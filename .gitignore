@@ -1,0 +1,5 @@
+build/
+third/
+common/.DS_Store
+bin/application
+.vscode/settings.json
