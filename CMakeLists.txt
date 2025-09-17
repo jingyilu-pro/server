@@ -214,21 +214,32 @@ link_directories(${CURL_INSTALL_DIR}/lib)
 # include_directories(BEFORE SYSTEM ${LIBCO_INSTALL_DIR}/include)
 # link_directories(${LIBCO_INSTALL_DIR}/lib)
 
-# Build libjwt as an external project.
-# set(LIBJWT_INSTALL_DIR ${CMAKE_BINARY_DIR}/third/libjwt)
-# set(LIBJWT_INCLUDE_DIR ${LIBJWT_INSTALL_DIR}/include)
-# set(LIBJWT_LIB_DIR ${LIBJWT_INSTALL_DIR}/lib)
-# ExternalProject_Add(libjwt_external_project
-#                     SOURCE_DIR  ${CMAKE_SOURCE_DIR}/third/libjwt
-#                     PREFIX      ${LIBJWT_INSTALL_DIR}
-#                     INSTALL_DIR ${LIBJWT_INSTALL_DIR}
-#                     CMAKE_ARGS  -DCMAKE_INSTALL_PREFIX:PATH=${LIBJWT_INSTALL_DIR}
+# Build jansson as an external project.
+# set(JANSSON_INSTALL_DIR ${CMAKE_BINARY_DIR}/third/jansson)
+# ExternalProject_Add(jansson_external_project
+#                     SOURCE_DIR  ${CMAKE_SOURCE_DIR}/third/jansson
+#                     PREFIX      ${JANSSON_INSTALL_DIR}
+#                     INSTALL_DIR ${JANSSON_INSTALL_DIR}
+#                     CMAKE_ARGS  -DCMAKE_INSTALL_PREFIX:PATH=${JANSSON_INSTALL_DIR}
 #                                 -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
 #                                 -DCMAKE_CXX_FLAGS=${EXTERNAL_PROJECT_CMAKE_CXX_FLAGS}
-#                     DEPENDS     jansson_external_project
 #                    )
-# include_directories(BEFORE SYSTEM ${LIBJWT_INCLUDE_DIR})
-# link_directories(${LIBJWT_LIB_DIR})
+# include_directories(BEFORE SYSTEM ${JANSSON_INSTALL_DIR}/include)
+# link_directories(${JANSSON_INSTALL_DIR}/lib)
+
+# Build libjwt as an external project.
+set(LIBJWT_INSTALL_DIR ${CMAKE_BINARY_DIR}/third/libjwt)
+ExternalProject_Add(libjwt_external_project
+                    SOURCE_DIR  ${CMAKE_SOURCE_DIR}/third/libjwt
+                    PREFIX      ${LIBJWT_INSTALL_DIR}
+                    INSTALL_DIR ${LIBJWT_INSTALL_DIR}
+                    CMAKE_ARGS  -DCMAKE_INSTALL_PREFIX:PATH=${LIBJWT_INSTALL_DIR}
+                                -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
+                                -DCMAKE_CXX_FLAGS=${EXTERNAL_PROJECT_CMAKE_CXX_FLAGS}
+                    # DEPENDS     jansson_external_project
+                   )
+include_directories(BEFORE SYSTEM ${LIBJWT_INSTALL_DIR}/include)
+link_directories(${LIBJWT_INSTALL_DIR}/lib)
 
 # main logic
 include_directories(
