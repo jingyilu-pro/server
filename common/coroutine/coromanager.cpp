@@ -16,7 +16,7 @@ CoroManager::~CoroManager()
     for(auto it = m_worker_threads.begin(); it != m_worker_threads.end(); ++it)
     {
         delete (*it);
-    }
+    }   
     m_worker_threads.clear();
     */
 }
@@ -47,15 +47,16 @@ CoroAwaitable CoroManager::await_suspend_handle(CoroManager* manager, CoroResult
 
 void CoroManager::update()
 {
-    CoroResult* result = nullptr;
     for(auto& var : m_worker_threads)
     {
-        if(var->get_results().try_dequeue(result))
+        size_t co = var->get_results().try_dequeue_bulk(m_results, block_size);
+        if(co == 0) continue;
+
+        for(size_t i = 0; i < co; ++i)
         {
+            auto* result = m_results[i];
             result->resume();
             release(result);
-            
-            result = nullptr;
         }
     }
 

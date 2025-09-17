@@ -10,6 +10,7 @@
 using namespace std;
 
 const int coro_result_recycle_interval = 5 * 60;
+const int block_size = 32;
 
 struct CoroAwaitable;
 
@@ -72,6 +73,7 @@ protected:
     list<CoroResult*> m_recycle_list;
     time_t m_update_time;
     time_t m_recycle_time;
+    CoroResult* m_results[block_size];
 };
 
 struct CoroAwaitable : public coro_awaitable<CoroResult*>

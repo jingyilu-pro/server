@@ -51,7 +51,7 @@ void Application::update()
 
         if(++total_idx == 110)
         {
-            usleep(100000000000);
+            usleep(100000000);
         }
     }
     
@@ -59,7 +59,7 @@ void Application::update()
 
 coro_task_t Application::check_maskword(const string& str)
 {
-    auto result = (CheckMaskWordResult*)co_await m_check_maskword_manager.awaitable(str);
+    auto* result = (CheckMaskWordResult*)co_await m_check_maskword_manager.awaitable(str);
 
     m_thread_statistics[std::this_thread::get_id()]++;
 

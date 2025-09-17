@@ -16,8 +16,7 @@ set(SOLUTION_DIR "${PROJECT_SOURCE_DIR}")
 set(THIRD_DIR "${PROJECT_SOURCE_DIR}/third")
 
 # -levent_core -lhiredis -ljansson -ljsoncpp
-set(THIRD_LIB_DIR "-ldl -lpthread")
-
+set(THIRD_LIB_DIR "-ldl -lpthread -lprotobuf -lutf8_range -lutf8_validity")
 # 运行目录
 set(CMAKE_INSTALL_PREFIX "${PROJECT_SOURCE_DIR}/bin")
 
@@ -26,6 +25,46 @@ MESSAGE(STATUS " 运行目录 = " ${CMAKE_INSTALL_PREFIX})
 MESSAGE(STATUS " 工程目录 = " ${SOLUTION_DIR})
 
 set(COMMON_LIB "common")
+set(PROTOCOL_LIB "protocol")
+find_package(absl CONFIG)
+set(ABSEL_LIBARARY
+    absl::absl_check
+    absl::absl_log
+    absl::algorithm
+    absl::base
+    absl::bind_front
+    absl::bits
+    absl::btree
+    absl::cleanup
+    absl::cord
+    absl::core_headers
+    absl::debugging
+    absl::die_if_null
+    absl::dynamic_annotations
+    absl::flags
+    absl::flat_hash_map
+    absl::flat_hash_set
+    absl::function_ref
+    absl::hash
+    absl::layout
+    absl::log_initialize
+    absl::log_globals
+    absl::log_severity
+    absl::memory
+    absl::node_hash_map
+    absl::node_hash_set
+    absl::random_distributions
+    absl::random_random
+    absl::span
+    absl::status
+    absl::statusor
+    absl::strings
+    absl::synchronization
+    absl::time
+    absl::type_traits
+    absl::utility
+  )
+
 if( CMAKE_BUILD_TYPE STREQUAL "Release" )
     set(CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} -std=c99 -fPIC -g -O2 -Wall")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -std=c++2a -g -O2 -Wall -fcoroutines -fpermissive -D__CONCURRENTQUEUE__")
@@ -118,18 +157,22 @@ ExternalProject_Add(spdlog_external_project
 include_directories(BEFORE SYSTEM ${SPDLOG_INSTALL_DIR}/include)
 link_directories(${SPDLOG_INSTALL_DIR}/lib)
 
-# Build protobuf as an external project.
-set(PROTOBUF_INSTALL_DIR ${CMAKE_BINARY_DIR}/third/protobuf)
-ExternalProject_Add(protobuf_external_project
-                    SOURCE_DIR  ${CMAKE_SOURCE_DIR}/third/protobuf
-                    PREFIX      ${PROTOBUF_INSTALL_DIR}
-                    INSTALL_DIR ${PROTOBUF_INSTALL_DIR}
-                    CMAKE_ARGS  -DCMAKE_INSTALL_PREFIX:PATH=${PROTOBUF_INSTALL_DIR}
-                                -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
-                                -DCMAKE_CXX_FLAGS=${EXTERNAL_PROJECT_CMAKE_CXX_FLAGS}
-                   )
-include_directories(BEFORE SYSTEM ${PROTOBUF_INSTALL_DIR}/include)
-link_directories(${PROTOBUF_INSTALL_DIR}/lib)
+# # Build protobuf as an external project.
+# set(PROTOBUF_INSTALL_DIR ${CMAKE_BINARY_DIR}/third/protobuf)
+# ExternalProject_Add(protobuf_external_project
+#                     SOURCE_DIR  ${CMAKE_SOURCE_DIR}/third/protobuf
+#                     PREFIX      ${PROTOBUF_INSTALL_DIR}
+#                     INSTALL_DIR ${PROTOBUF_INSTALL_DIR}
+#                     CMAKE_ARGS  -DCMAKE_INSTALL_PREFIX:PATH=${PROTOBUF_INSTALL_DIR}
+#                                 -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
+#                                 -DCMAKE_CXX_FLAGS=${EXTERNAL_PROJECT_CMAKE_CXX_FLAGS}
+#                                 # -Dprotobuf_BUILD_SHARED_LIBS=OFF
+#                                 -Dprotobuf_BUILD_TESTS=OFF
+#                                 -DABSL_ENABLE_INSTALL=ON
+#                                 # -Dprotobuf_LOCAL_DEPENDENCIES_ONLY=ON
+#                    )
+# include_directories(BEFORE SYSTEM ${PROTOBUF_INSTALL_DIR}/include)
+# link_directories(${PROTOBUF_INSTALL_DIR}/lib)
 
 # Build libzmq as an external project.
 set(LIBZMQ_INSTALL_DIR ${CMAKE_BINARY_DIR}/third/libzmq)
@@ -193,8 +236,11 @@ include_directories(
     ${SOLUTION_DIR}/common/coroutine
     ${SOLUTION_DIR}/common/utils
 
+    # app protocol
+     ${SOLUTION_DIR}/app/protocol
 )
 
 add_subdirectory(${SOLUTION_DIR}/common)
+add_subdirectory(${SOLUTION_DIR}/app/protocol)
 add_subdirectory(${SOLUTION_DIR}/app/application)
 

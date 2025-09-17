@@ -14,6 +14,8 @@
 
 #include "concurrentqueue.h"
 
+#include "protocol/base.pb.h"
+
 using namespace moodycamel;
 using namespace std;
 
@@ -26,8 +28,11 @@ int main(int argc, char* argv[])
     // coro_http_client client{};
     // async_simple::coro::syncAwait(get_post(client));
 
-    Application app(6);
+    Application app(std::thread::hardware_concurrency());
 
+
+    base::AddressBook book;
+    
     while(true)
     {
         app.update();
