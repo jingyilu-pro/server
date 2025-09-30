@@ -1,13 +1,11 @@
 Project(application)
 
 include_directories(
-    common
-    logic
-    logic/aoi
-    logic/maskword
+        common
+        logic
 )
 
-file(GLOB_RECURSE FileSources  *.cpp *.c *.cc)
+file(GLOB_RECURSE FileSources *.cpp *.c *.cc)
 file(GLOB_RECURSE FileHeaders *.h *.hpp)
 
 MESSAGE(STATUS " ABSEL_LIBARARY = " ${ABSEL_LIBARARY})
@@ -18,7 +16,20 @@ MESSAGE(STATUS " ABSEL_LIBARARY = " ${ABSEL_LIBARARY})
 message("absl: ${ABSEL_LIBARARY}")
 
 add_executable(application ${FileHeaders} ${FileSources})
-target_link_libraries(application ${COMMON_LIB} ${PROTOCOL_LIB} ${THIRD_LIB_DIR} ${ABSEL_LIBARARY} ${CMAKE_DL_LIBS})
+target_link_libraries(application
+        # service
+        maskword
+        
+        # servicebase
+        servicebase
+        # last
+        ${COMMON_LIB}
+        ${PROTOCOL_LIB}
+        ${THIRD_LIB_DIR}
+        ${ABSEL_LIBARARY}
+        ${CMAKE_DL_LIBS}
+)
+
 target_compile_features(application PRIVATE cxx_std_20)
 
 install(TARGETS application DESTINATION ${CMAKE_INSTALL_PREFIX})

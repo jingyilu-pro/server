@@ -241,17 +241,35 @@ ExternalProject_Add(libjwt_external_project
 include_directories(BEFORE SYSTEM ${LIBJWT_INSTALL_DIR}/include)
 link_directories(${LIBJWT_INSTALL_DIR}/lib)
 
+
+
+
 # main logic
 include_directories(
+    # common
     ${SOLUTION_DIR}/common
     ${SOLUTION_DIR}/common/coroutine
     ${SOLUTION_DIR}/common/utils
 
     # app protocol
-     ${SOLUTION_DIR}/app/protocol
+    ${SOLUTION_DIR}/app/protocol
+
+    # service
+    ${SOLUTION_DIR}/app/service/base
+    ${SOLUTION_DIR}/app/service/maskword/common
+    ${SOLUTION_DIR}/app/service/maskword/logic
 )
 
+# common lib
 add_subdirectory(${SOLUTION_DIR}/common)
+
+# proto lib
 add_subdirectory(${SOLUTION_DIR}/app/protocol)
+
+# serice lib
+add_subdirectory(${SOLUTION_DIR}/app/service/base)
+add_subdirectory(${SOLUTION_DIR}/app/service/maskword)
+
+# app
 add_subdirectory(${SOLUTION_DIR}/app/application)
 

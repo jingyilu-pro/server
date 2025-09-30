@@ -1,73 +1,63 @@
+//
+// Copyright (c) 2024-2025 JingyiLu jingyilupro@gmail.com
+//
+// This software is provided 'as-is', without any express or implied
+// warranty.  In no event will the authors be held liable for any damages
+// arising from the use of this software.
+// Permission is granted to anyone to use this software for any purpose,
+// including commercial applications, and to alter it and redistribute it
+// freely, subject to the following restrictions:
+// 1. The origin of this software must not be misrepresented; you must not
+//    claim that you wrote the original software. If you use this software
+//    in a product, an acknowledgment in the product documentation would be
+//    appreciated but is not required.
+// 2. Altered source versions must be plainly marked as such, and must not be
+//    misrepresented as being the original software.
+// 3. This notice may not be removed or altered from any source distribution.
+//
+
+
 #include "application.h"
 #include <iostream>
+#include <ranges>
+
+#include "service.h"
+#include "maskword_service.h"
 
 
 Application::Application(int thread_count/* = 1*/)
-: m_check_maskword_manager(this, thread_count)
 {
 
 }
 
-Application::~Application()
-{
+Application::~Application() = default;
 
+
+bool Application::start()
+{
+    auto service = new MaskWordService();
+    service->start();
+    m_services[0] = service;
+
+    return true;
+}
+
+bool Application::stop()
+{
+    for (auto service : m_services | views::values)
+    {
+        service->stop();
+        delete service;
+    }
+    m_services.clear();
+
+    return true;
 }
 
 void Application::update()
 {
-    m_check_maskword_manager.update();
-
-    static size_t stick = 0;
-    size_t tick = time(nullptr);
-    if(stick > tick) return;
-    stick = tick + 1;
-
-    // 此为自动测试代码
-    // static uint64 sidx = 0;
-    // for(int i = 0; i < 1000; ++i)
-    // {
-    //     check_maskword(to_string(sidx++));
-    // }
-
-    static bool start = false;
-    if(!start)
+    for (auto &val: m_services | views::values)
     {
-        start = true;
-        for(int i = 0; i < 10000000; ++i)
-        {
-            check_maskword("check_maskword");
-        }
+        val->update();
     }
-
-    static int total_idx = 0;
-    static size_t souttick = 0;
-    if(souttick < tick)
-    {
-        souttick = tick + 60;
-        for(auto [id, co] : m_thread_statistics)
-        {
-            std::cout << " id=" << id << " co=" << co / 1000 << "k" << std::endl;
-        }
-
-        if(++total_idx == 110)
-        {
-            usleep(100000000);
-        }
-    }
-    
 }
-
-coro_task_t Application::check_maskword(const string& str)
-{
-    auto* result = (CheckMaskWordResult*)co_await m_check_maskword_manager.awaitable(str);
-
-    m_thread_statistics[std::this_thread::get_id()]++;
-
-    check_maskword("check_maskword");
-    
-    // if(result->mask())
-    // {
-    //     std::cout << "thread=" << std::this_thread::get_id() << " str=" << result->str() << " mask=" << result->mask() << std::endl;
-    // }
-}
-
