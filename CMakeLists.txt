@@ -4,7 +4,7 @@
 # CMake
 cmake_minimum_required(VERSION 3.28)
 
-Project(server)
+Project(application)
 
 # https://cmake.org/cmake/help/latest/module/ExternalProject.html
 include(ExternalProject)
@@ -12,10 +12,12 @@ include(ExternalProject)
 # find_package(OpenSSL REQUIRED)
 
 set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
 # 运行目录
 set(SOLUTION_DIR "${PROJECT_SOURCE_DIR}")
-set(THIRD_DIR "${PROJECT_SOURCE_DIR}/third")
+set(THIRD_DIR "${PROJECT_SOURCE_DIR}/libs")
 
 # -levent_core -lhiredis -ljansson -ljsoncpp
 set(THIRD_LIB_DIR "-ldl -lpthread -lprotobuf -lutf8_range -lutf8_validity")
@@ -25,6 +27,12 @@ set(CMAKE_INSTALL_PREFIX "${PROJECT_SOURCE_DIR}/bin")
 MESSAGE(STATUS " CMAKE_BUILD_TYPE = " ${CMAKE_BUILD_TYPE})
 MESSAGE(STATUS " 运行目录 = " ${CMAKE_INSTALL_PREFIX})
 MESSAGE(STATUS " 工程目录 = " ${SOLUTION_DIR})
+
+
+include("cmake/dependencise_libs.cmake")
+build_dependencies()
+link_dependencies("BEFORE")
+
 
 set(COMMON_LIB "common")
 set(PROTOCOL_LIB "protocol")
@@ -77,181 +85,6 @@ else()
 endif()
 
 
-# Build libevent as an external project.
-set(LIBEVENT_INSTALL_DIR ${CMAKE_BINARY_DIR}/third/libevent)
-ExternalProject_Add(libevent_external_project
-                    SOURCE_DIR  ${CMAKE_SOURCE_DIR}/third/libevent
-                    PREFIX      ${LIBEVENT_INSTALL_DIR}
-                    INSTALL_DIR ${LIBEVENT_INSTALL_DIR}
-                    CMAKE_ARGS  -DCMAKE_INSTALL_PREFIX:PATH=${LIBEVENT_INSTALL_DIR}
-                                -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
-                                -DCMAKE_CXX_FLAGS=${EXTERNAL_PROJECT_CMAKE_CXX_FLAGS}
-                    # DEPENDS     jansson_external_project
-                   )
-include_directories(BEFORE SYSTEM ${LIBEVENT_INSTALL_DIR}/include)
-link_directories(${LIBEVENT_INSTALL_DIR}/lib)
-
-
-# Build concurrentqueue as an external project.
-set(CONCURRENTQUEUE_INSTALL_DIR ${CMAKE_BINARY_DIR}/third/concurrentqueue)
-ExternalProject_Add(concurrentqueue_external_project
-                    SOURCE_DIR  ${CMAKE_SOURCE_DIR}/third/concurrentqueue
-                    PREFIX      ${CONCURRENTQUEUE_INSTALL_DIR}
-                    INSTALL_DIR ${CONCURRENTQUEUE_INSTALL_DIR}
-                    CMAKE_ARGS  -DCMAKE_INSTALL_PREFIX:PATH=${CONCURRENTQUEUE_INSTALL_DIR}
-                                -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
-                                -DCMAKE_CXX_FLAGS=${EXTERNAL_PROJECT_CMAKE_CXX_FLAGS}
-                    # DEPENDS     jansson_external_project
-                   )
-include_directories(BEFORE SYSTEM ${CONCURRENTQUEUE_INSTALL_DIR}/include/concurrentqueue/moodycamel)
-link_directories(${CONCURRENTQUEUE_INSTALL_DIR}/lib)
-
-# Build readerwriterqueue as an external project.
-set(READERWRITERQUEUE_INSTALL_DIR ${CMAKE_BINARY_DIR}/third/readerwriterqueue)
-ExternalProject_Add(readerwriterqueue_external_project
-                    SOURCE_DIR  ${CMAKE_SOURCE_DIR}/third/readerwriterqueue
-                    PREFIX      ${READERWRITERQUEUE_INSTALL_DIR}
-                    INSTALL_DIR ${READERWRITERQUEUE_INSTALL_DIR}
-                    CMAKE_ARGS  -DCMAKE_INSTALL_PREFIX:PATH=${READERWRITERQUEUE_INSTALL_DIR}
-                                -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
-                                -DCMAKE_CXX_FLAGS=${EXTERNAL_PROJECT_CMAKE_CXX_FLAGS}
-                   )
-include_directories(BEFORE SYSTEM ${READERWRITERQUEUE_INSTALL_DIR}/include)
-link_directories(${READERWRITERQUEUE_INSTALL_DIR}/lib)
-
-
-# Build curl as an external project.
-# set(CURL_INSTALL_DIR ${CMAKE_BINARY_DIR}/third/curl)
-# ExternalProject_Add(curl_external_project
-#                     SOURCE_DIR  ${CMAKE_SOURCE_DIR}/third/curl
-#                     PREFIX      ${CURL_INSTALL_DIR}
-#                     INSTALL_DIR ${CURL_INSTALL_DIR}
-#                     CMAKE_ARGS  -DCMAKE_INSTALL_PREFIX:PATH=${CURL_INSTALL_DIR}
-#                                 -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
-#                                 -DCMAKE_CXX_FLAGS=${EXTERNAL_PROJECT_CMAKE_CXX_FLAGS}
-#                                 # -DCMAKE_TRY_COMPILE_TARGET_TYPE=STATIC_LIBRARY
-#                                 -DBUILD_SHARED_LIBS=OFF
-#                                 -DBUILD_STATIC_LIBS=ON
-#                                 -DBUILD_CURL_EXE=OFF
-#                                 -DCURL_ENABLE_SSL=OFF
-#                    )
-# include_directories(BEFORE SYSTEM ${CURL_INSTALL_DIR}/include)
-# link_directories(${CURL_INSTALL_DIR}/lib)
-
-
-# Build hiredis as an external project.
-set(HIREDIS_INSTALL_DIR ${CMAKE_BINARY_DIR}/third/hiredis)
-ExternalProject_Add(hiredis_external_project
-                    SOURCE_DIR  ${CMAKE_SOURCE_DIR}/third/hiredis
-                    PREFIX      ${HIREDIS_INSTALL_DIR}
-                    INSTALL_DIR ${HIREDIS_INSTALL_DIR}
-                    CMAKE_ARGS  -DCMAKE_INSTALL_PREFIX:PATH=${HIREDIS_INSTALL_DIR}
-                                -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
-                                -DCMAKE_CXX_FLAGS=${EXTERNAL_PROJECT_CMAKE_CXX_FLAGS}
-                   )
-include_directories(BEFORE SYSTEM ${HIREDIS_INSTALL_DIR}/include)
-link_directories(${HIREDIS_INSTALL_DIR}/lib)
-
-# Build mariadb-connector-c as an external project.
-set(MARIADB_INSTALL_DIR ${CMAKE_BINARY_DIR}/third/mariadb-connector-c)
-ExternalProject_Add(mariadb_external_project
-                    SOURCE_DIR  ${CMAKE_SOURCE_DIR}/third/mariadb-connector-c
-                    PREFIX      ${MARIADB_INSTALL_DIR}
-                    INSTALL_DIR ${MARIADB_INSTALL_DIR}
-                    CMAKE_ARGS  -DCMAKE_INSTALL_PREFIX:PATH=${MARIADB_INSTALL_DIR}
-                                -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
-                                -DCMAKE_CXX_FLAGS=${EXTERNAL_PROJECT_CMAKE_CXX_FLAGS}
-                   )
-include_directories(BEFORE SYSTEM ${MARIADB_INSTALL_DIR}/include)
-link_directories(${MARIADB_INSTALL_DIR}/lib)
-
-# Build spdlog as an external project.
-set(SPDLOG_INSTALL_DIR ${CMAKE_BINARY_DIR}/third/spdlog)
-ExternalProject_Add(spdlog_external_project
-                    SOURCE_DIR  ${CMAKE_SOURCE_DIR}/third/spdlog
-                    PREFIX      ${SPDLOG_INSTALL_DIR}
-                    INSTALL_DIR ${SPDLOG_INSTALL_DIR}
-                    CMAKE_ARGS  -DCMAKE_INSTALL_PREFIX:PATH=${SPDLOG_INSTALL_DIR}
-                                -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
-                                -DCMAKE_CXX_FLAGS=${EXTERNAL_PROJECT_CMAKE_CXX_FLAGS}
-                   )
-include_directories(BEFORE SYSTEM ${SPDLOG_INSTALL_DIR}/include)
-link_directories(${SPDLOG_INSTALL_DIR}/lib)
-
-# Build protobuf as an external project.
-# set(PROTOBUF_INSTALL_DIR ${CMAKE_BINARY_DIR}/third/protobuf)
-# ExternalProject_Add(protobuf_external_project
-#                     SOURCE_DIR  ${CMAKE_SOURCE_DIR}/third/protobuf
-#                     PREFIX      ${PROTOBUF_INSTALL_DIR}
-#                     INSTALL_DIR ${PROTOBUF_INSTALL_DIR}
-#                     CMAKE_ARGS  -DCMAKE_INSTALL_PREFIX:PATH=${PROTOBUF_INSTALL_DIR}
-#                                 -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
-#                                 -DCMAKE_CXX_FLAGS=${EXTERNAL_PROJECT_CMAKE_CXX_FLAGS}
-#                                 # -Dprotobuf_BUILD_SHARED_LIBS=OFF
-#                                 -Dprotobuf_BUILD_TESTS=OFF
-#                                 -DABSL_ENABLE_INSTALL=ON
-#                                 # -Dprotobuf_LOCAL_DEPENDENCIES_ONLY=ON
-#                    )
-# include_directories(BEFORE SYSTEM ${PROTOBUF_INSTALL_DIR}/include)
-# link_directories(${PROTOBUF_INSTALL_DIR}/lib)
-
-# Build libzmq as an external project.
-# set(LIBZMQ_INSTALL_DIR ${CMAKE_BINARY_DIR}/third/libzmq)
-# ExternalProject_Add(libzmq_external_project
-#                     SOURCE_DIR  ${CMAKE_SOURCE_DIR}/third/libzmq
-#                     PREFIX      ${LIBZMQ_INSTALL_DIR}
-#                     INSTALL_DIR ${LIBZMQ_INSTALL_DIR}
-#                     CMAKE_ARGS  -DCMAKE_INSTALL_PREFIX:PATH=${LIBZMQ_INSTALL_DIR}
-#                                 -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
-#                                 -DCMAKE_CXX_FLAGS=${EXTERNAL_PROJECT_CMAKE_CXX_FLAGS}
-#                    )
-# include_directories(BEFORE SYSTEM ${LIBZMQ_INSTALL_DIR}/include)
-# link_directories(${LIBZMQ_INSTALL_DIR}/lib)
-
-
-# Build libco as an external project.
-# set(LIBCO_INSTALL_DIR ${CMAKE_BINARY_DIR}/third/libco)
-# ExternalProject_Add(libco_external_project
-#                     SOURCE_DIR  ${CMAKE_SOURCE_DIR}/third/libco
-#                     PREFIX      ${LIBCO_INSTALL_DIR}
-#                     INSTALL_DIR ${LIBCO_INSTALL_DIR}
-#                     CMAKE_ARGS  -DCMAKE_INSTALL_PREFIX:PATH=${LIBCO_INSTALL_DIR}
-#                                 -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
-#                                 -DCMAKE_CXX_FLAGS=${EXTERNAL_PROJECT_CMAKE_CXX_FLAGS}
-#                    )
-# include_directories(BEFORE SYSTEM ${LIBCO_INSTALL_DIR}/include)
-# link_directories(${LIBCO_INSTALL_DIR}/lib)
-
-# Build jansson as an external project.
-# set(JANSSON_INSTALL_DIR ${CMAKE_BINARY_DIR}/third/jansson)
-# ExternalProject_Add(jansson_external_project
-#                     SOURCE_DIR  ${CMAKE_SOURCE_DIR}/third/jansson
-#                     PREFIX      ${JANSSON_INSTALL_DIR}
-#                     INSTALL_DIR ${JANSSON_INSTALL_DIR}
-#                     CMAKE_ARGS  -DCMAKE_INSTALL_PREFIX:PATH=${JANSSON_INSTALL_DIR}
-#                                 -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
-#                                 -DCMAKE_CXX_FLAGS=${EXTERNAL_PROJECT_CMAKE_CXX_FLAGS}
-#                    )
-# include_directories(BEFORE SYSTEM ${JANSSON_INSTALL_DIR}/include)
-# link_directories(${JANSSON_INSTALL_DIR}/lib)
-
-# Build libjwt as an external project.
-# set(LIBJWT_INSTALL_DIR ${CMAKE_BINARY_DIR}/third/libjwt)
-# ExternalProject_Add(libjwt_external_project
-#                     SOURCE_DIR  ${CMAKE_SOURCE_DIR}/third/libjwt
-#                     PREFIX      ${LIBJWT_INSTALL_DIR}
-#                     INSTALL_DIR ${LIBJWT_INSTALL_DIR}
-#                     CMAKE_ARGS  -DCMAKE_INSTALL_PREFIX:PATH=${LIBJWT_INSTALL_DIR}
-#                                 -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
-#                                 -DCMAKE_CXX_FLAGS=${EXTERNAL_PROJECT_CMAKE_CXX_FLAGS}
-#                     # DEPENDS     jansson_external_project
-#                    )
-# include_directories(BEFORE SYSTEM ${LIBJWT_INSTALL_DIR}/include)
-# link_directories(${LIBJWT_INSTALL_DIR}/lib)
-
-
-
-
 # main logic
 include_directories(
     # common
@@ -268,36 +101,6 @@ include_directories(
     ${SOLUTION_DIR}/app/service/maskword/logic
 )
 
-# third lib
-# set(DEPENDENCIES protobuf)
-# foreach(DEPENDENCY ${DEPENDENCIES})
-#     # Check that the libraries are present:
-#     if (NOT EXISTS "${PROJECT_SOURCE_DIR}/third/${DEPENDENCY}/CMakeLists.txt")
-#         message(FATAL_ERROR "${DEPENDENCY} is missing in folder third/${DEPENDENCY}. Have you initialized and updated the submodules / downloaded the extra libraries?")
-#     endif()
-
-#     # Include all the libraries
-#     # We use EXCLUDE_FROM_ALL so that only the explicit dependencies are compiled
-#     # (mbedTLS also has test and example programs in their CMakeLists.txt, we don't want those):
-#     add_subdirectory("third/${DEPENDENCY}" EXCLUDE_FROM_ALL)
-# endforeach()
-
-
-# function(link_dependencies TARGET)
-# 	# Add required includes:
-# 	target_include_directories(
-# 		${TARGET} SYSTEM PRIVATE
-#         "build/third/protobuf/include"
-# 	)
-
-# 	# Link dependencies as private:
-# 	target_link_libraries(
-# 		${TARGET} PRIVATE
-# 	)
-
-# endfunction()
-
-
 # common lib
 add_subdirectory(${SOLUTION_DIR}/common)
 
@@ -310,4 +113,5 @@ add_subdirectory(${SOLUTION_DIR}/app/service/maskword)
 
 # app
 add_subdirectory(${SOLUTION_DIR}/app/application)
+
 

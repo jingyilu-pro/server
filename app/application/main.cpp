@@ -27,12 +27,11 @@ using namespace std;
 
 
 int main(int argc, char *argv[])
- {
+{
+    std::cout << "main thead=" << std::this_thread::get_id() << " hardware_concurrency=" << std::thread::hardware_concurrency() << std::endl;
 
-    // spdlog::info("main thread={} hardware_concurrency={}", std::this_thread::get_id(), std::thread::hardware_concurrency());
-    std::cout << "main thead=" << std::this_thread::get_id() << " hardware_concurrency=" <<
-            std::thread::hardware_concurrency() << std::endl;
-
+    spdlog::info("Welcome to spdlog version {}.{}.{}  !", SPDLOG_VER_MAJOR, SPDLOG_VER_MINOR, SPDLOG_VER_PATCH);
+    spdlog::info("hardware_concurrency={}", std::thread::hardware_concurrency());
 
     Application app(std::thread::hardware_concurrency());
 
@@ -42,7 +41,7 @@ int main(int argc, char *argv[])
     {
         app.update();
 
-        spdlog::info("Welcome to spdlog version {}.{}.{}  !", SPDLOG_VER_MAJOR, SPDLOG_VER_MINOR, SPDLOG_VER_PATCH);
+        
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
 

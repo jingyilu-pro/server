@@ -1,0 +1,51 @@
+[submodule "libs/fmt"]
+	path = libs/fmt
+	url = https://github.com/fmtlib/fmt.git
+	ignore = dirty
+[submodule "libs/libevent"]
+	path = libs/libevent
+	url = https://github.com/cuberite/libevent.git
+	ignore = dirty
+[submodule "libs/jansson"]
+	path = libs/jansson
+	url = https://www.github.com/akheron/jansson.git
+	ignore = dirty
+[submodule "libs/curl"]
+	path = libs/curl
+	url = https://www.github.com/curl/curl.git
+	ignore = dirty
+[submodule "libs/hiredis"]
+	path = libs/hiredis
+	url = https://www.github.com/redis/hiredis.git
+	ignore = dirty
+[submodule "libs/libjwt"]
+	path = libs/libjwt
+	url = https://www.github.com/benmcollins/libjwt.git
+	ignore = dirty
+[submodule "libs/mariadb-connector-c"]
+	path = libs/mariadb-connector-c
+	url = https://www.github.com/mariadb-corporation/mariadb-connector-c.git
+	ignore = dirty
+[submodule "libs/protobuf"]
+	path = libs/protobuf
+	url = https://www.github.com/protocolbuffers/protobuf.git
+	ignore = dirty
+[submodule "libs/concurrentqueue"]
+	path = libs/concurrentqueue
+	url = https://www.github.com/cameron314/concurrentqueue.git
+	ignore = dirty
+[submodule "libs/readerwriterqueue"]
+	path = libs/readerwriterqueue
+	url = https://www.github.com/cameron314/readerwriterqueue.git
+	ignore = dirty
+[submodule "libs/spdlog"]
+	path = libs/spdlog
+	url = https://www.github.com/gabime/spdlog.git
+	ignore = dirty
+[submodule "libs/jemalloc"]
+	path = libs/jemalloc
+	url = https://www.github.com/jemalloc/jemalloc.git
+	ignore = dirty
+[submodule "libs/mbedtls"]
+	path = libs/mbedtls
+	url = https://github.com/Mbed-TLS/mbedtls.git
