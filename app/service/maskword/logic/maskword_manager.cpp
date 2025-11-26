@@ -17,36 +17,21 @@
 //
 
 
-#include <chrono>
-#include <iostream>
-#include "application.h"
-#include "log/glogger.h"
+#include "maskword_manager.h"
 
+MaskWordManager::MaskWordManager(MaskWordService *service, int thread_count/* = 1*/)
+    : CoroManager(thread_count)
+    , m_service(service)
+{
+    CoroManager::init();
+}
 
-using namespace std;
+MaskWordManager::~MaskWordManager() = default;
 
+CoroAwaitable MaskWordManager::awaitable(const string &mask_word) {
+    // 会自动回收对象
+    auto *result = dynamic_cast<MaskWordResult *>(alloc());
+    result->init(mask_word);
+    return CoroAwaitable{this, result};
+}
 
-int main(int argc, char *argv[])
- {
-
-    // spdlog::info("main thread={} hardware_concurrency={}", std::this_thread::get_id(), std::thread::hardware_concurrency());
-    std::cout << "main thead=" << std::this_thread::get_id() << " hardware_concurrency=" <<
-            std::thread::hardware_concurrency() << std::endl;
-
-
-    Application app(std::thread::hardware_concurrency());
-
-    app.start();
-
-    while (true)
-    {
-        app.update();
-
-        spdlog::info("Welcome to spdlog version {}.{}.{}  !", SPDLOG_VER_MAJOR, SPDLOG_VER_MINOR, SPDLOG_VER_PATCH);
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
-    }
-
-    app.stop();
-
-    return 0;
-};

@@ -3,3 +3,5 @@ third/
 common/.DS_Store
 bin/application
 .vscode/settings.json
+.idea/
+bin/logs/

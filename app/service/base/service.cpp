@@ -17,36 +17,20 @@
 //
 
 
-#include <chrono>
-#include <iostream>
-#include "application.h"
-#include "log/glogger.h"
+#include "service.h"
 
 
-using namespace std;
+bool Service::start()
+{
+    return true;
+}
 
+bool Service::stop()
+{
+    return true;
+}
 
-int main(int argc, char *argv[])
- {
+void Service::update()
+{
 
-    // spdlog::info("main thread={} hardware_concurrency={}", std::this_thread::get_id(), std::thread::hardware_concurrency());
-    std::cout << "main thead=" << std::this_thread::get_id() << " hardware_concurrency=" <<
-            std::thread::hardware_concurrency() << std::endl;
-
-
-    Application app(std::thread::hardware_concurrency());
-
-    app.start();
-
-    while (true)
-    {
-        app.update();
-
-        spdlog::info("Welcome to spdlog version {}.{}.{}  !", SPDLOG_VER_MAJOR, SPDLOG_VER_MINOR, SPDLOG_VER_PATCH);
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
-    }
-
-    app.stop();
-
-    return 0;
-};
+}

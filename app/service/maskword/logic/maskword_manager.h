@@ -17,36 +17,31 @@
 //
 
 
-#include <chrono>
-#include <iostream>
-#include "application.h"
-#include "log/glogger.h"
+#pragma once
 
+#include "define.h"
+#include <set>
+#include "corocoroutine.h"
+#include "coromanager.h"
+#include "maskword_result.h"
 
-using namespace std;
+class MaskWordService;
 
+class MaskWordManager : public CoroManager
+{
+public:
+    explicit MaskWordManager(MaskWordService *service, int thread_count = 1);
 
-int main(int argc, char *argv[])
- {
+    ~MaskWordManager() override;
 
-    // spdlog::info("main thread={} hardware_concurrency={}", std::this_thread::get_id(), std::thread::hardware_concurrency());
-    std::cout << "main thead=" << std::this_thread::get_id() << " hardware_concurrency=" <<
-            std::thread::hardware_concurrency() << std::endl;
+    CoroAwaitable awaitable(const string &mask_word);
 
-
-    Application app(std::thread::hardware_concurrency());
-
-    app.start();
-
-    while (true)
-    {
-        app.update();
-
-        spdlog::info("Welcome to spdlog version {}.{}.{}  !", SPDLOG_VER_MAJOR, SPDLOG_VER_MINOR, SPDLOG_VER_PATCH);
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+public:
+    CoroResult *alloc() override {
+        expand<MaskWordResult>();
+        return inner_alloc();
     }
 
-    app.stop();
-
-    return 0;
+private:
+    PROPERTY(MaskWordService*, service)
 };

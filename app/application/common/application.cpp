@@ -24,6 +24,7 @@
 #include "service.h"
 #include "maskword_service.h"
 
+#include "log/glogger.h"
 
 Application::Application(int thread_count/* = 1*/)
 {
@@ -35,6 +36,9 @@ Application::~Application() = default;
 
 bool Application::start()
 {
+    Glogger::init();
+    Glogger::set_log_level(0);
+
     auto service = new MaskWordService();
     service->start();
     m_services[0] = service;

@@ -17,36 +17,29 @@
 //
 
 
-#include <chrono>
-#include <iostream>
-#include "application.h"
-#include "log/glogger.h"
+#pragma once
+
+#include "cororesult.h"
+#include "define.h"
 
 
-using namespace std;
+class MaskWordResult final : public CoroResult {
+public:
+    MaskWordResult();
 
+    ~MaskWordResult() override;
 
-int main(int argc, char *argv[])
- {
+    void init(const string &str);
 
-    // spdlog::info("main thread={} hardware_concurrency={}", std::this_thread::get_id(), std::thread::hardware_concurrency());
-    std::cout << "main thead=" << std::this_thread::get_id() << " hardware_concurrency=" <<
-            std::thread::hardware_concurrency() << std::endl;
+    void worker() override;
 
+    void clear() override;
 
-    Application app(std::thread::hardware_concurrency());
+private:
+    // data
+    PROPERTY(bool, mask);
 
-    app.start();
+    PROPERTY_REF(string, str);
 
-    while (true)
-    {
-        app.update();
-
-        spdlog::info("Welcome to spdlog version {}.{}.{}  !", SPDLOG_VER_MAJOR, SPDLOG_VER_MINOR, SPDLOG_VER_PATCH);
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
-    }
-
-    app.stop();
-
-    return 0;
+    PROPERTY_REF(string, mask_word);
 };

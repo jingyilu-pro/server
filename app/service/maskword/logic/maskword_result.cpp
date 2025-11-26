@@ -17,36 +17,31 @@
 //
 
 
-#include <chrono>
-#include <iostream>
-#include "application.h"
-#include "log/glogger.h"
+#include "maskword_result.h"
 
 
-using namespace std;
+MaskWordResult::MaskWordResult()
+    : m_mask(false) {
+}
 
+MaskWordResult::~MaskWordResult() = default;
 
-int main(int argc, char *argv[])
- {
+void MaskWordResult::init(const string &str) {
+    set_str(str);
+    set_mask_word(str);
+    set_mask(false);
+}
 
-    // spdlog::info("main thread={} hardware_concurrency={}", std::this_thread::get_id(), std::thread::hardware_concurrency());
-    std::cout << "main thead=" << std::this_thread::get_id() << " hardware_concurrency=" <<
-            std::thread::hardware_concurrency() << std::endl;
-
-
-    Application app(std::thread::hardware_concurrency());
-
-    app.start();
-
-    while (true)
-    {
-        app.update();
-
-        spdlog::info("Welcome to spdlog version {}.{}.{}  !", SPDLOG_VER_MAJOR, SPDLOG_VER_MINOR, SPDLOG_VER_PATCH);
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+void MaskWordResult::worker() {
+    static int64 sid = 0;
+    set_mask(++sid % 3 == 0);
+    if (mask()) {
+        // std::cout << "thread=" << std::this_thread::get_id() << " str=" << str() << " is maskword" << std::endl;
     }
+    // gwarn("------->>>>>>>>>>>>>origin str:{} mask_word:{} mask:{}", str(), mask_word(), mask());
+}
 
-    app.stop();
-
-    return 0;
-};
+void MaskWordResult::clear() {
+    m_str.clear();
+    m_mask_word.clear();
+}

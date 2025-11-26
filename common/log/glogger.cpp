@@ -17,36 +17,26 @@
 //
 
 
-#include <chrono>
-#include <iostream>
-#include "application.h"
-#include "log/glogger.h"
+#include "glogger.h"
+// #include "fmt/fmt.h"
 
+void Glogger::init(const std::string& service, const std::string& file_name, const int file_count, const int max_file_size)
+{
+    spdlog::cfg::load_env_levels();
 
-using namespace std;
+    auto old_logger = spdlog::default_logger();
+    auto glogger = spdlog::rotating_logger_mt(service, std::format("logs/{}.log", file_name), max_file_size, file_count);
 
+    spdlog::set_default_logger(glogger);
+    
+    spdlog::flush_every(std::chrono::seconds(3));
 
-int main(int argc, char *argv[])
- {
+    spdlog::info("Welcome to spdlog version {}.{}.{}  !", SPDLOG_VER_MAJOR, SPDLOG_VER_MINOR, SPDLOG_VER_PATCH);
+}
 
-    // spdlog::info("main thread={} hardware_concurrency={}", std::this_thread::get_id(), std::thread::hardware_concurrency());
-    std::cout << "main thead=" << std::this_thread::get_id() << " hardware_concurrency=" <<
-            std::thread::hardware_concurrency() << std::endl;
+void Glogger::set_log_level(int level)
+{
+    spdlog::set_level((spdlog::level::level_enum)level);
 
-
-    Application app(std::thread::hardware_concurrency());
-
-    app.start();
-
-    while (true)
-    {
-        app.update();
-
-        spdlog::info("Welcome to spdlog version {}.{}.{}  !", SPDLOG_VER_MAJOR, SPDLOG_VER_MINOR, SPDLOG_VER_PATCH);
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
-    }
-
-    app.stop();
-
-    return 0;
-};
+    spdlog::info("set log level to {}", level);
+}
