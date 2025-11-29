@@ -30,6 +30,7 @@
 	path = libs/protobuf
 	url = https://www.github.com/protocolbuffers/protobuf.git
 	ignore = dirty
+	tag = v33.1
 [submodule "libs/concurrentqueue"]
 	path = libs/concurrentqueue
 	url = https://www.github.com/cameron314/concurrentqueue.git

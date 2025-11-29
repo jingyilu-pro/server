@@ -19,8 +19,8 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(SOLUTION_DIR "${PROJECT_SOURCE_DIR}")
 set(THIRD_DIR "${PROJECT_SOURCE_DIR}/libs")
 
-# -levent_core -lhiredis -ljansson -ljsoncpp
-set(THIRD_LIB_DIR "-ldl -lpthread -lprotobuf -lutf8_range -lutf8_validity")
+# -levent_core -lhiredis -ljansson -ljsoncpp -- -lprotobuf -lutf8_range -lutf8_validity
+set(MAIN_LIB_DIR "-ldl -lpthread")
 # 运行目录
 set(CMAKE_INSTALL_PREFIX "${PROJECT_SOURCE_DIR}/bin")
 
@@ -30,58 +30,19 @@ MESSAGE(STATUS " 工程目录 = " ${SOLUTION_DIR})
 
 
 include("cmake/dependencise_libs.cmake")
-build_dependencies()
-link_dependencies("BEFORE")
-
+# build_dependencies()
 
 set(COMMON_LIB "common")
 set(PROTOCOL_LIB "protocol")
-find_package(absl CONFIG)
-set(ABSEL_LIBARARY
-    absl::absl_check
-    absl::absl_log
-    absl::algorithm
-    absl::base
-    absl::bind_front
-    absl::bits
-    absl::btree
-    absl::cleanup
-    absl::cord
-    absl::core_headers
-    absl::debugging
-    absl::die_if_null
-    absl::dynamic_annotations
-    absl::flags
-    absl::flat_hash_map
-    absl::flat_hash_set
-    absl::function_ref
-    absl::hash
-    absl::layout
-    absl::log_initialize
-    absl::log_globals
-    absl::log_severity
-    absl::memory
-    absl::node_hash_map
-    absl::node_hash_set
-    absl::random_distributions
-    absl::random_random
-    absl::span
-    absl::status
-    absl::statusor
-    absl::strings
-    absl::synchronization
-    absl::time
-    absl::type_traits
-    absl::utility
-  )
+
 
 if( CMAKE_BUILD_TYPE STREQUAL "Release" )
     set(CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} -std=c99 -fPIC -g -O2 -Wall")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -std=c++2a -g -O2 -Wall -fcoroutines -fpermissive -D__CONCURRENTQUEUE__")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -std=c++2a -g3 -O2 -Wall -fcoroutines -fpermissive -D__CONCURRENTQUEUE__")
 else()
     set(CMAKE_BUILD_TYPE "Debug")
-    set(CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} -std=c99 -O0 -Wall -g -ggdb -fPIC")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++2a -O0 -Wall -g -ggdb -fPIC -fcoroutines -fpermissive -D__CONCURRENTQUEUE__") #-D__APPLE__  -D__CONCURRENTQUEUE__
+    set(CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} -std=c99 -O2 -Wall -g -ggdb -fPIC")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++2a -O2 -Wall -g3 -ggdb -fPIC -fcoroutines -fpermissive -D__CONCURRENTQUEUE__") #-D__APPLE__  -D__CONCURRENTQUEUE__
 endif()
 
 

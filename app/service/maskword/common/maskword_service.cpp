@@ -18,6 +18,8 @@
 
 
 #include "maskword_service.h"
+#include "protocol/base.pb.h"
+#include "log/glogger.h"
 
 
 MaskWordService::MaskWordService()
@@ -33,6 +35,11 @@ MaskWordService::~MaskWordService()
 
 bool MaskWordService::start()
 {
+    base::Person person;
+    person.set_id(111);
+
+    spdlog::info("person={}", person.id());
+
     return true;
 }
 

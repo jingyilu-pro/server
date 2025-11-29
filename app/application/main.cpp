@@ -21,6 +21,7 @@
 #include <iostream>
 #include "application.h"
 #include "log/glogger.h"
+#include "protocol/base.pb.h"
 
 
 using namespace std;
@@ -28,12 +29,14 @@ using namespace std;
 
 int main(int argc, char *argv[])
 {
-    std::cout << "main thead=" << std::this_thread::get_id() << " hardware_concurrency=" << std::thread::hardware_concurrency() << std::endl;
+    // std::cout << "main thead=" << std::this_thread::get_id() << " hardware_concurrency=" << std::thread::hardware_concurrency() << std::endl;
 
-    spdlog::info("Welcome to spdlog version {}.{}.{}  !", SPDLOG_VER_MAJOR, SPDLOG_VER_MINOR, SPDLOG_VER_PATCH);
     spdlog::info("hardware_concurrency={}", std::thread::hardware_concurrency());
 
     Application app(std::thread::hardware_concurrency());
+
+    base::Person person;
+    person.set_id(222);
 
     app.start();
 

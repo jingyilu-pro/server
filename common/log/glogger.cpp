@@ -24,10 +24,10 @@ void Glogger::init(const std::string& service, const std::string& file_name, con
 {
     spdlog::cfg::load_env_levels();
 
-    auto old_logger = spdlog::default_logger();
-    auto glogger = spdlog::rotating_logger_mt(service, std::format("logs/{}.log", file_name), max_file_size, file_count);
+    // auto old_logger = spdlog::default_logger();
+    // auto glogger = spdlog::rotating_logger_mt(service, std::format("logs/{}.log", file_name), max_file_size, file_count);
 
-    spdlog::set_default_logger(glogger);
+    // spdlog::set_default_logger(glogger);
     
     spdlog::flush_every(std::chrono::seconds(3));
 
