@@ -1,8 +1,9 @@
 include_directories(
-        protocol
+    protocol
 )
 
 file(GLOB_RECURSE FileSources *.cpp *.c *.cc)
 file(GLOB_RECURSE FileHeaders *.h *.hpp)
 
-add_library(protocol ${FileHeaders} ${FileSources})
+
+add_library(${PROTOCOL_LIB} ${FileHeaders} ${FileSources})

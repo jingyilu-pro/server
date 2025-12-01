@@ -1,3 +1,5 @@
+# https://cmake.org/cmake/help/latest/module/ExternalProject.html
+include(ExternalProject)
 
 # Set options for LibEvent, disable all their tests and benchmarks:
 # set(EVENT__DISABLE_OPENSSL   YES CACHE BOOL   "Disable OpenSSL in LibEvent")

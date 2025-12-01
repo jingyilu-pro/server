@@ -6,35 +6,32 @@ cmake_minimum_required(VERSION 3.28)
 
 Project(application)
 
-# https://cmake.org/cmake/help/latest/module/ExternalProject.html
-include(ExternalProject)
-
 # find_package(OpenSSL REQUIRED)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-# 运行目录
-set(SOLUTION_DIR "${PROJECT_SOURCE_DIR}")
-set(THIRD_DIR "${PROJECT_SOURCE_DIR}/libs")
-
 # -levent_core -lhiredis -ljansson -ljsoncpp -- -lprotobuf -lutf8_range -lutf8_validity
-set(MAIN_LIB_DIR "-ldl -lpthread")
-# 运行目录
+# set(MAIN_LIB_DIR "-ldl -lpthread")
+
+# 安装目录
 set(CMAKE_INSTALL_PREFIX "${PROJECT_SOURCE_DIR}/bin")
 
 MESSAGE(STATUS " CMAKE_BUILD_TYPE = " ${CMAKE_BUILD_TYPE})
 MESSAGE(STATUS " 运行目录 = " ${CMAKE_INSTALL_PREFIX})
-MESSAGE(STATUS " 工程目录 = " ${SOLUTION_DIR})
+MESSAGE(STATUS " 工程目录 = " ${PROJECT_SOURCE_DIR})
 
-
+# 依赖库
 include("cmake/dependencise_libs.cmake")
-# build_dependencies()
-
+# 通用库
 set(COMMON_LIB "common")
+# 协议库
 set(PROTOCOL_LIB "protocol")
-
+# 基础服务库
+set(SERVICE_BASE_DIR "servicebase")
+# 服务库
+set(SERVICE_LIB "maskword_service")
 
 if( CMAKE_BUILD_TYPE STREQUAL "Release" )
     set(CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} -std=c99 -fPIC -g -O2 -Wall")
@@ -47,32 +44,33 @@ endif()
 
 
 # main logic
+SET(SERVICE_DIR "${PROJECT_SOURCE_DIR}/app/service")
 include_directories(
     # common
-    ${SOLUTION_DIR}/common
-    ${SOLUTION_DIR}/common/coroutine
-    ${SOLUTION_DIR}/common/utils
+    ${PROJECT_SOURCE_DIR}/common
+    ${PROJECT_SOURCE_DIR}/common/coroutine
+    ${PROJECT_SOURCE_DIR}/common/utils
 
     # app protocol
-    ${SOLUTION_DIR}/app/protocol
+    ${PROJECT_SOURCE_DIR}/app/protocol
 
     # service
-    ${SOLUTION_DIR}/app/service/base
-    ${SOLUTION_DIR}/app/service/maskword/common
-    ${SOLUTION_DIR}/app/service/maskword/logic
+    ${SERVICE_DIR}/base
+    ${SERVICE_DIR}/maskword/common
+    ${SERVICE_DIR}/maskword/logic
 )
 
 # common lib
-add_subdirectory(${SOLUTION_DIR}/common)
+add_subdirectory(${PROJECT_SOURCE_DIR}/common)
 
 # proto lib
-add_subdirectory(${SOLUTION_DIR}/app/protocol)
+add_subdirectory(${PROJECT_SOURCE_DIR}/app/protocol)
 
 # serice lib
-add_subdirectory(${SOLUTION_DIR}/app/service/base)
-add_subdirectory(${SOLUTION_DIR}/app/service/maskword)
+add_subdirectory(${SERVICE_DIR}/base)
+add_subdirectory(${SERVICE_DIR}/maskword)
 
 # app
-add_subdirectory(${SOLUTION_DIR}/app/application)
+add_subdirectory(${PROJECT_SOURCE_DIR}/app/application)
 
 

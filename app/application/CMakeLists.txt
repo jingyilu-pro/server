@@ -8,14 +8,14 @@ include_directories(
 file(GLOB_RECURSE FileSources *.cpp *.c *.cc)
 file(GLOB_RECURSE FileHeaders *.h *.hpp)
 
+MESSAGE(STATUS " SERVICE_LIB = " ${SERVICE_LIB})
+
 add_executable(application ${FileHeaders} ${FileSources})
 target_link_libraries(application PRIVATE
         # service
-        maskword
-        
+        ${SERVICE_LIB}
         # servicebase
-        servicebase
-
+        ${SERVICE_BASE_DIR}
         # last
         ${COMMON_LIB}
         ${PROTOCOL_LIB}
