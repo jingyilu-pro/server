@@ -28,6 +28,7 @@
 #include <unistd.h>
 #include <thread>
 #include <string>
+#include <chrono>
 
 using namespace std;
 // using namespace std::experimental;
@@ -105,3 +106,12 @@ public:\
 private:\
     type* m_##name;
 
+
+// 时间跨度定义
+using TickTime = std::chrono::duration<signed int, std::ratio_multiply<std::chrono::milliseconds::period, std::ratio<50>>>;
+using TickTimeLong = std::chrono::duration<signed long long int, TickTime::period>;
+/** Converts a literal to a tick time. */
+constexpr TickTimeLong operator ""_tick(const unsigned long long tick)
+{
+	return TickTimeLong(tick);
+}

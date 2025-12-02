@@ -35,7 +35,7 @@ public:
 
     bool start();
     bool stop();
-    void update();
+    void update(std::chrono::milliseconds delta_time, std::chrono::milliseconds last_tick_time);
 
 private:
     std::map<int, Service*> m_services;

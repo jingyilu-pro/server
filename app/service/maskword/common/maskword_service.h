@@ -32,7 +32,7 @@ public:
 public:
     virtual bool start();
     virtual bool stop();
-    virtual void update();
+    virtual void update(std::chrono::milliseconds delta_time, std::chrono::milliseconds last_tick_time);
 private:
     MaskWordManager m_maskword_manager;
 };

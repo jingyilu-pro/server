@@ -4,14 +4,14 @@ jansson、jemalloc
 
 
 # 方式1：递归克隆（推荐）
-git clone --recursive https://github.com/user/main-repo.git
+git clone --recursive https://github.com/jingyilu-pro/server
 
 mkdir build
 cmake ..
 make install
 
 # 方式2：先克隆主项目，再初始化子模块
-git clone https://github.com/user/main-repo.git
+git clone https://github.com/jingyilu-pro/server
 cd main-repo
 git submodule init
 git submodule update

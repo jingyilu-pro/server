@@ -48,7 +48,7 @@ bool MaskWordService::stop()
     return true;
 }
 
-void MaskWordService::update()
+void MaskWordService::update(std::chrono::milliseconds delta_time, std::chrono::milliseconds last_tick_time)
 {
 
 }

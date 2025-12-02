@@ -40,12 +40,22 @@ int main(int argc, char *argv[])
 
     app.start();
 
+    auto last_tick = std::chrono::steady_clock::now();
+	auto last_tick_time = std::chrono::duration_cast<std::chrono::milliseconds>(1_tick);
     while (true)
     {
-        app.update();
+        auto now_tick = std::chrono::steady_clock::now();
+		auto delta_time = std::chrono::duration_cast<std::chrono::milliseconds>(now_tick - last_tick);
+		app.update(delta_time, last_tick_time);
+		last_tick_time = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - now_tick);
 
-        
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+		if (last_tick_time < 1_tick)
+		{
+			// Stretch tick time until it's at least 1 tick:
+			std::this_thread::sleep_for(1_tick - last_tick_time);
+		}
+
+		last_tick = now_tick;
     }
 
     app.stop();

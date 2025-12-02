@@ -58,10 +58,10 @@ bool Application::stop()
     return true;
 }
 
-void Application::update()
+void Application::update(std::chrono::milliseconds delta_time, std::chrono::milliseconds last_tick_time)
 {
     for (auto &val: m_services | views::values)
     {
-        val->update();
+        val->update(delta_time, last_tick_time);
     }
 }
