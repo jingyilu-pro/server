@@ -72,5 +72,5 @@ add_subdirectory(${SERVICE_DIR}/maskword)
 
 # app
 add_subdirectory(${PROJECT_SOURCE_DIR}/app/application)
-
+add_subdirectory(${PROJECT_SOURCE_DIR}/app/apptool)
 

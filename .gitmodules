@@ -50,3 +50,9 @@
 [submodule "libs/mbedtls"]
 	path = libs/mbedtls
 	url = https://github.com/Mbed-TLS/mbedtls.git
+[submodule "libs/recastnavigation"]
+	path = libs/recastnavigation
+	url = https://github.com/recastnavigation/recastnavigation
+[submodule "libs/tinyxml2"]
+	path = libs/tinyxml2
+	url = https://github.com/leethomason/tinyxml2

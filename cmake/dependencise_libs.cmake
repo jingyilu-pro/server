@@ -200,6 +200,35 @@ ExternalProject_Add(libjwt_external_project
 include_directories(BEFORE SYSTEM ${LIBJWT_INSTALL_DIR}/include)
 link_directories(${LIBJWT_INSTALL_DIR}/lib)
 
+# Build recastnavigation as an external project.
+set(RECASTNAVIGATION_INSTALL_DIR ${CMAKE_BINARY_DIR}/libs/recastnavigation)
+ExternalProject_Add(recastnavigation_external_project
+                    SOURCE_DIR  ${CMAKE_SOURCE_DIR}/libs/recastnavigation
+                    PREFIX      ${RECASTNAVIGATION_INSTALL_DIR}
+                    INSTALL_DIR ${RECASTNAVIGATION_INSTALL_DIR}
+                    CMAKE_ARGS  -DCMAKE_INSTALL_PREFIX:PATH=${RECASTNAVIGATION_INSTALL_DIR}
+                                -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
+                                -DCMAKE_CXX_FLAGS=${EXTERNAL_PROJECT_CMAKE_CXX_FLAGS}
+								-DRECASTNAVIGATION_DEMO=OFF
+								-DRECASTNAVIGATION_TESTS=OFF
+                   )
+include_directories(BEFORE SYSTEM ${RECASTNAVIGATION_INSTALL_DIR}/include)
+link_directories(${RECASTNAVIGATION_INSTALL_DIR}/lib)
+set(DEPENDENCIES_LIBS ${DEPENDENCIES_LIBS} -lDetour -lDetourCrowd -lDetourTileCache -lRecast)
+
+# Build tinyxml2 as an external project.
+set(TINYXML_INSTALL_DIR ${CMAKE_BINARY_DIR}/libs/tinyxml2)
+ExternalProject_Add(tinyxml2_external_project
+                    SOURCE_DIR  ${CMAKE_SOURCE_DIR}/libs/tinyxml2
+                    PREFIX      ${TINYXML_INSTALL_DIR}
+                    INSTALL_DIR ${TINYXML_INSTALL_DIR}
+                    CMAKE_ARGS  -DCMAKE_INSTALL_PREFIX:PATH=${TINYXML_INSTALL_DIR}
+                                -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
+                                -DCMAKE_CXX_FLAGS=${EXTERNAL_PROJECT_CMAKE_CXX_FLAGS}
+                   )
+include_directories(BEFORE SYSTEM ${TINYXML_INSTALL_DIR}/include)
+link_directories(${TINYXML_INSTALL_DIR}/lib)
+set(DEPENDENCIES_LIBS ${DEPENDENCIES_LIBS} -ltinyxml2)
 
 
 # ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -251,4 +280,4 @@ set(ABSEL_LIBARARY
 
 
 # 最后把要连接的库增加到这里
-set(DEPENDENCIES_LIBS -lprotobuf -lutf8_range -lutf8_validity ${ABSEL_LIBARARY})
+set(DEPENDENCIES_LIBS  ${DEPENDENCIES_LIBS} -lprotobuf -lutf8_range -lutf8_validity ${ABSEL_LIBARARY})
