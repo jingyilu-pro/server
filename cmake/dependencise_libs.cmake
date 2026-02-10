@@ -230,6 +230,8 @@ include_directories(BEFORE SYSTEM ${TINYXML_INSTALL_DIR}/include)
 link_directories(${TINYXML_INSTALL_DIR}/lib)
 set(DEPENDENCIES_LIBS ${DEPENDENCIES_LIBS} -ltinyxml2)
 
+set(DEPENDENCIES_LIBS ${DEPENDENCIES_LIBS} -levent -levent_core -levent_extra -levent_pthreads)
+
 
 # ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # 设置 CMAKE_PREFIX_PATH

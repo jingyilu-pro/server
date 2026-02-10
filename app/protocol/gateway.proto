@@ -1,0 +1,41 @@
+syntax = "proto3";
+
+package gateway;
+
+message Endpoint {
+  string host = 1;
+  uint32 port = 2;
+}
+
+message RouteLoginRequest {
+  string client_version = 1;
+}
+
+message RouteLoginResponse {
+  int32 code = 1;
+  Endpoint login_endpoint = 2;
+  Endpoint game_endpoint = 3;
+  string message = 4;
+}
+
+message AuthLoginRequest {
+  string account = 1;
+  string password = 2;
+}
+
+message AuthLoginResponse {
+  int32 code = 1;
+  string jwt = 2;
+  Endpoint game_endpoint = 3;
+  string message = 4;
+}
+
+message GameEnterRequest {
+  string account = 1;
+}
+
+message GameEnterResponse {
+  int32 code = 1;
+  string message = 2;
+}
+

@@ -16,23 +16,19 @@
 // 3. This notice may not be removed or altered from any source distribution.
 //
 
-#include "service.h"
+#include "client_pressure_types.h"
 
-const char* Service::name() const
+const char* stage_name(StageType stage)
 {
-    return "service";
+    switch(stage)
+    {
+    case StageType::manager:
+        return "manager";
+    case StageType::login:
+        return "login";
+    case StageType::game:
+        return "game";
+    }
+    return "unknown";
 }
 
-bool Service::start()
-{
-    return true;
-}
-
-bool Service::stop()
-{
-    return true;
-}
-
-void Service::update(std::chrono::milliseconds delta_time, std::chrono::milliseconds last_tick_time)
-{
-}

@@ -16,23 +16,15 @@
 // 3. This notice may not be removed or altered from any source distribution.
 //
 
-#include "service.h"
+#pragma once
 
-const char* Service::name() const
-{
-    return "service";
-}
+#include "application_config.h"
+#include "basic_http_service.h"
 
-bool Service::start()
+class LoginService : public BasicHttpService
 {
-    return true;
-}
+public:
+    explicit LoginService(const RuntimeConfig& config);
+    ~LoginService() override;
+};
 
-bool Service::stop()
-{
-    return true;
-}
-
-void Service::update(std::chrono::milliseconds delta_time, std::chrono::milliseconds last_tick_time)
-{
-}

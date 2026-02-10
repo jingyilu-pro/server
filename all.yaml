@@ -1,0 +1,34 @@
+server:
+  manager:
+    host: 127.0.0.1
+    port: 18080
+  login:
+    host: 127.0.0.1
+    port: 18081
+  game:
+    host: 127.0.0.1
+    port: 18082
+
+client_pressure:
+  enabled: false
+  target:
+    discovery_role: manager
+    # manager_host: 127.0.0.1
+    # manager_port: 18080
+  scenario:
+    duration_sec: 30
+    virtual_users: 20
+    target_rps: 120
+    ramp_up_sec: 5
+    request_timeout_ms: 2000
+    auto_relogin: true
+    login_account_pool:
+      - user_0001
+      - user_0002
+      - user_0003
+      - user_0004
+  report:
+    interval_sec: 5
+    output: log
+    json_path: client_pressure_report.json
+

@@ -1,42 +1,73 @@
+# Build & Run
 
-# 需要单独安装
-jansson、jemalloc
+## 1. Clone
 
-
-# 方式1：递归克隆（推荐）
+```bash
 git clone --recursive https://github.com/jingyilu-pro/server
+cd server
+```
 
-mkdir build
-cmake ..
-make install
+若已 clone，可补齐子模块：
 
-# 方式2：先克隆主项目，再初始化子模块
-git clone https://github.com/jingyilu-pro/server
-cd main-repo
-git submodule init
-git submodule update
-
-
-
-# 更新所有子模块到最新提交
-git submodule update --remote
-
-# 更新特定子模块
-git submodule update --remote libs/lib1
-
-# 拉取所有子模块的更新
-git submodule foreach git pull
-
-# 如果子模块本身也包含子模块
+```bash
 git submodule update --init --recursive
+```
 
-# 添加子模块并指定深度为1
-git submodule add --depth 1 https://github.com/user/repo.git
+## 2. Build
 
-# 指定深度和路径
-git submodule add --depth 1 https://github.com/user/repo.git libs/repo
+示例（WSL / Linux）：
 
-# 指定深度和分支
-git submodule add --depth 1 -b main https://github.com/user/repo.git
+```bash
+mkdir -p build-wsl-main
+cd build-wsl-main
+cmake ..
+make -j
+```
 
+## 3. 配置
+
+默认配置文件：项目根目录 `all.yaml`。
+
+关键字段：
+
+- `server.manager/login/game`：三个 HTTP 服务监听地址
+- `client_pressure.enabled`：是否自动发压
+- `client_pressure.scenario`：时长、并发、RPS、超时
+- `client_pressure.report`：日志/JSON 报告输出
+
+## 4. 启动模式
+
+统一通过 `application --mode` 控制角色，不新增独立可执行程序。
+
+```bash
+./build-wsl-main/app/application/application --mode manager --config all.yaml
+./build-wsl-main/app/application/application --mode login --config all.yaml
+./build-wsl-main/app/application/application --mode game --config all.yaml
+./build-wsl-main/app/application/application --mode client --config all.yaml
+./build-wsl-main/app/application/application --mode all --config all.yaml
+```
+
+模式含义：
+
+- `manager`：仅 manager
+- `login`：仅 login
+- `game`：仅 game
+- `client`：仅 client pressure
+- `all`：manager + login + game + client pressure
+
+`all` 模式下 client 总是启动，但仅在 `client_pressure.enabled=true` 时发流量。
+
+## 5. 快速验证
+
+PowerShell 脚本：
+
+- `scripts/smoke_modes.ps1`：模式 smoke
+- `scripts/short_pressure.ps1`：短压测回归
+
+运行示例：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/smoke_modes.ps1
+powershell -ExecutionPolicy Bypass -File scripts/short_pressure.ps1
+```
 

@@ -27,6 +27,7 @@ public:
     virtual ~Service() = default;
 
 public:
+    virtual const char* name() const;
     virtual bool start();
     virtual bool stop();
     virtual void update(std::chrono::milliseconds delta_time, std::chrono::milliseconds last_tick_time);

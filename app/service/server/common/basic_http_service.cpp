@@ -1,0 +1,284 @@
+//
+// Copyright (c) 2024-2025 JingyiLu jingyilupro@gmail.com
+//
+// This software is provided 'as-is', without any express or implied
+// warranty.  In no event will the authors be held liable for any damages
+// arising from the use of this software.
+// Permission is granted to anyone to use this software for any purpose,
+// including commercial applications, and to alter it and redistribute it
+// freely, subject to the following restrictions:
+// 1. The origin of this software must not be misrepresented; you must not
+//    claim that you wrote the original software. If you use this software
+//    in a product, an acknowledgment in the product documentation would be
+//    appreciated but is not required.
+// 2. Altered source versions must be plainly marked as such, and must not be
+//    misrepresented as being the original software.
+// 3. This notice may not be removed or altered from any source distribution.
+//
+
+#include "basic_http_service.h"
+
+#include "log/glogger.h"
+
+#include <algorithm>
+#include <event2/buffer.h>
+#include <event2/keyvalq_struct.h>
+#include <event2/thread.h>
+#include <google/protobuf/message.h>
+
+BasicHttpService::BasicHttpService(std::string service_name, EndpointConfig endpoint)
+    : m_service_name(std::move(service_name)), m_endpoint(std::move(endpoint))
+{
+}
+
+BasicHttpService::~BasicHttpService()
+{
+    stop();
+}
+
+const char* BasicHttpService::name() const
+{
+    return m_service_name.c_str();
+}
+
+bool BasicHttpService::start()
+{
+    if(m_running.load())
+    {
+        return true;
+    }
+
+    evthread_use_pthreads();
+    m_event_base = event_base_new();
+    if(m_event_base == nullptr)
+    {
+        spdlog::error("{} failed to create event base", m_service_name);
+        return false;
+    }
+
+    m_evhttp = evhttp_new(m_event_base);
+    if(m_evhttp == nullptr)
+    {
+        spdlog::error("{} failed to create evhttp", m_service_name);
+        event_base_free(m_event_base);
+        m_event_base = nullptr;
+        return false;
+    }
+
+    evhttp_set_gencb(m_evhttp, &BasicHttpService::global_request_callback, this);
+
+    auto bind_result = evhttp_bind_socket(m_evhttp, m_endpoint.host.c_str(), static_cast<ev_uint16_t>(m_endpoint.port));
+    if(bind_result != 0)
+    {
+        spdlog::error("{} failed to bind endpoint {}", m_service_name, make_endpoint_text(m_endpoint));
+        evhttp_free(m_evhttp);
+        m_evhttp = nullptr;
+        event_base_free(m_event_base);
+        m_event_base = nullptr;
+        return false;
+    }
+
+    m_running.store(true);
+    m_thread = std::thread(&BasicHttpService::event_loop, this);
+    spdlog::info("{} listening at {}", m_service_name, make_endpoint_text(m_endpoint));
+    return true;
+}
+
+bool BasicHttpService::stop()
+{
+    if(!m_running.load())
+    {
+        return true;
+    }
+
+    m_running.store(false);
+    if(m_event_base != nullptr)
+    {
+        event_base_loopbreak(m_event_base);
+    }
+    if(m_thread.joinable())
+    {
+        m_thread.join();
+    }
+
+    if(m_evhttp != nullptr)
+    {
+        evhttp_free(m_evhttp);
+        m_evhttp = nullptr;
+    }
+    if(m_event_base != nullptr)
+    {
+        event_base_free(m_event_base);
+        m_event_base = nullptr;
+    }
+
+    spdlog::info("{} stopped", m_service_name);
+    return true;
+}
+
+void BasicHttpService::update(std::chrono::milliseconds delta_time, std::chrono::milliseconds last_tick_time)
+{
+    (void)delta_time;
+    (void)last_tick_time;
+}
+
+bool BasicHttpService::register_handler(const std::string& path, Handler handler)
+{
+    if(path.empty() || !handler)
+    {
+        return false;
+    }
+    m_handlers[path] = std::move(handler);
+    return true;
+}
+
+std::string BasicHttpService::read_request_body(evhttp_request* request)
+{
+    if(request == nullptr)
+    {
+        return {};
+    }
+    evbuffer* input = evhttp_request_get_input_buffer(request);
+    if(input == nullptr)
+    {
+        return {};
+    }
+    const size_t length = evbuffer_get_length(input);
+    std::string body;
+    body.resize(length);
+    if(length > 0)
+    {
+        evbuffer_copyout(input, body.data(), length);
+    }
+    return body;
+}
+
+bool BasicHttpService::write_protobuf_response(evhttp_request* request, const google::protobuf::Message& response, int http_status)
+{
+    if(request == nullptr)
+    {
+        return false;
+    }
+
+    std::string output_data;
+    if(!response.SerializeToString(&output_data))
+    {
+        return false;
+    }
+
+    evbuffer* output = evbuffer_new();
+    if(output == nullptr)
+    {
+        return false;
+    }
+    evbuffer_add(output, output_data.data(), output_data.size());
+
+    auto* headers = evhttp_request_get_output_headers(request);
+    if(headers != nullptr)
+    {
+        evhttp_add_header(headers, "Content-Type", "application/x-protobuf");
+        evhttp_add_header(headers, "Connection", "close");
+    }
+    evhttp_send_reply(request, http_status, "OK", output);
+    evbuffer_free(output);
+    return true;
+}
+
+std::string BasicHttpService::extract_authorization_token(evhttp_request* request)
+{
+    if(request == nullptr)
+    {
+        return {};
+    }
+
+    auto* headers = evhttp_request_get_input_headers(request);
+    if(headers == nullptr)
+    {
+        return {};
+    }
+
+    const char* authorization = evhttp_find_header(headers, "Authorization");
+    if(authorization == nullptr)
+    {
+        return {};
+    }
+
+    std::string token = authorization;
+    const std::string prefix = "Bearer ";
+    if(token.rfind(prefix, 0) == 0)
+    {
+        token = token.substr(prefix.size());
+    }
+    return token;
+}
+
+std::string BasicHttpService::make_endpoint_text(const EndpointConfig& endpoint)
+{
+    return endpoint.host + ":" + std::to_string(endpoint.port);
+}
+
+void BasicHttpService::global_request_callback(evhttp_request* request, void* arg)
+{
+    auto* self = static_cast<BasicHttpService*>(arg);
+    if(self == nullptr)
+    {
+        evhttp_send_error(request, 500, "internal error");
+        return;
+    }
+    self->on_request(request);
+}
+
+void BasicHttpService::on_request(evhttp_request* request)
+{
+    if(request == nullptr)
+    {
+        return;
+    }
+
+    const auto command = evhttp_request_get_command(request);
+    if(command != EVHTTP_REQ_POST)
+    {
+        evhttp_send_error(request, 405, "method not allowed");
+        return;
+    }
+
+    const char* raw_uri = evhttp_request_get_uri(request);
+    if(raw_uri == nullptr)
+    {
+        evhttp_send_error(request, 400, "invalid uri");
+        return;
+    }
+
+    std::string uri = raw_uri;
+    auto query_pos = uri.find('?');
+    if(query_pos != std::string::npos)
+    {
+        uri = uri.substr(0, query_pos);
+    }
+
+    auto it = m_handlers.find(uri);
+    if(it == m_handlers.end())
+    {
+        evhttp_send_error(request, 404, "not found");
+        return;
+    }
+
+    it->second(request);
+}
+
+void BasicHttpService::event_loop()
+{
+    if(m_event_base == nullptr)
+    {
+        return;
+    }
+
+    while(m_running.load())
+    {
+        const auto code = event_base_loop(m_event_base, EVLOOP_ONCE | EVLOOP_NONBLOCK);
+        if(code != 0)
+        {
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        }
+    }
+}

@@ -16,23 +16,29 @@
 // 3. This notice may not be removed or altered from any source distribution.
 //
 
-#include "service.h"
+#pragma once
 
-const char* Service::name() const
-{
-    return "service";
-}
+#include <service.h>
 
-bool Service::start()
-{
-    return true;
-}
+#include "application_config.h"
+#include "client_pressure_manager.h"
 
-bool Service::stop()
-{
-    return true;
-}
+#include <memory>
 
-void Service::update(std::chrono::milliseconds delta_time, std::chrono::milliseconds last_tick_time)
+class ClientPressureService : public Service
 {
-}
+public:
+    explicit ClientPressureService(const RuntimeConfig& config);
+    ~ClientPressureService() override;
+
+public:
+    const char* name() const override;
+    bool start() override;
+    bool stop() override;
+    void update(std::chrono::milliseconds delta_time, std::chrono::milliseconds last_tick_time) override;
+    bool completed() const;
+
+private:
+    RuntimeConfig m_config;
+    std::unique_ptr<ClientPressureManager> m_manager;
+};

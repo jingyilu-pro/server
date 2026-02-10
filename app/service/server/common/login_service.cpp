@@ -16,23 +16,31 @@
 // 3. This notice may not be removed or altered from any source distribution.
 //
 
-#include "service.h"
+#include "login_service.h"
 
-const char* Service::name() const
+#include "protocol/gateway.pb.h"
+
+LoginService::LoginService(const RuntimeConfig& config)
+    : BasicHttpService("login", config.server.login)
 {
-    return "service";
+    register_handler("/v1/auth/login", [config](evhttp_request* request) {
+        gateway::AuthLoginRequest login_request;
+        auto body = read_request_body(request);
+        if(!login_request.ParseFromString(body))
+        {
+            evhttp_send_error(request, 400, "invalid protobuf");
+            return;
+        }
+
+        gateway::AuthLoginResponse response;
+        response.set_code(0);
+        response.set_jwt("mock.jwt.token." + login_request.account());
+        response.mutable_game_endpoint()->set_host(config.server.game.host);
+        response.mutable_game_endpoint()->set_port(static_cast<uint32_t>(config.server.game.port));
+
+        write_protobuf_response(request, response, 200);
+    });
 }
 
-bool Service::start()
-{
-    return true;
-}
+LoginService::~LoginService() = default;
 
-bool Service::stop()
-{
-    return true;
-}
-
-void Service::update(std::chrono::milliseconds delta_time, std::chrono::milliseconds last_tick_time)
-{
-}

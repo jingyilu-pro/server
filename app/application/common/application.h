@@ -20,10 +20,33 @@
 
 #include "define.h"
 #include "corocoroutine.h"
+#include "application_config.h"
 
 #include <map>
+#include <memory>
+#include <optional>
+#include <string_view>
 
 class Service;
+class ClientPressureService;
+
+enum class AppMode
+{
+    all,
+    manager,
+    login,
+    game,
+    client
+};
+
+struct ApplicationOptions
+{
+    AppMode mode = AppMode::all;
+    std::string config_path = "all.yaml";
+};
+
+const char* to_string(AppMode mode);
+std::optional<AppMode> parse_app_mode(std::string_view mode_text);
 
 class Application
 {
@@ -32,10 +55,22 @@ public:
 
     ~Application();
 
-    bool start();
+    bool start(const ApplicationOptions& options);
     bool stop();
     void update(std::chrono::milliseconds delta_time, std::chrono::milliseconds last_tick_time);
+    bool should_exit() const;
 
 private:
-    std::map<int, Service*> m_services;
+    bool start_services_by_mode();
+    bool start_non_client_services();
+    bool start_client_service();
+    bool register_service(std::unique_ptr<Service> service);
+
+private:
+    int m_thread_count = 1;
+    ApplicationOptions m_options;
+    RuntimeConfig m_runtime_config;
+    bool m_should_exit = false;
+    ClientPressureService* m_client_service = nullptr;
+    std::map<int, std::unique_ptr<Service>> m_services;
 };

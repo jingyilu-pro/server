@@ -16,23 +16,23 @@
 // 3. This notice may not be removed or altered from any source distribution.
 //
 
-#include "service.h"
+#pragma once
 
-const char* Service::name() const
-{
-    return "service";
-}
+#include "client_pressure_types.h"
 
-bool Service::start()
-{
-    return true;
-}
+#include <string>
 
-bool Service::stop()
+class ClientWorker
 {
-    return true;
-}
+public:
+    ClientWorker() = default;
+    ~ClientWorker() = default;
 
-void Service::update(std::chrono::milliseconds delta_time, std::chrono::milliseconds last_tick_time)
-{
-}
+    WorkerCycleResult run(ClientPressureTask* task) const;
+
+private:
+    bool do_manager_route(const ClientPressureTask& task, StageSample* sample) const;
+    bool do_login(ClientPressureTask* task, StageSample* sample) const;
+    bool do_enter_game(const ClientPressureTask& task, StageSample* sample) const;
+};
+

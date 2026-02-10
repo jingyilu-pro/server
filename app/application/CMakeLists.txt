@@ -24,8 +24,13 @@ target_link_libraries(application PRIVATE
         ${CMAKE_DL_LIBS}
 )
 
+if(TARGET application)
+    add_dependencies(application
+        libevent_external_project
+    )
+endif()
+
 
 target_compile_features(application PRIVATE cxx_std_20)
 
 install(TARGETS application DESTINATION ${CMAKE_INSTALL_PREFIX})
-
