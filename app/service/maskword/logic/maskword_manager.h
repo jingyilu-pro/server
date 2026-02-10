@@ -16,7 +16,6 @@
 // 3. This notice may not be removed or altered from any source distribution.
 //
 
-
 #pragma once
 
 #include "define.h"
@@ -30,14 +29,15 @@ class MaskWordService;
 class MaskWordManager : public CoroManager
 {
 public:
-    explicit MaskWordManager(MaskWordService *service, int thread_count = 1);
+    explicit MaskWordManager(MaskWordService* service, int thread_count = 1);
 
     ~MaskWordManager() override;
 
-    CoroAwaitable awaitable(const string &mask_word);
+    CoroAwaitable awaitable(const string& mask_word);
 
 public:
-    CoroResult *alloc() override {
+    CoroResult* alloc() override
+    {
         expand<MaskWordResult>();
         return inner_alloc();
     }

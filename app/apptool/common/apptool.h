@@ -16,14 +16,12 @@
 // 3. This notice may not be removed or altered from any source distribution.
 //
 
-
 #pragma once
 
 #include "define.h"
 #include "corocoroutine.h"
 
 #include <map>
-
 
 class AppTool
 {

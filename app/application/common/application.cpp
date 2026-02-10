@@ -16,7 +16,6 @@
 // 3. This notice may not be removed or altered from any source distribution.
 //
 
-
 #include "application.h"
 #include <iostream>
 #include <ranges>
@@ -26,13 +25,11 @@
 
 #include "log/glogger.h"
 
-Application::Application(int thread_count/* = 1*/)
+Application::Application(int thread_count /* = 1*/)
 {
-
 }
 
 Application::~Application() = default;
-
 
 bool Application::start()
 {
@@ -48,7 +45,7 @@ bool Application::start()
 
 bool Application::stop()
 {
-    for (auto service : m_services | views::values)
+    for(auto service : m_services | views::values)
     {
         service->stop();
         delete service;
@@ -60,7 +57,7 @@ bool Application::stop()
 
 void Application::update(std::chrono::milliseconds delta_time, std::chrono::milliseconds last_tick_time)
 {
-    for (auto &val: m_services | views::values)
+    for(auto& val : m_services | views::values)
     {
         val->update(delta_time, last_tick_time);
     }

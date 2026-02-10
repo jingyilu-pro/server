@@ -1,0 +1,33 @@
+---
+Language: Cpp
+BasedOnStyle: LLVM
+
+# 尽量贴合当前仓库风格（最小约束）
+Standard: c++20
+IndentWidth: 4
+TabWidth: 4
+UseTab: Never
+ColumnLimit: 0
+
+# 现有代码以 Allman 为主
+BreakBeforeBraces: Allman
+
+# class 内 public/private/protected 顶格
+IndentAccessModifiers: false
+AccessModifierOffset: -4
+
+# 保持现有 if(...) / for(...) 习惯
+SpaceBeforeParens: Never
+
+# 与现有 type* name / type& name 风格一致
+PointerAlignment: Left
+ReferenceAlignment: Left
+
+# 避免非必要改动
+SortIncludes: Never
+ReflowComments: false
+
+# 保留常见短内联函数写法（getter/setter）
+AllowShortFunctionsOnASingleLine: Inline
+AllowShortBlocksOnASingleLine: Empty
+...

@@ -16,9 +16,7 @@
 // 3. This notice may not be removed or altered from any source distribution.
 //
 
-
 #pragma once
-
 
 #include <condition_variable>
 #include <functional>
@@ -31,7 +29,6 @@
 using namespace moodycamel;
 
 using namespace std;
-
 
 class CoroResult;
 
@@ -46,7 +43,8 @@ public:
     virtual void worker();
 
     void insert(CoroResult* opt);
-    auto& get_results() { return m_results; } 
+    auto& get_results() { return m_results; }
+
 protected:
     thread m_thread;
     mutex m_mutex;

@@ -16,7 +16,6 @@
 // 3. This notice may not be removed or altered from any source distribution.
 //
 
-
 #pragma once
 
 /* Numeric representation of the version */
@@ -33,13 +32,12 @@
 /* Name of package */
 #define DEMO_PACKAGE "demo"
 
-
 const char* get_version(void)
 {
-	return (DEMO_VERSION);
+    return (DEMO_VERSION);
 }
 
 uint32_t get_version_number(void)
 {
-	return (DEMO_NUMERIC_VERSION);
+    return (DEMO_NUMERIC_VERSION);
 }

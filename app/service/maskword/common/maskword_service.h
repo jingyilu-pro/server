@@ -16,7 +16,6 @@
 // 3. This notice may not be removed or altered from any source distribution.
 //
 
-
 #pragma once
 
 #include <service.h>
@@ -26,13 +25,15 @@ class MaskWordService : public Service
 {
 public:
     MaskWordService();
-    virtual  ~MaskWordService();
+    virtual ~MaskWordService();
 
     auto& maskword_manager() { return m_maskword_manager; }
+
 public:
     virtual bool start();
     virtual bool stop();
     virtual void update(std::chrono::milliseconds delta_time, std::chrono::milliseconds last_tick_time);
+
 private:
     MaskWordManager m_maskword_manager;
 };

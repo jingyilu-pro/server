@@ -16,14 +16,13 @@
 // 3. This notice may not be removed or altered from any source distribution.
 //
 
-
 #pragma once
 
 #include <string>
 
 #include "spdlog/spdlog.h"
-#include "spdlog/cfg/env.h"   // support for loading levels from the environment variable
-#include "spdlog/fmt/ostr.h"  // support for user defined types
+#include "spdlog/cfg/env.h"  // support for loading levels from the environment variable
+#include "spdlog/fmt/ostr.h" // support for user defined types
 #include "spdlog/sinks/rotating_file_sink.h"
 
 /*

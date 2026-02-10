@@ -16,21 +16,17 @@
 // 3. This notice may not be removed or altered from any source distribution.
 //
 
-
 #include "maskword_service.h"
 #include "protocol/base.pb.h"
 #include "log/glogger.h"
 
-
 MaskWordService::MaskWordService()
-    :m_maskword_manager(this)
+    : m_maskword_manager(this)
 {
-
 }
 
 MaskWordService::~MaskWordService()
 {
-
 }
 
 bool MaskWordService::start()
@@ -50,5 +46,4 @@ bool MaskWordService::stop()
 
 void MaskWordService::update(std::chrono::milliseconds delta_time, std::chrono::milliseconds last_tick_time)
 {
-
 }

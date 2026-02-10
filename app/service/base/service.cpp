@@ -16,9 +16,7 @@
 // 3. This notice may not be removed or altered from any source distribution.
 //
 
-
 #include "service.h"
-
 
 bool Service::start()
 {
@@ -32,5 +30,4 @@ bool Service::stop()
 
 void Service::update(std::chrono::milliseconds delta_time, std::chrono::milliseconds last_tick_time)
 {
-
 }

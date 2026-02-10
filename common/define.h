@@ -16,8 +16,6 @@
 // 3. This notice may not be removed or altered from any source distribution.
 //
 
-
-
 #pragma once
 
 #ifdef __APPLE__
@@ -32,7 +30,6 @@
 
 using namespace std;
 // using namespace std::experimental;
-
 
 /*!
     uint64 is a typedef for an unsigned integer that is exactly 64 bits wide.
@@ -62,56 +59,82 @@ typedef long long int64;
 #endif
 
 typedef unsigned short uint16;
-typedef unsigned int   uint32;
-typedef unsigned char  uint8;
+typedef unsigned int uint32;
+typedef unsigned char uint8;
 
 typedef short int16;
-typedef int   int32;
-typedef char  int8;
+typedef int int32;
+typedef char int8;
 
-typedef int   SOCKET;
+typedef int SOCKET;
 
 // make sure these types have the right sizes on this platform
-COMPILE_TIME_ASSERT(sizeof(uint8)  == 1);
+COMPILE_TIME_ASSERT(sizeof(uint8) == 1);
 COMPILE_TIME_ASSERT(sizeof(uint16) == 2);
 COMPILE_TIME_ASSERT(sizeof(uint32) == 4);
 COMPILE_TIME_ASSERT(sizeof(uint64) == 8);
 
-COMPILE_TIME_ASSERT(sizeof(int8)  == 1);
+COMPILE_TIME_ASSERT(sizeof(int8) == 1);
 COMPILE_TIME_ASSERT(sizeof(int16) == 2);
 COMPILE_TIME_ASSERT(sizeof(int32) == 4);
 COMPILE_TIME_ASSERT(sizeof(int64) == 8);
 
+#define SAFE_DELETE(x)  \
+    {                   \
+        if(x)           \
+        {               \
+            delete(x);  \
+            (x) = NULL; \
+        }               \
+    }
 
-#define SAFE_DELETE(x) { if (x) { delete (x); (x) = NULL; } }
-
-#define PROPERTY(type, name) \
-public:\
-    type name() { return m_##name; };\
-    void set_##name(type name) { m_##name = name; };\
-private:\
+#define PROPERTY(type, name)   \
+public:                        \
+    type name()                \
+    {                          \
+        return m_##name;       \
+    };                         \
+    void set_##name(type name) \
+    {                          \
+        m_##name = name;       \
+    };                         \
+                               \
+private:                       \
     type m_##name;
 
-#define PROPERTY_REF(type, name) \
-public:\
-    type& name() { return m_##name; };\
-    void set_##name(const type& name) { m_##name = name; };\
-private:\
+#define PROPERTY_REF(type, name)      \
+public:                               \
+    type& name()                      \
+    {                                 \
+        return m_##name;              \
+    };                                \
+    void set_##name(const type& name) \
+    {                                 \
+        m_##name = name;              \
+    };                                \
+                                      \
+private:                              \
     type m_##name;
 
 #define PROPERTY_PTR(type, name) \
-public:\
-    type* name() { return m_##name; };\
-    void set_##name(type* name) { m_##name = name; };\
-private:\
+public:                          \
+    type* name()                 \
+    {                            \
+        return m_##name;         \
+    };                           \
+    void set_##name(type* name)  \
+    {                            \
+        m_##name = name;         \
+    };                           \
+                                 \
+private:                         \
     type* m_##name;
-
 
 // 时间跨度定义
 using TickTime = std::chrono::duration<signed int, std::ratio_multiply<std::chrono::milliseconds::period, std::ratio<50>>>;
 using TickTimeLong = std::chrono::duration<signed long long int, TickTime::period>;
 /** Converts a literal to a tick time. */
-constexpr TickTimeLong operator ""_tick(const unsigned long long tick)
+constexpr TickTimeLong operator""_tick(const unsigned long long tick)
 {
-	return TickTimeLong(tick);
+    return TickTimeLong(tick);
 }

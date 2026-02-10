@@ -16,10 +16,8 @@
 // 3. This notice may not be removed or altered from any source distribution.
 //
 
-
 #include "workerthread.h"
 #include "cororesult.h"
-
 
 WorkerThread::WorkerThread()
 {
@@ -42,7 +40,7 @@ void WorkerThread::worker()
     // std::cout << "WorkerThread thread id " << std::this_thread::get_id() << std::endl;
 
     CoroResult* opt = nullptr;
-    while (true)
+    while(true)
     {
         m_opts.wait_dequeue(opt);
         opt->worker();
@@ -50,10 +48,10 @@ void WorkerThread::worker()
         m_results.enqueue(opt);
 
         opt = nullptr;
-      
+
         // std::this_thread::sleep_for(std::chrono::milliseconds(1));
         usleep(25);
-    }    
+    }
 }
 
 void WorkerThread::insert(CoroResult* opt)

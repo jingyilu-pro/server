@@ -16,7 +16,6 @@
 // 3. This notice may not be removed or altered from any source distribution.
 //
 
-
 #include "glogger.h"
 // #include "fmt/fmt.h"
 
@@ -28,7 +27,7 @@ void Glogger::init(const std::string& service, const std::string& file_name, con
     // auto glogger = spdlog::rotating_logger_mt(service, std::format("logs/{}.log", file_name), max_file_size, file_count);
 
     // spdlog::set_default_logger(glogger);
-    
+
     spdlog::flush_every(std::chrono::seconds(3));
 
     spdlog::info("Welcome to spdlog version {}.{}.{}  !", SPDLOG_VER_MAJOR, SPDLOG_VER_MINOR, SPDLOG_VER_PATCH);

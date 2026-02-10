@@ -1,0 +1,13 @@
+# Third-party submodules
+libs/**
+
+# Build artifacts
+build/**
+build-*/**
+build-wsl/**
+build-wsl-main/**
+
+# Generated protobuf sources
+app/protocol/protocol/*.pb.h
+app/protocol/protocol/*.pb.cc
+

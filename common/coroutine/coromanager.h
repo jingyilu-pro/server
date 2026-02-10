@@ -16,7 +16,6 @@
 // 3. This notice may not be removed or altered from any source distribution.
 //
 
-
 #pragma once
 
 #include "corocoroutine.h"
@@ -36,6 +35,7 @@ struct CoroAwaitable;
 class CoroManager
 {
     friend struct CoroAwaitable;
+
 public:
     explicit CoroManager(int worker_count = 1);
     virtual ~CoroManager();
@@ -46,12 +46,14 @@ public:
 public:
     static CoroAwaitable start_coroutine(CoroManager* manager);
     static CoroAwaitable await_suspend_handle(CoroManager* manager, CoroResult* result);
+
 protected:
     virtual CoroResult* alloc() = 0;
-    template<class T>
+    template <class T>
     void expand()
     {
-        if(!pool_empty()) return;
+        if(!pool_empty())
+            return;
         for(int i = 0; i < 16; ++i)
         {
             release(new(std::nothrow) T(), true);
@@ -79,10 +81,12 @@ protected:
             result->clear();
         m_result_pool.push_back(result);
     }
-    void add_async_result(CoroResult* result) const {
+    void add_async_result(CoroResult* result) const
+    {
         m_worker_threads[result->uid() % m_worker_count]->insert(result);
     }
     void recycle();
+
 protected:
     uint64 m_global_index = 0;
     int m_worker_count = 1;
@@ -99,14 +103,15 @@ struct CoroAwaitable : public coro_awaitable<CoroResult*>
     CoroManager* m_manager = nullptr;
     CoroResult* m_result = nullptr;
 
-    CoroAwaitable(CoroManager* manager, CoroResult* result) : m_manager{manager}, m_result{result} {}
-    CoroResult* await_resume() override {return m_result;}
-    void await_suspend(coro_handle handle) override {
+    CoroAwaitable(CoroManager* manager, CoroResult* result)
+        : m_manager{manager}, m_result{result} {}
+    CoroResult* await_resume() override { return m_result; }
+    void await_suspend(coro_handle handle) override
+    {
         m_result->set_handle(handle);
         m_manager->add_async_result(m_result);
     }
 };
-
 
 // for example
 class TestCoroManager : public CoroManager
@@ -116,12 +121,11 @@ public:
     ~TestCoroManager() override;
 
     CoroAwaitable awaitable(const string& mask_word);
+
 public:
     virtual CoroResult* alloc()
     {
         expand<TestCoroResult>();
         return inner_alloc();
     }
-
 };
-
