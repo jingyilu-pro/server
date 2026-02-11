@@ -40,9 +40,27 @@ std::string safe_instance_id(const ServiceInstance& instance)
 
 } // namespace
 
+RedisDiscoveryCoroManager::RedisDiscoveryCoroManager(int worker_count)
+    : CoroManager(worker_count)
+{
+    CoroManager::init();
+}
+
+RedisDiscoveryCoroManager::~RedisDiscoveryCoroManager() = default;
+
+CoroResult* RedisDiscoveryCoroManager::alloc()
+{
+    expand<ServiceDiscoveryOpResult>();
+    return inner_alloc();
+}
+
 RedisServiceDiscovery::RedisServiceDiscovery(const RedisConfig& config)
     : m_config(config)
 {
+    m_manager = std::make_unique<RedisDiscoveryCoroManager>(std::max(1, m_config.coro_workers));
+
+    std::lock_guard lock(m_mutex);
+    m_ready = ensure_connected();
 }
 
 RedisServiceDiscovery::~RedisServiceDiscovery()
@@ -55,53 +73,195 @@ RedisServiceDiscovery::~RedisServiceDiscovery()
     }
 }
 
-bool RedisServiceDiscovery::register_instance(const ServiceInstance& instance)
+bool RedisServiceDiscovery::ready() const
 {
+    return m_ready;
+}
+
+void RedisServiceDiscovery::poll()
+{
+    if(m_manager)
+    {
+        m_manager->update();
+    }
+}
+
+ServiceDiscoveryOpResult* RedisServiceDiscovery::alloc_result()
+{
+    if(m_manager == nullptr)
+    {
+        return nullptr;
+    }
+
+    auto* result = dynamic_cast<ServiceDiscoveryOpResult*>(m_manager->alloc());
+    return result;
+}
+
+CoroAwaitable RedisServiceDiscovery::register_instance(const ServiceInstance& instance)
+{
+    auto* result = alloc_result();
+    if(result == nullptr)
+    {
+        return CoroAwaitable{m_manager.get(), nullptr};
+    }
+
+    result->init(ServiceDiscoveryOpType::register_instance,
+                 instance,
+                 instance.role,
+                 [this](ServiceDiscoveryOpResult* op) {
+                     execute_operation(op);
+                 });
+    return CoroAwaitable{m_manager.get(), result};
+}
+
+CoroAwaitable RedisServiceDiscovery::heartbeat(const ServiceInstance& instance)
+{
+    auto* result = alloc_result();
+    if(result == nullptr)
+    {
+        return CoroAwaitable{m_manager.get(), nullptr};
+    }
+
+    result->init(ServiceDiscoveryOpType::heartbeat,
+                 instance,
+                 instance.role,
+                 [this](ServiceDiscoveryOpResult* op) {
+                     execute_operation(op);
+                 });
+    return CoroAwaitable{m_manager.get(), result};
+}
+
+CoroAwaitable RedisServiceDiscovery::list_instances(const std::string& role)
+{
+    ServiceInstance dummy_instance;
+    dummy_instance.role = role;
+
+    auto* result = alloc_result();
+    if(result == nullptr)
+    {
+        return CoroAwaitable{m_manager.get(), nullptr};
+    }
+
+    result->init(ServiceDiscoveryOpType::list_instances,
+                 dummy_instance,
+                 role,
+                 [this](ServiceDiscoveryOpResult* op) {
+                     execute_operation(op);
+                 });
+    return CoroAwaitable{m_manager.get(), result};
+}
+
+CoroAwaitable RedisServiceDiscovery::unregister_instance(const ServiceInstance& instance)
+{
+    auto* result = alloc_result();
+    if(result == nullptr)
+    {
+        return CoroAwaitable{m_manager.get(), nullptr};
+    }
+
+    result->init(ServiceDiscoveryOpType::unregister_instance,
+                 instance,
+                 instance.role,
+                 [this](ServiceDiscoveryOpResult* op) {
+                     execute_operation(op);
+                 });
+    return CoroAwaitable{m_manager.get(), result};
+}
+
+void RedisServiceDiscovery::execute_operation(ServiceDiscoveryOpResult* result)
+{
+    if(result == nullptr)
+    {
+        return;
+    }
+
     std::lock_guard lock(m_mutex);
     if(!ensure_connected())
     {
-        return false;
+        result->success = false;
+        result->error = "redis_unavailable";
+        return;
     }
 
-    if(!set_instance_hash(instance) || !expire_instance(instance))
+    switch(result->op_type)
     {
-        return false;
-    }
+    case ServiceDiscoveryOpType::register_instance:
+    {
+        const bool ok = set_instance_hash(result->request_instance) &&
+                        expire_instance(result->request_instance);
+        if(!ok)
+        {
+            result->success = false;
+            result->error = "redis_register_hash_or_expire_failed";
+            break;
+        }
 
-    auto role_set_key = make_role_set_key(instance.role);
-    auto instance_key = make_instance_key(instance);
-    auto* reply = static_cast<redisReply*>(redisCommand(m_context,
-                                                        "SADD %s %s",
-                                                        role_set_key.c_str(),
-                                                        instance_key.c_str()));
-    if(reply == nullptr)
-    {
-        return false;
+        auto role_set_key = make_role_set_key(result->request_instance.role);
+        auto instance_key = make_instance_key(result->request_instance);
+        auto* reply = static_cast<redisReply*>(redisCommand(m_context,
+                                                            "SADD %s %s",
+                                                            role_set_key.c_str(),
+                                                            instance_key.c_str()));
+        if(reply == nullptr)
+        {
+            result->success = false;
+            result->error = "redis_register_sadd_failed";
+            break;
+        }
+        freeReplyObject(reply);
+        result->success = true;
+        break;
     }
-    freeReplyObject(reply);
-    return true;
+    case ServiceDiscoveryOpType::heartbeat:
+    {
+        result->success = set_instance_hash(result->request_instance) && expire_instance(result->request_instance);
+        if(!result->success)
+        {
+            result->error = "redis_heartbeat_failed";
+        }
+        break;
+    }
+    case ServiceDiscoveryOpType::list_instances:
+    {
+        result->instances = query_instances_by_role(result->request_role);
+        result->success = true;
+        break;
+    }
+    case ServiceDiscoveryOpType::unregister_instance:
+    {
+        auto role_set_key = make_role_set_key(result->request_instance.role);
+        auto instance_key = make_instance_key(result->request_instance);
+
+        auto* remove_reply = static_cast<redisReply*>(redisCommand(m_context,
+                                                                   "SREM %s %s",
+                                                                   role_set_key.c_str(),
+                                                                   instance_key.c_str()));
+        if(remove_reply != nullptr)
+        {
+            freeReplyObject(remove_reply);
+        }
+
+        auto* del_reply = static_cast<redisReply*>(redisCommand(m_context, "DEL %s", instance_key.c_str()));
+        if(del_reply == nullptr)
+        {
+            result->success = false;
+            result->error = "redis_unregister_del_failed";
+            break;
+        }
+        freeReplyObject(del_reply);
+        result->success = true;
+        break;
+    }
+    default:
+        result->success = false;
+        result->error = "redis_unknown_operation";
+        break;
+    }
 }
 
-bool RedisServiceDiscovery::heartbeat(const ServiceInstance& instance)
-{
-    std::lock_guard lock(m_mutex);
-    if(!ensure_connected())
-    {
-        return false;
-    }
-
-    return set_instance_hash(instance) && expire_instance(instance);
-}
-
-std::vector<ServiceInstance> RedisServiceDiscovery::list_instances(const std::string& role)
+std::vector<ServiceInstance> RedisServiceDiscovery::query_instances_by_role(const std::string& role)
 {
     std::vector<ServiceInstance> out;
-
-    std::lock_guard lock(m_mutex);
-    if(!ensure_connected())
-    {
-        return out;
-    }
 
     auto role_set_key = make_role_set_key(role);
     auto* set_reply = static_cast<redisReply*>(redisCommand(m_context, "SMEMBERS %s", role_set_key.c_str()));
@@ -161,24 +321,30 @@ std::vector<ServiceInstance> RedisServiceDiscovery::list_instances(const std::st
         instance.role = role;
         for(size_t i = 0; i + 1 < hash_reply->elements; i += 2)
         {
-            const auto* key = hash_reply->element[i];
-            const auto* value = hash_reply->element[i + 1];
-            if(key == nullptr || value == nullptr || key->str == nullptr || value->str == nullptr)
+            auto* field_reply = hash_reply->element[i];
+            auto* value_reply = hash_reply->element[i + 1];
+            if(field_reply == nullptr || value_reply == nullptr ||
+               field_reply->str == nullptr || value_reply->str == nullptr)
             {
                 continue;
             }
 
-            const std::string field(key->str, key->len);
-            const std::string field_value(value->str, value->len);
-            if(field == "host")
+            auto field = std::string(field_reply->str, field_reply->len);
+            auto value = std::string(value_reply->str, value_reply->len);
+
+            if(field == "role")
             {
-                instance.endpoint.host = field_value;
+                instance.role = value;
+            }
+            else if(field == "host")
+            {
+                instance.endpoint.host = value;
             }
             else if(field == "port")
             {
                 try
                 {
-                    instance.endpoint.port = static_cast<uint16_t>(std::stoi(field_value));
+                    instance.endpoint.port = static_cast<uint16_t>(std::stoi(value));
                 }
                 catch(...)
                 {
@@ -189,7 +355,7 @@ std::vector<ServiceInstance> RedisServiceDiscovery::list_instances(const std::st
             {
                 try
                 {
-                    instance.weight = std::max(1, std::stoi(field_value));
+                    instance.weight = std::max(1, std::stoi(value));
                 }
                 catch(...)
                 {
@@ -198,12 +364,11 @@ std::vector<ServiceInstance> RedisServiceDiscovery::list_instances(const std::st
             }
             else if(field == "instance_id")
             {
-                instance.instance_id = field_value;
+                instance.instance_id = value;
             }
         }
 
-        freeReplyObject(hash_reply);
-        if(instance.endpoint.port != 0)
+        if(instance.endpoint.port > 0)
         {
             if(instance.instance_id.empty())
             {
@@ -211,39 +376,12 @@ std::vector<ServiceInstance> RedisServiceDiscovery::list_instances(const std::st
             }
             out.push_back(instance);
         }
+
+        freeReplyObject(hash_reply);
     }
 
     freeReplyObject(set_reply);
     return out;
-}
-
-bool RedisServiceDiscovery::unregister_instance(const ServiceInstance& instance)
-{
-    std::lock_guard lock(m_mutex);
-    if(!ensure_connected())
-    {
-        return false;
-    }
-
-    auto role_set_key = make_role_set_key(instance.role);
-    auto instance_key = make_instance_key(instance);
-
-    auto* remove_reply = static_cast<redisReply*>(redisCommand(m_context,
-                                                               "SREM %s %s",
-                                                               role_set_key.c_str(),
-                                                               instance_key.c_str()));
-    if(remove_reply != nullptr)
-    {
-        freeReplyObject(remove_reply);
-    }
-
-    auto* del_reply = static_cast<redisReply*>(redisCommand(m_context, "DEL %s", instance_key.c_str()));
-    if(del_reply == nullptr)
-    {
-        return false;
-    }
-    freeReplyObject(del_reply);
-    return true;
 }
 
 bool RedisServiceDiscovery::ensure_connected()

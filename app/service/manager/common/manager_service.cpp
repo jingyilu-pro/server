@@ -55,36 +55,7 @@ ManagerService::ManagerService(const RuntimeConfig& config, std::shared_ptr<ISer
     m_local_instance.instance_id = name() + std::string("@") + make_endpoint_text(config.server.manager);
 
     register_handler("/v1/route/login", [this](evhttp_request* request) {
-        gateway::RouteLoginRequest route_request;
-        auto body = read_request_body(request);
-        if(body.empty())
-        {
-            evhttp_send_error(request, 400, "empty protobuf body");
-            return;
-        }
-        if(!route_request.ParseFromString(body))
-        {
-            evhttp_send_error(request, 400, "invalid protobuf");
-            return;
-        }
-
-        auto login_instances = m_discovery ? m_discovery->list_instances("login") : std::vector<ServiceInstance>{};
-        auto game_instances = m_discovery ? m_discovery->list_instances("game") : std::vector<ServiceInstance>{};
-
-        gateway::RouteLoginResponse response;
-        auto picked_login = choose_weighted_endpoint(login_instances, m_config.server.login, &m_login_round_robin_counter);
-        auto picked_game = choose_weighted_endpoint(game_instances, m_config.server.game, &m_game_round_robin_counter);
-
-        response.set_code(0);
-        response.set_message("ok");
-        response.set_trace_id(make_trace_id());
-        response.set_server_time_ms(now_ms());
-        response.mutable_login_endpoint()->set_host(picked_login.host);
-        response.mutable_login_endpoint()->set_port(static_cast<uint32_t>(picked_login.port));
-        response.mutable_game_endpoint()->set_host(picked_game.host);
-        response.mutable_game_endpoint()->set_port(static_cast<uint32_t>(picked_game.port));
-
-        write_protobuf_response(request, response, 200);
+        route_login_async(request);
     });
 }
 
@@ -97,12 +68,30 @@ bool ManagerService::start()
         return false;
     }
 
-    if(m_discovery)
+    if(!m_discovery)
     {
-        if(!m_discovery->register_instance(m_local_instance))
-        {
-            spdlog::warn("manager register to redis failed, continue with local fallback route");
-        }
+        spdlog::error("manager discovery unavailable");
+        BasicHttpService::stop();
+        return false;
+    }
+
+    ServiceDiscoveryOpResult register_result;
+    if(!wait_service_discovery_result(m_discovery.get(),
+                                      m_discovery->register_instance(m_local_instance),
+                                      &register_result,
+                                      std::max(1000, m_config.redis.op_timeout_ms)))
+    {
+        spdlog::error("manager register to redis timeout or empty result");
+        BasicHttpService::stop();
+        return false;
+    }
+
+    if(!register_result.success)
+    {
+        spdlog::error("manager register to redis failed: {}",
+                      register_result.error);
+        BasicHttpService::stop();
+        return false;
     }
 
     m_last_heartbeat = std::chrono::steady_clock::now();
@@ -113,7 +102,11 @@ bool ManagerService::stop()
 {
     if(m_discovery)
     {
-        m_discovery->unregister_instance(m_local_instance);
+        ServiceDiscoveryOpResult unregister_result;
+        wait_service_discovery_result(m_discovery.get(),
+                                      m_discovery->unregister_instance(m_local_instance),
+                                      &unregister_result,
+                                      m_config.redis.op_timeout_ms);
     }
 
     return BasicHttpService::stop();
@@ -122,16 +115,20 @@ bool ManagerService::stop()
 void ManagerService::update(std::chrono::milliseconds delta_time, std::chrono::milliseconds last_tick_time)
 {
     BasicHttpService::update(delta_time, last_tick_time);
+}
 
-    if(!m_discovery)
+void ManagerService::on_event_loop_tick()
+{
+    if(m_discovery)
     {
-        return;
+        m_discovery->poll();
     }
 
     auto now = std::chrono::steady_clock::now();
-    if(now - m_last_heartbeat >= std::chrono::seconds(std::max(1, m_config.redis.refresh_sec)))
+    if(m_discovery && !m_heartbeat_inflight &&
+       now - m_last_heartbeat >= std::chrono::seconds(std::max(1, m_config.redis.refresh_sec)))
     {
-        m_discovery->heartbeat(m_local_instance);
+        heartbeat_async();
         m_last_heartbeat = now;
     }
 }
@@ -171,4 +168,66 @@ EndpointConfig ManagerService::choose_weighted_endpoint(const std::vector<Servic
     }
 
     return instances.front().endpoint;
+}
+
+coro_task_t ManagerService::heartbeat_async()
+{
+    m_heartbeat_inflight = true;
+    auto* result = dynamic_cast<ServiceDiscoveryOpResult*>(co_await m_discovery->heartbeat(m_local_instance));
+    if(result == nullptr || !result->success)
+    {
+        spdlog::warn("manager heartbeat to redis failed: {}",
+                     result == nullptr ? "null result" : result->error);
+    }
+    m_heartbeat_inflight = false;
+}
+
+coro_task_t ManagerService::route_login_async(evhttp_request* request)
+{
+    retain_request(request);
+
+    gateway::RouteLoginRequest route_request;
+    auto body = read_request_body(request);
+    if(body.empty())
+    {
+        evhttp_send_error(request, 400, "empty protobuf body");
+        release_request(request);
+        co_return;
+    }
+    if(!route_request.ParseFromString(body))
+    {
+        evhttp_send_error(request, 400, "invalid protobuf");
+        release_request(request);
+        co_return;
+    }
+
+    auto* login_result = dynamic_cast<ServiceDiscoveryOpResult*>(co_await m_discovery->list_instances("login"));
+    auto* game_result = dynamic_cast<ServiceDiscoveryOpResult*>(co_await m_discovery->list_instances("game"));
+
+    std::vector<ServiceInstance> login_instances;
+    std::vector<ServiceInstance> game_instances;
+    if(login_result != nullptr && login_result->success)
+    {
+        login_instances = login_result->instances;
+    }
+    if(game_result != nullptr && game_result->success)
+    {
+        game_instances = game_result->instances;
+    }
+
+    gateway::RouteLoginResponse response;
+    auto picked_login = choose_weighted_endpoint(login_instances, m_config.server.login, &m_login_round_robin_counter);
+    auto picked_game = choose_weighted_endpoint(game_instances, m_config.server.game, &m_game_round_robin_counter);
+
+    response.set_code(0);
+    response.set_message("ok");
+    response.set_trace_id(make_trace_id());
+    response.set_server_time_ms(now_ms());
+    response.mutable_login_endpoint()->set_host(picked_login.host);
+    response.mutable_login_endpoint()->set_port(static_cast<uint32_t>(picked_login.port));
+    response.mutable_game_endpoint()->set_host(picked_game.host);
+    response.mutable_game_endpoint()->set_port(static_cast<uint32_t>(picked_game.port));
+
+    write_protobuf_response(request, response, 200);
+    release_request(request);
 }

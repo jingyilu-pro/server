@@ -1,23 +1,30 @@
 # server
 
-统一的 C++ 服务端工程，当前支持 `manager/login/game/client_pressure` 多角色，由单一二进制 `application` 按 `--mode` 启动。
+Unified C++ server project with multi-role runtime via a single `application` binary.
 
-## 快速开始
+Current roles:
 
-### 1) 拉取代码（含子模块）
+- `manager`
+- `login`
+- `game`
+- `client_pressure`
+
+## Quick Start
+
+### 1) Clone (with submodules)
 
 ```bash
 git clone --recursive https://github.com/jingyilu-pro/server
 cd server
 ```
 
-若已拉取仓库：
+If already cloned:
 
 ```bash
 git submodule update --init --recursive
 ```
 
-### 2) 编译（WSL / Linux）
+### 2) Build (WSL / Linux)
 
 ```bash
 mkdir -p build-wsl-main
@@ -26,7 +33,7 @@ cmake ..
 cmake --build . -j
 ```
 
-### 3) 运行
+### 3) Run
 
 ```bash
 ./build-wsl-main/app/application/application --mode manager --config all.yaml
@@ -36,64 +43,92 @@ cmake --build . -j
 ./build-wsl-main/app/application/application --mode all --config all.yaml
 ```
 
-## 运行模式
+## Runtime Modes
 
-- `manager`: 仅启动 manager。
-- `login`: 仅启动 login。
-- `game`: 仅启动 game。
-- `client`: 仅启动压测客户端，完成后自动退出。
-- `all`: 同进程启动 `manager + login + game + client_pressure`。
+- `manager`: manager only.
+- `login`: login only.
+- `game`: game only.
+- `client`: pressure client only (auto-exit when completed).
+- `all`: `manager + login + game + client_pressure` in one process.
 
-`all` 模式下默认会装配 `client_pressure`，但是否发压由 `all.yaml` 中 `client_pressure.enabled` 控制（默认 `false`）。
+`all` always wires `client_pressure`; actual traffic generation depends on `client_pressure.enabled`.
 
-## 协议约束
+## Protocol Constraints
 
-- HTTP 仅支持 `POST`。
-- 请求/响应载荷均为 protobuf 二进制。
-- `Content-Type` 必须为 `application/x-protobuf`。
+- HTTP method: `POST` only.
+- Payload: protobuf binary request/response.
+- Content-Type: `application/x-protobuf`.
 
-错误基线：
+Error baseline:
 
-- 非 `POST` -> `405`
-- 错误 Content-Type -> `415`
-- 空 body / 非法 protobuf -> `400`
+- non-POST -> `405`
+- invalid content-type -> `415`
+- empty body / invalid protobuf -> `400`
 
-## 目录结构（当前）
+## IO Coroutine Architecture
 
-- `app/application`: 进程装配与 `--mode` 启动入口。
-- `app/service/base`: 共享服务基础组件（HTTP 基类、Redis/MySQL/JWT 抽象与实现等）。
-- `app/service/manager/common|logic`: manager 服务实现。
-- `app/service/login/common|logic`: login 服务实现。
-- `app/service/game/common|logic`: game 服务实现。
-- `app/service/client/common|logic`: client pressure 压测实现。
-- `app/service/server`: 聚合 `server_service` 目标（无业务实现源码）。
+HTTP, Redis, and MySQL operations are coroutine-driven based on project coroutine abstractions:
 
-## 配置
+- `coro_task`
+- `coro_awaitable`
+- `CoroManager`
+- `CoroResult`
 
-主配置文件：`all.yaml`
+Flow (server):
 
-核心配置段：
+`evhttp callback -> coroutine task -> co_await Redis/MySQL -> poll() resume -> protobuf response`
 
-- `server`：manager/login/game 监听地址。
-- `redis`：服务发现。
-- `mysql`：账号存储。
-- `jwt`：签发与校验。
-- `client_pressure`：压测场景与报告。
+Flow (client pressure):
 
-推荐环境变量覆盖敏感信息：
+`worker -> coroutine HTTP ops (libevent client) -> manager/login/game chain`
+
+## Startup Dependency Policy
+
+- Redis and MySQL are startup hard dependencies for server-side modes.
+- If Redis/MySQL is unavailable, corresponding service startup fails.
+- Service registration to Redis is performed during startup and must succeed.
+
+## Directory Layout
+
+- `app/application`: process bootstrap and `--mode` orchestration.
+- `app/service/base`: shared service components (HTTP base, Redis/MySQL abstractions + impls, token/provider wiring).
+- `app/service/manager/common|logic`: manager service.
+- `app/service/login/common|logic`: login service.
+- `app/service/game/common|logic`: game service.
+- `app/service/client/common|logic`: pressure client.
+- `app/service/server`: aggregator-only `server_service` target.
+
+## Config (`all.yaml`)
+
+Core sections:
+
+- `server`: role listener endpoints.
+- `redis`: service discovery (`coro_workers` supported).
+  - `op_timeout_ms` controls register/list/unregister synchronous wait timeout.
+- `mysql`: account store (`coro_workers` supported).
+- `jwt`: issue/verify config.
+- `client_pressure`: scenario and report (`http.coro_workers` supported).
+
+Sensitive values can be overridden by env:
 
 - `GAME_MYSQL_PASSWORD`
 - `GAME_JWT_SECRET`
 - `GAME_REDIS_PASSWORD`
 
-## WSL 依赖
+You can start from `.env.example` and export variables before launching:
 
-建议在 WSL Ubuntu 内安装：`mariadb-server + redis-server`，并保持仅本机可访问（`127.0.0.1`）。
+```bash
+cp .env.example .env
+export $(grep -v '^#' .env | xargs)
+```
 
-完整步骤见：`INSTALL.md`。
+## Docs
 
-## 文档
+- install/run: `INSTALL.md`
+- architecture: `ARCHITECTURE.md`
+- code style: `CODE_STYLE.md`
 
-- 安装与运行：`INSTALL.md`
-- 架构设计：`ARCHITECTURE.md`
-- 代码风格：`CODE_STYLE.md`
+## Project Skills
+
+- `skills/code-review-fix-loop/SKILL.md`: iterative implement-review-fix loop policy for this repo.
+- `skills/chinese-default-agent/SKILL.md`: 全程中文协作规范（对话、注释、文档、技能内容统一中文）。

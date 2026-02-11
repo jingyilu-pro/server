@@ -20,6 +20,7 @@
 
 #include <algorithm>
 #include <cctype>
+#include <chrono>
 #include <ranges>
 
 #include "client_pressure_service.h"
@@ -123,7 +124,16 @@ bool Application::start(const ApplicationOptions& options)
         return false;
     }
 
-    m_server_context = std::make_shared<ServerContext>(create_server_context(m_runtime_config));
+    const bool need_server_context = options.mode != AppMode::client;
+    if(need_server_context)
+    {
+        m_server_context = std::make_shared<ServerContext>(create_server_context(m_runtime_config));
+        if(!m_server_context->ready)
+        {
+            spdlog::error("server context create failed: {}", m_server_context->error);
+            return false;
+        }
+    }
 
     spdlog::info("application start mode={}, config={}", to_string(options.mode), options.config_path);
 
@@ -149,16 +159,16 @@ bool Application::start_services_by_mode()
         return start_client_service();
     case AppMode::manager:
         return register_service(std::make_unique<ManagerService>(m_runtime_config,
-                                                                 m_server_context ? m_server_context->discovery : nullptr));
+                                                                 m_server_context ? m_server_context->manager_discovery : nullptr));
     case AppMode::login:
         return register_service(std::make_unique<LoginService>(m_runtime_config,
-                                                               m_server_context ? m_server_context->discovery : nullptr,
-                                                               m_server_context ? m_server_context->account_repository : nullptr,
-                                                               m_server_context ? m_server_context->token_provider : nullptr));
+                                                               m_server_context ? m_server_context->login_discovery : nullptr,
+                                                               m_server_context ? m_server_context->login_account_repository : nullptr,
+                                                               m_server_context ? m_server_context->login_token_provider : nullptr));
     case AppMode::game:
         return register_service(std::make_unique<GameService>(m_runtime_config,
-                                                              m_server_context ? m_server_context->discovery : nullptr,
-                                                              m_server_context ? m_server_context->token_provider : nullptr));
+                                                              m_server_context ? m_server_context->game_discovery : nullptr,
+                                                              m_server_context ? m_server_context->game_token_provider : nullptr));
     case AppMode::client:
         return start_client_service();
     }
@@ -167,24 +177,27 @@ bool Application::start_services_by_mode()
 
 bool Application::start_non_client_services()
 {
-    auto discovery = m_server_context ? m_server_context->discovery : nullptr;
-    auto account_repository = m_server_context ? m_server_context->account_repository : nullptr;
-    auto token_provider = m_server_context ? m_server_context->token_provider : nullptr;
+    auto manager_discovery = m_server_context ? m_server_context->manager_discovery : nullptr;
+    auto login_discovery = m_server_context ? m_server_context->login_discovery : nullptr;
+    auto game_discovery = m_server_context ? m_server_context->game_discovery : nullptr;
+    auto account_repository = m_server_context ? m_server_context->login_account_repository : nullptr;
+    auto login_token_provider = m_server_context ? m_server_context->login_token_provider : nullptr;
+    auto game_token_provider = m_server_context ? m_server_context->game_token_provider : nullptr;
 
-    if(!register_service(std::make_unique<ManagerService>(m_runtime_config, discovery)))
+    if(!register_service(std::make_unique<ManagerService>(m_runtime_config, manager_discovery)))
     {
         return false;
     }
     if(!register_service(std::make_unique<LoginService>(m_runtime_config,
-                                                        discovery,
+                                                        login_discovery,
                                                         account_repository,
-                                                        token_provider)))
+                                                        login_token_provider)))
     {
         return false;
     }
     if(!register_service(std::make_unique<GameService>(m_runtime_config,
-                                                       discovery,
-                                                       token_provider)))
+                                                       game_discovery,
+                                                       game_token_provider)))
     {
         return false;
     }

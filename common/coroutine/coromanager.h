@@ -105,9 +105,14 @@ struct CoroAwaitable : public coro_awaitable<CoroResult*>
 
     CoroAwaitable(CoroManager* manager, CoroResult* result)
         : m_manager{manager}, m_result{result} {}
+    [[nodiscard]] bool await_ready() const override { return m_result == nullptr; }
     CoroResult* await_resume() override { return m_result; }
     void await_suspend(coro_handle handle) override
     {
+        if(m_result == nullptr || m_manager == nullptr)
+        {
+            return;
+        }
         m_result->set_handle(handle);
         m_manager->add_async_result(m_result);
     }

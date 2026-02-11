@@ -20,6 +20,7 @@
 
 #include "application_config.h"
 #include "basic_http_service.h"
+#include "corocoroutine.h"
 
 #include "service_discovery.h"
 
@@ -37,10 +38,15 @@ public:
     bool stop() override;
     void update(std::chrono::milliseconds delta_time, std::chrono::milliseconds last_tick_time) override;
 
+protected:
+    void on_event_loop_tick() override;
+
 private:
     EndpointConfig choose_weighted_endpoint(const std::vector<ServiceInstance>& instances,
                                             const EndpointConfig& fallback,
                                             std::size_t* round_robin_counter);
+    coro_task_t heartbeat_async();
+    coro_task_t route_login_async(evhttp_request* request);
 
 private:
     RuntimeConfig m_config;
@@ -49,4 +55,5 @@ private:
     std::chrono::steady_clock::time_point m_last_heartbeat;
     std::size_t m_login_round_robin_counter = 0;
     std::size_t m_game_round_robin_counter = 0;
+    bool m_heartbeat_inflight = false;
 };

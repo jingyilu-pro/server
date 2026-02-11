@@ -20,6 +20,7 @@
 
 #include "application_config.h"
 #include "basic_http_service.h"
+#include "corocoroutine.h"
 
 #include "service_discovery.h"
 #include "token_provider.h"
@@ -40,10 +41,18 @@ public:
     bool stop() override;
     void update(std::chrono::milliseconds delta_time, std::chrono::milliseconds last_tick_time) override;
 
+protected:
+    void on_event_loop_tick() override;
+
+private:
+    coro_task_t heartbeat_async();
+    coro_task_t enter_game_async(evhttp_request* request);
+
 private:
     RuntimeConfig m_config;
     std::shared_ptr<IServiceDiscovery> m_discovery;
     std::shared_ptr<ITokenProvider> m_token_provider;
     ServiceInstance m_local_instance;
     std::chrono::steady_clock::time_point m_last_heartbeat;
+    bool m_heartbeat_inflight = false;
 };

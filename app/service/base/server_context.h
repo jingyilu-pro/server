@@ -27,10 +27,17 @@
 
 struct ServerContext
 {
-    std::shared_ptr<IServiceDiscovery> discovery;
-    std::shared_ptr<IAccountRepository> account_repository;
-    std::shared_ptr<ITokenProvider> token_provider;
+    bool ready = false;
+    std::string error;
+
+    std::shared_ptr<IServiceDiscovery> manager_discovery;
+    std::shared_ptr<IServiceDiscovery> login_discovery;
+    std::shared_ptr<IServiceDiscovery> game_discovery;
+
+    std::shared_ptr<IAccountRepository> login_account_repository;
+
+    std::shared_ptr<ITokenProvider> login_token_provider;
+    std::shared_ptr<ITokenProvider> game_token_provider;
 };
 
 ServerContext create_server_context(const RuntimeConfig& config);
-

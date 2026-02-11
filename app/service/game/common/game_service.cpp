@@ -58,54 +58,7 @@ GameService::GameService(const RuntimeConfig& config,
     m_local_instance.instance_id = name() + std::string("@") + make_endpoint_text(config.server.game);
 
     register_handler("/v1/game/enter", [this](evhttp_request* request) {
-        gateway::GameEnterRequest game_request;
-        auto body = read_request_body(request);
-        if(body.empty())
-        {
-            evhttp_send_error(request, 400, "empty protobuf body");
-            return;
-        }
-        if(!game_request.ParseFromString(body))
-        {
-            evhttp_send_error(request, 400, "invalid protobuf");
-            return;
-        }
-
-        auto token = extract_authorization_token(request);
-        gateway::GameEnterResponse response;
-        response.set_trace_id(make_trace_id());
-        response.set_server_time_ms(now_ms());
-        if(token.empty())
-        {
-            response.set_code(40101);
-            response.set_message("missing jwt");
-        }
-        else if(m_token_provider == nullptr)
-        {
-            response.set_code(50002);
-            response.set_message("token provider unavailable");
-        }
-        else
-        {
-            auto verified = m_token_provider->verify(token);
-            if(!verified)
-            {
-                response.set_code(40102);
-                response.set_message("invalid or expired jwt");
-            }
-            else if(!game_request.account().empty() && verified->subject != game_request.account())
-            {
-                response.set_code(40103);
-                response.set_message("jwt subject mismatch");
-            }
-            else
-            {
-                response.set_code(0);
-                response.set_message("welcome " + verified->subject);
-            }
-        }
-
-        write_protobuf_response(request, response, 200);
+        enter_game_async(request);
     });
 }
 
@@ -118,12 +71,30 @@ bool GameService::start()
         return false;
     }
 
-    if(m_discovery)
+    if(!m_discovery)
     {
-        if(!m_discovery->register_instance(m_local_instance))
-        {
-            spdlog::warn("game register to redis failed");
-        }
+        spdlog::error("game discovery unavailable");
+        BasicHttpService::stop();
+        return false;
+    }
+
+    ServiceDiscoveryOpResult register_result;
+    if(!wait_service_discovery_result(m_discovery.get(),
+                                      m_discovery->register_instance(m_local_instance),
+                                      &register_result,
+                                      std::max(1000, m_config.redis.op_timeout_ms)))
+    {
+        spdlog::error("game register to redis timeout or empty result");
+        BasicHttpService::stop();
+        return false;
+    }
+
+    if(!register_result.success)
+    {
+        spdlog::error("game register to redis failed: {}",
+                      register_result.error);
+        BasicHttpService::stop();
+        return false;
     }
 
     m_last_heartbeat = std::chrono::steady_clock::now();
@@ -134,7 +105,11 @@ bool GameService::stop()
 {
     if(m_discovery)
     {
-        m_discovery->unregister_instance(m_local_instance);
+        ServiceDiscoveryOpResult unregister_result;
+        wait_service_discovery_result(m_discovery.get(),
+                                      m_discovery->unregister_instance(m_local_instance),
+                                      &unregister_result,
+                                      m_config.redis.op_timeout_ms);
     }
 
     return BasicHttpService::stop();
@@ -143,16 +118,89 @@ bool GameService::stop()
 void GameService::update(std::chrono::milliseconds delta_time, std::chrono::milliseconds last_tick_time)
 {
     BasicHttpService::update(delta_time, last_tick_time);
+}
 
-    if(!m_discovery)
+void GameService::on_event_loop_tick()
+{
+    if(m_discovery)
     {
-        return;
+        m_discovery->poll();
     }
 
     auto now = std::chrono::steady_clock::now();
-    if(now - m_last_heartbeat >= std::chrono::seconds(std::max(1, m_config.redis.refresh_sec)))
+    if(m_discovery && !m_heartbeat_inflight &&
+       now - m_last_heartbeat >= std::chrono::seconds(std::max(1, m_config.redis.refresh_sec)))
     {
-        m_discovery->heartbeat(m_local_instance);
+        heartbeat_async();
         m_last_heartbeat = now;
     }
+}
+
+coro_task_t GameService::heartbeat_async()
+{
+    m_heartbeat_inflight = true;
+    auto* result = dynamic_cast<ServiceDiscoveryOpResult*>(co_await m_discovery->heartbeat(m_local_instance));
+    if(result == nullptr || !result->success)
+    {
+        spdlog::warn("game heartbeat to redis failed: {}",
+                     result == nullptr ? "null result" : result->error);
+    }
+    m_heartbeat_inflight = false;
+}
+
+coro_task_t GameService::enter_game_async(evhttp_request* request)
+{
+    retain_request(request);
+
+    gateway::GameEnterRequest game_request;
+    auto body = read_request_body(request);
+    if(body.empty())
+    {
+        evhttp_send_error(request, 400, "empty protobuf body");
+        release_request(request);
+        co_return;
+    }
+    if(!game_request.ParseFromString(body))
+    {
+        evhttp_send_error(request, 400, "invalid protobuf");
+        release_request(request);
+        co_return;
+    }
+
+    auto token = extract_authorization_token(request);
+    gateway::GameEnterResponse response;
+    response.set_trace_id(make_trace_id());
+    response.set_server_time_ms(now_ms());
+    if(token.empty())
+    {
+        response.set_code(40101);
+        response.set_message("missing jwt");
+    }
+    else if(m_token_provider == nullptr)
+    {
+        response.set_code(50002);
+        response.set_message("token provider unavailable");
+    }
+    else
+    {
+        auto verified = m_token_provider->verify(token);
+        if(!verified)
+        {
+            response.set_code(40102);
+            response.set_message("invalid or expired jwt");
+        }
+        else if(!game_request.account().empty() && verified->subject != game_request.account())
+        {
+            response.set_code(40103);
+            response.set_message("jwt subject mismatch");
+        }
+        else
+        {
+            response.set_code(0);
+            response.set_message("welcome " + verified->subject);
+        }
+    }
+
+    write_protobuf_response(request, response, 200);
+    release_request(request);
 }

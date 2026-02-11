@@ -60,107 +60,11 @@ LoginService::LoginService(const RuntimeConfig& config,
     m_local_instance.instance_id = name() + std::string("@") + make_endpoint_text(config.server.login);
 
     register_handler("/v1/auth/register", [this](evhttp_request* request) {
-        gateway::AuthRegisterRequest register_request;
-        auto body = read_request_body(request);
-        if(body.empty())
-        {
-            evhttp_send_error(request, 400, "empty protobuf body");
-            return;
-        }
-        if(!register_request.ParseFromString(body))
-        {
-            evhttp_send_error(request, 400, "invalid protobuf");
-            return;
-        }
-
-        gateway::AuthRegisterResponse response;
-        response.set_trace_id(make_trace_id());
-        response.set_server_time_ms(now_ms());
-
-        if(m_account_repository == nullptr)
-        {
-            response.set_code(50001);
-            response.set_message("account repository unavailable");
-            write_protobuf_response(request, response, 200);
-            return;
-        }
-
-        const bool created = m_account_repository->create_account(register_request.account(), register_request.password());
-        if(!created)
-        {
-            response.set_code(40001);
-            response.set_message("account already exists or invalid input");
-            write_protobuf_response(request, response, 200);
-            return;
-        }
-
-        response.set_code(0);
-        response.set_message("registered");
-        write_protobuf_response(request, response, 200);
+        register_async(request);
     });
 
     register_handler("/v1/auth/login", [this](evhttp_request* request) {
-        gateway::AuthLoginRequest login_request;
-        auto body = read_request_body(request);
-        if(body.empty())
-        {
-            evhttp_send_error(request, 400, "empty protobuf body");
-            return;
-        }
-        if(!login_request.ParseFromString(body))
-        {
-            evhttp_send_error(request, 400, "invalid protobuf");
-            return;
-        }
-
-        gateway::AuthLoginResponse response;
-        response.set_trace_id(make_trace_id());
-        response.set_server_time_ms(now_ms());
-
-        if(m_account_repository == nullptr)
-        {
-            response.set_code(50001);
-            response.set_message("account repository unavailable");
-            write_protobuf_response(request, response, 200);
-            return;
-        }
-
-        const bool password_ok = m_account_repository->verify_password(login_request.account(), login_request.password());
-        if(!password_ok)
-        {
-            response.set_code(40101);
-            response.set_message("invalid account or password");
-            write_protobuf_response(request, response, 200);
-            return;
-        }
-
-        if(m_token_provider == nullptr)
-        {
-            response.set_code(50002);
-            response.set_message("token provider unavailable");
-            write_protobuf_response(request, response, 200);
-            return;
-        }
-
-        const auto token = m_token_provider->issue(login_request.account(), m_config.jwt.expire_sec);
-        if(token.empty())
-        {
-            response.set_code(50003);
-            response.set_message("token issue failed");
-            write_protobuf_response(request, response, 200);
-            return;
-        }
-
-        auto game_instances = m_discovery ? m_discovery->list_instances("game") : std::vector<ServiceInstance>{};
-        auto game_endpoint = choose_weighted_game_endpoint(game_instances);
-
-        response.set_code(0);
-        response.set_message("ok");
-        response.set_jwt(token);
-        response.mutable_game_endpoint()->set_host(game_endpoint.host);
-        response.mutable_game_endpoint()->set_port(static_cast<uint32_t>(game_endpoint.port));
-
-        write_protobuf_response(request, response, 200);
+        login_async(request);
     });
 }
 
@@ -173,12 +77,42 @@ bool LoginService::start()
         return false;
     }
 
-    if(m_discovery)
+    if(!m_discovery)
     {
-        if(!m_discovery->register_instance(m_local_instance))
-        {
-            spdlog::warn("login register to redis failed, continue with config fallback route");
-        }
+        spdlog::error("login discovery unavailable");
+        BasicHttpService::stop();
+        return false;
+    }
+    if(!m_account_repository)
+    {
+        spdlog::error("login account repository unavailable");
+        BasicHttpService::stop();
+        return false;
+    }
+    if(!m_account_repository->ready())
+    {
+        spdlog::error("login account repository not ready");
+        BasicHttpService::stop();
+        return false;
+    }
+
+    ServiceDiscoveryOpResult register_result;
+    if(!wait_service_discovery_result(m_discovery.get(),
+                                      m_discovery->register_instance(m_local_instance),
+                                      &register_result,
+                                      std::max(1000, m_config.redis.op_timeout_ms)))
+    {
+        spdlog::error("login register to redis timeout or empty result");
+        BasicHttpService::stop();
+        return false;
+    }
+
+    if(!register_result.success)
+    {
+        spdlog::error("login register to redis failed: {}",
+                      register_result.error);
+        BasicHttpService::stop();
+        return false;
     }
 
     m_last_heartbeat = std::chrono::steady_clock::now();
@@ -189,7 +123,11 @@ bool LoginService::stop()
 {
     if(m_discovery)
     {
-        m_discovery->unregister_instance(m_local_instance);
+        ServiceDiscoveryOpResult unregister_result;
+        wait_service_discovery_result(m_discovery.get(),
+                                      m_discovery->unregister_instance(m_local_instance),
+                                      &unregister_result,
+                                      m_config.redis.op_timeout_ms);
     }
 
     return BasicHttpService::stop();
@@ -198,16 +136,24 @@ bool LoginService::stop()
 void LoginService::update(std::chrono::milliseconds delta_time, std::chrono::milliseconds last_tick_time)
 {
     BasicHttpService::update(delta_time, last_tick_time);
+}
 
-    if(!m_discovery)
+void LoginService::on_event_loop_tick()
+{
+    if(m_discovery)
     {
-        return;
+        m_discovery->poll();
+    }
+    if(m_account_repository)
+    {
+        m_account_repository->poll();
     }
 
     auto now = std::chrono::steady_clock::now();
-    if(now - m_last_heartbeat >= std::chrono::seconds(std::max(1, m_config.redis.refresh_sec)))
+    if(m_discovery && !m_heartbeat_inflight &&
+       now - m_last_heartbeat >= std::chrono::seconds(std::max(1, m_config.redis.refresh_sec)))
     {
-        m_discovery->heartbeat(m_local_instance);
+        heartbeat_async();
         m_last_heartbeat = now;
     }
 }
@@ -245,4 +191,160 @@ EndpointConfig LoginService::choose_weighted_game_endpoint(const std::vector<Ser
     }
 
     return instances.front().endpoint;
+}
+
+coro_task_t LoginService::heartbeat_async()
+{
+    m_heartbeat_inflight = true;
+    auto* result = dynamic_cast<ServiceDiscoveryOpResult*>(co_await m_discovery->heartbeat(m_local_instance));
+    if(result == nullptr || !result->success)
+    {
+        spdlog::warn("login heartbeat to redis failed: {}",
+                     result == nullptr ? "null result" : result->error);
+    }
+    m_heartbeat_inflight = false;
+}
+
+coro_task_t LoginService::register_async(evhttp_request* request)
+{
+    retain_request(request);
+
+    gateway::AuthRegisterRequest register_request;
+    auto body = read_request_body(request);
+    if(body.empty())
+    {
+        evhttp_send_error(request, 400, "empty protobuf body");
+        release_request(request);
+        co_return;
+    }
+    if(!register_request.ParseFromString(body))
+    {
+        evhttp_send_error(request, 400, "invalid protobuf");
+        release_request(request);
+        co_return;
+    }
+
+    gateway::AuthRegisterResponse response;
+    response.set_trace_id(make_trace_id());
+    response.set_server_time_ms(now_ms());
+
+    if(m_account_repository == nullptr)
+    {
+        response.set_code(50001);
+        response.set_message("account repository unavailable");
+        write_protobuf_response(request, response, 200);
+        release_request(request);
+        co_return;
+    }
+
+    auto* create_result = dynamic_cast<AccountRepositoryOpResult*>(
+        co_await m_account_repository->create_account(register_request.account(), register_request.password()));
+
+    if(create_result == nullptr || !create_result->success)
+    {
+        response.set_code(50001);
+        response.set_message("account repository unavailable");
+        write_protobuf_response(request, response, 200);
+        release_request(request);
+        co_return;
+    }
+
+    if(!create_result->create_ok)
+    {
+        response.set_code(40001);
+        response.set_message("account already exists or invalid input");
+        write_protobuf_response(request, response, 200);
+        release_request(request);
+        co_return;
+    }
+
+    response.set_code(0);
+    response.set_message("registered");
+    write_protobuf_response(request, response, 200);
+    release_request(request);
+}
+
+coro_task_t LoginService::login_async(evhttp_request* request)
+{
+    retain_request(request);
+
+    gateway::AuthLoginRequest login_request;
+    auto body = read_request_body(request);
+    if(body.empty())
+    {
+        evhttp_send_error(request, 400, "empty protobuf body");
+        release_request(request);
+        co_return;
+    }
+    if(!login_request.ParseFromString(body))
+    {
+        evhttp_send_error(request, 400, "invalid protobuf");
+        release_request(request);
+        co_return;
+    }
+
+    gateway::AuthLoginResponse response;
+    response.set_trace_id(make_trace_id());
+    response.set_server_time_ms(now_ms());
+
+    if(m_account_repository == nullptr)
+    {
+        response.set_code(50001);
+        response.set_message("account repository unavailable");
+        write_protobuf_response(request, response, 200);
+        release_request(request);
+        co_return;
+    }
+
+    auto* verify_result = dynamic_cast<AccountRepositoryOpResult*>(
+        co_await m_account_repository->verify_password(login_request.account(), login_request.password()));
+    if(verify_result == nullptr || !verify_result->success)
+    {
+        response.set_code(50001);
+        response.set_message("account repository unavailable");
+        write_protobuf_response(request, response, 200);
+        release_request(request);
+        co_return;
+    }
+
+    if(!verify_result->password_ok)
+    {
+        response.set_code(40101);
+        response.set_message("invalid account or password");
+        write_protobuf_response(request, response, 200);
+        release_request(request);
+        co_return;
+    }
+
+    if(m_token_provider == nullptr)
+    {
+        response.set_code(50002);
+        response.set_message("token provider unavailable");
+        write_protobuf_response(request, response, 200);
+        release_request(request);
+        co_return;
+    }
+
+    const auto token = m_token_provider->issue(login_request.account(), m_config.jwt.expire_sec);
+    if(token.empty())
+    {
+        response.set_code(50003);
+        response.set_message("token issue failed");
+        write_protobuf_response(request, response, 200);
+        release_request(request);
+        co_return;
+    }
+
+    auto* list_result = dynamic_cast<ServiceDiscoveryOpResult*>(co_await m_discovery->list_instances("game"));
+    auto game_instances = (list_result != nullptr && list_result->success) ? list_result->instances : std::vector<ServiceInstance>{};
+    auto game_endpoint = choose_weighted_game_endpoint(game_instances);
+
+    response.set_code(0);
+    response.set_message("ok");
+    response.set_jwt(token);
+    response.mutable_game_endpoint()->set_host(game_endpoint.host);
+    response.mutable_game_endpoint()->set_port(static_cast<uint32_t>(game_endpoint.port));
+
+    write_protobuf_response(request, response, 200);
+    release_request(request);
 }

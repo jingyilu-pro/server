@@ -229,6 +229,20 @@ bool set_config_value(RuntimeConfig* config, const std::string& key, const std::
         config->client_pressure.report.json_path = trim(value);
         return true;
     }
+    if(key == "client_pressure.http.coro_workers")
+    {
+        int workers = 0;
+        if(!parse_int_value(value, &workers) || workers <= 0)
+        {
+            if(error_message != nullptr)
+            {
+                *error_message = "invalid positive int value for client_pressure.http.coro_workers";
+            }
+            return false;
+        }
+        config->client_pressure.http.coro_workers = workers;
+        return true;
+    }
 
     if(key == "server.manager.host")
     {
@@ -347,6 +361,34 @@ bool set_config_value(RuntimeConfig* config, const std::string& key, const std::
         config->redis.refresh_sec = parsed;
         return true;
     }
+    if(key == "redis.op_timeout_ms")
+    {
+        int timeout_ms = 0;
+        if(!parse_int_value(value, &timeout_ms) || timeout_ms <= 0)
+        {
+            if(error_message != nullptr)
+            {
+                *error_message = "invalid positive int value for redis.op_timeout_ms";
+            }
+            return false;
+        }
+        config->redis.op_timeout_ms = timeout_ms;
+        return true;
+    }
+    if(key == "redis.coro_workers")
+    {
+        int workers = 0;
+        if(!parse_int_value(value, &workers) || workers <= 0)
+        {
+            if(error_message != nullptr)
+            {
+                *error_message = "invalid positive int value for redis.coro_workers";
+            }
+            return false;
+        }
+        config->redis.coro_workers = workers;
+        return true;
+    }
 
     if(key == "mysql.host")
     {
@@ -394,6 +436,20 @@ bool set_config_value(RuntimeConfig* config, const std::string& key, const std::
             return false;
         }
         config->mysql.connect_timeout_ms = timeout_ms;
+        return true;
+    }
+    if(key == "mysql.coro_workers")
+    {
+        int workers = 0;
+        if(!parse_int_value(value, &workers) || workers <= 0)
+        {
+            if(error_message != nullptr)
+            {
+                *error_message = "invalid positive int value for mysql.coro_workers";
+            }
+            return false;
+        }
+        config->mysql.coro_workers = workers;
         return true;
     }
 

@@ -1,0 +1,4 @@
+interface:
+  display_name: "中文代码审查修复闭环"
+  short_description: "迭代审查代码并修复直到无阻塞问题"
+  default_prompt: "请全程使用中文交流和注释，先审查当前代码改动，修复问题，复跑验证并持续循环，直到没有阻塞问题。"

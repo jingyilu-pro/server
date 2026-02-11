@@ -44,6 +44,8 @@ struct RedisConfig
     std::string key_prefix = "svc";
     int ttl_sec = 15;
     int refresh_sec = 5;
+    int op_timeout_ms = 2000;
+    int coro_workers = 1;
 };
 
 struct MySqlConfig
@@ -54,6 +56,12 @@ struct MySqlConfig
     std::string password;
     std::string database = "game";
     int connect_timeout_ms = 2000;
+    int coro_workers = 1;
+};
+
+struct ClientPressureHttpConfig
+{
+    int coro_workers = 1;
 };
 
 struct JwtConfig
@@ -94,6 +102,7 @@ struct ClientPressureConfig
     ClientPressureTargetConfig target;
     ClientPressureScenarioConfig scenario;
     ClientPressureReportConfig report;
+    ClientPressureHttpConfig http;
 };
 
 struct RuntimeConfig

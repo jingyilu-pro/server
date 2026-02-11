@@ -17,17 +17,22 @@ redis:
   key_prefix: svc
   ttl_sec: 15
   refresh_sec: 5
+  op_timeout_ms: 2000
+  coro_workers: 1
 
 mysql:
   host: 127.0.0.1
   port: 3306
   user: game_app
+  # 推荐用环境变量 GAME_MYSQL_PASSWORD 覆盖，不在仓库保存真实密码
   password: ""
   database: game
   connect_timeout_ms: 2000
+  coro_workers: 1
 
 jwt:
   issuer: game-login
+  # 推荐用环境变量 GAME_JWT_SECRET 覆盖，不在仓库保存真实密钥
   secret: ""
   expire_sec: 7200
 
@@ -53,3 +58,5 @@ client_pressure:
     interval_sec: 5
     output: log
     json_path: client_pressure_report.json
+  http:
+    coro_workers: 1

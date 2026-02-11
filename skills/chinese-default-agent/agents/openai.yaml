@@ -1,0 +1,5 @@
+interface:
+  display_name: "全程中文协作"
+  short_description: "对话注释文档与技能内容统一中文"
+  default_prompt: "请将后续对话、代码注释、文档说明、技能内容统一使用中文，并在每次改动后进行代码审查与修复闭环。"
+

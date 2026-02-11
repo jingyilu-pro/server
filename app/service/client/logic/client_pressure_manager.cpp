@@ -355,7 +355,7 @@ void ClientPressureManager::worker_loop(int worker_index)
         return;
     }
 
-    ClientWorker worker;
+    ClientWorker worker(std::max(1, m_config.client_pressure.http.coro_workers));
     while(true)
     {
         {

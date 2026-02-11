@@ -20,7 +20,14 @@
 
 #include "log/glogger.h"
 
+#include <openssl/evp.h>
+
 #include <algorithm>
+#include <array>
+#include <cstring>
+#include <iomanip>
+#include <random>
+#include <sstream>
 
 namespace
 {
@@ -35,11 +42,122 @@ constexpr const char* kAccountTableSql =
     "updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"
     ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
 
+constexpr const char* kFindAccountSql =
+    "SELECT account,password_hash,salt FROM account WHERE account=? LIMIT 1";
+
+constexpr const char* kInsertAccountSql =
+    "INSERT INTO account(account,password_hash,salt) VALUES(?,?,?)";
+
+constexpr int kPasswordHashIterations = 120000;
+
+std::string bytes_to_hex(const unsigned char* data, size_t len)
+{
+    std::ostringstream output;
+    output << std::hex << std::setfill('0');
+    for(size_t i = 0; i < len; ++i)
+    {
+        output << std::setw(2) << static_cast<int>(data[i]);
+    }
+    return output.str();
+}
+
+std::string sha256_hex(const std::string& input)
+{
+    std::array<unsigned char, EVP_MAX_MD_SIZE> digest{};
+    unsigned int digest_len = 0;
+
+    EVP_MD_CTX* context = EVP_MD_CTX_new();
+    if(context == nullptr)
+    {
+        return {};
+    }
+
+    bool ok = EVP_DigestInit_ex(context, EVP_sha256(), nullptr) == 1 &&
+              EVP_DigestUpdate(context, input.data(), input.size()) == 1 &&
+              EVP_DigestFinal_ex(context, digest.data(), &digest_len) == 1;
+
+    EVP_MD_CTX_free(context);
+    if(!ok)
+    {
+        return {};
+    }
+
+    return bytes_to_hex(digest.data(), digest_len);
+}
+
+std::string generate_salt_hex()
+{
+    std::array<unsigned char, 16> salt_bytes{};
+    std::random_device device;
+    for(auto& value : salt_bytes)
+    {
+        value = static_cast<unsigned char>(device());
+    }
+    return bytes_to_hex(salt_bytes.data(), salt_bytes.size());
+}
+
+std::string make_password_hash(const std::string& password, const std::string& salt)
+{
+    std::array<unsigned char, 32> digest{};
+    const int rc = PKCS5_PBKDF2_HMAC(password.c_str(),
+                                     static_cast<int>(password.size()),
+                                     reinterpret_cast<const unsigned char*>(salt.data()),
+                                     static_cast<int>(salt.size()),
+                                     kPasswordHashIterations,
+                                     EVP_sha256(),
+                                     static_cast<int>(digest.size()),
+                                     digest.data());
+    if(rc != 1)
+    {
+        return {};
+    }
+    return bytes_to_hex(digest.data(), digest.size());
+}
+
+std::string make_password_hash_legacy(const std::string& password, const std::string& salt)
+{
+    return sha256_hex(salt + ":" + password);
+}
+
+bool verify_password_value(const std::string& password, const AccountRecord& record)
+{
+    const auto expected_hash = make_password_hash(password, record.salt);
+    if(record.password_hash == expected_hash)
+    {
+        return true;
+    }
+
+    const auto expected_legacy_hash = make_password_hash_legacy(password, record.salt);
+    if(record.password_hash == expected_legacy_hash)
+    {
+        return true;
+    }
+
+    return record.salt.empty() && record.password_hash == password;
+}
+
 } // namespace
+
+MySqlAccountCoroManager::MySqlAccountCoroManager(int worker_count)
+    : CoroManager(worker_count)
+{
+    CoroManager::init();
+}
+
+MySqlAccountCoroManager::~MySqlAccountCoroManager() = default;
+
+CoroResult* MySqlAccountCoroManager::alloc()
+{
+    expand<AccountRepositoryOpResult>();
+    return inner_alloc();
+}
 
 MySqlAccountRepository::MySqlAccountRepository(const MySqlConfig& config)
     : m_config(config)
 {
+    m_manager = std::make_unique<MySqlAccountCoroManager>(std::max(1, m_config.coro_workers));
+
+    std::lock_guard lock(m_mutex);
     m_ready = ensure_connected() && ensure_table();
 }
 
@@ -58,86 +176,145 @@ bool MySqlAccountRepository::ready() const
     return m_ready;
 }
 
-std::optional<AccountRecord> MySqlAccountRepository::find_account(const std::string& account)
+void MySqlAccountRepository::poll()
 {
-    std::lock_guard lock(m_mutex);
-    if(!ensure_connected())
+    if(m_manager)
     {
-        return std::nullopt;
+        m_manager->update();
+    }
+}
+
+AccountRepositoryOpResult* MySqlAccountRepository::alloc_result()
+{
+    if(m_manager == nullptr)
+    {
+        return nullptr;
     }
 
-    const auto escaped_account = escape_string(account);
-    const auto sql = "SELECT account,password_hash,salt FROM account WHERE account='" + escaped_account + "' LIMIT 1";
-    if(mysql_query(m_mysql, sql.c_str()) != 0)
-    {
-        spdlog::error("mysql query failed: {}", mysql_error(m_mysql));
-        return std::nullopt;
-    }
+    auto* result = dynamic_cast<AccountRepositoryOpResult*>(m_manager->alloc());
+    return result;
+}
 
-    MYSQL_RES* result = mysql_store_result(m_mysql);
+CoroAwaitable MySqlAccountRepository::find_account(const std::string& account)
+{
+    auto* result = alloc_result();
     if(result == nullptr)
     {
-        return std::nullopt;
+        return CoroAwaitable{m_manager.get(), nullptr};
     }
 
-    auto* row = mysql_fetch_row(result);
-    if(row == nullptr)
-    {
-        mysql_free_result(result);
-        return std::nullopt;
-    }
-
-    AccountRecord record;
-    record.account = row[0] == nullptr ? "" : row[0];
-    record.password_hash = row[1] == nullptr ? "" : row[1];
-    record.salt = row[2] == nullptr ? "" : row[2];
-
-    mysql_free_result(result);
-    return record;
+    result->init(AccountRepositoryOpType::find_account,
+                 account,
+                 "",
+                 [this](AccountRepositoryOpResult* op) {
+                     execute_operation(op);
+                 });
+    return CoroAwaitable{m_manager.get(), result};
 }
 
-bool MySqlAccountRepository::verify_password(const std::string& account, const std::string& password)
+CoroAwaitable MySqlAccountRepository::verify_password(const std::string& account, const std::string& password)
 {
-    auto record = find_account(account);
-    if(!record)
+    auto* result = alloc_result();
+    if(result == nullptr)
     {
-        return false;
+        return CoroAwaitable{m_manager.get(), nullptr};
     }
-    return record->password_hash == password;
+
+    result->init(AccountRepositoryOpType::verify_password,
+                 account,
+                 password,
+                 [this](AccountRepositoryOpResult* op) {
+                     execute_operation(op);
+                 });
+    return CoroAwaitable{m_manager.get(), result};
 }
 
-bool MySqlAccountRepository::create_account(const std::string& account, const std::string& password)
+CoroAwaitable MySqlAccountRepository::create_account(const std::string& account, const std::string& password)
 {
-    if(account.empty())
+    auto* result = alloc_result();
+    if(result == nullptr)
     {
-        return false;
+        return CoroAwaitable{m_manager.get(), nullptr};
+    }
+
+    result->init(AccountRepositoryOpType::create_account,
+                 account,
+                 password,
+                 [this](AccountRepositoryOpResult* op) {
+                     execute_operation(op);
+                 });
+    return CoroAwaitable{m_manager.get(), result};
+}
+
+void MySqlAccountRepository::execute_operation(AccountRepositoryOpResult* result)
+{
+    if(result == nullptr)
+    {
+        return;
     }
 
     std::lock_guard lock(m_mutex);
     if(!ensure_connected())
     {
-        return false;
+        result->success = false;
+        result->error = "mysql_unavailable";
+        return;
     }
 
-    const auto escaped_account = escape_string(account);
-    const auto escaped_password = escape_string(password);
-
-    const auto sql = "INSERT INTO account(account,password_hash,salt) VALUES('" +
-                     escaped_account +
-                     "','" +
-                     escaped_password +
-                     "','')";
-    if(mysql_query(m_mysql, sql.c_str()) != 0)
+    switch(result->op_type)
     {
-        if(mysql_errno(m_mysql) == 1062)
+    case AccountRepositoryOpType::find_account:
+    {
+        std::optional<AccountRecord> record;
+        std::string error;
+        const bool ok = query_account_record(result->request_account, &record, &error);
+        result->success = ok;
+        result->record = record;
+        if(!ok)
         {
-            return false;
+            result->error = error.empty() ? "mysql_find_failed" : error;
         }
-        spdlog::error("mysql insert failed: {}", mysql_error(m_mysql));
-        return false;
+        break;
     }
+    case AccountRepositoryOpType::verify_password:
+    {
+        std::optional<AccountRecord> record;
+        std::string error;
+        const bool ok = query_account_record(result->request_account, &record, &error);
+        result->success = ok;
+        if(!ok)
+        {
+            result->error = error.empty() ? "mysql_verify_query_failed" : error;
+            break;
+        }
 
-    return true;
+        result->record = record;
+        result->password_ok = record.has_value() && verify_password_value(result->request_password, *record);
+        break;
+    }
+    case AccountRepositoryOpType::create_account:
+    {
+        if(result->request_account.empty())
+        {
+            result->success = true;
+            result->create_ok = false;
+            break;
+        }
+
+        std::string error;
+        result->create_ok = insert_account_record(result->request_account, result->request_password, &error);
+        result->success = error.empty();
+        if(!error.empty())
+        {
+            result->error = error;
+        }
+        break;
+    }
+    default:
+        result->success = false;
+        result->error = "mysql_unknown_operation";
+        break;
+    }
 }
 
 bool MySqlAccountRepository::ensure_connected()
@@ -187,7 +364,6 @@ bool MySqlAccountRepository::ensure_connected()
 
 bool MySqlAccountRepository::ensure_table()
 {
-    std::lock_guard lock(m_mutex);
     if(!ensure_connected())
     {
         return false;
@@ -201,19 +377,208 @@ bool MySqlAccountRepository::ensure_table()
     return true;
 }
 
-std::string MySqlAccountRepository::escape_string(const std::string& input)
+bool MySqlAccountRepository::query_account_record(const std::string& account,
+                                                  std::optional<AccountRecord>* out_record,
+                                                  std::string* error)
 {
-    if(m_mysql == nullptr)
+    if(out_record == nullptr)
     {
-        return input;
+        if(error != nullptr)
+        {
+            *error = "mysql_invalid_output";
+        }
+        return false;
     }
 
-    std::string out;
-    out.resize(input.size() * 2 + 1);
-    const auto escaped_length = mysql_real_escape_string(m_mysql,
-                                                          out.data(),
-                                                          input.data(),
-                                                          static_cast<unsigned long>(input.size()));
-    out.resize(escaped_length);
-    return out;
+    out_record->reset();
+
+    MYSQL_STMT* stmt = mysql_stmt_init(m_mysql);
+    if(stmt == nullptr)
+    {
+        if(error != nullptr)
+        {
+            *error = "mysql_stmt_init_failed";
+        }
+        return false;
+    }
+
+    bool ok = false;
+    do
+    {
+        if(mysql_stmt_prepare(stmt, kFindAccountSql, static_cast<unsigned long>(std::strlen(kFindAccountSql))) != 0)
+        {
+            if(error != nullptr)
+            {
+                *error = mysql_stmt_error(stmt);
+            }
+            break;
+        }
+
+        MYSQL_BIND bind_param[1]{};
+        unsigned long account_len = static_cast<unsigned long>(account.size());
+        bind_param[0].buffer_type = MYSQL_TYPE_STRING;
+        bind_param[0].buffer = const_cast<char*>(account.data());
+        bind_param[0].buffer_length = account_len;
+        bind_param[0].length = &account_len;
+
+        if(mysql_stmt_bind_param(stmt, bind_param) != 0)
+        {
+            if(error != nullptr)
+            {
+                *error = mysql_stmt_error(stmt);
+            }
+            break;
+        }
+
+        if(mysql_stmt_execute(stmt) != 0)
+        {
+            if(error != nullptr)
+            {
+                *error = mysql_stmt_error(stmt);
+            }
+            break;
+        }
+
+        std::array<char, 129> account_buf{};
+        std::array<char, 257> password_buf{};
+        std::array<char, 129> salt_buf{};
+        unsigned long account_out_len = 0;
+        unsigned long password_out_len = 0;
+        unsigned long salt_out_len = 0;
+        my_bool account_is_null = 0;
+        my_bool password_is_null = 0;
+        my_bool salt_is_null = 0;
+
+        MYSQL_BIND bind_result[3]{};
+        bind_result[0].buffer_type = MYSQL_TYPE_STRING;
+        bind_result[0].buffer = account_buf.data();
+        bind_result[0].buffer_length = static_cast<unsigned long>(account_buf.size());
+        bind_result[0].is_null = &account_is_null;
+        bind_result[0].length = &account_out_len;
+
+        bind_result[1].buffer_type = MYSQL_TYPE_STRING;
+        bind_result[1].buffer = password_buf.data();
+        bind_result[1].buffer_length = static_cast<unsigned long>(password_buf.size());
+        bind_result[1].is_null = &password_is_null;
+        bind_result[1].length = &password_out_len;
+
+        bind_result[2].buffer_type = MYSQL_TYPE_STRING;
+        bind_result[2].buffer = salt_buf.data();
+        bind_result[2].buffer_length = static_cast<unsigned long>(salt_buf.size());
+        bind_result[2].is_null = &salt_is_null;
+        bind_result[2].length = &salt_out_len;
+
+        if(mysql_stmt_bind_result(stmt, bind_result) != 0)
+        {
+            if(error != nullptr)
+            {
+                *error = mysql_stmt_error(stmt);
+            }
+            break;
+        }
+
+        const int fetch_rc = mysql_stmt_fetch(stmt);
+        if(fetch_rc == MYSQL_NO_DATA)
+        {
+            ok = true;
+            break;
+        }
+        if(fetch_rc != 0 && fetch_rc != MYSQL_DATA_TRUNCATED)
+        {
+            if(error != nullptr)
+            {
+                *error = mysql_stmt_error(stmt);
+            }
+            break;
+        }
+
+        AccountRecord record;
+        record.account.assign(account_buf.data(), std::min<unsigned long>(account_out_len, static_cast<unsigned long>(account_buf.size() - 1)));
+        record.password_hash.assign(password_buf.data(), std::min<unsigned long>(password_out_len, static_cast<unsigned long>(password_buf.size() - 1)));
+        record.salt.assign(salt_buf.data(), std::min<unsigned long>(salt_out_len, static_cast<unsigned long>(salt_buf.size() - 1)));
+        *out_record = record;
+        ok = true;
+    } while(false);
+
+    mysql_stmt_close(stmt);
+    return ok;
+}
+
+bool MySqlAccountRepository::insert_account_record(const std::string& account,
+                                                   const std::string& password,
+                                                   std::string* error)
+{
+    MYSQL_STMT* stmt = mysql_stmt_init(m_mysql);
+    if(stmt == nullptr)
+    {
+        if(error != nullptr)
+        {
+            *error = "mysql_stmt_init_failed";
+        }
+        return false;
+    }
+
+    bool created = false;
+    do
+    {
+        if(mysql_stmt_prepare(stmt, kInsertAccountSql, static_cast<unsigned long>(std::strlen(kInsertAccountSql))) != 0)
+        {
+            if(error != nullptr)
+            {
+                *error = mysql_stmt_error(stmt);
+            }
+            break;
+        }
+
+        const std::string salt = generate_salt_hex();
+        const std::string password_hash = make_password_hash(password, salt);
+        unsigned long account_len = static_cast<unsigned long>(account.size());
+        unsigned long password_len = static_cast<unsigned long>(password_hash.size());
+        unsigned long salt_len = static_cast<unsigned long>(salt.size());
+
+        MYSQL_BIND bind_param[3]{};
+        bind_param[0].buffer_type = MYSQL_TYPE_STRING;
+        bind_param[0].buffer = const_cast<char*>(account.data());
+        bind_param[0].buffer_length = account_len;
+        bind_param[0].length = &account_len;
+
+        bind_param[1].buffer_type = MYSQL_TYPE_STRING;
+        bind_param[1].buffer = const_cast<char*>(password_hash.data());
+        bind_param[1].buffer_length = password_len;
+        bind_param[1].length = &password_len;
+
+        bind_param[2].buffer_type = MYSQL_TYPE_STRING;
+        bind_param[2].buffer = const_cast<char*>(salt.data());
+        bind_param[2].buffer_length = salt_len;
+        bind_param[2].length = &salt_len;
+
+        if(mysql_stmt_bind_param(stmt, bind_param) != 0)
+        {
+            if(error != nullptr)
+            {
+                *error = mysql_stmt_error(stmt);
+            }
+            break;
+        }
+
+        if(mysql_stmt_execute(stmt) != 0)
+        {
+            if(mysql_stmt_errno(stmt) == 1062)
+            {
+                created = false;
+                break;
+            }
+
+            if(error != nullptr)
+            {
+                *error = mysql_stmt_error(stmt);
+            }
+            break;
+        }
+
+        created = true;
+    } while(false);
+
+    mysql_stmt_close(stmt);
+    return created;
 }

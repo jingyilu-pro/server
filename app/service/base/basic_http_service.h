@@ -28,6 +28,8 @@
 #include <event2/http.h>
 #include <event2/thread.h>
 #include <functional>
+#include <mutex>
+#include <unordered_set>
 #include <string>
 #include <thread>
 #include <unordered_map>
@@ -59,6 +61,9 @@ protected:
     static std::string extract_authorization_token(evhttp_request* request);
     static bool is_protobuf_content_type(evhttp_request* request);
     static std::string make_endpoint_text(const EndpointConfig& endpoint);
+    void retain_request(evhttp_request* request);
+    void release_request(evhttp_request* request);
+    virtual void on_event_loop_tick();
 
 private:
     static void global_request_callback(evhttp_request* request, void* arg);
@@ -74,4 +79,6 @@ private:
     evhttp* m_evhttp = nullptr;
     std::thread m_thread;
     std::atomic<bool> m_running{false};
+    std::unordered_set<evhttp_request*> m_owned_requests;
+    std::mutex m_owned_mutex;
 };

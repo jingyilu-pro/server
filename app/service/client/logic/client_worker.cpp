@@ -18,25 +18,17 @@
 
 #include "client_worker.h"
 
+#include "coromanager.h"
+#include "cororesult.h"
 #include "protocol/gateway.pb.h"
 
+#include <event2/buffer.h>
+#include <event2/event.h>
+#include <event2/http.h>
+
 #include <chrono>
-#include <cstring>
-#include <fcntl.h>
-#include <netdb.h>
-#include <sstream>
-#include <string>
-#include <vector>
-
-#include <arpa/inet.h>
-#include <netinet/in.h>
-#include <sys/select.h>
-#include <sys/socket.h>
-#include <sys/types.h>
-#include <unistd.h>
-
-namespace
-{
+#include <memory>
+#include <thread>
 
 struct HttpResponse
 {
@@ -45,6 +37,9 @@ struct HttpResponse
     bool timed_out = false;
     bool ok = false;
 };
+
+namespace
+{
 
 int64_t duration_us(std::chrono::steady_clock::time_point begin)
 {
@@ -57,252 +52,323 @@ std::string endpoint_path(const char* path)
     return std::string(path == nullptr ? "/" : path);
 }
 
-bool wait_socket_ready(int fd, int timeout_ms, bool read_wait)
+struct HttpClientOpResult : public CoroResult
 {
-    fd_set fds;
-    FD_ZERO(&fds);
-    FD_SET(fd, &fds);
-
-    timeval timeout;
-    timeout.tv_sec = timeout_ms / 1000;
-    timeout.tv_usec = (timeout_ms % 1000) * 1000;
-
-    int result = read_wait ? select(fd + 1, &fds, nullptr, nullptr, &timeout)
-                           : select(fd + 1, nullptr, &fds, nullptr, &timeout);
-    return result > 0;
-}
-
-bool set_non_blocking(int fd)
-{
-    int flags = fcntl(fd, F_GETFL, 0);
-    if(flags < 0)
-    {
-        return false;
-    }
-    if(fcntl(fd, F_SETFL, flags | O_NONBLOCK) < 0)
-    {
-        return false;
-    }
-    return true;
-}
-
-bool set_blocking(int fd)
-{
-    int flags = fcntl(fd, F_GETFL, 0);
-    if(flags < 0)
-    {
-        return false;
-    }
-    if(fcntl(fd, F_SETFL, flags & ~O_NONBLOCK) < 0)
-    {
-        return false;
-    }
-    return true;
-}
-
-bool connect_with_timeout(int fd, const sockaddr* addr, socklen_t addr_len, int timeout_ms, bool* timed_out)
-{
-    if(timed_out == nullptr)
-    {
-        return false;
-    }
-    *timed_out = false;
-
-    if(!set_non_blocking(fd))
-    {
-        return false;
-    }
-
-    int result = connect(fd, addr, addr_len);
-    if(result == 0)
-    {
-        set_blocking(fd);
-        return true;
-    }
-    if(errno != EINPROGRESS)
-    {
-        return false;
-    }
-
-    if(!wait_socket_ready(fd, timeout_ms, false))
-    {
-        *timed_out = true;
-        return false;
-    }
-
-    int so_error = 0;
-    socklen_t so_error_len = sizeof(so_error);
-    if(getsockopt(fd, SOL_SOCKET, SO_ERROR, &so_error, &so_error_len) != 0)
-    {
-        return false;
-    }
-    if(so_error != 0)
-    {
-        errno = so_error;
-        return false;
-    }
-
-    set_blocking(fd);
-    return true;
-}
-
-bool send_all(int fd, const std::string& data, int timeout_ms)
-{
-    size_t sent = 0;
-    while(sent < data.size())
-    {
-        if(!wait_socket_ready(fd, timeout_ms, false))
-        {
-            return false;
-        }
-
-        ssize_t n = send(fd, data.data() + sent, data.size() - sent, 0);
-        if(n <= 0)
-        {
-            return false;
-        }
-        sent += static_cast<size_t>(n);
-    }
-    return true;
-}
-
-bool recv_until_close(int fd, std::string* out, int timeout_ms, bool* timeout)
-{
-    if(out == nullptr || timeout == nullptr)
-    {
-        return false;
-    }
-
-    constexpr size_t kBufferSize = 8192;
-    char buffer[kBufferSize];
-
-    while(true)
-    {
-        if(!wait_socket_ready(fd, timeout_ms, true))
-        {
-            *timeout = true;
-            return false;
-        }
-
-        ssize_t n = recv(fd, buffer, kBufferSize, 0);
-        if(n < 0)
-        {
-            return false;
-        }
-        if(n == 0)
-        {
-            break;
-        }
-        out->append(buffer, static_cast<size_t>(n));
-    }
-
-    return true;
-}
-
-HttpResponse http_post(const EndpointConfig& endpoint,
-                       const char* path,
-                       const std::string& protobuf_body,
-                       int timeout_ms,
-                       const std::vector<std::string>& headers)
-{
+    EndpointConfig endpoint;
+    std::string path;
+    std::string request_body;
+    int timeout_ms = 2000;
+    std::vector<std::string> headers;
     HttpResponse response;
+    std::string error;
 
-    int fd = -1;
-
-    addrinfo hints{};
-    hints.ai_family = AF_UNSPEC;
-    hints.ai_socktype = SOCK_STREAM;
-
-    addrinfo* result = nullptr;
-    const std::string port_text = std::to_string(endpoint.port);
-    if(getaddrinfo(endpoint.host.c_str(), port_text.c_str(), &hints, &result) != 0)
+    void clear() override
     {
-        return response;
+        endpoint = {};
+        path.clear();
+        request_body.clear();
+        timeout_ms = 2000;
+        headers.clear();
+        response = {};
+        error.clear();
     }
 
-    bool connected = false;
-    bool connect_timeout = false;
-    for(addrinfo* current = result; current != nullptr; current = current->ai_next)
+    void worker() override
     {
-        fd = socket(current->ai_family, current->ai_socktype, current->ai_protocol);
-        if(fd < 0)
+        response = {};
+        error.clear();
+
+        event_base* base = event_base_new();
+        if(base == nullptr)
         {
-            continue;
+            error = "event_base_new_failed";
+            return;
         }
 
-        if(connect_with_timeout(fd, current->ai_addr, static_cast<socklen_t>(current->ai_addrlen), timeout_ms, &connect_timeout))
+        evhttp_connection* connection = evhttp_connection_base_new(base,
+                                                                   nullptr,
+                                                                   endpoint.host.c_str(),
+                                                                   static_cast<ev_uint16_t>(endpoint.port));
+        if(connection == nullptr)
         {
-            connected = true;
-            break;
+            event_base_free(base);
+            error = "evhttp_connection_base_new_failed";
+            return;
+        }
+        evhttp_connection_set_timeout(connection, std::max(1, timeout_ms / 1000));
+
+        struct RequestState
+        {
+            HttpClientOpResult* result = nullptr;
+        };
+
+        RequestState state;
+        state.result = this;
+
+        auto* request = evhttp_request_new(
+            [](evhttp_request* req, void* arg) {
+                auto* req_state = static_cast<RequestState*>(arg);
+                if(req_state == nullptr || req_state->result == nullptr)
+                {
+                    return;
+                }
+
+                if(req == nullptr)
+                {
+                    req_state->result->response.ok = false;
+                    if(req_state->result->error.empty())
+                    {
+                        req_state->result->error = "http_request_null";
+                    }
+                    return;
+                }
+
+                auto* input = evhttp_request_get_input_buffer(req);
+                if(input != nullptr)
+                {
+                    const size_t length = evbuffer_get_length(input);
+                    req_state->result->response.body.resize(length);
+                    if(length > 0)
+                    {
+                        evbuffer_copyout(input, req_state->result->response.body.data(), length);
+                    }
+                }
+
+                req_state->result->response.status_code = evhttp_request_get_response_code(req);
+                req_state->result->response.ok = req_state->result->response.status_code > 0;
+            },
+            &state);
+
+        if(request == nullptr)
+        {
+            evhttp_connection_free(connection);
+            event_base_free(base);
+            error = "evhttp_request_new_failed";
+            return;
         }
 
-        close(fd);
-        fd = -1;
-    }
-    freeaddrinfo(result);
+        evhttp_request_set_error_cb(
+            request,
+            [](evhttp_request_error err, void* arg) {
+                auto* req_state = static_cast<RequestState*>(arg);
+                if(req_state == nullptr || req_state->result == nullptr)
+                {
+                    return;
+                }
 
-    if(!connected || fd < 0)
+                req_state->result->response.ok = false;
+                req_state->result->response.timed_out = (err == EVREQ_HTTP_TIMEOUT);
+                if(req_state->result->error.empty())
+                {
+                    switch(err)
+                    {
+                    case EVREQ_HTTP_TIMEOUT:
+                        req_state->result->error = "http_timeout";
+                        break;
+                    case EVREQ_HTTP_EOF:
+                        req_state->result->error = "http_eof";
+                        break;
+                    case EVREQ_HTTP_INVALID_HEADER:
+                        req_state->result->error = "http_invalid_header";
+                        break;
+                    case EVREQ_HTTP_BUFFER_ERROR:
+                        req_state->result->error = "http_buffer_error";
+                        break;
+                    case EVREQ_HTTP_REQUEST_CANCEL:
+                        req_state->result->error = "http_request_cancel";
+                        break;
+                    case EVREQ_HTTP_DATA_TOO_LONG:
+                        req_state->result->error = "http_data_too_long";
+                        break;
+                    default:
+                        req_state->result->error = "http_unknown_error";
+                        break;
+                    }
+                }
+            });
+
+        auto* output_headers = evhttp_request_get_output_headers(request);
+        evhttp_add_header(output_headers, "Host", (endpoint.host + ":" + std::to_string(endpoint.port)).c_str());
+        evhttp_add_header(output_headers, "Connection", "close");
+        evhttp_add_header(output_headers, "Content-Type", "application/x-protobuf");
+        for(const auto& header : headers)
+        {
+            const auto colon_pos = header.find(':');
+            if(colon_pos == std::string::npos)
+            {
+                continue;
+            }
+            auto key = header.substr(0, colon_pos);
+            auto value = header.substr(colon_pos + 1);
+            while(!value.empty() && value.front() == ' ')
+            {
+                value.erase(value.begin());
+            }
+            if(!key.empty() && !value.empty())
+            {
+                evhttp_add_header(output_headers, key.c_str(), value.c_str());
+            }
+        }
+
+        auto* output_buffer = evhttp_request_get_output_buffer(request);
+        if(output_buffer != nullptr && !request_body.empty())
+        {
+            evbuffer_add(output_buffer, request_body.data(), request_body.size());
+        }
+
+        if(evhttp_make_request(connection, request, EVHTTP_REQ_POST, endpoint_path(path.c_str()).c_str()) != 0)
+        {
+            evhttp_request_free(request);
+            evhttp_connection_free(connection);
+            event_base_free(base);
+            error = "evhttp_make_request_failed";
+            return;
+        }
+
+        event_base_dispatch(base);
+
+        if(!response.ok && error.empty() && response.status_code <= 0)
+        {
+            error = "http_request_failed";
+        }
+
+        evhttp_connection_free(connection);
+        event_base_free(base);
+    }
+};
+
+class HttpClientManager : public CoroManager
+{
+public:
+    explicit HttpClientManager(int worker_count)
+        : CoroManager(worker_count)
     {
-        response.timed_out = connect_timeout;
-        return response;
+        CoroManager::init();
     }
 
-    std::ostringstream request;
-    request << "POST " << endpoint_path(path) << " HTTP/1.1\r\n";
-    request << "Host: " << endpoint.host << ":" << endpoint.port << "\r\n";
-    request << "Connection: close\r\n";
-    request << "Content-Type: application/x-protobuf\r\n";
-    for(const auto& header : headers)
+    ~HttpClientManager() override = default;
+
+public:
+    CoroResult* alloc() override
     {
-        request << header << "\r\n";
+        expand<HttpClientOpResult>();
+        return inner_alloc();
     }
-    request << "Content-Length: " << protobuf_body.size() << "\r\n\r\n";
-    request << protobuf_body;
+};
 
-    const auto request_text = request.str();
-    if(!send_all(fd, request_text, timeout_ms))
+struct HttpWaitState
+{
+    bool done = false;
+    bool has_result = false;
+    bool success = false;
+    HttpResponse response;
+};
+
+coro_task_t capture_http_result(CoroAwaitable awaitable,
+                                std::shared_ptr<HttpWaitState> state)
+{
+    auto* result = dynamic_cast<HttpClientOpResult*>(co_await awaitable);
+    if(!state)
     {
-        close(fd);
-        return response;
+        co_return;
     }
 
-    std::string raw_response;
-    bool timeout = false;
-    if(!recv_until_close(fd, &raw_response, timeout_ms, &timeout))
+    if(result != nullptr)
     {
-        response.timed_out = timeout;
-        close(fd);
-        return response;
+        state->response = result->response;
+        state->success = result->response.ok && result->error.empty();
+        state->has_result = true;
     }
-
-    close(fd);
-
-    auto head_end = raw_response.find("\r\n\r\n");
-    if(head_end == std::string::npos)
-    {
-        return response;
-    }
-
-    auto status_end = raw_response.find("\r\n");
-    if(status_end == std::string::npos)
-    {
-        return response;
-    }
-
-    auto status_line = raw_response.substr(0, status_end);
-    {
-        std::istringstream status_stream(status_line);
-        std::string http_version;
-        status_stream >> http_version;
-        status_stream >> response.status_code;
-    }
-
-    response.body = raw_response.substr(head_end + 4);
-    response.ok = (response.status_code > 0);
-    return response;
+    state->done = true;
 }
 
 } // namespace
+
+class ClientWorker::HttpClientManager : public ::HttpClientManager
+{
+public:
+    explicit HttpClientManager(int worker_count)
+        : ::HttpClientManager(worker_count)
+    {
+    }
+};
+
+ClientWorker::ClientWorker(int http_coro_workers)
+    : m_http_coro_workers(std::max(1, http_coro_workers))
+{
+    m_http_manager = std::make_unique<HttpClientManager>(m_http_coro_workers);
+}
+
+ClientWorker::~ClientWorker() = default;
+
+bool ClientWorker::run_http_awaitable(CoroAwaitable awaitable, HttpResponse* out_response, int timeout_ms) const
+{
+    if(out_response == nullptr)
+    {
+        return false;
+    }
+    *out_response = {};
+
+    auto wait_state = std::make_shared<HttpWaitState>();
+    capture_http_result(awaitable, wait_state);
+
+    if(timeout_ms <= 0)
+    {
+        timeout_ms = 2000;
+    }
+
+    auto begin = std::chrono::steady_clock::now();
+    while(std::chrono::duration_cast<std::chrono::milliseconds>(
+              std::chrono::steady_clock::now() - begin)
+              .count() <= timeout_ms)
+    {
+        if(m_http_manager)
+        {
+            m_http_manager->update();
+        }
+
+        if(wait_state->done)
+        {
+            if(wait_state->has_result)
+            {
+                *out_response = wait_state->response;
+                return wait_state->success;
+            }
+            return false;
+        }
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    }
+
+    out_response->timed_out = true;
+    return false;
+}
+
+CoroAwaitable ClientWorker::http_post_async(const EndpointConfig& endpoint,
+                                            const char* path,
+                                            const std::string& protobuf_body,
+                                            int timeout_ms,
+                                            const std::vector<std::string>& headers) const
+{
+    if(!m_http_manager)
+    {
+        return CoroAwaitable{nullptr, nullptr};
+    }
+
+    auto* result = dynamic_cast<HttpClientOpResult*>(m_http_manager->alloc());
+    if(result == nullptr)
+    {
+        return CoroAwaitable{m_http_manager.get(), nullptr};
+    }
+
+    result->endpoint = endpoint;
+    result->path = path == nullptr ? "/" : path;
+    result->request_body = protobuf_body;
+    result->timeout_ms = timeout_ms;
+    result->headers = headers;
+
+    return CoroAwaitable{m_http_manager.get(), result};
+}
 
 WorkerCycleResult ClientWorker::run(ClientPressureTask* task) const
 {
@@ -373,17 +439,20 @@ bool ClientWorker::do_manager_route(ClientPressureTask* task, StageSample* sampl
     request.SerializeToString(&request_data);
 
     auto begin = std::chrono::steady_clock::now();
-    auto response = http_post(task->manager_endpoint,
-                              "/v1/route/login",
-                              request_data,
-                              task->request_timeout_ms,
-                              {});
+    HttpResponse response;
+    const bool http_ok = run_http_awaitable(http_post_async(task->manager_endpoint,
+                                                            "/v1/route/login",
+                                                            request_data,
+                                                            task->request_timeout_ms,
+                                                            {}),
+                                            &response,
+                                            task->request_timeout_ms);
 
     sample->latency_us = duration_us(begin);
     sample->status_code = response.status_code;
     sample->timeout = response.timed_out;
 
-    if(!response.ok)
+    if(!http_ok)
     {
         sample->error_reason = response.timed_out ? "manager_timeout" : "manager_network_error";
         return false;
@@ -439,13 +508,16 @@ bool ClientWorker::do_register(ClientPressureTask* task, std::string* error_reas
     std::string request_data;
     request.SerializeToString(&request_data);
 
-    auto response = http_post(task->login_endpoint,
-                              "/v1/auth/register",
-                              request_data,
-                              task->request_timeout_ms,
-                              {});
+    HttpResponse response;
+    const bool http_ok = run_http_awaitable(http_post_async(task->login_endpoint,
+                                                            "/v1/auth/register",
+                                                            request_data,
+                                                            task->request_timeout_ms,
+                                                            {}),
+                                            &response,
+                                            task->request_timeout_ms);
 
-    if(!response.ok)
+    if(!http_ok)
     {
         if(error_reason != nullptr)
         {
@@ -472,16 +544,16 @@ bool ClientWorker::do_register(ClientPressureTask* task, std::string* error_reas
         return false;
     }
 
-    if(register_response.code() == 0 || register_response.code() == 40001)
+    if(register_response.code() != 0 && register_response.code() != 40001)
     {
-        return true;
+        if(error_reason != nullptr)
+        {
+            *error_reason = "register_code_" + std::to_string(register_response.code());
+        }
+        return false;
     }
 
-    if(error_reason != nullptr)
-    {
-        *error_reason = "register_code_" + std::to_string(register_response.code());
-    }
-    return false;
+    return true;
 }
 
 bool ClientWorker::do_login(ClientPressureTask* task, StageSample* sample) const
@@ -499,17 +571,20 @@ bool ClientWorker::do_login(ClientPressureTask* task, StageSample* sample) const
     request.SerializeToString(&request_data);
 
     auto begin = std::chrono::steady_clock::now();
-    auto response = http_post(task->login_endpoint,
-                              "/v1/auth/login",
-                              request_data,
-                              task->request_timeout_ms,
-                              {});
+    HttpResponse response;
+    bool http_ok = run_http_awaitable(http_post_async(task->login_endpoint,
+                                                      "/v1/auth/login",
+                                                      request_data,
+                                                      task->request_timeout_ms,
+                                                      {}),
+                                      &response,
+                                      task->request_timeout_ms);
 
     sample->latency_us = duration_us(begin);
     sample->status_code = response.status_code;
     sample->timeout = response.timed_out;
 
-    if(!response.ok)
+    if(!http_ok)
     {
         sample->error_reason = response.timed_out ? "login_timeout" : "login_network_error";
         return false;
@@ -533,16 +608,18 @@ bool ClientWorker::do_login(ClientPressureTask* task, StageSample* sample) const
             std::string register_error;
             if(do_register(task, &register_error))
             {
-                response = http_post(task->login_endpoint,
-                                     "/v1/auth/login",
-                                     request_data,
-                                     task->request_timeout_ms,
-                                     {});
+                http_ok = run_http_awaitable(http_post_async(task->login_endpoint,
+                                                             "/v1/auth/login",
+                                                             request_data,
+                                                             task->request_timeout_ms,
+                                                             {}),
+                                             &response,
+                                             task->request_timeout_ms);
                 sample->status_code = response.status_code;
                 sample->timeout = response.timed_out;
                 sample->latency_us = duration_us(begin);
 
-                if(!response.ok)
+                if(!http_ok)
                 {
                     sample->error_reason = response.timed_out ? "login_timeout" : "login_network_error";
                     return false;
@@ -614,17 +691,20 @@ bool ClientWorker::do_enter_game(const ClientPressureTask& task, StageSample* sa
     }
 
     auto begin = std::chrono::steady_clock::now();
-    auto response = http_post(task.game_endpoint,
-                              "/v1/game/enter",
-                              request_data,
-                              task.request_timeout_ms,
-                              headers);
+    HttpResponse response;
+    const bool http_ok = run_http_awaitable(http_post_async(task.game_endpoint,
+                                                            "/v1/game/enter",
+                                                            request_data,
+                                                            task.request_timeout_ms,
+                                                            headers),
+                                            &response,
+                                            task.request_timeout_ms);
 
     sample->latency_us = duration_us(begin);
     sample->status_code = response.status_code;
     sample->timeout = response.timed_out;
 
-    if(!response.ok)
+    if(!http_ok)
     {
         sample->error_reason = response.timed_out ? "game_timeout" : "game_network_error";
         return false;

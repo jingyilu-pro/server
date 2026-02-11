@@ -37,16 +37,30 @@ Server side directories are split by role (maskword-style):
 Core sections:
 
 - `server.manager/login/game`: HTTP listener endpoints.
-- `redis`: service-discovery backend for manager/login/game.
-- `mysql`: account storage for login.
+- `redis`: service-discovery backend for manager/login/game (`coro_workers` supported).
+  - `redis.op_timeout_ms` controls sync wait timeout for startup registration and sync list/unregister helper paths.
+- `mysql`: account storage for login (`coro_workers` supported).
 - `jwt`: token issuer + secret for login/game.
-- `client_pressure`: full-chain pressure settings.
+- `client_pressure`: full-chain pressure settings (`http.coro_workers` supported).
+
+Runtime behavior notes:
+
+- Redis and MySQL are startup hard dependencies for server modes.
+- If Redis/MySQL is unavailable, related service startup fails.
+- Startup includes blocking service registration into Redis.
 
 Environment overrides (recommended):
 
 - `GAME_MYSQL_PASSWORD`
 - `GAME_JWT_SECRET`
 - `GAME_REDIS_PASSWORD`
+
+You can bootstrap from `.env.example`:
+
+```bash
+cp .env.example .env
+export $(grep -v '^#' .env | xargs)
+```
 
 ## 5. Run modes
 

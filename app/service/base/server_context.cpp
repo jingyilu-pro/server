@@ -18,32 +18,53 @@
 
 #include "server_context.h"
 
-#include "memory_account_repository.h"
+#include "jwt_token_provider.h"
 #include "mysql_account_repository.h"
 #include "redis_service_discovery.h"
-#include "jwt_token_provider.h"
-
-#include "log/glogger.h"
 
 ServerContext create_server_context(const RuntimeConfig& config)
 {
     ServerContext context;
 
-    context.discovery = std::make_shared<RedisServiceDiscovery>(config.redis);
+    context.manager_discovery = std::make_shared<RedisServiceDiscovery>(config.redis);
+    context.login_discovery = std::make_shared<RedisServiceDiscovery>(config.redis);
+    context.game_discovery = std::make_shared<RedisServiceDiscovery>(config.redis);
+    context.login_account_repository = std::make_shared<MySqlAccountRepository>(config.mysql);
+    context.login_token_provider = std::make_shared<JwtTokenProvider>(config.jwt);
+    context.game_token_provider = context.login_token_provider;
 
-    auto mysql_repository = std::make_shared<MySqlAccountRepository>(config.mysql);
-    if(mysql_repository->ready())
+    if(context.manager_discovery == nullptr || !context.manager_discovery->ready())
     {
-        context.account_repository = mysql_repository;
+        context.ready = false;
+        context.error = "manager redis discovery not ready";
+        return context;
     }
-    else
+    if(context.login_discovery == nullptr || !context.login_discovery->ready())
     {
-        spdlog::warn("mysql repository unavailable, fallback to in-memory account repository");
-        context.account_repository = std::make_shared<MemoryAccountRepository>();
+        context.ready = false;
+        context.error = "login redis discovery not ready";
+        return context;
+    }
+    if(context.game_discovery == nullptr || !context.game_discovery->ready())
+    {
+        context.ready = false;
+        context.error = "game redis discovery not ready";
+        return context;
+    }
+    if(context.login_account_repository == nullptr || !context.login_account_repository->ready())
+    {
+        context.ready = false;
+        context.error = "mysql account repository not ready";
+        return context;
+    }
+    if(context.login_token_provider == nullptr || context.game_token_provider == nullptr)
+    {
+        context.ready = false;
+        context.error = "token provider not ready";
+        return context;
     }
 
-    context.token_provider = std::make_shared<JwtTokenProvider>(config.jwt);
-
+    context.ready = true;
     return context;
 }
 

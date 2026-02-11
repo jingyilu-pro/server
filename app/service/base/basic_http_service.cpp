@@ -102,6 +102,18 @@ bool BasicHttpService::stop()
         m_thread.join();
     }
 
+    {
+        std::lock_guard lock(m_owned_mutex);
+        for(auto* request : m_owned_requests)
+        {
+            if(request != nullptr)
+            {
+                evhttp_request_free(request);
+            }
+        }
+        m_owned_requests.clear();
+    }
+
     if(m_evhttp != nullptr)
     {
         evhttp_free(m_evhttp);
@@ -131,6 +143,47 @@ bool BasicHttpService::register_handler(const std::string& path, Handler handler
     }
     m_handlers[path] = std::move(handler);
     return true;
+}
+
+void BasicHttpService::retain_request(evhttp_request* request)
+{
+    if(request == nullptr)
+    {
+        return;
+    }
+
+    evhttp_request_own(request);
+    std::lock_guard lock(m_owned_mutex);
+    m_owned_requests.insert(request);
+}
+
+void BasicHttpService::release_request(evhttp_request* request)
+{
+    if(request == nullptr)
+    {
+        return;
+    }
+
+    std::lock_guard lock(m_owned_mutex);
+    const auto iter = m_owned_requests.find(request);
+    if(iter == m_owned_requests.end())
+    {
+        return;
+    }
+
+    m_owned_requests.erase(iter);
+
+    if(evhttp_request_get_connection(request) != nullptr)
+    {
+        evhttp_send_reply_end(request);
+        return;
+    }
+
+    evhttp_request_free(request);
+}
+
+void BasicHttpService::on_event_loop_tick()
+{
 }
 
 std::string BasicHttpService::read_request_body(evhttp_request* request)
@@ -324,6 +377,7 @@ void BasicHttpService::event_loop()
 
     while(m_running.load())
     {
+        on_event_loop_tick();
         const auto code = event_base_loop(m_event_base, EVLOOP_ONCE | EVLOOP_NONBLOCK);
         if(code != 0)
         {
