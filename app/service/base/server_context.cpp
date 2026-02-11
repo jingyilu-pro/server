@@ -16,23 +16,34 @@
 // 3. This notice may not be removed or altered from any source distribution.
 //
 
-#pragma once
+#include "server_context.h"
 
-#include "client_pressure_types.h"
+#include "memory_account_repository.h"
+#include "mysql_account_repository.h"
+#include "redis_service_discovery.h"
+#include "jwt_token_provider.h"
 
-#include <string>
+#include "log/glogger.h"
 
-class ClientWorker
+ServerContext create_server_context(const RuntimeConfig& config)
 {
-public:
-    ClientWorker() = default;
-    ~ClientWorker() = default;
+    ServerContext context;
 
-    WorkerCycleResult run(ClientPressureTask* task) const;
+    context.discovery = std::make_shared<RedisServiceDiscovery>(config.redis);
 
-private:
-    bool do_manager_route(ClientPressureTask* task, StageSample* sample) const;
-    bool do_login(ClientPressureTask* task, StageSample* sample) const;
-    bool do_register(ClientPressureTask* task, std::string* error_reason) const;
-    bool do_enter_game(const ClientPressureTask& task, StageSample* sample) const;
-};
+    auto mysql_repository = std::make_shared<MySqlAccountRepository>(config.mysql);
+    if(mysql_repository->ready())
+    {
+        context.account_repository = mysql_repository;
+    }
+    else
+    {
+        spdlog::warn("mysql repository unavailable, fallback to in-memory account repository");
+        context.account_repository = std::make_shared<MemoryAccountRepository>();
+    }
+
+    context.token_provider = std::make_shared<JwtTokenProvider>(config.jwt);
+
+    return context;
+}
+

@@ -106,6 +106,7 @@ ExternalProject_Add(mariadb_external_project
 				)
 include_directories(BEFORE SYSTEM ${MARIADB_INSTALL_DIR}/include)
 link_directories(${MARIADB_INSTALL_DIR}/lib)
+link_directories(${MARIADB_INSTALL_DIR}/lib/mariadb)
 
 # Build spdlog as an external project.
 set(SPDLOG_INSTALL_DIR ${CMAKE_BINARY_DIR}/libs/spdlog)
@@ -231,6 +232,7 @@ link_directories(${TINYXML_INSTALL_DIR}/lib)
 set(DEPENDENCIES_LIBS ${DEPENDENCIES_LIBS} -ltinyxml2)
 
 set(DEPENDENCIES_LIBS ${DEPENDENCIES_LIBS} -levent -levent_core -levent_extra -levent_pthreads)
+set(DEPENDENCIES_LIBS ${DEPENDENCIES_LIBS} -lhiredis -lmariadb -ljwt -lssl -lcrypto -ljansson)
 
 
 # ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

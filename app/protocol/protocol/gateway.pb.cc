@@ -62,6 +62,10 @@ inline constexpr GameEnterResponse::Impl_::Impl_(
         message_(
             &::google::protobuf::internal::fixed_address_empty_string,
             ::_pbi::ConstantInitialized()),
+        trace_id_(
+            &::google::protobuf::internal::fixed_address_empty_string,
+            ::_pbi::ConstantInitialized()),
+        server_time_ms_{::int64_t{0}},
         code_{0} {}
 
 template <typename>
@@ -141,6 +145,70 @@ struct EndpointDefaultTypeInternal {
 PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT
     PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 EndpointDefaultTypeInternal _Endpoint_default_instance_;
 
+inline constexpr AuthRegisterResponse::Impl_::Impl_(
+    [[maybe_unused]] ::google::protobuf::internal::InternalVisibility visibility,
+    ::_pbi::ConstantInitialized) noexcept
+      : _cached_size_{0},
+        message_(
+            &::google::protobuf::internal::fixed_address_empty_string,
+            ::_pbi::ConstantInitialized()),
+        trace_id_(
+            &::google::protobuf::internal::fixed_address_empty_string,
+            ::_pbi::ConstantInitialized()),
+        server_time_ms_{::int64_t{0}},
+        code_{0} {}
+
+template <typename>
+PROTOBUF_CONSTEXPR AuthRegisterResponse::AuthRegisterResponse(::_pbi::ConstantInitialized)
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+    : ::google::protobuf::Message(AuthRegisterResponse_class_data_.base()),
+#else   // PROTOBUF_CUSTOM_VTABLE
+    : ::google::protobuf::Message(),
+#endif  // PROTOBUF_CUSTOM_VTABLE
+      _impl_(internal_visibility(), ::_pbi::ConstantInitialized()) {
+}
+struct AuthRegisterResponseDefaultTypeInternal {
+  PROTOBUF_CONSTEXPR AuthRegisterResponseDefaultTypeInternal() : _instance(::_pbi::ConstantInitialized{}) {}
+  ~AuthRegisterResponseDefaultTypeInternal() {}
+  union {
+    AuthRegisterResponse _instance;
+  };
+};
+
+PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT
+    PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 AuthRegisterResponseDefaultTypeInternal _AuthRegisterResponse_default_instance_;
+
+inline constexpr AuthRegisterRequest::Impl_::Impl_(
+    [[maybe_unused]] ::google::protobuf::internal::InternalVisibility visibility,
+    ::_pbi::ConstantInitialized) noexcept
+      : _cached_size_{0},
+        account_(
+            &::google::protobuf::internal::fixed_address_empty_string,
+            ::_pbi::ConstantInitialized()),
+        password_(
+            &::google::protobuf::internal::fixed_address_empty_string,
+            ::_pbi::ConstantInitialized()) {}
+
+template <typename>
+PROTOBUF_CONSTEXPR AuthRegisterRequest::AuthRegisterRequest(::_pbi::ConstantInitialized)
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+    : ::google::protobuf::Message(AuthRegisterRequest_class_data_.base()),
+#else   // PROTOBUF_CUSTOM_VTABLE
+    : ::google::protobuf::Message(),
+#endif  // PROTOBUF_CUSTOM_VTABLE
+      _impl_(internal_visibility(), ::_pbi::ConstantInitialized()) {
+}
+struct AuthRegisterRequestDefaultTypeInternal {
+  PROTOBUF_CONSTEXPR AuthRegisterRequestDefaultTypeInternal() : _instance(::_pbi::ConstantInitialized{}) {}
+  ~AuthRegisterRequestDefaultTypeInternal() {}
+  union {
+    AuthRegisterRequest _instance;
+  };
+};
+
+PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT
+    PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 AuthRegisterRequestDefaultTypeInternal _AuthRegisterRequest_default_instance_;
+
 inline constexpr AuthLoginRequest::Impl_::Impl_(
     [[maybe_unused]] ::google::protobuf::internal::InternalVisibility visibility,
     ::_pbi::ConstantInitialized) noexcept
@@ -179,8 +247,12 @@ inline constexpr RouteLoginResponse::Impl_::Impl_(
         message_(
             &::google::protobuf::internal::fixed_address_empty_string,
             ::_pbi::ConstantInitialized()),
+        trace_id_(
+            &::google::protobuf::internal::fixed_address_empty_string,
+            ::_pbi::ConstantInitialized()),
         login_endpoint_{nullptr},
         game_endpoint_{nullptr},
+        server_time_ms_{::int64_t{0}},
         code_{0} {}
 
 template <typename>
@@ -213,7 +285,11 @@ inline constexpr AuthLoginResponse::Impl_::Impl_(
         message_(
             &::google::protobuf::internal::fixed_address_empty_string,
             ::_pbi::ConstantInitialized()),
+        trace_id_(
+            &::google::protobuf::internal::fixed_address_empty_string,
+            ::_pbi::ConstantInitialized()),
         game_endpoint_{nullptr},
+        server_time_ms_{::int64_t{0}},
         code_{0} {}
 
 template <typename>
@@ -257,15 +333,19 @@ const ::uint32_t
         0,
         0x081, // bitmap
         PROTOBUF_FIELD_OFFSET(::gateway::RouteLoginResponse, _impl_._has_bits_),
-        7, // hasbit index offset
+        9, // hasbit index offset
         PROTOBUF_FIELD_OFFSET(::gateway::RouteLoginResponse, _impl_.code_),
         PROTOBUF_FIELD_OFFSET(::gateway::RouteLoginResponse, _impl_.login_endpoint_),
         PROTOBUF_FIELD_OFFSET(::gateway::RouteLoginResponse, _impl_.game_endpoint_),
         PROTOBUF_FIELD_OFFSET(::gateway::RouteLoginResponse, _impl_.message_),
-        3,
-        1,
+        PROTOBUF_FIELD_OFFSET(::gateway::RouteLoginResponse, _impl_.trace_id_),
+        PROTOBUF_FIELD_OFFSET(::gateway::RouteLoginResponse, _impl_.server_time_ms_),
+        5,
         2,
+        3,
         0,
+        1,
+        4,
         0x081, // bitmap
         PROTOBUF_FIELD_OFFSET(::gateway::AuthLoginRequest, _impl_._has_bits_),
         5, // hasbit index offset
@@ -274,16 +354,38 @@ const ::uint32_t
         0,
         1,
         0x081, // bitmap
-        PROTOBUF_FIELD_OFFSET(::gateway::AuthLoginResponse, _impl_._has_bits_),
+        PROTOBUF_FIELD_OFFSET(::gateway::AuthRegisterRequest, _impl_._has_bits_),
+        5, // hasbit index offset
+        PROTOBUF_FIELD_OFFSET(::gateway::AuthRegisterRequest, _impl_.account_),
+        PROTOBUF_FIELD_OFFSET(::gateway::AuthRegisterRequest, _impl_.password_),
+        0,
+        1,
+        0x081, // bitmap
+        PROTOBUF_FIELD_OFFSET(::gateway::AuthRegisterResponse, _impl_._has_bits_),
         7, // hasbit index offset
+        PROTOBUF_FIELD_OFFSET(::gateway::AuthRegisterResponse, _impl_.code_),
+        PROTOBUF_FIELD_OFFSET(::gateway::AuthRegisterResponse, _impl_.message_),
+        PROTOBUF_FIELD_OFFSET(::gateway::AuthRegisterResponse, _impl_.trace_id_),
+        PROTOBUF_FIELD_OFFSET(::gateway::AuthRegisterResponse, _impl_.server_time_ms_),
+        3,
+        0,
+        1,
+        2,
+        0x081, // bitmap
+        PROTOBUF_FIELD_OFFSET(::gateway::AuthLoginResponse, _impl_._has_bits_),
+        9, // hasbit index offset
         PROTOBUF_FIELD_OFFSET(::gateway::AuthLoginResponse, _impl_.code_),
         PROTOBUF_FIELD_OFFSET(::gateway::AuthLoginResponse, _impl_.jwt_),
         PROTOBUF_FIELD_OFFSET(::gateway::AuthLoginResponse, _impl_.game_endpoint_),
         PROTOBUF_FIELD_OFFSET(::gateway::AuthLoginResponse, _impl_.message_),
-        3,
+        PROTOBUF_FIELD_OFFSET(::gateway::AuthLoginResponse, _impl_.trace_id_),
+        PROTOBUF_FIELD_OFFSET(::gateway::AuthLoginResponse, _impl_.server_time_ms_),
+        5,
         0,
-        2,
+        3,
         1,
+        2,
+        4,
         0x081, // bitmap
         PROTOBUF_FIELD_OFFSET(::gateway::GameEnterRequest, _impl_._has_bits_),
         4, // hasbit index offset
@@ -291,11 +393,15 @@ const ::uint32_t
         0,
         0x081, // bitmap
         PROTOBUF_FIELD_OFFSET(::gateway::GameEnterResponse, _impl_._has_bits_),
-        5, // hasbit index offset
+        7, // hasbit index offset
         PROTOBUF_FIELD_OFFSET(::gateway::GameEnterResponse, _impl_.code_),
         PROTOBUF_FIELD_OFFSET(::gateway::GameEnterResponse, _impl_.message_),
-        1,
+        PROTOBUF_FIELD_OFFSET(::gateway::GameEnterResponse, _impl_.trace_id_),
+        PROTOBUF_FIELD_OFFSET(::gateway::GameEnterResponse, _impl_.server_time_ms_),
+        3,
         0,
+        1,
+        2,
 };
 
 static const ::_pbi::MigrationSchema
@@ -303,16 +409,20 @@ static const ::_pbi::MigrationSchema
         {0, sizeof(::gateway::Endpoint)},
         {7, sizeof(::gateway::RouteLoginRequest)},
         {12, sizeof(::gateway::RouteLoginResponse)},
-        {23, sizeof(::gateway::AuthLoginRequest)},
-        {30, sizeof(::gateway::AuthLoginResponse)},
-        {41, sizeof(::gateway::GameEnterRequest)},
-        {46, sizeof(::gateway::GameEnterResponse)},
+        {27, sizeof(::gateway::AuthLoginRequest)},
+        {34, sizeof(::gateway::AuthRegisterRequest)},
+        {41, sizeof(::gateway::AuthRegisterResponse)},
+        {52, sizeof(::gateway::AuthLoginResponse)},
+        {67, sizeof(::gateway::GameEnterRequest)},
+        {72, sizeof(::gateway::GameEnterResponse)},
 };
 static const ::_pb::Message* PROTOBUF_NONNULL const file_default_instances[] = {
     &::gateway::_Endpoint_default_instance_._instance,
     &::gateway::_RouteLoginRequest_default_instance_._instance,
     &::gateway::_RouteLoginResponse_default_instance_._instance,
     &::gateway::_AuthLoginRequest_default_instance_._instance,
+    &::gateway::_AuthRegisterRequest_default_instance_._instance,
+    &::gateway::_AuthRegisterResponse_default_instance_._instance,
     &::gateway::_AuthLoginResponse_default_instance_._instance,
     &::gateway::_GameEnterRequest_default_instance_._instance,
     &::gateway::_GameEnterResponse_default_instance_._instance,
@@ -321,29 +431,36 @@ const char descriptor_table_protodef_gateway_2eproto[] ABSL_ATTRIBUTE_SECTION_VA
     protodesc_cold) = {
     "\n\rgateway.proto\022\007gateway\"&\n\010Endpoint\022\014\n\004"
     "host\030\001 \001(\t\022\014\n\004port\030\002 \001(\r\"+\n\021RouteLoginRe"
-    "quest\022\026\n\016client_version\030\001 \001(\t\"\210\001\n\022RouteL"
+    "quest\022\026\n\016client_version\030\001 \001(\t\"\262\001\n\022RouteL"
     "oginResponse\022\014\n\004code\030\001 \001(\005\022)\n\016login_endp"
     "oint\030\002 \001(\0132\021.gateway.Endpoint\022(\n\rgame_en"
     "dpoint\030\003 \001(\0132\021.gateway.Endpoint\022\017\n\007messa"
-    "ge\030\004 \001(\t\"5\n\020AuthLoginRequest\022\017\n\007account\030"
-    "\001 \001(\t\022\020\n\010password\030\002 \001(\t\"i\n\021AuthLoginResp"
-    "onse\022\014\n\004code\030\001 \001(\005\022\013\n\003jwt\030\002 \001(\t\022(\n\rgame_"
-    "endpoint\030\003 \001(\0132\021.gateway.Endpoint\022\017\n\007mes"
-    "sage\030\004 \001(\t\"#\n\020GameEnterRequest\022\017\n\007accoun"
-    "t\030\001 \001(\t\"2\n\021GameEnterResponse\022\014\n\004code\030\001 \001"
-    "(\005\022\017\n\007message\030\002 \001(\tb\006proto3"
+    "ge\030\004 \001(\t\022\020\n\010trace_id\030\005 \001(\t\022\026\n\016server_tim"
+    "e_ms\030\006 \001(\003\"5\n\020AuthLoginRequest\022\017\n\007accoun"
+    "t\030\001 \001(\t\022\020\n\010password\030\002 \001(\t\"8\n\023AuthRegiste"
+    "rRequest\022\017\n\007account\030\001 \001(\t\022\020\n\010password\030\002 "
+    "\001(\t\"_\n\024AuthRegisterResponse\022\014\n\004code\030\001 \001("
+    "\005\022\017\n\007message\030\002 \001(\t\022\020\n\010trace_id\030\003 \001(\t\022\026\n\016"
+    "server_time_ms\030\004 \001(\003\"\223\001\n\021AuthLoginRespon"
+    "se\022\014\n\004code\030\001 \001(\005\022\013\n\003jwt\030\002 \001(\t\022(\n\rgame_en"
+    "dpoint\030\003 \001(\0132\021.gateway.Endpoint\022\017\n\007messa"
+    "ge\030\004 \001(\t\022\020\n\010trace_id\030\005 \001(\t\022\026\n\016server_tim"
+    "e_ms\030\006 \001(\003\"#\n\020GameEnterRequest\022\017\n\007accoun"
+    "t\030\001 \001(\t\"\\\n\021GameEnterResponse\022\014\n\004code\030\001 \001"
+    "(\005\022\017\n\007message\030\002 \001(\t\022\020\n\010trace_id\030\003 \001(\t\022\026\n"
+    "\016server_time_ms\030\004 \001(\003b\006proto3"
 };
 static ::absl::once_flag descriptor_table_gateway_2eproto_once;
 PROTOBUF_CONSTINIT const ::_pbi::DescriptorTable descriptor_table_gateway_2eproto = {
     false,
     false,
-    507,
+    789,
     descriptor_table_protodef_gateway_2eproto,
     "gateway.proto",
     &descriptor_table_gateway_2eproto_once,
     nullptr,
     0,
-    7,
+    9,
     schemas,
     file_default_instances,
     TableStruct_gateway_2eproto::offsets,
@@ -960,7 +1077,8 @@ PROTOBUF_NDEBUG_INLINE RouteLoginResponse::Impl_::Impl_(
     [[maybe_unused]] const ::gateway::RouteLoginResponse& from_msg)
       : _has_bits_{from._has_bits_},
         _cached_size_{0},
-        message_(arena, from.message_) {}
+        message_(arena, from.message_),
+        trace_id_(arena, from.trace_id_) {}
 
 RouteLoginResponse::RouteLoginResponse(
     ::google::protobuf::Arena* PROTOBUF_NULLABLE arena,
@@ -976,13 +1094,19 @@ RouteLoginResponse::RouteLoginResponse(
       from._internal_metadata_);
   new (&_impl_) Impl_(internal_visibility(), arena, from._impl_, from);
   ::uint32_t cached_has_bits = _impl_._has_bits_[0];
-  _impl_.login_endpoint_ = (CheckHasBit(cached_has_bits, 0x00000002U))
+  _impl_.login_endpoint_ = (CheckHasBit(cached_has_bits, 0x00000004U))
                 ? ::google::protobuf::Message::CopyConstruct(arena, *from._impl_.login_endpoint_)
                 : nullptr;
-  _impl_.game_endpoint_ = (CheckHasBit(cached_has_bits, 0x00000004U))
+  _impl_.game_endpoint_ = (CheckHasBit(cached_has_bits, 0x00000008U))
                 ? ::google::protobuf::Message::CopyConstruct(arena, *from._impl_.game_endpoint_)
                 : nullptr;
-  _impl_.code_ = from._impl_.code_;
+  ::memcpy(reinterpret_cast<char*>(&_impl_) +
+               offsetof(Impl_, server_time_ms_),
+           reinterpret_cast<const char*>(&from._impl_) +
+               offsetof(Impl_, server_time_ms_),
+           offsetof(Impl_, code_) -
+               offsetof(Impl_, server_time_ms_) +
+               sizeof(Impl_::code_));
 
   // @@protoc_insertion_point(copy_constructor:gateway.RouteLoginResponse)
 }
@@ -990,7 +1114,8 @@ PROTOBUF_NDEBUG_INLINE RouteLoginResponse::Impl_::Impl_(
     [[maybe_unused]] ::google::protobuf::internal::InternalVisibility visibility,
     [[maybe_unused]] ::google::protobuf::Arena* PROTOBUF_NULLABLE arena)
       : _cached_size_{0},
-        message_(arena) {}
+        message_(arena),
+        trace_id_(arena) {}
 
 inline void RouteLoginResponse::SharedCtor(::_pb::Arena* PROTOBUF_NULLABLE arena) {
   new (&_impl_) Impl_(internal_visibility(), arena);
@@ -1013,6 +1138,7 @@ inline void RouteLoginResponse::SharedDtor(MessageLite& self) {
   this_._internal_metadata_.Delete<::google::protobuf::UnknownFieldSet>();
   ABSL_DCHECK(this_.GetArena() == nullptr);
   this_._impl_.message_.Destroy();
+  this_._impl_.trace_id_.Destroy();
   delete this_._impl_.login_endpoint_;
   delete this_._impl_.game_endpoint_;
   this_._impl_.~Impl_();
@@ -1061,16 +1187,16 @@ RouteLoginResponse::GetClassData() const {
   return RouteLoginResponse_class_data_.base();
 }
 PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1
-const ::_pbi::TcParseTable<2, 4, 2, 42, 2>
+const ::_pbi::TcParseTable<3, 6, 2, 50, 2>
 RouteLoginResponse::_table_ = {
   {
     PROTOBUF_FIELD_OFFSET(RouteLoginResponse, _impl_._has_bits_),
     0, // no _extensions_
-    4, 24,  // max_field_number, fast_idx_mask
+    6, 56,  // max_field_number, fast_idx_mask
     offsetof(decltype(_table_), field_lookup_table),
-    4294967280,  // skipmap
+    4294967232,  // skipmap
     offsetof(decltype(_table_), field_entries),
-    4,  // num_field_entries
+    6,  // num_field_entries
     2,  // num_aux_entries
     offsetof(decltype(_table_), aux_entries),
     RouteLoginResponse_class_data_.base(),
@@ -1080,42 +1206,57 @@ RouteLoginResponse::_table_ = {
     ::_pbi::TcParser::GetTable<::gateway::RouteLoginResponse>(),  // to_prefetch
     #endif  // PROTOBUF_PREFETCH_PARSE_TABLE
   }, {{
+    {::_pbi::TcParser::MiniParse, {}},
+    // int32 code = 1;
+    {::_pbi::TcParser::SingularVarintNoZag1<::uint32_t, offsetof(RouteLoginResponse, _impl_.code_), 5>(),
+     {8, 5, 0,
+      PROTOBUF_FIELD_OFFSET(RouteLoginResponse, _impl_.code_)}},
+    // .gateway.Endpoint login_endpoint = 2;
+    {::_pbi::TcParser::FastMtS1,
+     {18, 2, 0,
+      PROTOBUF_FIELD_OFFSET(RouteLoginResponse, _impl_.login_endpoint_)}},
+    // .gateway.Endpoint game_endpoint = 3;
+    {::_pbi::TcParser::FastMtS1,
+     {26, 3, 1,
+      PROTOBUF_FIELD_OFFSET(RouteLoginResponse, _impl_.game_endpoint_)}},
     // string message = 4;
     {::_pbi::TcParser::FastUS1,
      {34, 0, 0,
       PROTOBUF_FIELD_OFFSET(RouteLoginResponse, _impl_.message_)}},
-    // int32 code = 1;
-    {::_pbi::TcParser::SingularVarintNoZag1<::uint32_t, offsetof(RouteLoginResponse, _impl_.code_), 3>(),
-     {8, 3, 0,
-      PROTOBUF_FIELD_OFFSET(RouteLoginResponse, _impl_.code_)}},
-    // .gateway.Endpoint login_endpoint = 2;
-    {::_pbi::TcParser::FastMtS1,
-     {18, 1, 0,
-      PROTOBUF_FIELD_OFFSET(RouteLoginResponse, _impl_.login_endpoint_)}},
-    // .gateway.Endpoint game_endpoint = 3;
-    {::_pbi::TcParser::FastMtS1,
-     {26, 2, 1,
-      PROTOBUF_FIELD_OFFSET(RouteLoginResponse, _impl_.game_endpoint_)}},
+    // string trace_id = 5;
+    {::_pbi::TcParser::FastUS1,
+     {42, 1, 0,
+      PROTOBUF_FIELD_OFFSET(RouteLoginResponse, _impl_.trace_id_)}},
+    // int64 server_time_ms = 6;
+    {::_pbi::TcParser::SingularVarintNoZag1<::uint64_t, offsetof(RouteLoginResponse, _impl_.server_time_ms_), 4>(),
+     {48, 4, 0,
+      PROTOBUF_FIELD_OFFSET(RouteLoginResponse, _impl_.server_time_ms_)}},
+    {::_pbi::TcParser::MiniParse, {}},
   }}, {{
     65535, 65535
   }}, {{
     // int32 code = 1;
-    {PROTOBUF_FIELD_OFFSET(RouteLoginResponse, _impl_.code_), _Internal::kHasBitsOffset + 3, 0, (0 | ::_fl::kFcOptional | ::_fl::kInt32)},
+    {PROTOBUF_FIELD_OFFSET(RouteLoginResponse, _impl_.code_), _Internal::kHasBitsOffset + 5, 0, (0 | ::_fl::kFcOptional | ::_fl::kInt32)},
     // .gateway.Endpoint login_endpoint = 2;
-    {PROTOBUF_FIELD_OFFSET(RouteLoginResponse, _impl_.login_endpoint_), _Internal::kHasBitsOffset + 1, 0, (0 | ::_fl::kFcOptional | ::_fl::kMessage | ::_fl::kTvTable)},
+    {PROTOBUF_FIELD_OFFSET(RouteLoginResponse, _impl_.login_endpoint_), _Internal::kHasBitsOffset + 2, 0, (0 | ::_fl::kFcOptional | ::_fl::kMessage | ::_fl::kTvTable)},
     // .gateway.Endpoint game_endpoint = 3;
-    {PROTOBUF_FIELD_OFFSET(RouteLoginResponse, _impl_.game_endpoint_), _Internal::kHasBitsOffset + 2, 1, (0 | ::_fl::kFcOptional | ::_fl::kMessage | ::_fl::kTvTable)},
+    {PROTOBUF_FIELD_OFFSET(RouteLoginResponse, _impl_.game_endpoint_), _Internal::kHasBitsOffset + 3, 1, (0 | ::_fl::kFcOptional | ::_fl::kMessage | ::_fl::kTvTable)},
     // string message = 4;
     {PROTOBUF_FIELD_OFFSET(RouteLoginResponse, _impl_.message_), _Internal::kHasBitsOffset + 0, 0, (0 | ::_fl::kFcOptional | ::_fl::kUtf8String | ::_fl::kRepAString)},
+    // string trace_id = 5;
+    {PROTOBUF_FIELD_OFFSET(RouteLoginResponse, _impl_.trace_id_), _Internal::kHasBitsOffset + 1, 0, (0 | ::_fl::kFcOptional | ::_fl::kUtf8String | ::_fl::kRepAString)},
+    // int64 server_time_ms = 6;
+    {PROTOBUF_FIELD_OFFSET(RouteLoginResponse, _impl_.server_time_ms_), _Internal::kHasBitsOffset + 4, 0, (0 | ::_fl::kFcOptional | ::_fl::kInt64)},
   }},
   {{
       {::_pbi::TcParser::GetTable<::gateway::Endpoint>()},
       {::_pbi::TcParser::GetTable<::gateway::Endpoint>()},
   }},
   {{
-    "\32\0\0\0\7\0\0\0"
+    "\32\0\0\0\7\10\0\0"
     "gateway.RouteLoginResponse"
     "message"
+    "trace_id"
   }},
 };
 PROTOBUF_NOINLINE void RouteLoginResponse::Clear() {
@@ -1126,20 +1267,27 @@ PROTOBUF_NOINLINE void RouteLoginResponse::Clear() {
   (void) cached_has_bits;
 
   cached_has_bits = _impl_._has_bits_[0];
-  if (BatchCheckHasBit(cached_has_bits, 0x00000007U)) {
+  if (BatchCheckHasBit(cached_has_bits, 0x0000000fU)) {
     if (CheckHasBit(cached_has_bits, 0x00000001U)) {
       _impl_.message_.ClearNonDefaultToEmpty();
     }
     if (CheckHasBit(cached_has_bits, 0x00000002U)) {
+      _impl_.trace_id_.ClearNonDefaultToEmpty();
+    }
+    if (CheckHasBit(cached_has_bits, 0x00000004U)) {
       ABSL_DCHECK(_impl_.login_endpoint_ != nullptr);
       _impl_.login_endpoint_->Clear();
     }
-    if (CheckHasBit(cached_has_bits, 0x00000004U)) {
+    if (CheckHasBit(cached_has_bits, 0x00000008U)) {
       ABSL_DCHECK(_impl_.game_endpoint_ != nullptr);
       _impl_.game_endpoint_->Clear();
     }
   }
-  _impl_.code_ = 0;
+  if (BatchCheckHasBit(cached_has_bits, 0x00000030U)) {
+    ::memset(&_impl_.server_time_ms_, 0, static_cast<::size_t>(
+        reinterpret_cast<char*>(&_impl_.code_) -
+        reinterpret_cast<char*>(&_impl_.server_time_ms_)) + sizeof(_impl_.code_));
+  }
   _impl_._has_bits_.Clear();
   _internal_metadata_.Clear<::google::protobuf::UnknownFieldSet>();
 }
@@ -1164,7 +1312,7 @@ PROTOBUF_NOINLINE void RouteLoginResponse::Clear() {
 
   cached_has_bits = this_._impl_._has_bits_[0];
   // int32 code = 1;
-  if (CheckHasBit(cached_has_bits, 0x00000008U)) {
+  if (CheckHasBit(cached_has_bits, 0x00000020U)) {
     if (this_._internal_code() != 0) {
       target =
           ::google::protobuf::internal::WireFormatLite::WriteInt32ToArrayWithField<1>(
@@ -1173,14 +1321,14 @@ PROTOBUF_NOINLINE void RouteLoginResponse::Clear() {
   }
 
   // .gateway.Endpoint login_endpoint = 2;
-  if (CheckHasBit(cached_has_bits, 0x00000002U)) {
+  if (CheckHasBit(cached_has_bits, 0x00000004U)) {
     target = ::google::protobuf::internal::WireFormatLite::InternalWriteMessage(
         2, *this_._impl_.login_endpoint_, this_._impl_.login_endpoint_->GetCachedSize(), target,
         stream);
   }
 
   // .gateway.Endpoint game_endpoint = 3;
-  if (CheckHasBit(cached_has_bits, 0x00000004U)) {
+  if (CheckHasBit(cached_has_bits, 0x00000008U)) {
     target = ::google::protobuf::internal::WireFormatLite::InternalWriteMessage(
         3, *this_._impl_.game_endpoint_, this_._impl_.game_endpoint_->GetCachedSize(), target,
         stream);
@@ -1193,6 +1341,25 @@ PROTOBUF_NOINLINE void RouteLoginResponse::Clear() {
       ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
           _s.data(), static_cast<int>(_s.length()), ::google::protobuf::internal::WireFormatLite::SERIALIZE, "gateway.RouteLoginResponse.message");
       target = stream->WriteStringMaybeAliased(4, _s, target);
+    }
+  }
+
+  // string trace_id = 5;
+  if (CheckHasBit(cached_has_bits, 0x00000002U)) {
+    if (!this_._internal_trace_id().empty()) {
+      const ::std::string& _s = this_._internal_trace_id();
+      ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+          _s.data(), static_cast<int>(_s.length()), ::google::protobuf::internal::WireFormatLite::SERIALIZE, "gateway.RouteLoginResponse.trace_id");
+      target = stream->WriteStringMaybeAliased(5, _s, target);
+    }
+  }
+
+  // int64 server_time_ms = 6;
+  if (CheckHasBit(cached_has_bits, 0x00000010U)) {
+    if (this_._internal_server_time_ms() != 0) {
+      target =
+          ::google::protobuf::internal::WireFormatLite::WriteInt64ToArrayWithField<6>(
+              stream, this_._internal_server_time_ms(), target);
     }
   }
 
@@ -1221,7 +1388,7 @@ PROTOBUF_NOINLINE void RouteLoginResponse::Clear() {
 
   ::_pbi::Prefetch5LinesFrom7Lines(&this_);
   cached_has_bits = this_._impl_._has_bits_[0];
-  if (BatchCheckHasBit(cached_has_bits, 0x0000000fU)) {
+  if (BatchCheckHasBit(cached_has_bits, 0x0000003fU)) {
     // string message = 4;
     if (CheckHasBit(cached_has_bits, 0x00000001U)) {
       if (!this_._internal_message().empty()) {
@@ -1229,18 +1396,32 @@ PROTOBUF_NOINLINE void RouteLoginResponse::Clear() {
                                         this_._internal_message());
       }
     }
-    // .gateway.Endpoint login_endpoint = 2;
+    // string trace_id = 5;
     if (CheckHasBit(cached_has_bits, 0x00000002U)) {
+      if (!this_._internal_trace_id().empty()) {
+        total_size += 1 + ::google::protobuf::internal::WireFormatLite::StringSize(
+                                        this_._internal_trace_id());
+      }
+    }
+    // .gateway.Endpoint login_endpoint = 2;
+    if (CheckHasBit(cached_has_bits, 0x00000004U)) {
       total_size += 1 +
                     ::google::protobuf::internal::WireFormatLite::MessageSize(*this_._impl_.login_endpoint_);
     }
     // .gateway.Endpoint game_endpoint = 3;
-    if (CheckHasBit(cached_has_bits, 0x00000004U)) {
+    if (CheckHasBit(cached_has_bits, 0x00000008U)) {
       total_size += 1 +
                     ::google::protobuf::internal::WireFormatLite::MessageSize(*this_._impl_.game_endpoint_);
     }
+    // int64 server_time_ms = 6;
+    if (CheckHasBit(cached_has_bits, 0x00000010U)) {
+      if (this_._internal_server_time_ms() != 0) {
+        total_size += ::_pbi::WireFormatLite::Int64SizePlusOne(
+            this_._internal_server_time_ms());
+      }
+    }
     // int32 code = 1;
-    if (CheckHasBit(cached_has_bits, 0x00000008U)) {
+    if (CheckHasBit(cached_has_bits, 0x00000020U)) {
       if (this_._internal_code() != 0) {
         total_size += ::_pbi::WireFormatLite::Int32SizePlusOne(
             this_._internal_code());
@@ -1266,7 +1447,7 @@ void RouteLoginResponse::MergeImpl(::google::protobuf::MessageLite& to_msg,
   (void)cached_has_bits;
 
   cached_has_bits = from._impl_._has_bits_[0];
-  if (BatchCheckHasBit(cached_has_bits, 0x0000000fU)) {
+  if (BatchCheckHasBit(cached_has_bits, 0x0000003fU)) {
     if (CheckHasBit(cached_has_bits, 0x00000001U)) {
       if (!from._internal_message().empty()) {
         _this->_internal_set_message(from._internal_message());
@@ -1277,6 +1458,15 @@ void RouteLoginResponse::MergeImpl(::google::protobuf::MessageLite& to_msg,
       }
     }
     if (CheckHasBit(cached_has_bits, 0x00000002U)) {
+      if (!from._internal_trace_id().empty()) {
+        _this->_internal_set_trace_id(from._internal_trace_id());
+      } else {
+        if (_this->_impl_.trace_id_.IsDefault()) {
+          _this->_internal_set_trace_id("");
+        }
+      }
+    }
+    if (CheckHasBit(cached_has_bits, 0x00000004U)) {
       ABSL_DCHECK(from._impl_.login_endpoint_ != nullptr);
       if (_this->_impl_.login_endpoint_ == nullptr) {
         _this->_impl_.login_endpoint_ = ::google::protobuf::Message::CopyConstruct(arena, *from._impl_.login_endpoint_);
@@ -1284,7 +1474,7 @@ void RouteLoginResponse::MergeImpl(::google::protobuf::MessageLite& to_msg,
         _this->_impl_.login_endpoint_->MergeFrom(*from._impl_.login_endpoint_);
       }
     }
-    if (CheckHasBit(cached_has_bits, 0x00000004U)) {
+    if (CheckHasBit(cached_has_bits, 0x00000008U)) {
       ABSL_DCHECK(from._impl_.game_endpoint_ != nullptr);
       if (_this->_impl_.game_endpoint_ == nullptr) {
         _this->_impl_.game_endpoint_ = ::google::protobuf::Message::CopyConstruct(arena, *from._impl_.game_endpoint_);
@@ -1292,7 +1482,12 @@ void RouteLoginResponse::MergeImpl(::google::protobuf::MessageLite& to_msg,
         _this->_impl_.game_endpoint_->MergeFrom(*from._impl_.game_endpoint_);
       }
     }
-    if (CheckHasBit(cached_has_bits, 0x00000008U)) {
+    if (CheckHasBit(cached_has_bits, 0x00000010U)) {
+      if (from._internal_server_time_ms() != 0) {
+        _this->_impl_.server_time_ms_ = from._impl_.server_time_ms_;
+      }
+    }
+    if (CheckHasBit(cached_has_bits, 0x00000020U)) {
       if (from._internal_code() != 0) {
         _this->_impl_.code_ = from._impl_.code_;
       }
@@ -1318,6 +1513,7 @@ void RouteLoginResponse::InternalSwap(RouteLoginResponse* PROTOBUF_RESTRICT PROT
   _internal_metadata_.InternalSwap(&other->_internal_metadata_);
   swap(_impl_._has_bits_[0], other->_impl_._has_bits_[0]);
   ::_pbi::ArenaStringPtr::InternalSwap(&_impl_.message_, &other->_impl_.message_, arena);
+  ::_pbi::ArenaStringPtr::InternalSwap(&_impl_.trace_id_, &other->_impl_.trace_id_, arena);
   ::google::protobuf::internal::memswap<
       PROTOBUF_FIELD_OFFSET(RouteLoginResponse, _impl_.code_)
       + sizeof(RouteLoginResponse::_impl_.code_)
@@ -1651,6 +1847,724 @@ void AuthLoginRequest::InternalSwap(AuthLoginRequest* PROTOBUF_RESTRICT PROTOBUF
 }
 // ===================================================================
 
+class AuthRegisterRequest::_Internal {
+ public:
+  using HasBits =
+      decltype(::std::declval<AuthRegisterRequest>()._impl_._has_bits_);
+  static constexpr ::int32_t kHasBitsOffset =
+      8 * PROTOBUF_FIELD_OFFSET(AuthRegisterRequest, _impl_._has_bits_);
+};
+
+AuthRegisterRequest::AuthRegisterRequest(::google::protobuf::Arena* PROTOBUF_NULLABLE arena)
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+    : ::google::protobuf::Message(arena, AuthRegisterRequest_class_data_.base()) {
+#else   // PROTOBUF_CUSTOM_VTABLE
+    : ::google::protobuf::Message(arena) {
+#endif  // PROTOBUF_CUSTOM_VTABLE
+  SharedCtor(arena);
+  // @@protoc_insertion_point(arena_constructor:gateway.AuthRegisterRequest)
+}
+PROTOBUF_NDEBUG_INLINE AuthRegisterRequest::Impl_::Impl_(
+    [[maybe_unused]] ::google::protobuf::internal::InternalVisibility visibility,
+    [[maybe_unused]] ::google::protobuf::Arena* PROTOBUF_NULLABLE arena, const Impl_& from,
+    [[maybe_unused]] const ::gateway::AuthRegisterRequest& from_msg)
+      : _has_bits_{from._has_bits_},
+        _cached_size_{0},
+        account_(arena, from.account_),
+        password_(arena, from.password_) {}
+
+AuthRegisterRequest::AuthRegisterRequest(
+    ::google::protobuf::Arena* PROTOBUF_NULLABLE arena,
+    const AuthRegisterRequest& from)
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+    : ::google::protobuf::Message(arena, AuthRegisterRequest_class_data_.base()) {
+#else   // PROTOBUF_CUSTOM_VTABLE
+    : ::google::protobuf::Message(arena) {
+#endif  // PROTOBUF_CUSTOM_VTABLE
+  AuthRegisterRequest* const _this = this;
+  (void)_this;
+  _internal_metadata_.MergeFrom<::google::protobuf::UnknownFieldSet>(
+      from._internal_metadata_);
+  new (&_impl_) Impl_(internal_visibility(), arena, from._impl_, from);
+
+  // @@protoc_insertion_point(copy_constructor:gateway.AuthRegisterRequest)
+}
+PROTOBUF_NDEBUG_INLINE AuthRegisterRequest::Impl_::Impl_(
+    [[maybe_unused]] ::google::protobuf::internal::InternalVisibility visibility,
+    [[maybe_unused]] ::google::protobuf::Arena* PROTOBUF_NULLABLE arena)
+      : _cached_size_{0},
+        account_(arena),
+        password_(arena) {}
+
+inline void AuthRegisterRequest::SharedCtor(::_pb::Arena* PROTOBUF_NULLABLE arena) {
+  new (&_impl_) Impl_(internal_visibility(), arena);
+}
+AuthRegisterRequest::~AuthRegisterRequest() {
+  // @@protoc_insertion_point(destructor:gateway.AuthRegisterRequest)
+  SharedDtor(*this);
+}
+inline void AuthRegisterRequest::SharedDtor(MessageLite& self) {
+  AuthRegisterRequest& this_ = static_cast<AuthRegisterRequest&>(self);
+  if constexpr (::_pbi::DebugHardenCheckHasBitConsistency()) {
+    this_.CheckHasBitConsistency();
+  }
+  this_._internal_metadata_.Delete<::google::protobuf::UnknownFieldSet>();
+  ABSL_DCHECK(this_.GetArena() == nullptr);
+  this_._impl_.account_.Destroy();
+  this_._impl_.password_.Destroy();
+  this_._impl_.~Impl_();
+}
+
+inline void* PROTOBUF_NONNULL AuthRegisterRequest::PlacementNew_(
+    const void* PROTOBUF_NONNULL, void* PROTOBUF_NONNULL mem,
+    ::google::protobuf::Arena* PROTOBUF_NULLABLE arena) {
+  return ::new (mem) AuthRegisterRequest(arena);
+}
+constexpr auto AuthRegisterRequest::InternalNewImpl_() {
+  return ::google::protobuf::internal::MessageCreator::CopyInit(sizeof(AuthRegisterRequest),
+                                            alignof(AuthRegisterRequest));
+}
+constexpr auto AuthRegisterRequest::InternalGenerateClassData_() {
+  return ::google::protobuf::internal::ClassDataFull{
+      ::google::protobuf::internal::ClassData{
+          &_AuthRegisterRequest_default_instance_._instance,
+          &_table_.header,
+          nullptr,  // OnDemandRegisterArenaDtor
+          nullptr,  // IsInitialized
+          &AuthRegisterRequest::MergeImpl,
+          ::google::protobuf::Message::GetNewImpl<AuthRegisterRequest>(),
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+          &AuthRegisterRequest::SharedDtor,
+          ::google::protobuf::Message::GetClearImpl<AuthRegisterRequest>(), &AuthRegisterRequest::ByteSizeLong,
+              &AuthRegisterRequest::_InternalSerialize,
+#endif  // PROTOBUF_CUSTOM_VTABLE
+          PROTOBUF_FIELD_OFFSET(AuthRegisterRequest, _impl_._cached_size_),
+          false,
+      },
+      &AuthRegisterRequest::kDescriptorMethods,
+      &descriptor_table_gateway_2eproto,
+      nullptr,  // tracker
+  };
+}
+
+PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 const
+    ::google::protobuf::internal::ClassDataFull AuthRegisterRequest_class_data_ =
+        AuthRegisterRequest::InternalGenerateClassData_();
+
+PROTOBUF_ATTRIBUTE_WEAK const ::google::protobuf::internal::ClassData* PROTOBUF_NONNULL
+AuthRegisterRequest::GetClassData() const {
+  ::google::protobuf::internal::PrefetchToLocalCache(&AuthRegisterRequest_class_data_);
+  ::google::protobuf::internal::PrefetchToLocalCache(AuthRegisterRequest_class_data_.tc_table);
+  return AuthRegisterRequest_class_data_.base();
+}
+PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1
+const ::_pbi::TcParseTable<1, 2, 0, 51, 2>
+AuthRegisterRequest::_table_ = {
+  {
+    PROTOBUF_FIELD_OFFSET(AuthRegisterRequest, _impl_._has_bits_),
+    0, // no _extensions_
+    2, 8,  // max_field_number, fast_idx_mask
+    offsetof(decltype(_table_), field_lookup_table),
+    4294967292,  // skipmap
+    offsetof(decltype(_table_), field_entries),
+    2,  // num_field_entries
+    0,  // num_aux_entries
+    offsetof(decltype(_table_), field_names),  // no aux_entries
+    AuthRegisterRequest_class_data_.base(),
+    nullptr,  // post_loop_handler
+    ::_pbi::TcParser::GenericFallback,  // fallback
+    #ifdef PROTOBUF_PREFETCH_PARSE_TABLE
+    ::_pbi::TcParser::GetTable<::gateway::AuthRegisterRequest>(),  // to_prefetch
+    #endif  // PROTOBUF_PREFETCH_PARSE_TABLE
+  }, {{
+    // string password = 2;
+    {::_pbi::TcParser::FastUS1,
+     {18, 1, 0,
+      PROTOBUF_FIELD_OFFSET(AuthRegisterRequest, _impl_.password_)}},
+    // string account = 1;
+    {::_pbi::TcParser::FastUS1,
+     {10, 0, 0,
+      PROTOBUF_FIELD_OFFSET(AuthRegisterRequest, _impl_.account_)}},
+  }}, {{
+    65535, 65535
+  }}, {{
+    // string account = 1;
+    {PROTOBUF_FIELD_OFFSET(AuthRegisterRequest, _impl_.account_), _Internal::kHasBitsOffset + 0, 0, (0 | ::_fl::kFcOptional | ::_fl::kUtf8String | ::_fl::kRepAString)},
+    // string password = 2;
+    {PROTOBUF_FIELD_OFFSET(AuthRegisterRequest, _impl_.password_), _Internal::kHasBitsOffset + 1, 0, (0 | ::_fl::kFcOptional | ::_fl::kUtf8String | ::_fl::kRepAString)},
+  }},
+  // no aux_entries
+  {{
+    "\33\7\10\0\0\0\0\0"
+    "gateway.AuthRegisterRequest"
+    "account"
+    "password"
+  }},
+};
+PROTOBUF_NOINLINE void AuthRegisterRequest::Clear() {
+// @@protoc_insertion_point(message_clear_start:gateway.AuthRegisterRequest)
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  ::uint32_t cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  cached_has_bits = _impl_._has_bits_[0];
+  if (BatchCheckHasBit(cached_has_bits, 0x00000003U)) {
+    if (CheckHasBit(cached_has_bits, 0x00000001U)) {
+      _impl_.account_.ClearNonDefaultToEmpty();
+    }
+    if (CheckHasBit(cached_has_bits, 0x00000002U)) {
+      _impl_.password_.ClearNonDefaultToEmpty();
+    }
+  }
+  _impl_._has_bits_.Clear();
+  _internal_metadata_.Clear<::google::protobuf::UnknownFieldSet>();
+}
+
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+::uint8_t* PROTOBUF_NONNULL AuthRegisterRequest::_InternalSerialize(
+    const ::google::protobuf::MessageLite& base, ::uint8_t* PROTOBUF_NONNULL target,
+    ::google::protobuf::io::EpsCopyOutputStream* PROTOBUF_NONNULL stream) {
+  const AuthRegisterRequest& this_ = static_cast<const AuthRegisterRequest&>(base);
+#else   // PROTOBUF_CUSTOM_VTABLE
+::uint8_t* PROTOBUF_NONNULL AuthRegisterRequest::_InternalSerialize(
+    ::uint8_t* PROTOBUF_NONNULL target,
+    ::google::protobuf::io::EpsCopyOutputStream* PROTOBUF_NONNULL stream) const {
+  const AuthRegisterRequest& this_ = *this;
+#endif  // PROTOBUF_CUSTOM_VTABLE
+  if constexpr (::_pbi::DebugHardenCheckHasBitConsistency()) {
+    this_.CheckHasBitConsistency();
+  }
+  // @@protoc_insertion_point(serialize_to_array_start:gateway.AuthRegisterRequest)
+  ::uint32_t cached_has_bits = 0;
+  (void)cached_has_bits;
+
+  cached_has_bits = this_._impl_._has_bits_[0];
+  // string account = 1;
+  if (CheckHasBit(cached_has_bits, 0x00000001U)) {
+    if (!this_._internal_account().empty()) {
+      const ::std::string& _s = this_._internal_account();
+      ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+          _s.data(), static_cast<int>(_s.length()), ::google::protobuf::internal::WireFormatLite::SERIALIZE, "gateway.AuthRegisterRequest.account");
+      target = stream->WriteStringMaybeAliased(1, _s, target);
+    }
+  }
+
+  // string password = 2;
+  if (CheckHasBit(cached_has_bits, 0x00000002U)) {
+    if (!this_._internal_password().empty()) {
+      const ::std::string& _s = this_._internal_password();
+      ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+          _s.data(), static_cast<int>(_s.length()), ::google::protobuf::internal::WireFormatLite::SERIALIZE, "gateway.AuthRegisterRequest.password");
+      target = stream->WriteStringMaybeAliased(2, _s, target);
+    }
+  }
+
+  if (ABSL_PREDICT_FALSE(this_._internal_metadata_.have_unknown_fields())) {
+    target =
+        ::_pbi::WireFormat::InternalSerializeUnknownFieldsToArray(
+            this_._internal_metadata_.unknown_fields<::google::protobuf::UnknownFieldSet>(::google::protobuf::UnknownFieldSet::default_instance), target, stream);
+  }
+  // @@protoc_insertion_point(serialize_to_array_end:gateway.AuthRegisterRequest)
+  return target;
+}
+
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+::size_t AuthRegisterRequest::ByteSizeLong(const MessageLite& base) {
+  const AuthRegisterRequest& this_ = static_cast<const AuthRegisterRequest&>(base);
+#else   // PROTOBUF_CUSTOM_VTABLE
+::size_t AuthRegisterRequest::ByteSizeLong() const {
+  const AuthRegisterRequest& this_ = *this;
+#endif  // PROTOBUF_CUSTOM_VTABLE
+  // @@protoc_insertion_point(message_byte_size_start:gateway.AuthRegisterRequest)
+  ::size_t total_size = 0;
+
+  ::uint32_t cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void)cached_has_bits;
+
+  ::_pbi::Prefetch5LinesFrom7Lines(&this_);
+  cached_has_bits = this_._impl_._has_bits_[0];
+  if (BatchCheckHasBit(cached_has_bits, 0x00000003U)) {
+    // string account = 1;
+    if (CheckHasBit(cached_has_bits, 0x00000001U)) {
+      if (!this_._internal_account().empty()) {
+        total_size += 1 + ::google::protobuf::internal::WireFormatLite::StringSize(
+                                        this_._internal_account());
+      }
+    }
+    // string password = 2;
+    if (CheckHasBit(cached_has_bits, 0x00000002U)) {
+      if (!this_._internal_password().empty()) {
+        total_size += 1 + ::google::protobuf::internal::WireFormatLite::StringSize(
+                                        this_._internal_password());
+      }
+    }
+  }
+  return this_.MaybeComputeUnknownFieldsSize(total_size,
+                                             &this_._impl_._cached_size_);
+}
+
+void AuthRegisterRequest::MergeImpl(::google::protobuf::MessageLite& to_msg,
+                            const ::google::protobuf::MessageLite& from_msg) {
+   auto* const _this =
+      static_cast<AuthRegisterRequest*>(&to_msg);
+  auto& from = static_cast<const AuthRegisterRequest&>(from_msg);
+  if constexpr (::_pbi::DebugHardenCheckHasBitConsistency()) {
+    from.CheckHasBitConsistency();
+  }
+  // @@protoc_insertion_point(class_specific_merge_from_start:gateway.AuthRegisterRequest)
+  ABSL_DCHECK_NE(&from, _this);
+  ::uint32_t cached_has_bits = 0;
+  (void)cached_has_bits;
+
+  cached_has_bits = from._impl_._has_bits_[0];
+  if (BatchCheckHasBit(cached_has_bits, 0x00000003U)) {
+    if (CheckHasBit(cached_has_bits, 0x00000001U)) {
+      if (!from._internal_account().empty()) {
+        _this->_internal_set_account(from._internal_account());
+      } else {
+        if (_this->_impl_.account_.IsDefault()) {
+          _this->_internal_set_account("");
+        }
+      }
+    }
+    if (CheckHasBit(cached_has_bits, 0x00000002U)) {
+      if (!from._internal_password().empty()) {
+        _this->_internal_set_password(from._internal_password());
+      } else {
+        if (_this->_impl_.password_.IsDefault()) {
+          _this->_internal_set_password("");
+        }
+      }
+    }
+  }
+  _this->_impl_._has_bits_[0] |= cached_has_bits;
+  _this->_internal_metadata_.MergeFrom<::google::protobuf::UnknownFieldSet>(
+      from._internal_metadata_);
+}
+
+void AuthRegisterRequest::CopyFrom(const AuthRegisterRequest& from) {
+  // @@protoc_insertion_point(class_specific_copy_from_start:gateway.AuthRegisterRequest)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+
+void AuthRegisterRequest::InternalSwap(AuthRegisterRequest* PROTOBUF_RESTRICT PROTOBUF_NONNULL other) {
+  using ::std::swap;
+  auto* arena = GetArena();
+  ABSL_DCHECK_EQ(arena, other->GetArena());
+  _internal_metadata_.InternalSwap(&other->_internal_metadata_);
+  swap(_impl_._has_bits_[0], other->_impl_._has_bits_[0]);
+  ::_pbi::ArenaStringPtr::InternalSwap(&_impl_.account_, &other->_impl_.account_, arena);
+  ::_pbi::ArenaStringPtr::InternalSwap(&_impl_.password_, &other->_impl_.password_, arena);
+}
+
+::google::protobuf::Metadata AuthRegisterRequest::GetMetadata() const {
+  return ::google::protobuf::Message::GetMetadataImpl(GetClassData()->full());
+}
+// ===================================================================
+
+class AuthRegisterResponse::_Internal {
+ public:
+  using HasBits =
+      decltype(::std::declval<AuthRegisterResponse>()._impl_._has_bits_);
+  static constexpr ::int32_t kHasBitsOffset =
+      8 * PROTOBUF_FIELD_OFFSET(AuthRegisterResponse, _impl_._has_bits_);
+};
+
+AuthRegisterResponse::AuthRegisterResponse(::google::protobuf::Arena* PROTOBUF_NULLABLE arena)
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+    : ::google::protobuf::Message(arena, AuthRegisterResponse_class_data_.base()) {
+#else   // PROTOBUF_CUSTOM_VTABLE
+    : ::google::protobuf::Message(arena) {
+#endif  // PROTOBUF_CUSTOM_VTABLE
+  SharedCtor(arena);
+  // @@protoc_insertion_point(arena_constructor:gateway.AuthRegisterResponse)
+}
+PROTOBUF_NDEBUG_INLINE AuthRegisterResponse::Impl_::Impl_(
+    [[maybe_unused]] ::google::protobuf::internal::InternalVisibility visibility,
+    [[maybe_unused]] ::google::protobuf::Arena* PROTOBUF_NULLABLE arena, const Impl_& from,
+    [[maybe_unused]] const ::gateway::AuthRegisterResponse& from_msg)
+      : _has_bits_{from._has_bits_},
+        _cached_size_{0},
+        message_(arena, from.message_),
+        trace_id_(arena, from.trace_id_) {}
+
+AuthRegisterResponse::AuthRegisterResponse(
+    ::google::protobuf::Arena* PROTOBUF_NULLABLE arena,
+    const AuthRegisterResponse& from)
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+    : ::google::protobuf::Message(arena, AuthRegisterResponse_class_data_.base()) {
+#else   // PROTOBUF_CUSTOM_VTABLE
+    : ::google::protobuf::Message(arena) {
+#endif  // PROTOBUF_CUSTOM_VTABLE
+  AuthRegisterResponse* const _this = this;
+  (void)_this;
+  _internal_metadata_.MergeFrom<::google::protobuf::UnknownFieldSet>(
+      from._internal_metadata_);
+  new (&_impl_) Impl_(internal_visibility(), arena, from._impl_, from);
+  ::memcpy(reinterpret_cast<char*>(&_impl_) +
+               offsetof(Impl_, server_time_ms_),
+           reinterpret_cast<const char*>(&from._impl_) +
+               offsetof(Impl_, server_time_ms_),
+           offsetof(Impl_, code_) -
+               offsetof(Impl_, server_time_ms_) +
+               sizeof(Impl_::code_));
+
+  // @@protoc_insertion_point(copy_constructor:gateway.AuthRegisterResponse)
+}
+PROTOBUF_NDEBUG_INLINE AuthRegisterResponse::Impl_::Impl_(
+    [[maybe_unused]] ::google::protobuf::internal::InternalVisibility visibility,
+    [[maybe_unused]] ::google::protobuf::Arena* PROTOBUF_NULLABLE arena)
+      : _cached_size_{0},
+        message_(arena),
+        trace_id_(arena) {}
+
+inline void AuthRegisterResponse::SharedCtor(::_pb::Arena* PROTOBUF_NULLABLE arena) {
+  new (&_impl_) Impl_(internal_visibility(), arena);
+  ::memset(reinterpret_cast<char*>(&_impl_) +
+               offsetof(Impl_, server_time_ms_),
+           0,
+           offsetof(Impl_, code_) -
+               offsetof(Impl_, server_time_ms_) +
+               sizeof(Impl_::code_));
+}
+AuthRegisterResponse::~AuthRegisterResponse() {
+  // @@protoc_insertion_point(destructor:gateway.AuthRegisterResponse)
+  SharedDtor(*this);
+}
+inline void AuthRegisterResponse::SharedDtor(MessageLite& self) {
+  AuthRegisterResponse& this_ = static_cast<AuthRegisterResponse&>(self);
+  if constexpr (::_pbi::DebugHardenCheckHasBitConsistency()) {
+    this_.CheckHasBitConsistency();
+  }
+  this_._internal_metadata_.Delete<::google::protobuf::UnknownFieldSet>();
+  ABSL_DCHECK(this_.GetArena() == nullptr);
+  this_._impl_.message_.Destroy();
+  this_._impl_.trace_id_.Destroy();
+  this_._impl_.~Impl_();
+}
+
+inline void* PROTOBUF_NONNULL AuthRegisterResponse::PlacementNew_(
+    const void* PROTOBUF_NONNULL, void* PROTOBUF_NONNULL mem,
+    ::google::protobuf::Arena* PROTOBUF_NULLABLE arena) {
+  return ::new (mem) AuthRegisterResponse(arena);
+}
+constexpr auto AuthRegisterResponse::InternalNewImpl_() {
+  return ::google::protobuf::internal::MessageCreator::CopyInit(sizeof(AuthRegisterResponse),
+                                            alignof(AuthRegisterResponse));
+}
+constexpr auto AuthRegisterResponse::InternalGenerateClassData_() {
+  return ::google::protobuf::internal::ClassDataFull{
+      ::google::protobuf::internal::ClassData{
+          &_AuthRegisterResponse_default_instance_._instance,
+          &_table_.header,
+          nullptr,  // OnDemandRegisterArenaDtor
+          nullptr,  // IsInitialized
+          &AuthRegisterResponse::MergeImpl,
+          ::google::protobuf::Message::GetNewImpl<AuthRegisterResponse>(),
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+          &AuthRegisterResponse::SharedDtor,
+          ::google::protobuf::Message::GetClearImpl<AuthRegisterResponse>(), &AuthRegisterResponse::ByteSizeLong,
+              &AuthRegisterResponse::_InternalSerialize,
+#endif  // PROTOBUF_CUSTOM_VTABLE
+          PROTOBUF_FIELD_OFFSET(AuthRegisterResponse, _impl_._cached_size_),
+          false,
+      },
+      &AuthRegisterResponse::kDescriptorMethods,
+      &descriptor_table_gateway_2eproto,
+      nullptr,  // tracker
+  };
+}
+
+PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 const
+    ::google::protobuf::internal::ClassDataFull AuthRegisterResponse_class_data_ =
+        AuthRegisterResponse::InternalGenerateClassData_();
+
+PROTOBUF_ATTRIBUTE_WEAK const ::google::protobuf::internal::ClassData* PROTOBUF_NONNULL
+AuthRegisterResponse::GetClassData() const {
+  ::google::protobuf::internal::PrefetchToLocalCache(&AuthRegisterResponse_class_data_);
+  ::google::protobuf::internal::PrefetchToLocalCache(AuthRegisterResponse_class_data_.tc_table);
+  return AuthRegisterResponse_class_data_.base();
+}
+PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1
+const ::_pbi::TcParseTable<2, 4, 0, 52, 2>
+AuthRegisterResponse::_table_ = {
+  {
+    PROTOBUF_FIELD_OFFSET(AuthRegisterResponse, _impl_._has_bits_),
+    0, // no _extensions_
+    4, 24,  // max_field_number, fast_idx_mask
+    offsetof(decltype(_table_), field_lookup_table),
+    4294967280,  // skipmap
+    offsetof(decltype(_table_), field_entries),
+    4,  // num_field_entries
+    0,  // num_aux_entries
+    offsetof(decltype(_table_), field_names),  // no aux_entries
+    AuthRegisterResponse_class_data_.base(),
+    nullptr,  // post_loop_handler
+    ::_pbi::TcParser::GenericFallback,  // fallback
+    #ifdef PROTOBUF_PREFETCH_PARSE_TABLE
+    ::_pbi::TcParser::GetTable<::gateway::AuthRegisterResponse>(),  // to_prefetch
+    #endif  // PROTOBUF_PREFETCH_PARSE_TABLE
+  }, {{
+    // int64 server_time_ms = 4;
+    {::_pbi::TcParser::SingularVarintNoZag1<::uint64_t, offsetof(AuthRegisterResponse, _impl_.server_time_ms_), 2>(),
+     {32, 2, 0,
+      PROTOBUF_FIELD_OFFSET(AuthRegisterResponse, _impl_.server_time_ms_)}},
+    // int32 code = 1;
+    {::_pbi::TcParser::SingularVarintNoZag1<::uint32_t, offsetof(AuthRegisterResponse, _impl_.code_), 3>(),
+     {8, 3, 0,
+      PROTOBUF_FIELD_OFFSET(AuthRegisterResponse, _impl_.code_)}},
+    // string message = 2;
+    {::_pbi::TcParser::FastUS1,
+     {18, 0, 0,
+      PROTOBUF_FIELD_OFFSET(AuthRegisterResponse, _impl_.message_)}},
+    // string trace_id = 3;
+    {::_pbi::TcParser::FastUS1,
+     {26, 1, 0,
+      PROTOBUF_FIELD_OFFSET(AuthRegisterResponse, _impl_.trace_id_)}},
+  }}, {{
+    65535, 65535
+  }}, {{
+    // int32 code = 1;
+    {PROTOBUF_FIELD_OFFSET(AuthRegisterResponse, _impl_.code_), _Internal::kHasBitsOffset + 3, 0, (0 | ::_fl::kFcOptional | ::_fl::kInt32)},
+    // string message = 2;
+    {PROTOBUF_FIELD_OFFSET(AuthRegisterResponse, _impl_.message_), _Internal::kHasBitsOffset + 0, 0, (0 | ::_fl::kFcOptional | ::_fl::kUtf8String | ::_fl::kRepAString)},
+    // string trace_id = 3;
+    {PROTOBUF_FIELD_OFFSET(AuthRegisterResponse, _impl_.trace_id_), _Internal::kHasBitsOffset + 1, 0, (0 | ::_fl::kFcOptional | ::_fl::kUtf8String | ::_fl::kRepAString)},
+    // int64 server_time_ms = 4;
+    {PROTOBUF_FIELD_OFFSET(AuthRegisterResponse, _impl_.server_time_ms_), _Internal::kHasBitsOffset + 2, 0, (0 | ::_fl::kFcOptional | ::_fl::kInt64)},
+  }},
+  // no aux_entries
+  {{
+    "\34\0\7\10\0\0\0\0"
+    "gateway.AuthRegisterResponse"
+    "message"
+    "trace_id"
+  }},
+};
+PROTOBUF_NOINLINE void AuthRegisterResponse::Clear() {
+// @@protoc_insertion_point(message_clear_start:gateway.AuthRegisterResponse)
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  ::uint32_t cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  cached_has_bits = _impl_._has_bits_[0];
+  if (BatchCheckHasBit(cached_has_bits, 0x00000003U)) {
+    if (CheckHasBit(cached_has_bits, 0x00000001U)) {
+      _impl_.message_.ClearNonDefaultToEmpty();
+    }
+    if (CheckHasBit(cached_has_bits, 0x00000002U)) {
+      _impl_.trace_id_.ClearNonDefaultToEmpty();
+    }
+  }
+  if (BatchCheckHasBit(cached_has_bits, 0x0000000cU)) {
+    ::memset(&_impl_.server_time_ms_, 0, static_cast<::size_t>(
+        reinterpret_cast<char*>(&_impl_.code_) -
+        reinterpret_cast<char*>(&_impl_.server_time_ms_)) + sizeof(_impl_.code_));
+  }
+  _impl_._has_bits_.Clear();
+  _internal_metadata_.Clear<::google::protobuf::UnknownFieldSet>();
+}
+
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+::uint8_t* PROTOBUF_NONNULL AuthRegisterResponse::_InternalSerialize(
+    const ::google::protobuf::MessageLite& base, ::uint8_t* PROTOBUF_NONNULL target,
+    ::google::protobuf::io::EpsCopyOutputStream* PROTOBUF_NONNULL stream) {
+  const AuthRegisterResponse& this_ = static_cast<const AuthRegisterResponse&>(base);
+#else   // PROTOBUF_CUSTOM_VTABLE
+::uint8_t* PROTOBUF_NONNULL AuthRegisterResponse::_InternalSerialize(
+    ::uint8_t* PROTOBUF_NONNULL target,
+    ::google::protobuf::io::EpsCopyOutputStream* PROTOBUF_NONNULL stream) const {
+  const AuthRegisterResponse& this_ = *this;
+#endif  // PROTOBUF_CUSTOM_VTABLE
+  if constexpr (::_pbi::DebugHardenCheckHasBitConsistency()) {
+    this_.CheckHasBitConsistency();
+  }
+  // @@protoc_insertion_point(serialize_to_array_start:gateway.AuthRegisterResponse)
+  ::uint32_t cached_has_bits = 0;
+  (void)cached_has_bits;
+
+  cached_has_bits = this_._impl_._has_bits_[0];
+  // int32 code = 1;
+  if (CheckHasBit(cached_has_bits, 0x00000008U)) {
+    if (this_._internal_code() != 0) {
+      target =
+          ::google::protobuf::internal::WireFormatLite::WriteInt32ToArrayWithField<1>(
+              stream, this_._internal_code(), target);
+    }
+  }
+
+  // string message = 2;
+  if (CheckHasBit(cached_has_bits, 0x00000001U)) {
+    if (!this_._internal_message().empty()) {
+      const ::std::string& _s = this_._internal_message();
+      ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+          _s.data(), static_cast<int>(_s.length()), ::google::protobuf::internal::WireFormatLite::SERIALIZE, "gateway.AuthRegisterResponse.message");
+      target = stream->WriteStringMaybeAliased(2, _s, target);
+    }
+  }
+
+  // string trace_id = 3;
+  if (CheckHasBit(cached_has_bits, 0x00000002U)) {
+    if (!this_._internal_trace_id().empty()) {
+      const ::std::string& _s = this_._internal_trace_id();
+      ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+          _s.data(), static_cast<int>(_s.length()), ::google::protobuf::internal::WireFormatLite::SERIALIZE, "gateway.AuthRegisterResponse.trace_id");
+      target = stream->WriteStringMaybeAliased(3, _s, target);
+    }
+  }
+
+  // int64 server_time_ms = 4;
+  if (CheckHasBit(cached_has_bits, 0x00000004U)) {
+    if (this_._internal_server_time_ms() != 0) {
+      target =
+          ::google::protobuf::internal::WireFormatLite::WriteInt64ToArrayWithField<4>(
+              stream, this_._internal_server_time_ms(), target);
+    }
+  }
+
+  if (ABSL_PREDICT_FALSE(this_._internal_metadata_.have_unknown_fields())) {
+    target =
+        ::_pbi::WireFormat::InternalSerializeUnknownFieldsToArray(
+            this_._internal_metadata_.unknown_fields<::google::protobuf::UnknownFieldSet>(::google::protobuf::UnknownFieldSet::default_instance), target, stream);
+  }
+  // @@protoc_insertion_point(serialize_to_array_end:gateway.AuthRegisterResponse)
+  return target;
+}
+
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+::size_t AuthRegisterResponse::ByteSizeLong(const MessageLite& base) {
+  const AuthRegisterResponse& this_ = static_cast<const AuthRegisterResponse&>(base);
+#else   // PROTOBUF_CUSTOM_VTABLE
+::size_t AuthRegisterResponse::ByteSizeLong() const {
+  const AuthRegisterResponse& this_ = *this;
+#endif  // PROTOBUF_CUSTOM_VTABLE
+  // @@protoc_insertion_point(message_byte_size_start:gateway.AuthRegisterResponse)
+  ::size_t total_size = 0;
+
+  ::uint32_t cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void)cached_has_bits;
+
+  ::_pbi::Prefetch5LinesFrom7Lines(&this_);
+  cached_has_bits = this_._impl_._has_bits_[0];
+  if (BatchCheckHasBit(cached_has_bits, 0x0000000fU)) {
+    // string message = 2;
+    if (CheckHasBit(cached_has_bits, 0x00000001U)) {
+      if (!this_._internal_message().empty()) {
+        total_size += 1 + ::google::protobuf::internal::WireFormatLite::StringSize(
+                                        this_._internal_message());
+      }
+    }
+    // string trace_id = 3;
+    if (CheckHasBit(cached_has_bits, 0x00000002U)) {
+      if (!this_._internal_trace_id().empty()) {
+        total_size += 1 + ::google::protobuf::internal::WireFormatLite::StringSize(
+                                        this_._internal_trace_id());
+      }
+    }
+    // int64 server_time_ms = 4;
+    if (CheckHasBit(cached_has_bits, 0x00000004U)) {
+      if (this_._internal_server_time_ms() != 0) {
+        total_size += ::_pbi::WireFormatLite::Int64SizePlusOne(
+            this_._internal_server_time_ms());
+      }
+    }
+    // int32 code = 1;
+    if (CheckHasBit(cached_has_bits, 0x00000008U)) {
+      if (this_._internal_code() != 0) {
+        total_size += ::_pbi::WireFormatLite::Int32SizePlusOne(
+            this_._internal_code());
+      }
+    }
+  }
+  return this_.MaybeComputeUnknownFieldsSize(total_size,
+                                             &this_._impl_._cached_size_);
+}
+
+void AuthRegisterResponse::MergeImpl(::google::protobuf::MessageLite& to_msg,
+                            const ::google::protobuf::MessageLite& from_msg) {
+   auto* const _this =
+      static_cast<AuthRegisterResponse*>(&to_msg);
+  auto& from = static_cast<const AuthRegisterResponse&>(from_msg);
+  if constexpr (::_pbi::DebugHardenCheckHasBitConsistency()) {
+    from.CheckHasBitConsistency();
+  }
+  // @@protoc_insertion_point(class_specific_merge_from_start:gateway.AuthRegisterResponse)
+  ABSL_DCHECK_NE(&from, _this);
+  ::uint32_t cached_has_bits = 0;
+  (void)cached_has_bits;
+
+  cached_has_bits = from._impl_._has_bits_[0];
+  if (BatchCheckHasBit(cached_has_bits, 0x0000000fU)) {
+    if (CheckHasBit(cached_has_bits, 0x00000001U)) {
+      if (!from._internal_message().empty()) {
+        _this->_internal_set_message(from._internal_message());
+      } else {
+        if (_this->_impl_.message_.IsDefault()) {
+          _this->_internal_set_message("");
+        }
+      }
+    }
+    if (CheckHasBit(cached_has_bits, 0x00000002U)) {
+      if (!from._internal_trace_id().empty()) {
+        _this->_internal_set_trace_id(from._internal_trace_id());
+      } else {
+        if (_this->_impl_.trace_id_.IsDefault()) {
+          _this->_internal_set_trace_id("");
+        }
+      }
+    }
+    if (CheckHasBit(cached_has_bits, 0x00000004U)) {
+      if (from._internal_server_time_ms() != 0) {
+        _this->_impl_.server_time_ms_ = from._impl_.server_time_ms_;
+      }
+    }
+    if (CheckHasBit(cached_has_bits, 0x00000008U)) {
+      if (from._internal_code() != 0) {
+        _this->_impl_.code_ = from._impl_.code_;
+      }
+    }
+  }
+  _this->_impl_._has_bits_[0] |= cached_has_bits;
+  _this->_internal_metadata_.MergeFrom<::google::protobuf::UnknownFieldSet>(
+      from._internal_metadata_);
+}
+
+void AuthRegisterResponse::CopyFrom(const AuthRegisterResponse& from) {
+  // @@protoc_insertion_point(class_specific_copy_from_start:gateway.AuthRegisterResponse)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+
+void AuthRegisterResponse::InternalSwap(AuthRegisterResponse* PROTOBUF_RESTRICT PROTOBUF_NONNULL other) {
+  using ::std::swap;
+  auto* arena = GetArena();
+  ABSL_DCHECK_EQ(arena, other->GetArena());
+  _internal_metadata_.InternalSwap(&other->_internal_metadata_);
+  swap(_impl_._has_bits_[0], other->_impl_._has_bits_[0]);
+  ::_pbi::ArenaStringPtr::InternalSwap(&_impl_.message_, &other->_impl_.message_, arena);
+  ::_pbi::ArenaStringPtr::InternalSwap(&_impl_.trace_id_, &other->_impl_.trace_id_, arena);
+  ::google::protobuf::internal::memswap<
+      PROTOBUF_FIELD_OFFSET(AuthRegisterResponse, _impl_.code_)
+      + sizeof(AuthRegisterResponse::_impl_.code_)
+      - PROTOBUF_FIELD_OFFSET(AuthRegisterResponse, _impl_.server_time_ms_)>(
+          reinterpret_cast<char*>(&_impl_.server_time_ms_),
+          reinterpret_cast<char*>(&other->_impl_.server_time_ms_));
+}
+
+::google::protobuf::Metadata AuthRegisterResponse::GetMetadata() const {
+  return ::google::protobuf::Message::GetMetadataImpl(GetClassData()->full());
+}
+// ===================================================================
+
 class AuthLoginResponse::_Internal {
  public:
   using HasBits =
@@ -1675,7 +2589,8 @@ PROTOBUF_NDEBUG_INLINE AuthLoginResponse::Impl_::Impl_(
       : _has_bits_{from._has_bits_},
         _cached_size_{0},
         jwt_(arena, from.jwt_),
-        message_(arena, from.message_) {}
+        message_(arena, from.message_),
+        trace_id_(arena, from.trace_id_) {}
 
 AuthLoginResponse::AuthLoginResponse(
     ::google::protobuf::Arena* PROTOBUF_NULLABLE arena,
@@ -1691,10 +2606,16 @@ AuthLoginResponse::AuthLoginResponse(
       from._internal_metadata_);
   new (&_impl_) Impl_(internal_visibility(), arena, from._impl_, from);
   ::uint32_t cached_has_bits = _impl_._has_bits_[0];
-  _impl_.game_endpoint_ = (CheckHasBit(cached_has_bits, 0x00000004U))
+  _impl_.game_endpoint_ = (CheckHasBit(cached_has_bits, 0x00000008U))
                 ? ::google::protobuf::Message::CopyConstruct(arena, *from._impl_.game_endpoint_)
                 : nullptr;
-  _impl_.code_ = from._impl_.code_;
+  ::memcpy(reinterpret_cast<char*>(&_impl_) +
+               offsetof(Impl_, server_time_ms_),
+           reinterpret_cast<const char*>(&from._impl_) +
+               offsetof(Impl_, server_time_ms_),
+           offsetof(Impl_, code_) -
+               offsetof(Impl_, server_time_ms_) +
+               sizeof(Impl_::code_));
 
   // @@protoc_insertion_point(copy_constructor:gateway.AuthLoginResponse)
 }
@@ -1703,7 +2624,8 @@ PROTOBUF_NDEBUG_INLINE AuthLoginResponse::Impl_::Impl_(
     [[maybe_unused]] ::google::protobuf::Arena* PROTOBUF_NULLABLE arena)
       : _cached_size_{0},
         jwt_(arena),
-        message_(arena) {}
+        message_(arena),
+        trace_id_(arena) {}
 
 inline void AuthLoginResponse::SharedCtor(::_pb::Arena* PROTOBUF_NULLABLE arena) {
   new (&_impl_) Impl_(internal_visibility(), arena);
@@ -1727,6 +2649,7 @@ inline void AuthLoginResponse::SharedDtor(MessageLite& self) {
   ABSL_DCHECK(this_.GetArena() == nullptr);
   this_._impl_.jwt_.Destroy();
   this_._impl_.message_.Destroy();
+  this_._impl_.trace_id_.Destroy();
   delete this_._impl_.game_endpoint_;
   this_._impl_.~Impl_();
 }
@@ -1774,16 +2697,16 @@ AuthLoginResponse::GetClassData() const {
   return AuthLoginResponse_class_data_.base();
 }
 PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1
-const ::_pbi::TcParseTable<2, 4, 1, 44, 2>
+const ::_pbi::TcParseTable<3, 6, 1, 52, 2>
 AuthLoginResponse::_table_ = {
   {
     PROTOBUF_FIELD_OFFSET(AuthLoginResponse, _impl_._has_bits_),
     0, // no _extensions_
-    4, 24,  // max_field_number, fast_idx_mask
+    6, 56,  // max_field_number, fast_idx_mask
     offsetof(decltype(_table_), field_lookup_table),
-    4294967280,  // skipmap
+    4294967232,  // skipmap
     offsetof(decltype(_table_), field_entries),
-    4,  // num_field_entries
+    6,  // num_field_entries
     1,  // num_aux_entries
     offsetof(decltype(_table_), aux_entries),
     AuthLoginResponse_class_data_.base(),
@@ -1793,13 +2716,10 @@ AuthLoginResponse::_table_ = {
     ::_pbi::TcParser::GetTable<::gateway::AuthLoginResponse>(),  // to_prefetch
     #endif  // PROTOBUF_PREFETCH_PARSE_TABLE
   }, {{
-    // string message = 4;
-    {::_pbi::TcParser::FastUS1,
-     {34, 1, 0,
-      PROTOBUF_FIELD_OFFSET(AuthLoginResponse, _impl_.message_)}},
+    {::_pbi::TcParser::MiniParse, {}},
     // int32 code = 1;
-    {::_pbi::TcParser::SingularVarintNoZag1<::uint32_t, offsetof(AuthLoginResponse, _impl_.code_), 3>(),
-     {8, 3, 0,
+    {::_pbi::TcParser::SingularVarintNoZag1<::uint32_t, offsetof(AuthLoginResponse, _impl_.code_), 5>(),
+     {8, 5, 0,
       PROTOBUF_FIELD_OFFSET(AuthLoginResponse, _impl_.code_)}},
     // string jwt = 2;
     {::_pbi::TcParser::FastUS1,
@@ -1807,28 +2727,46 @@ AuthLoginResponse::_table_ = {
       PROTOBUF_FIELD_OFFSET(AuthLoginResponse, _impl_.jwt_)}},
     // .gateway.Endpoint game_endpoint = 3;
     {::_pbi::TcParser::FastMtS1,
-     {26, 2, 0,
+     {26, 3, 0,
       PROTOBUF_FIELD_OFFSET(AuthLoginResponse, _impl_.game_endpoint_)}},
+    // string message = 4;
+    {::_pbi::TcParser::FastUS1,
+     {34, 1, 0,
+      PROTOBUF_FIELD_OFFSET(AuthLoginResponse, _impl_.message_)}},
+    // string trace_id = 5;
+    {::_pbi::TcParser::FastUS1,
+     {42, 2, 0,
+      PROTOBUF_FIELD_OFFSET(AuthLoginResponse, _impl_.trace_id_)}},
+    // int64 server_time_ms = 6;
+    {::_pbi::TcParser::SingularVarintNoZag1<::uint64_t, offsetof(AuthLoginResponse, _impl_.server_time_ms_), 4>(),
+     {48, 4, 0,
+      PROTOBUF_FIELD_OFFSET(AuthLoginResponse, _impl_.server_time_ms_)}},
+    {::_pbi::TcParser::MiniParse, {}},
   }}, {{
     65535, 65535
   }}, {{
     // int32 code = 1;
-    {PROTOBUF_FIELD_OFFSET(AuthLoginResponse, _impl_.code_), _Internal::kHasBitsOffset + 3, 0, (0 | ::_fl::kFcOptional | ::_fl::kInt32)},
+    {PROTOBUF_FIELD_OFFSET(AuthLoginResponse, _impl_.code_), _Internal::kHasBitsOffset + 5, 0, (0 | ::_fl::kFcOptional | ::_fl::kInt32)},
     // string jwt = 2;
     {PROTOBUF_FIELD_OFFSET(AuthLoginResponse, _impl_.jwt_), _Internal::kHasBitsOffset + 0, 0, (0 | ::_fl::kFcOptional | ::_fl::kUtf8String | ::_fl::kRepAString)},
     // .gateway.Endpoint game_endpoint = 3;
-    {PROTOBUF_FIELD_OFFSET(AuthLoginResponse, _impl_.game_endpoint_), _Internal::kHasBitsOffset + 2, 0, (0 | ::_fl::kFcOptional | ::_fl::kMessage | ::_fl::kTvTable)},
+    {PROTOBUF_FIELD_OFFSET(AuthLoginResponse, _impl_.game_endpoint_), _Internal::kHasBitsOffset + 3, 0, (0 | ::_fl::kFcOptional | ::_fl::kMessage | ::_fl::kTvTable)},
     // string message = 4;
     {PROTOBUF_FIELD_OFFSET(AuthLoginResponse, _impl_.message_), _Internal::kHasBitsOffset + 1, 0, (0 | ::_fl::kFcOptional | ::_fl::kUtf8String | ::_fl::kRepAString)},
+    // string trace_id = 5;
+    {PROTOBUF_FIELD_OFFSET(AuthLoginResponse, _impl_.trace_id_), _Internal::kHasBitsOffset + 2, 0, (0 | ::_fl::kFcOptional | ::_fl::kUtf8String | ::_fl::kRepAString)},
+    // int64 server_time_ms = 6;
+    {PROTOBUF_FIELD_OFFSET(AuthLoginResponse, _impl_.server_time_ms_), _Internal::kHasBitsOffset + 4, 0, (0 | ::_fl::kFcOptional | ::_fl::kInt64)},
   }},
   {{
       {::_pbi::TcParser::GetTable<::gateway::Endpoint>()},
   }},
   {{
-    "\31\0\3\0\7\0\0\0"
+    "\31\0\3\0\7\10\0\0"
     "gateway.AuthLoginResponse"
     "jwt"
     "message"
+    "trace_id"
   }},
 };
 PROTOBUF_NOINLINE void AuthLoginResponse::Clear() {
@@ -1839,7 +2777,7 @@ PROTOBUF_NOINLINE void AuthLoginResponse::Clear() {
   (void) cached_has_bits;
 
   cached_has_bits = _impl_._has_bits_[0];
-  if (BatchCheckHasBit(cached_has_bits, 0x00000007U)) {
+  if (BatchCheckHasBit(cached_has_bits, 0x0000000fU)) {
     if (CheckHasBit(cached_has_bits, 0x00000001U)) {
       _impl_.jwt_.ClearNonDefaultToEmpty();
     }
@@ -1847,11 +2785,18 @@ PROTOBUF_NOINLINE void AuthLoginResponse::Clear() {
       _impl_.message_.ClearNonDefaultToEmpty();
     }
     if (CheckHasBit(cached_has_bits, 0x00000004U)) {
+      _impl_.trace_id_.ClearNonDefaultToEmpty();
+    }
+    if (CheckHasBit(cached_has_bits, 0x00000008U)) {
       ABSL_DCHECK(_impl_.game_endpoint_ != nullptr);
       _impl_.game_endpoint_->Clear();
     }
   }
-  _impl_.code_ = 0;
+  if (BatchCheckHasBit(cached_has_bits, 0x00000030U)) {
+    ::memset(&_impl_.server_time_ms_, 0, static_cast<::size_t>(
+        reinterpret_cast<char*>(&_impl_.code_) -
+        reinterpret_cast<char*>(&_impl_.server_time_ms_)) + sizeof(_impl_.code_));
+  }
   _impl_._has_bits_.Clear();
   _internal_metadata_.Clear<::google::protobuf::UnknownFieldSet>();
 }
@@ -1876,7 +2821,7 @@ PROTOBUF_NOINLINE void AuthLoginResponse::Clear() {
 
   cached_has_bits = this_._impl_._has_bits_[0];
   // int32 code = 1;
-  if (CheckHasBit(cached_has_bits, 0x00000008U)) {
+  if (CheckHasBit(cached_has_bits, 0x00000020U)) {
     if (this_._internal_code() != 0) {
       target =
           ::google::protobuf::internal::WireFormatLite::WriteInt32ToArrayWithField<1>(
@@ -1895,7 +2840,7 @@ PROTOBUF_NOINLINE void AuthLoginResponse::Clear() {
   }
 
   // .gateway.Endpoint game_endpoint = 3;
-  if (CheckHasBit(cached_has_bits, 0x00000004U)) {
+  if (CheckHasBit(cached_has_bits, 0x00000008U)) {
     target = ::google::protobuf::internal::WireFormatLite::InternalWriteMessage(
         3, *this_._impl_.game_endpoint_, this_._impl_.game_endpoint_->GetCachedSize(), target,
         stream);
@@ -1908,6 +2853,25 @@ PROTOBUF_NOINLINE void AuthLoginResponse::Clear() {
       ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
           _s.data(), static_cast<int>(_s.length()), ::google::protobuf::internal::WireFormatLite::SERIALIZE, "gateway.AuthLoginResponse.message");
       target = stream->WriteStringMaybeAliased(4, _s, target);
+    }
+  }
+
+  // string trace_id = 5;
+  if (CheckHasBit(cached_has_bits, 0x00000004U)) {
+    if (!this_._internal_trace_id().empty()) {
+      const ::std::string& _s = this_._internal_trace_id();
+      ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+          _s.data(), static_cast<int>(_s.length()), ::google::protobuf::internal::WireFormatLite::SERIALIZE, "gateway.AuthLoginResponse.trace_id");
+      target = stream->WriteStringMaybeAliased(5, _s, target);
+    }
+  }
+
+  // int64 server_time_ms = 6;
+  if (CheckHasBit(cached_has_bits, 0x00000010U)) {
+    if (this_._internal_server_time_ms() != 0) {
+      target =
+          ::google::protobuf::internal::WireFormatLite::WriteInt64ToArrayWithField<6>(
+              stream, this_._internal_server_time_ms(), target);
     }
   }
 
@@ -1936,7 +2900,7 @@ PROTOBUF_NOINLINE void AuthLoginResponse::Clear() {
 
   ::_pbi::Prefetch5LinesFrom7Lines(&this_);
   cached_has_bits = this_._impl_._has_bits_[0];
-  if (BatchCheckHasBit(cached_has_bits, 0x0000000fU)) {
+  if (BatchCheckHasBit(cached_has_bits, 0x0000003fU)) {
     // string jwt = 2;
     if (CheckHasBit(cached_has_bits, 0x00000001U)) {
       if (!this_._internal_jwt().empty()) {
@@ -1951,13 +2915,27 @@ PROTOBUF_NOINLINE void AuthLoginResponse::Clear() {
                                         this_._internal_message());
       }
     }
-    // .gateway.Endpoint game_endpoint = 3;
+    // string trace_id = 5;
     if (CheckHasBit(cached_has_bits, 0x00000004U)) {
+      if (!this_._internal_trace_id().empty()) {
+        total_size += 1 + ::google::protobuf::internal::WireFormatLite::StringSize(
+                                        this_._internal_trace_id());
+      }
+    }
+    // .gateway.Endpoint game_endpoint = 3;
+    if (CheckHasBit(cached_has_bits, 0x00000008U)) {
       total_size += 1 +
                     ::google::protobuf::internal::WireFormatLite::MessageSize(*this_._impl_.game_endpoint_);
     }
+    // int64 server_time_ms = 6;
+    if (CheckHasBit(cached_has_bits, 0x00000010U)) {
+      if (this_._internal_server_time_ms() != 0) {
+        total_size += ::_pbi::WireFormatLite::Int64SizePlusOne(
+            this_._internal_server_time_ms());
+      }
+    }
     // int32 code = 1;
-    if (CheckHasBit(cached_has_bits, 0x00000008U)) {
+    if (CheckHasBit(cached_has_bits, 0x00000020U)) {
       if (this_._internal_code() != 0) {
         total_size += ::_pbi::WireFormatLite::Int32SizePlusOne(
             this_._internal_code());
@@ -1983,7 +2961,7 @@ void AuthLoginResponse::MergeImpl(::google::protobuf::MessageLite& to_msg,
   (void)cached_has_bits;
 
   cached_has_bits = from._impl_._has_bits_[0];
-  if (BatchCheckHasBit(cached_has_bits, 0x0000000fU)) {
+  if (BatchCheckHasBit(cached_has_bits, 0x0000003fU)) {
     if (CheckHasBit(cached_has_bits, 0x00000001U)) {
       if (!from._internal_jwt().empty()) {
         _this->_internal_set_jwt(from._internal_jwt());
@@ -2003,6 +2981,15 @@ void AuthLoginResponse::MergeImpl(::google::protobuf::MessageLite& to_msg,
       }
     }
     if (CheckHasBit(cached_has_bits, 0x00000004U)) {
+      if (!from._internal_trace_id().empty()) {
+        _this->_internal_set_trace_id(from._internal_trace_id());
+      } else {
+        if (_this->_impl_.trace_id_.IsDefault()) {
+          _this->_internal_set_trace_id("");
+        }
+      }
+    }
+    if (CheckHasBit(cached_has_bits, 0x00000008U)) {
       ABSL_DCHECK(from._impl_.game_endpoint_ != nullptr);
       if (_this->_impl_.game_endpoint_ == nullptr) {
         _this->_impl_.game_endpoint_ = ::google::protobuf::Message::CopyConstruct(arena, *from._impl_.game_endpoint_);
@@ -2010,7 +2997,12 @@ void AuthLoginResponse::MergeImpl(::google::protobuf::MessageLite& to_msg,
         _this->_impl_.game_endpoint_->MergeFrom(*from._impl_.game_endpoint_);
       }
     }
-    if (CheckHasBit(cached_has_bits, 0x00000008U)) {
+    if (CheckHasBit(cached_has_bits, 0x00000010U)) {
+      if (from._internal_server_time_ms() != 0) {
+        _this->_impl_.server_time_ms_ = from._impl_.server_time_ms_;
+      }
+    }
+    if (CheckHasBit(cached_has_bits, 0x00000020U)) {
       if (from._internal_code() != 0) {
         _this->_impl_.code_ = from._impl_.code_;
       }
@@ -2037,6 +3029,7 @@ void AuthLoginResponse::InternalSwap(AuthLoginResponse* PROTOBUF_RESTRICT PROTOB
   swap(_impl_._has_bits_[0], other->_impl_._has_bits_[0]);
   ::_pbi::ArenaStringPtr::InternalSwap(&_impl_.jwt_, &other->_impl_.jwt_, arena);
   ::_pbi::ArenaStringPtr::InternalSwap(&_impl_.message_, &other->_impl_.message_, arena);
+  ::_pbi::ArenaStringPtr::InternalSwap(&_impl_.trace_id_, &other->_impl_.trace_id_, arena);
   ::google::protobuf::internal::memswap<
       PROTOBUF_FIELD_OFFSET(AuthLoginResponse, _impl_.code_)
       + sizeof(AuthLoginResponse::_impl_.code_)
@@ -2348,7 +3341,8 @@ PROTOBUF_NDEBUG_INLINE GameEnterResponse::Impl_::Impl_(
     [[maybe_unused]] const ::gateway::GameEnterResponse& from_msg)
       : _has_bits_{from._has_bits_},
         _cached_size_{0},
-        message_(arena, from.message_) {}
+        message_(arena, from.message_),
+        trace_id_(arena, from.trace_id_) {}
 
 GameEnterResponse::GameEnterResponse(
     ::google::protobuf::Arena* PROTOBUF_NULLABLE arena,
@@ -2363,7 +3357,13 @@ GameEnterResponse::GameEnterResponse(
   _internal_metadata_.MergeFrom<::google::protobuf::UnknownFieldSet>(
       from._internal_metadata_);
   new (&_impl_) Impl_(internal_visibility(), arena, from._impl_, from);
-  _impl_.code_ = from._impl_.code_;
+  ::memcpy(reinterpret_cast<char*>(&_impl_) +
+               offsetof(Impl_, server_time_ms_),
+           reinterpret_cast<const char*>(&from._impl_) +
+               offsetof(Impl_, server_time_ms_),
+           offsetof(Impl_, code_) -
+               offsetof(Impl_, server_time_ms_) +
+               sizeof(Impl_::code_));
 
   // @@protoc_insertion_point(copy_constructor:gateway.GameEnterResponse)
 }
@@ -2371,11 +3371,17 @@ PROTOBUF_NDEBUG_INLINE GameEnterResponse::Impl_::Impl_(
     [[maybe_unused]] ::google::protobuf::internal::InternalVisibility visibility,
     [[maybe_unused]] ::google::protobuf::Arena* PROTOBUF_NULLABLE arena)
       : _cached_size_{0},
-        message_(arena) {}
+        message_(arena),
+        trace_id_(arena) {}
 
 inline void GameEnterResponse::SharedCtor(::_pb::Arena* PROTOBUF_NULLABLE arena) {
   new (&_impl_) Impl_(internal_visibility(), arena);
-  _impl_.code_ = {};
+  ::memset(reinterpret_cast<char*>(&_impl_) +
+               offsetof(Impl_, server_time_ms_),
+           0,
+           offsetof(Impl_, code_) -
+               offsetof(Impl_, server_time_ms_) +
+               sizeof(Impl_::code_));
 }
 GameEnterResponse::~GameEnterResponse() {
   // @@protoc_insertion_point(destructor:gateway.GameEnterResponse)
@@ -2389,6 +3395,7 @@ inline void GameEnterResponse::SharedDtor(MessageLite& self) {
   this_._internal_metadata_.Delete<::google::protobuf::UnknownFieldSet>();
   ABSL_DCHECK(this_.GetArena() == nullptr);
   this_._impl_.message_.Destroy();
+  this_._impl_.trace_id_.Destroy();
   this_._impl_.~Impl_();
 }
 
@@ -2435,16 +3442,16 @@ GameEnterResponse::GetClassData() const {
   return GameEnterResponse_class_data_.base();
 }
 PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1
-const ::_pbi::TcParseTable<1, 2, 0, 41, 2>
+const ::_pbi::TcParseTable<2, 4, 0, 49, 2>
 GameEnterResponse::_table_ = {
   {
     PROTOBUF_FIELD_OFFSET(GameEnterResponse, _impl_._has_bits_),
     0, // no _extensions_
-    2, 8,  // max_field_number, fast_idx_mask
+    4, 24,  // max_field_number, fast_idx_mask
     offsetof(decltype(_table_), field_lookup_table),
-    4294967292,  // skipmap
+    4294967280,  // skipmap
     offsetof(decltype(_table_), field_entries),
-    2,  // num_field_entries
+    4,  // num_field_entries
     0,  // num_aux_entries
     offsetof(decltype(_table_), field_names),  // no aux_entries
     GameEnterResponse_class_data_.base(),
@@ -2454,27 +3461,40 @@ GameEnterResponse::_table_ = {
     ::_pbi::TcParser::GetTable<::gateway::GameEnterResponse>(),  // to_prefetch
     #endif  // PROTOBUF_PREFETCH_PARSE_TABLE
   }, {{
+    // int64 server_time_ms = 4;
+    {::_pbi::TcParser::SingularVarintNoZag1<::uint64_t, offsetof(GameEnterResponse, _impl_.server_time_ms_), 2>(),
+     {32, 2, 0,
+      PROTOBUF_FIELD_OFFSET(GameEnterResponse, _impl_.server_time_ms_)}},
+    // int32 code = 1;
+    {::_pbi::TcParser::SingularVarintNoZag1<::uint32_t, offsetof(GameEnterResponse, _impl_.code_), 3>(),
+     {8, 3, 0,
+      PROTOBUF_FIELD_OFFSET(GameEnterResponse, _impl_.code_)}},
     // string message = 2;
     {::_pbi::TcParser::FastUS1,
      {18, 0, 0,
       PROTOBUF_FIELD_OFFSET(GameEnterResponse, _impl_.message_)}},
-    // int32 code = 1;
-    {::_pbi::TcParser::SingularVarintNoZag1<::uint32_t, offsetof(GameEnterResponse, _impl_.code_), 1>(),
-     {8, 1, 0,
-      PROTOBUF_FIELD_OFFSET(GameEnterResponse, _impl_.code_)}},
+    // string trace_id = 3;
+    {::_pbi::TcParser::FastUS1,
+     {26, 1, 0,
+      PROTOBUF_FIELD_OFFSET(GameEnterResponse, _impl_.trace_id_)}},
   }}, {{
     65535, 65535
   }}, {{
     // int32 code = 1;
-    {PROTOBUF_FIELD_OFFSET(GameEnterResponse, _impl_.code_), _Internal::kHasBitsOffset + 1, 0, (0 | ::_fl::kFcOptional | ::_fl::kInt32)},
+    {PROTOBUF_FIELD_OFFSET(GameEnterResponse, _impl_.code_), _Internal::kHasBitsOffset + 3, 0, (0 | ::_fl::kFcOptional | ::_fl::kInt32)},
     // string message = 2;
     {PROTOBUF_FIELD_OFFSET(GameEnterResponse, _impl_.message_), _Internal::kHasBitsOffset + 0, 0, (0 | ::_fl::kFcOptional | ::_fl::kUtf8String | ::_fl::kRepAString)},
+    // string trace_id = 3;
+    {PROTOBUF_FIELD_OFFSET(GameEnterResponse, _impl_.trace_id_), _Internal::kHasBitsOffset + 1, 0, (0 | ::_fl::kFcOptional | ::_fl::kUtf8String | ::_fl::kRepAString)},
+    // int64 server_time_ms = 4;
+    {PROTOBUF_FIELD_OFFSET(GameEnterResponse, _impl_.server_time_ms_), _Internal::kHasBitsOffset + 2, 0, (0 | ::_fl::kFcOptional | ::_fl::kInt64)},
   }},
   // no aux_entries
   {{
-    "\31\0\7\0\0\0\0\0"
+    "\31\0\7\10\0\0\0\0"
     "gateway.GameEnterResponse"
     "message"
+    "trace_id"
   }},
 };
 PROTOBUF_NOINLINE void GameEnterResponse::Clear() {
@@ -2485,10 +3505,19 @@ PROTOBUF_NOINLINE void GameEnterResponse::Clear() {
   (void) cached_has_bits;
 
   cached_has_bits = _impl_._has_bits_[0];
-  if (CheckHasBit(cached_has_bits, 0x00000001U)) {
-    _impl_.message_.ClearNonDefaultToEmpty();
+  if (BatchCheckHasBit(cached_has_bits, 0x00000003U)) {
+    if (CheckHasBit(cached_has_bits, 0x00000001U)) {
+      _impl_.message_.ClearNonDefaultToEmpty();
+    }
+    if (CheckHasBit(cached_has_bits, 0x00000002U)) {
+      _impl_.trace_id_.ClearNonDefaultToEmpty();
+    }
   }
-  _impl_.code_ = 0;
+  if (BatchCheckHasBit(cached_has_bits, 0x0000000cU)) {
+    ::memset(&_impl_.server_time_ms_, 0, static_cast<::size_t>(
+        reinterpret_cast<char*>(&_impl_.code_) -
+        reinterpret_cast<char*>(&_impl_.server_time_ms_)) + sizeof(_impl_.code_));
+  }
   _impl_._has_bits_.Clear();
   _internal_metadata_.Clear<::google::protobuf::UnknownFieldSet>();
 }
@@ -2513,7 +3542,7 @@ PROTOBUF_NOINLINE void GameEnterResponse::Clear() {
 
   cached_has_bits = this_._impl_._has_bits_[0];
   // int32 code = 1;
-  if (CheckHasBit(cached_has_bits, 0x00000002U)) {
+  if (CheckHasBit(cached_has_bits, 0x00000008U)) {
     if (this_._internal_code() != 0) {
       target =
           ::google::protobuf::internal::WireFormatLite::WriteInt32ToArrayWithField<1>(
@@ -2528,6 +3557,25 @@ PROTOBUF_NOINLINE void GameEnterResponse::Clear() {
       ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
           _s.data(), static_cast<int>(_s.length()), ::google::protobuf::internal::WireFormatLite::SERIALIZE, "gateway.GameEnterResponse.message");
       target = stream->WriteStringMaybeAliased(2, _s, target);
+    }
+  }
+
+  // string trace_id = 3;
+  if (CheckHasBit(cached_has_bits, 0x00000002U)) {
+    if (!this_._internal_trace_id().empty()) {
+      const ::std::string& _s = this_._internal_trace_id();
+      ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+          _s.data(), static_cast<int>(_s.length()), ::google::protobuf::internal::WireFormatLite::SERIALIZE, "gateway.GameEnterResponse.trace_id");
+      target = stream->WriteStringMaybeAliased(3, _s, target);
+    }
+  }
+
+  // int64 server_time_ms = 4;
+  if (CheckHasBit(cached_has_bits, 0x00000004U)) {
+    if (this_._internal_server_time_ms() != 0) {
+      target =
+          ::google::protobuf::internal::WireFormatLite::WriteInt64ToArrayWithField<4>(
+              stream, this_._internal_server_time_ms(), target);
     }
   }
 
@@ -2556,7 +3604,7 @@ PROTOBUF_NOINLINE void GameEnterResponse::Clear() {
 
   ::_pbi::Prefetch5LinesFrom7Lines(&this_);
   cached_has_bits = this_._impl_._has_bits_[0];
-  if (BatchCheckHasBit(cached_has_bits, 0x00000003U)) {
+  if (BatchCheckHasBit(cached_has_bits, 0x0000000fU)) {
     // string message = 2;
     if (CheckHasBit(cached_has_bits, 0x00000001U)) {
       if (!this_._internal_message().empty()) {
@@ -2564,8 +3612,22 @@ PROTOBUF_NOINLINE void GameEnterResponse::Clear() {
                                         this_._internal_message());
       }
     }
-    // int32 code = 1;
+    // string trace_id = 3;
     if (CheckHasBit(cached_has_bits, 0x00000002U)) {
+      if (!this_._internal_trace_id().empty()) {
+        total_size += 1 + ::google::protobuf::internal::WireFormatLite::StringSize(
+                                        this_._internal_trace_id());
+      }
+    }
+    // int64 server_time_ms = 4;
+    if (CheckHasBit(cached_has_bits, 0x00000004U)) {
+      if (this_._internal_server_time_ms() != 0) {
+        total_size += ::_pbi::WireFormatLite::Int64SizePlusOne(
+            this_._internal_server_time_ms());
+      }
+    }
+    // int32 code = 1;
+    if (CheckHasBit(cached_has_bits, 0x00000008U)) {
       if (this_._internal_code() != 0) {
         total_size += ::_pbi::WireFormatLite::Int32SizePlusOne(
             this_._internal_code());
@@ -2590,7 +3652,7 @@ void GameEnterResponse::MergeImpl(::google::protobuf::MessageLite& to_msg,
   (void)cached_has_bits;
 
   cached_has_bits = from._impl_._has_bits_[0];
-  if (BatchCheckHasBit(cached_has_bits, 0x00000003U)) {
+  if (BatchCheckHasBit(cached_has_bits, 0x0000000fU)) {
     if (CheckHasBit(cached_has_bits, 0x00000001U)) {
       if (!from._internal_message().empty()) {
         _this->_internal_set_message(from._internal_message());
@@ -2601,6 +3663,20 @@ void GameEnterResponse::MergeImpl(::google::protobuf::MessageLite& to_msg,
       }
     }
     if (CheckHasBit(cached_has_bits, 0x00000002U)) {
+      if (!from._internal_trace_id().empty()) {
+        _this->_internal_set_trace_id(from._internal_trace_id());
+      } else {
+        if (_this->_impl_.trace_id_.IsDefault()) {
+          _this->_internal_set_trace_id("");
+        }
+      }
+    }
+    if (CheckHasBit(cached_has_bits, 0x00000004U)) {
+      if (from._internal_server_time_ms() != 0) {
+        _this->_impl_.server_time_ms_ = from._impl_.server_time_ms_;
+      }
+    }
+    if (CheckHasBit(cached_has_bits, 0x00000008U)) {
       if (from._internal_code() != 0) {
         _this->_impl_.code_ = from._impl_.code_;
       }
@@ -2626,7 +3702,13 @@ void GameEnterResponse::InternalSwap(GameEnterResponse* PROTOBUF_RESTRICT PROTOB
   _internal_metadata_.InternalSwap(&other->_internal_metadata_);
   swap(_impl_._has_bits_[0], other->_impl_._has_bits_[0]);
   ::_pbi::ArenaStringPtr::InternalSwap(&_impl_.message_, &other->_impl_.message_, arena);
-  swap(_impl_.code_, other->_impl_.code_);
+  ::_pbi::ArenaStringPtr::InternalSwap(&_impl_.trace_id_, &other->_impl_.trace_id_, arena);
+  ::google::protobuf::internal::memswap<
+      PROTOBUF_FIELD_OFFSET(GameEnterResponse, _impl_.code_)
+      + sizeof(GameEnterResponse::_impl_.code_)
+      - PROTOBUF_FIELD_OFFSET(GameEnterResponse, _impl_.server_time_ms_)>(
+          reinterpret_cast<char*>(&_impl_.server_time_ms_),
+          reinterpret_cast<char*>(&other->_impl_.server_time_ms_));
 }
 
 ::google::protobuf::Metadata GameEnterResponse::GetMetadata() const {

@@ -61,6 +61,14 @@ class AuthLoginResponse;
 struct AuthLoginResponseDefaultTypeInternal;
 extern AuthLoginResponseDefaultTypeInternal _AuthLoginResponse_default_instance_;
 extern const ::google::protobuf::internal::ClassDataFull AuthLoginResponse_class_data_;
+class AuthRegisterRequest;
+struct AuthRegisterRequestDefaultTypeInternal;
+extern AuthRegisterRequestDefaultTypeInternal _AuthRegisterRequest_default_instance_;
+extern const ::google::protobuf::internal::ClassDataFull AuthRegisterRequest_class_data_;
+class AuthRegisterResponse;
+struct AuthRegisterResponseDefaultTypeInternal;
+extern AuthRegisterResponseDefaultTypeInternal _AuthRegisterResponse_default_instance_;
+extern const ::google::protobuf::internal::ClassDataFull AuthRegisterResponse_class_data_;
 class Endpoint;
 struct EndpointDefaultTypeInternal;
 extern EndpointDefaultTypeInternal _Endpoint_default_instance_;
@@ -346,7 +354,7 @@ class GameEnterResponse final : public ::google::protobuf::Message
     return *reinterpret_cast<const GameEnterResponse*>(
         &_GameEnterResponse_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 6;
+  static constexpr int kIndexInFileMessages = 8;
   friend void swap(GameEnterResponse& a, GameEnterResponse& b) { a.Swap(&b); }
   inline void Swap(GameEnterResponse* PROTOBUF_NONNULL other) {
     if (other == this) return;
@@ -434,6 +442,8 @@ class GameEnterResponse final : public ::google::protobuf::Message
   // accessors -------------------------------------------------------
   enum : int {
     kMessageFieldNumber = 2,
+    kTraceIdFieldNumber = 3,
+    kServerTimeMsFieldNumber = 4,
     kCodeFieldNumber = 1,
   };
   // string message = 2;
@@ -451,6 +461,31 @@ class GameEnterResponse final : public ::google::protobuf::Message
   ::std::string* PROTOBUF_NONNULL _internal_mutable_message();
 
   public:
+  // string trace_id = 3;
+  void clear_trace_id() ;
+  const ::std::string& trace_id() const;
+  template <typename Arg_ = const ::std::string&, typename... Args_>
+  void set_trace_id(Arg_&& arg, Args_... args);
+  ::std::string* PROTOBUF_NONNULL mutable_trace_id();
+  [[nodiscard]] ::std::string* PROTOBUF_NULLABLE release_trace_id();
+  void set_allocated_trace_id(::std::string* PROTOBUF_NULLABLE value);
+
+  private:
+  const ::std::string& _internal_trace_id() const;
+  PROTOBUF_ALWAYS_INLINE void _internal_set_trace_id(const ::std::string& value);
+  ::std::string* PROTOBUF_NONNULL _internal_mutable_trace_id();
+
+  public:
+  // int64 server_time_ms = 4;
+  void clear_server_time_ms() ;
+  ::int64_t server_time_ms() const;
+  void set_server_time_ms(::int64_t value);
+
+  private:
+  ::int64_t _internal_server_time_ms() const;
+  void _internal_set_server_time_ms(::int64_t value);
+
+  public:
   // int32 code = 1;
   void clear_code() ;
   ::int32_t code() const;
@@ -465,8 +500,8 @@ class GameEnterResponse final : public ::google::protobuf::Message
  private:
   class _Internal;
   friend class ::google::protobuf::internal::TcParser;
-  static const ::google::protobuf::internal::TcParseTable<1, 2,
-                                   0, 41,
+  static const ::google::protobuf::internal::TcParseTable<2, 4,
+                                   0, 49,
                                    2>
       _table_;
 
@@ -490,6 +525,8 @@ class GameEnterResponse final : public ::google::protobuf::Message
     ::google::protobuf::internal::HasBits<1> _has_bits_;
     ::google::protobuf::internal::CachedSize _cached_size_;
     ::google::protobuf::internal::ArenaStringPtr message_;
+    ::google::protobuf::internal::ArenaStringPtr trace_id_;
+    ::int64_t server_time_ms_;
     ::int32_t code_;
     PROTOBUF_TSAN_DECLARE_MEMBER
   };
@@ -555,7 +592,7 @@ class GameEnterRequest final : public ::google::protobuf::Message
     return *reinterpret_cast<const GameEnterRequest*>(
         &_GameEnterRequest_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 5;
+  static constexpr int kIndexInFileMessages = 7;
   friend void swap(GameEnterRequest& a, GameEnterRequest& b) { a.Swap(&b); }
   inline void Swap(GameEnterRequest* PROTOBUF_NONNULL other) {
     if (other == this) return;
@@ -904,6 +941,458 @@ class Endpoint final : public ::google::protobuf::Message
 };
 
 extern const ::google::protobuf::internal::ClassDataFull Endpoint_class_data_;
+// -------------------------------------------------------------------
+
+class AuthRegisterResponse final : public ::google::protobuf::Message
+/* @@protoc_insertion_point(class_definition:gateway.AuthRegisterResponse) */ {
+ public:
+  inline AuthRegisterResponse() : AuthRegisterResponse(nullptr) {}
+  ~AuthRegisterResponse() PROTOBUF_FINAL;
+
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+  void operator delete(AuthRegisterResponse* PROTOBUF_NONNULL msg, ::std::destroying_delete_t) {
+    SharedDtor(*msg);
+    ::google::protobuf::internal::SizedDelete(msg, sizeof(AuthRegisterResponse));
+  }
+#endif
+
+  template <typename = void>
+  explicit PROTOBUF_CONSTEXPR AuthRegisterResponse(::google::protobuf::internal::ConstantInitialized);
+
+  inline AuthRegisterResponse(const AuthRegisterResponse& from) : AuthRegisterResponse(nullptr, from) {}
+  inline AuthRegisterResponse(AuthRegisterResponse&& from) noexcept
+      : AuthRegisterResponse(nullptr, ::std::move(from)) {}
+  inline AuthRegisterResponse& operator=(const AuthRegisterResponse& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline AuthRegisterResponse& operator=(AuthRegisterResponse&& from) noexcept {
+    if (this == &from) return *this;
+    if (::google::protobuf::internal::CanMoveWithInternalSwap(GetArena(), from.GetArena())) {
+      InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const
+      ABSL_ATTRIBUTE_LIFETIME_BOUND {
+    return _internal_metadata_.unknown_fields<::google::protobuf::UnknownFieldSet>(::google::protobuf::UnknownFieldSet::default_instance);
+  }
+  inline ::google::protobuf::UnknownFieldSet* PROTOBUF_NONNULL mutable_unknown_fields()
+      ABSL_ATTRIBUTE_LIFETIME_BOUND {
+    return _internal_metadata_.mutable_unknown_fields<::google::protobuf::UnknownFieldSet>();
+  }
+
+  static const ::google::protobuf::Descriptor* PROTOBUF_NONNULL descriptor() {
+    return GetDescriptor();
+  }
+  static const ::google::protobuf::Descriptor* PROTOBUF_NONNULL GetDescriptor() {
+    return default_instance().GetMetadata().descriptor;
+  }
+  static const ::google::protobuf::Reflection* PROTOBUF_NONNULL GetReflection() {
+    return default_instance().GetMetadata().reflection;
+  }
+  static const AuthRegisterResponse& default_instance() {
+    return *reinterpret_cast<const AuthRegisterResponse*>(
+        &_AuthRegisterResponse_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages = 5;
+  friend void swap(AuthRegisterResponse& a, AuthRegisterResponse& b) { a.Swap(&b); }
+  inline void Swap(AuthRegisterResponse* PROTOBUF_NONNULL other) {
+    if (other == this) return;
+    if (::google::protobuf::internal::CanUseInternalSwap(GetArena(), other->GetArena())) {
+      InternalSwap(other);
+    } else {
+      ::google::protobuf::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(AuthRegisterResponse* PROTOBUF_NONNULL other) {
+    if (other == this) return;
+    ABSL_DCHECK(GetArena() == other->GetArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  AuthRegisterResponse* PROTOBUF_NONNULL New(::google::protobuf::Arena* PROTOBUF_NULLABLE arena = nullptr) const {
+    return ::google::protobuf::Message::DefaultConstruct<AuthRegisterResponse>(arena);
+  }
+  using ::google::protobuf::Message::CopyFrom;
+  void CopyFrom(const AuthRegisterResponse& from);
+  using ::google::protobuf::Message::MergeFrom;
+  void MergeFrom(const AuthRegisterResponse& from) { AuthRegisterResponse::MergeImpl(*this, from); }
+
+  private:
+  static void MergeImpl(::google::protobuf::MessageLite& to_msg,
+                        const ::google::protobuf::MessageLite& from_msg);
+
+  public:
+  bool IsInitialized() const {
+    return true;
+  }
+  ABSL_ATTRIBUTE_REINITIALIZES void Clear() PROTOBUF_FINAL;
+  #if defined(PROTOBUF_CUSTOM_VTABLE)
+  private:
+  static ::size_t ByteSizeLong(const ::google::protobuf::MessageLite& msg);
+  static ::uint8_t* PROTOBUF_NONNULL _InternalSerialize(
+      const ::google::protobuf::MessageLite& msg, ::uint8_t* PROTOBUF_NONNULL target,
+      ::google::protobuf::io::EpsCopyOutputStream* PROTOBUF_NONNULL stream);
+
+  public:
+  ::size_t ByteSizeLong() const { return ByteSizeLong(*this); }
+  ::uint8_t* PROTOBUF_NONNULL _InternalSerialize(
+      ::uint8_t* PROTOBUF_NONNULL target,
+      ::google::protobuf::io::EpsCopyOutputStream* PROTOBUF_NONNULL stream) const {
+    return _InternalSerialize(*this, target, stream);
+  }
+  #else   // PROTOBUF_CUSTOM_VTABLE
+  ::size_t ByteSizeLong() const final;
+  ::uint8_t* PROTOBUF_NONNULL _InternalSerialize(
+      ::uint8_t* PROTOBUF_NONNULL target,
+      ::google::protobuf::io::EpsCopyOutputStream* PROTOBUF_NONNULL stream) const final;
+  #endif  // PROTOBUF_CUSTOM_VTABLE
+  int GetCachedSize() const { return _impl_._cached_size_.Get(); }
+
+  private:
+  void SharedCtor(::google::protobuf::Arena* PROTOBUF_NULLABLE arena);
+  static void SharedDtor(MessageLite& self);
+  void InternalSwap(AuthRegisterResponse* PROTOBUF_NONNULL other);
+ private:
+  template <typename T>
+  friend ::absl::string_view(::google::protobuf::internal::GetAnyMessageName)();
+  static ::absl::string_view FullMessageName() { return "gateway.AuthRegisterResponse"; }
+
+  explicit AuthRegisterResponse(::google::protobuf::Arena* PROTOBUF_NULLABLE arena);
+  AuthRegisterResponse(::google::protobuf::Arena* PROTOBUF_NULLABLE arena, const AuthRegisterResponse& from);
+  AuthRegisterResponse(
+      ::google::protobuf::Arena* PROTOBUF_NULLABLE arena, AuthRegisterResponse&& from) noexcept
+      : AuthRegisterResponse(arena) {
+    *this = ::std::move(from);
+  }
+  const ::google::protobuf::internal::ClassData* PROTOBUF_NONNULL GetClassData() const PROTOBUF_FINAL;
+  static void* PROTOBUF_NONNULL PlacementNew_(
+      const void* PROTOBUF_NONNULL, void* PROTOBUF_NONNULL mem,
+      ::google::protobuf::Arena* PROTOBUF_NULLABLE arena);
+  static constexpr auto InternalNewImpl_();
+
+ public:
+  static constexpr auto InternalGenerateClassData_();
+
+  ::google::protobuf::Metadata GetMetadata() const;
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+  enum : int {
+    kMessageFieldNumber = 2,
+    kTraceIdFieldNumber = 3,
+    kServerTimeMsFieldNumber = 4,
+    kCodeFieldNumber = 1,
+  };
+  // string message = 2;
+  void clear_message() ;
+  const ::std::string& message() const;
+  template <typename Arg_ = const ::std::string&, typename... Args_>
+  void set_message(Arg_&& arg, Args_... args);
+  ::std::string* PROTOBUF_NONNULL mutable_message();
+  [[nodiscard]] ::std::string* PROTOBUF_NULLABLE release_message();
+  void set_allocated_message(::std::string* PROTOBUF_NULLABLE value);
+
+  private:
+  const ::std::string& _internal_message() const;
+  PROTOBUF_ALWAYS_INLINE void _internal_set_message(const ::std::string& value);
+  ::std::string* PROTOBUF_NONNULL _internal_mutable_message();
+
+  public:
+  // string trace_id = 3;
+  void clear_trace_id() ;
+  const ::std::string& trace_id() const;
+  template <typename Arg_ = const ::std::string&, typename... Args_>
+  void set_trace_id(Arg_&& arg, Args_... args);
+  ::std::string* PROTOBUF_NONNULL mutable_trace_id();
+  [[nodiscard]] ::std::string* PROTOBUF_NULLABLE release_trace_id();
+  void set_allocated_trace_id(::std::string* PROTOBUF_NULLABLE value);
+
+  private:
+  const ::std::string& _internal_trace_id() const;
+  PROTOBUF_ALWAYS_INLINE void _internal_set_trace_id(const ::std::string& value);
+  ::std::string* PROTOBUF_NONNULL _internal_mutable_trace_id();
+
+  public:
+  // int64 server_time_ms = 4;
+  void clear_server_time_ms() ;
+  ::int64_t server_time_ms() const;
+  void set_server_time_ms(::int64_t value);
+
+  private:
+  ::int64_t _internal_server_time_ms() const;
+  void _internal_set_server_time_ms(::int64_t value);
+
+  public:
+  // int32 code = 1;
+  void clear_code() ;
+  ::int32_t code() const;
+  void set_code(::int32_t value);
+
+  private:
+  ::int32_t _internal_code() const;
+  void _internal_set_code(::int32_t value);
+
+  public:
+  // @@protoc_insertion_point(class_scope:gateway.AuthRegisterResponse)
+ private:
+  class _Internal;
+  friend class ::google::protobuf::internal::TcParser;
+  static const ::google::protobuf::internal::TcParseTable<2, 4,
+                                   0, 52,
+                                   2>
+      _table_;
+
+  friend class ::google::protobuf::MessageLite;
+  friend class ::google::protobuf::Arena;
+  friend ::google::protobuf::internal::PrivateAccess;
+  template <typename T>
+  friend class ::google::protobuf::Arena::InternalHelper;
+  using InternalArenaConstructable_ = void;
+  using DestructorSkippable_ = void;
+  struct Impl_ {
+    inline explicit constexpr Impl_(::google::protobuf::internal::InternalVisibility visibility,
+                                    ::google::protobuf::internal::ConstantInitialized) noexcept;
+    inline explicit Impl_(
+        ::google::protobuf::internal::InternalVisibility visibility,
+        ::google::protobuf::Arena* PROTOBUF_NULLABLE arena);
+    inline explicit Impl_(
+        ::google::protobuf::internal::InternalVisibility visibility,
+        ::google::protobuf::Arena* PROTOBUF_NULLABLE arena, const Impl_& from,
+        const AuthRegisterResponse& from_msg);
+    ::google::protobuf::internal::HasBits<1> _has_bits_;
+    ::google::protobuf::internal::CachedSize _cached_size_;
+    ::google::protobuf::internal::ArenaStringPtr message_;
+    ::google::protobuf::internal::ArenaStringPtr trace_id_;
+    ::int64_t server_time_ms_;
+    ::int32_t code_;
+    PROTOBUF_TSAN_DECLARE_MEMBER
+  };
+  union { Impl_ _impl_; };
+  friend struct ::TableStruct_gateway_2eproto;
+};
+
+extern const ::google::protobuf::internal::ClassDataFull AuthRegisterResponse_class_data_;
+// -------------------------------------------------------------------
+
+class AuthRegisterRequest final : public ::google::protobuf::Message
+/* @@protoc_insertion_point(class_definition:gateway.AuthRegisterRequest) */ {
+ public:
+  inline AuthRegisterRequest() : AuthRegisterRequest(nullptr) {}
+  ~AuthRegisterRequest() PROTOBUF_FINAL;
+
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+  void operator delete(AuthRegisterRequest* PROTOBUF_NONNULL msg, ::std::destroying_delete_t) {
+    SharedDtor(*msg);
+    ::google::protobuf::internal::SizedDelete(msg, sizeof(AuthRegisterRequest));
+  }
+#endif
+
+  template <typename = void>
+  explicit PROTOBUF_CONSTEXPR AuthRegisterRequest(::google::protobuf::internal::ConstantInitialized);
+
+  inline AuthRegisterRequest(const AuthRegisterRequest& from) : AuthRegisterRequest(nullptr, from) {}
+  inline AuthRegisterRequest(AuthRegisterRequest&& from) noexcept
+      : AuthRegisterRequest(nullptr, ::std::move(from)) {}
+  inline AuthRegisterRequest& operator=(const AuthRegisterRequest& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline AuthRegisterRequest& operator=(AuthRegisterRequest&& from) noexcept {
+    if (this == &from) return *this;
+    if (::google::protobuf::internal::CanMoveWithInternalSwap(GetArena(), from.GetArena())) {
+      InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const
+      ABSL_ATTRIBUTE_LIFETIME_BOUND {
+    return _internal_metadata_.unknown_fields<::google::protobuf::UnknownFieldSet>(::google::protobuf::UnknownFieldSet::default_instance);
+  }
+  inline ::google::protobuf::UnknownFieldSet* PROTOBUF_NONNULL mutable_unknown_fields()
+      ABSL_ATTRIBUTE_LIFETIME_BOUND {
+    return _internal_metadata_.mutable_unknown_fields<::google::protobuf::UnknownFieldSet>();
+  }
+
+  static const ::google::protobuf::Descriptor* PROTOBUF_NONNULL descriptor() {
+    return GetDescriptor();
+  }
+  static const ::google::protobuf::Descriptor* PROTOBUF_NONNULL GetDescriptor() {
+    return default_instance().GetMetadata().descriptor;
+  }
+  static const ::google::protobuf::Reflection* PROTOBUF_NONNULL GetReflection() {
+    return default_instance().GetMetadata().reflection;
+  }
+  static const AuthRegisterRequest& default_instance() {
+    return *reinterpret_cast<const AuthRegisterRequest*>(
+        &_AuthRegisterRequest_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages = 4;
+  friend void swap(AuthRegisterRequest& a, AuthRegisterRequest& b) { a.Swap(&b); }
+  inline void Swap(AuthRegisterRequest* PROTOBUF_NONNULL other) {
+    if (other == this) return;
+    if (::google::protobuf::internal::CanUseInternalSwap(GetArena(), other->GetArena())) {
+      InternalSwap(other);
+    } else {
+      ::google::protobuf::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(AuthRegisterRequest* PROTOBUF_NONNULL other) {
+    if (other == this) return;
+    ABSL_DCHECK(GetArena() == other->GetArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  AuthRegisterRequest* PROTOBUF_NONNULL New(::google::protobuf::Arena* PROTOBUF_NULLABLE arena = nullptr) const {
+    return ::google::protobuf::Message::DefaultConstruct<AuthRegisterRequest>(arena);
+  }
+  using ::google::protobuf::Message::CopyFrom;
+  void CopyFrom(const AuthRegisterRequest& from);
+  using ::google::protobuf::Message::MergeFrom;
+  void MergeFrom(const AuthRegisterRequest& from) { AuthRegisterRequest::MergeImpl(*this, from); }
+
+  private:
+  static void MergeImpl(::google::protobuf::MessageLite& to_msg,
+                        const ::google::protobuf::MessageLite& from_msg);
+
+  public:
+  bool IsInitialized() const {
+    return true;
+  }
+  ABSL_ATTRIBUTE_REINITIALIZES void Clear() PROTOBUF_FINAL;
+  #if defined(PROTOBUF_CUSTOM_VTABLE)
+  private:
+  static ::size_t ByteSizeLong(const ::google::protobuf::MessageLite& msg);
+  static ::uint8_t* PROTOBUF_NONNULL _InternalSerialize(
+      const ::google::protobuf::MessageLite& msg, ::uint8_t* PROTOBUF_NONNULL target,
+      ::google::protobuf::io::EpsCopyOutputStream* PROTOBUF_NONNULL stream);
+
+  public:
+  ::size_t ByteSizeLong() const { return ByteSizeLong(*this); }
+  ::uint8_t* PROTOBUF_NONNULL _InternalSerialize(
+      ::uint8_t* PROTOBUF_NONNULL target,
+      ::google::protobuf::io::EpsCopyOutputStream* PROTOBUF_NONNULL stream) const {
+    return _InternalSerialize(*this, target, stream);
+  }
+  #else   // PROTOBUF_CUSTOM_VTABLE
+  ::size_t ByteSizeLong() const final;
+  ::uint8_t* PROTOBUF_NONNULL _InternalSerialize(
+      ::uint8_t* PROTOBUF_NONNULL target,
+      ::google::protobuf::io::EpsCopyOutputStream* PROTOBUF_NONNULL stream) const final;
+  #endif  // PROTOBUF_CUSTOM_VTABLE
+  int GetCachedSize() const { return _impl_._cached_size_.Get(); }
+
+  private:
+  void SharedCtor(::google::protobuf::Arena* PROTOBUF_NULLABLE arena);
+  static void SharedDtor(MessageLite& self);
+  void InternalSwap(AuthRegisterRequest* PROTOBUF_NONNULL other);
+ private:
+  template <typename T>
+  friend ::absl::string_view(::google::protobuf::internal::GetAnyMessageName)();
+  static ::absl::string_view FullMessageName() { return "gateway.AuthRegisterRequest"; }
+
+  explicit AuthRegisterRequest(::google::protobuf::Arena* PROTOBUF_NULLABLE arena);
+  AuthRegisterRequest(::google::protobuf::Arena* PROTOBUF_NULLABLE arena, const AuthRegisterRequest& from);
+  AuthRegisterRequest(
+      ::google::protobuf::Arena* PROTOBUF_NULLABLE arena, AuthRegisterRequest&& from) noexcept
+      : AuthRegisterRequest(arena) {
+    *this = ::std::move(from);
+  }
+  const ::google::protobuf::internal::ClassData* PROTOBUF_NONNULL GetClassData() const PROTOBUF_FINAL;
+  static void* PROTOBUF_NONNULL PlacementNew_(
+      const void* PROTOBUF_NONNULL, void* PROTOBUF_NONNULL mem,
+      ::google::protobuf::Arena* PROTOBUF_NULLABLE arena);
+  static constexpr auto InternalNewImpl_();
+
+ public:
+  static constexpr auto InternalGenerateClassData_();
+
+  ::google::protobuf::Metadata GetMetadata() const;
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+  enum : int {
+    kAccountFieldNumber = 1,
+    kPasswordFieldNumber = 2,
+  };
+  // string account = 1;
+  void clear_account() ;
+  const ::std::string& account() const;
+  template <typename Arg_ = const ::std::string&, typename... Args_>
+  void set_account(Arg_&& arg, Args_... args);
+  ::std::string* PROTOBUF_NONNULL mutable_account();
+  [[nodiscard]] ::std::string* PROTOBUF_NULLABLE release_account();
+  void set_allocated_account(::std::string* PROTOBUF_NULLABLE value);
+
+  private:
+  const ::std::string& _internal_account() const;
+  PROTOBUF_ALWAYS_INLINE void _internal_set_account(const ::std::string& value);
+  ::std::string* PROTOBUF_NONNULL _internal_mutable_account();
+
+  public:
+  // string password = 2;
+  void clear_password() ;
+  const ::std::string& password() const;
+  template <typename Arg_ = const ::std::string&, typename... Args_>
+  void set_password(Arg_&& arg, Args_... args);
+  ::std::string* PROTOBUF_NONNULL mutable_password();
+  [[nodiscard]] ::std::string* PROTOBUF_NULLABLE release_password();
+  void set_allocated_password(::std::string* PROTOBUF_NULLABLE value);
+
+  private:
+  const ::std::string& _internal_password() const;
+  PROTOBUF_ALWAYS_INLINE void _internal_set_password(const ::std::string& value);
+  ::std::string* PROTOBUF_NONNULL _internal_mutable_password();
+
+  public:
+  // @@protoc_insertion_point(class_scope:gateway.AuthRegisterRequest)
+ private:
+  class _Internal;
+  friend class ::google::protobuf::internal::TcParser;
+  static const ::google::protobuf::internal::TcParseTable<1, 2,
+                                   0, 51,
+                                   2>
+      _table_;
+
+  friend class ::google::protobuf::MessageLite;
+  friend class ::google::protobuf::Arena;
+  friend ::google::protobuf::internal::PrivateAccess;
+  template <typename T>
+  friend class ::google::protobuf::Arena::InternalHelper;
+  using InternalArenaConstructable_ = void;
+  using DestructorSkippable_ = void;
+  struct Impl_ {
+    inline explicit constexpr Impl_(::google::protobuf::internal::InternalVisibility visibility,
+                                    ::google::protobuf::internal::ConstantInitialized) noexcept;
+    inline explicit Impl_(
+        ::google::protobuf::internal::InternalVisibility visibility,
+        ::google::protobuf::Arena* PROTOBUF_NULLABLE arena);
+    inline explicit Impl_(
+        ::google::protobuf::internal::InternalVisibility visibility,
+        ::google::protobuf::Arena* PROTOBUF_NULLABLE arena, const Impl_& from,
+        const AuthRegisterRequest& from_msg);
+    ::google::protobuf::internal::HasBits<1> _has_bits_;
+    ::google::protobuf::internal::CachedSize _cached_size_;
+    ::google::protobuf::internal::ArenaStringPtr account_;
+    ::google::protobuf::internal::ArenaStringPtr password_;
+    PROTOBUF_TSAN_DECLARE_MEMBER
+  };
+  union { Impl_ _impl_; };
+  friend struct ::TableStruct_gateway_2eproto;
+};
+
+extern const ::google::protobuf::internal::ClassDataFull AuthRegisterRequest_class_data_;
 // -------------------------------------------------------------------
 
 class AuthLoginRequest final : public ::google::protobuf::Message
@@ -1263,8 +1752,10 @@ class RouteLoginResponse final : public ::google::protobuf::Message
   // accessors -------------------------------------------------------
   enum : int {
     kMessageFieldNumber = 4,
+    kTraceIdFieldNumber = 5,
     kLoginEndpointFieldNumber = 2,
     kGameEndpointFieldNumber = 3,
+    kServerTimeMsFieldNumber = 6,
     kCodeFieldNumber = 1,
   };
   // string message = 4;
@@ -1280,6 +1771,21 @@ class RouteLoginResponse final : public ::google::protobuf::Message
   const ::std::string& _internal_message() const;
   PROTOBUF_ALWAYS_INLINE void _internal_set_message(const ::std::string& value);
   ::std::string* PROTOBUF_NONNULL _internal_mutable_message();
+
+  public:
+  // string trace_id = 5;
+  void clear_trace_id() ;
+  const ::std::string& trace_id() const;
+  template <typename Arg_ = const ::std::string&, typename... Args_>
+  void set_trace_id(Arg_&& arg, Args_... args);
+  ::std::string* PROTOBUF_NONNULL mutable_trace_id();
+  [[nodiscard]] ::std::string* PROTOBUF_NULLABLE release_trace_id();
+  void set_allocated_trace_id(::std::string* PROTOBUF_NULLABLE value);
+
+  private:
+  const ::std::string& _internal_trace_id() const;
+  PROTOBUF_ALWAYS_INLINE void _internal_set_trace_id(const ::std::string& value);
+  ::std::string* PROTOBUF_NONNULL _internal_mutable_trace_id();
 
   public:
   // .gateway.Endpoint login_endpoint = 2;
@@ -1314,6 +1820,16 @@ class RouteLoginResponse final : public ::google::protobuf::Message
   ::gateway::Endpoint* PROTOBUF_NONNULL _internal_mutable_game_endpoint();
 
   public:
+  // int64 server_time_ms = 6;
+  void clear_server_time_ms() ;
+  ::int64_t server_time_ms() const;
+  void set_server_time_ms(::int64_t value);
+
+  private:
+  ::int64_t _internal_server_time_ms() const;
+  void _internal_set_server_time_ms(::int64_t value);
+
+  public:
   // int32 code = 1;
   void clear_code() ;
   ::int32_t code() const;
@@ -1328,8 +1844,8 @@ class RouteLoginResponse final : public ::google::protobuf::Message
  private:
   class _Internal;
   friend class ::google::protobuf::internal::TcParser;
-  static const ::google::protobuf::internal::TcParseTable<2, 4,
-                                   2, 42,
+  static const ::google::protobuf::internal::TcParseTable<3, 6,
+                                   2, 50,
                                    2>
       _table_;
 
@@ -1353,8 +1869,10 @@ class RouteLoginResponse final : public ::google::protobuf::Message
     ::google::protobuf::internal::HasBits<1> _has_bits_;
     ::google::protobuf::internal::CachedSize _cached_size_;
     ::google::protobuf::internal::ArenaStringPtr message_;
+    ::google::protobuf::internal::ArenaStringPtr trace_id_;
     ::gateway::Endpoint* PROTOBUF_NULLABLE login_endpoint_;
     ::gateway::Endpoint* PROTOBUF_NULLABLE game_endpoint_;
+    ::int64_t server_time_ms_;
     ::int32_t code_;
     PROTOBUF_TSAN_DECLARE_MEMBER
   };
@@ -1420,7 +1938,7 @@ class AuthLoginResponse final : public ::google::protobuf::Message
     return *reinterpret_cast<const AuthLoginResponse*>(
         &_AuthLoginResponse_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 4;
+  static constexpr int kIndexInFileMessages = 6;
   friend void swap(AuthLoginResponse& a, AuthLoginResponse& b) { a.Swap(&b); }
   inline void Swap(AuthLoginResponse* PROTOBUF_NONNULL other) {
     if (other == this) return;
@@ -1509,7 +2027,9 @@ class AuthLoginResponse final : public ::google::protobuf::Message
   enum : int {
     kJwtFieldNumber = 2,
     kMessageFieldNumber = 4,
+    kTraceIdFieldNumber = 5,
     kGameEndpointFieldNumber = 3,
+    kServerTimeMsFieldNumber = 6,
     kCodeFieldNumber = 1,
   };
   // string jwt = 2;
@@ -1542,6 +2062,21 @@ class AuthLoginResponse final : public ::google::protobuf::Message
   ::std::string* PROTOBUF_NONNULL _internal_mutable_message();
 
   public:
+  // string trace_id = 5;
+  void clear_trace_id() ;
+  const ::std::string& trace_id() const;
+  template <typename Arg_ = const ::std::string&, typename... Args_>
+  void set_trace_id(Arg_&& arg, Args_... args);
+  ::std::string* PROTOBUF_NONNULL mutable_trace_id();
+  [[nodiscard]] ::std::string* PROTOBUF_NULLABLE release_trace_id();
+  void set_allocated_trace_id(::std::string* PROTOBUF_NULLABLE value);
+
+  private:
+  const ::std::string& _internal_trace_id() const;
+  PROTOBUF_ALWAYS_INLINE void _internal_set_trace_id(const ::std::string& value);
+  ::std::string* PROTOBUF_NONNULL _internal_mutable_trace_id();
+
+  public:
   // .gateway.Endpoint game_endpoint = 3;
   [[nodiscard]] bool has_game_endpoint()
       const;
@@ -1558,6 +2093,16 @@ class AuthLoginResponse final : public ::google::protobuf::Message
   ::gateway::Endpoint* PROTOBUF_NONNULL _internal_mutable_game_endpoint();
 
   public:
+  // int64 server_time_ms = 6;
+  void clear_server_time_ms() ;
+  ::int64_t server_time_ms() const;
+  void set_server_time_ms(::int64_t value);
+
+  private:
+  ::int64_t _internal_server_time_ms() const;
+  void _internal_set_server_time_ms(::int64_t value);
+
+  public:
   // int32 code = 1;
   void clear_code() ;
   ::int32_t code() const;
@@ -1572,8 +2117,8 @@ class AuthLoginResponse final : public ::google::protobuf::Message
  private:
   class _Internal;
   friend class ::google::protobuf::internal::TcParser;
-  static const ::google::protobuf::internal::TcParseTable<2, 4,
-                                   1, 44,
+  static const ::google::protobuf::internal::TcParseTable<3, 6,
+                                   1, 52,
                                    2>
       _table_;
 
@@ -1598,7 +2143,9 @@ class AuthLoginResponse final : public ::google::protobuf::Message
     ::google::protobuf::internal::CachedSize _cached_size_;
     ::google::protobuf::internal::ArenaStringPtr jwt_;
     ::google::protobuf::internal::ArenaStringPtr message_;
+    ::google::protobuf::internal::ArenaStringPtr trace_id_;
     ::gateway::Endpoint* PROTOBUF_NULLABLE game_endpoint_;
+    ::int64_t server_time_ms_;
     ::int32_t code_;
     PROTOBUF_TSAN_DECLARE_MEMBER
   };
@@ -1792,7 +2339,7 @@ inline void RouteLoginResponse::clear_code() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   _impl_.code_ = 0;
   ClearHasBit(_impl_._has_bits_[0],
-                  0x00000008U);
+                  0x00000020U);
 }
 inline ::int32_t RouteLoginResponse::code() const {
   // @@protoc_insertion_point(field_get:gateway.RouteLoginResponse.code)
@@ -1800,7 +2347,7 @@ inline ::int32_t RouteLoginResponse::code() const {
 }
 inline void RouteLoginResponse::set_code(::int32_t value) {
   _internal_set_code(value);
-  SetHasBit(_impl_._has_bits_[0], 0x00000008U);
+  SetHasBit(_impl_._has_bits_[0], 0x00000020U);
   // @@protoc_insertion_point(field_set:gateway.RouteLoginResponse.code)
 }
 inline ::int32_t RouteLoginResponse::_internal_code() const {
@@ -1814,7 +2361,7 @@ inline void RouteLoginResponse::_internal_set_code(::int32_t value) {
 
 // .gateway.Endpoint login_endpoint = 2;
 inline bool RouteLoginResponse::has_login_endpoint() const {
-  bool value = CheckHasBit(_impl_._has_bits_[0], 0x00000002U);
+  bool value = CheckHasBit(_impl_._has_bits_[0], 0x00000004U);
   PROTOBUF_ASSUME(!value || _impl_.login_endpoint_ != nullptr);
   return value;
 }
@@ -1822,7 +2369,7 @@ inline void RouteLoginResponse::clear_login_endpoint() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   if (_impl_.login_endpoint_ != nullptr) _impl_.login_endpoint_->Clear();
   ClearHasBit(_impl_._has_bits_[0],
-                  0x00000002U);
+                  0x00000004U);
 }
 inline const ::gateway::Endpoint& RouteLoginResponse::_internal_login_endpoint() const {
   ::google::protobuf::internal::TSanRead(&_impl_);
@@ -1841,16 +2388,16 @@ inline void RouteLoginResponse::unsafe_arena_set_allocated_login_endpoint(
   }
   _impl_.login_endpoint_ = reinterpret_cast<::gateway::Endpoint*>(value);
   if (value != nullptr) {
-    SetHasBit(_impl_._has_bits_[0], 0x00000002U);
+    SetHasBit(_impl_._has_bits_[0], 0x00000004U);
   } else {
-    ClearHasBit(_impl_._has_bits_[0], 0x00000002U);
+    ClearHasBit(_impl_._has_bits_[0], 0x00000004U);
   }
   // @@protoc_insertion_point(field_unsafe_arena_set_allocated:gateway.RouteLoginResponse.login_endpoint)
 }
 inline ::gateway::Endpoint* PROTOBUF_NULLABLE RouteLoginResponse::release_login_endpoint() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
 
-  ClearHasBit(_impl_._has_bits_[0], 0x00000002U);
+  ClearHasBit(_impl_._has_bits_[0], 0x00000004U);
   ::gateway::Endpoint* released = _impl_.login_endpoint_;
   _impl_.login_endpoint_ = nullptr;
   if (::google::protobuf::internal::DebugHardenForceCopyInRelease()) {
@@ -1870,7 +2417,7 @@ inline ::gateway::Endpoint* PROTOBUF_NULLABLE RouteLoginResponse::unsafe_arena_r
   ::google::protobuf::internal::TSanWrite(&_impl_);
   // @@protoc_insertion_point(field_release:gateway.RouteLoginResponse.login_endpoint)
 
-  ClearHasBit(_impl_._has_bits_[0], 0x00000002U);
+  ClearHasBit(_impl_._has_bits_[0], 0x00000004U);
   ::gateway::Endpoint* temp = _impl_.login_endpoint_;
   _impl_.login_endpoint_ = nullptr;
   return temp;
@@ -1885,7 +2432,7 @@ inline ::gateway::Endpoint* PROTOBUF_NONNULL RouteLoginResponse::_internal_mutab
 }
 inline ::gateway::Endpoint* PROTOBUF_NONNULL RouteLoginResponse::mutable_login_endpoint()
     ABSL_ATTRIBUTE_LIFETIME_BOUND {
-  SetHasBit(_impl_._has_bits_[0], 0x00000002U);
+  SetHasBit(_impl_._has_bits_[0], 0x00000004U);
   ::gateway::Endpoint* _msg = _internal_mutable_login_endpoint();
   // @@protoc_insertion_point(field_mutable:gateway.RouteLoginResponse.login_endpoint)
   return _msg;
@@ -1902,9 +2449,9 @@ inline void RouteLoginResponse::set_allocated_login_endpoint(::gateway::Endpoint
     if (message_arena != submessage_arena) {
       value = ::google::protobuf::internal::GetOwnedMessage(message_arena, value, submessage_arena);
     }
-    SetHasBit(_impl_._has_bits_[0], 0x00000002U);
+    SetHasBit(_impl_._has_bits_[0], 0x00000004U);
   } else {
-    ClearHasBit(_impl_._has_bits_[0], 0x00000002U);
+    ClearHasBit(_impl_._has_bits_[0], 0x00000004U);
   }
 
   _impl_.login_endpoint_ = reinterpret_cast<::gateway::Endpoint*>(value);
@@ -1913,7 +2460,7 @@ inline void RouteLoginResponse::set_allocated_login_endpoint(::gateway::Endpoint
 
 // .gateway.Endpoint game_endpoint = 3;
 inline bool RouteLoginResponse::has_game_endpoint() const {
-  bool value = CheckHasBit(_impl_._has_bits_[0], 0x00000004U);
+  bool value = CheckHasBit(_impl_._has_bits_[0], 0x00000008U);
   PROTOBUF_ASSUME(!value || _impl_.game_endpoint_ != nullptr);
   return value;
 }
@@ -1921,7 +2468,7 @@ inline void RouteLoginResponse::clear_game_endpoint() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   if (_impl_.game_endpoint_ != nullptr) _impl_.game_endpoint_->Clear();
   ClearHasBit(_impl_._has_bits_[0],
-                  0x00000004U);
+                  0x00000008U);
 }
 inline const ::gateway::Endpoint& RouteLoginResponse::_internal_game_endpoint() const {
   ::google::protobuf::internal::TSanRead(&_impl_);
@@ -1940,16 +2487,16 @@ inline void RouteLoginResponse::unsafe_arena_set_allocated_game_endpoint(
   }
   _impl_.game_endpoint_ = reinterpret_cast<::gateway::Endpoint*>(value);
   if (value != nullptr) {
-    SetHasBit(_impl_._has_bits_[0], 0x00000004U);
+    SetHasBit(_impl_._has_bits_[0], 0x00000008U);
   } else {
-    ClearHasBit(_impl_._has_bits_[0], 0x00000004U);
+    ClearHasBit(_impl_._has_bits_[0], 0x00000008U);
   }
   // @@protoc_insertion_point(field_unsafe_arena_set_allocated:gateway.RouteLoginResponse.game_endpoint)
 }
 inline ::gateway::Endpoint* PROTOBUF_NULLABLE RouteLoginResponse::release_game_endpoint() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
 
-  ClearHasBit(_impl_._has_bits_[0], 0x00000004U);
+  ClearHasBit(_impl_._has_bits_[0], 0x00000008U);
   ::gateway::Endpoint* released = _impl_.game_endpoint_;
   _impl_.game_endpoint_ = nullptr;
   if (::google::protobuf::internal::DebugHardenForceCopyInRelease()) {
@@ -1969,7 +2516,7 @@ inline ::gateway::Endpoint* PROTOBUF_NULLABLE RouteLoginResponse::unsafe_arena_r
   ::google::protobuf::internal::TSanWrite(&_impl_);
   // @@protoc_insertion_point(field_release:gateway.RouteLoginResponse.game_endpoint)
 
-  ClearHasBit(_impl_._has_bits_[0], 0x00000004U);
+  ClearHasBit(_impl_._has_bits_[0], 0x00000008U);
   ::gateway::Endpoint* temp = _impl_.game_endpoint_;
   _impl_.game_endpoint_ = nullptr;
   return temp;
@@ -1984,7 +2531,7 @@ inline ::gateway::Endpoint* PROTOBUF_NONNULL RouteLoginResponse::_internal_mutab
 }
 inline ::gateway::Endpoint* PROTOBUF_NONNULL RouteLoginResponse::mutable_game_endpoint()
     ABSL_ATTRIBUTE_LIFETIME_BOUND {
-  SetHasBit(_impl_._has_bits_[0], 0x00000004U);
+  SetHasBit(_impl_._has_bits_[0], 0x00000008U);
   ::gateway::Endpoint* _msg = _internal_mutable_game_endpoint();
   // @@protoc_insertion_point(field_mutable:gateway.RouteLoginResponse.game_endpoint)
   return _msg;
@@ -2001,9 +2548,9 @@ inline void RouteLoginResponse::set_allocated_game_endpoint(::gateway::Endpoint*
     if (message_arena != submessage_arena) {
       value = ::google::protobuf::internal::GetOwnedMessage(message_arena, value, submessage_arena);
     }
-    SetHasBit(_impl_._has_bits_[0], 0x00000004U);
+    SetHasBit(_impl_._has_bits_[0], 0x00000008U);
   } else {
-    ClearHasBit(_impl_._has_bits_[0], 0x00000004U);
+    ClearHasBit(_impl_._has_bits_[0], 0x00000008U);
   }
 
   _impl_.game_endpoint_ = reinterpret_cast<::gateway::Endpoint*>(value);
@@ -2073,6 +2620,96 @@ inline void RouteLoginResponse::set_allocated_message(::std::string* PROTOBUF_NU
     _impl_.message_.Set("", GetArena());
   }
   // @@protoc_insertion_point(field_set_allocated:gateway.RouteLoginResponse.message)
+}
+
+// string trace_id = 5;
+inline void RouteLoginResponse::clear_trace_id() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.trace_id_.ClearToEmpty();
+  ClearHasBit(_impl_._has_bits_[0],
+                  0x00000002U);
+}
+inline const ::std::string& RouteLoginResponse::trace_id() const
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_get:gateway.RouteLoginResponse.trace_id)
+  return _internal_trace_id();
+}
+template <typename Arg_, typename... Args_>
+PROTOBUF_ALWAYS_INLINE void RouteLoginResponse::set_trace_id(Arg_&& arg, Args_... args) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  SetHasBit(_impl_._has_bits_[0], 0x00000002U);
+  _impl_.trace_id_.Set(static_cast<Arg_&&>(arg), args..., GetArena());
+  // @@protoc_insertion_point(field_set:gateway.RouteLoginResponse.trace_id)
+}
+inline ::std::string* PROTOBUF_NONNULL RouteLoginResponse::mutable_trace_id()
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  SetHasBit(_impl_._has_bits_[0], 0x00000002U);
+  ::std::string* _s = _internal_mutable_trace_id();
+  // @@protoc_insertion_point(field_mutable:gateway.RouteLoginResponse.trace_id)
+  return _s;
+}
+inline const ::std::string& RouteLoginResponse::_internal_trace_id() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.trace_id_.Get();
+}
+inline void RouteLoginResponse::_internal_set_trace_id(const ::std::string& value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.trace_id_.Set(value, GetArena());
+}
+inline ::std::string* PROTOBUF_NONNULL RouteLoginResponse::_internal_mutable_trace_id() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  return _impl_.trace_id_.Mutable( GetArena());
+}
+inline ::std::string* PROTOBUF_NULLABLE RouteLoginResponse::release_trace_id() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  // @@protoc_insertion_point(field_release:gateway.RouteLoginResponse.trace_id)
+  if (!CheckHasBit(_impl_._has_bits_[0], 0x00000002U)) {
+    return nullptr;
+  }
+  ClearHasBit(_impl_._has_bits_[0], 0x00000002U);
+  auto* released = _impl_.trace_id_.Release();
+  if (::google::protobuf::internal::DebugHardenForceCopyDefaultString()) {
+    _impl_.trace_id_.Set("", GetArena());
+  }
+  return released;
+}
+inline void RouteLoginResponse::set_allocated_trace_id(::std::string* PROTOBUF_NULLABLE value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (value != nullptr) {
+    SetHasBit(_impl_._has_bits_[0], 0x00000002U);
+  } else {
+    ClearHasBit(_impl_._has_bits_[0], 0x00000002U);
+  }
+  _impl_.trace_id_.SetAllocated(value, GetArena());
+  if (::google::protobuf::internal::DebugHardenForceCopyDefaultString() && _impl_.trace_id_.IsDefault()) {
+    _impl_.trace_id_.Set("", GetArena());
+  }
+  // @@protoc_insertion_point(field_set_allocated:gateway.RouteLoginResponse.trace_id)
+}
+
+// int64 server_time_ms = 6;
+inline void RouteLoginResponse::clear_server_time_ms() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.server_time_ms_ = ::int64_t{0};
+  ClearHasBit(_impl_._has_bits_[0],
+                  0x00000010U);
+}
+inline ::int64_t RouteLoginResponse::server_time_ms() const {
+  // @@protoc_insertion_point(field_get:gateway.RouteLoginResponse.server_time_ms)
+  return _internal_server_time_ms();
+}
+inline void RouteLoginResponse::set_server_time_ms(::int64_t value) {
+  _internal_set_server_time_ms(value);
+  SetHasBit(_impl_._has_bits_[0], 0x00000010U);
+  // @@protoc_insertion_point(field_set:gateway.RouteLoginResponse.server_time_ms)
+}
+inline ::int64_t RouteLoginResponse::_internal_server_time_ms() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.server_time_ms_;
+}
+inline void RouteLoginResponse::_internal_set_server_time_ms(::int64_t value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.server_time_ms_ = value;
 }
 
 // -------------------------------------------------------------------
@@ -2211,6 +2848,324 @@ inline void AuthLoginRequest::set_allocated_password(::std::string* PROTOBUF_NUL
 
 // -------------------------------------------------------------------
 
+// AuthRegisterRequest
+
+// string account = 1;
+inline void AuthRegisterRequest::clear_account() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.account_.ClearToEmpty();
+  ClearHasBit(_impl_._has_bits_[0],
+                  0x00000001U);
+}
+inline const ::std::string& AuthRegisterRequest::account() const
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_get:gateway.AuthRegisterRequest.account)
+  return _internal_account();
+}
+template <typename Arg_, typename... Args_>
+PROTOBUF_ALWAYS_INLINE void AuthRegisterRequest::set_account(Arg_&& arg, Args_... args) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  SetHasBit(_impl_._has_bits_[0], 0x00000001U);
+  _impl_.account_.Set(static_cast<Arg_&&>(arg), args..., GetArena());
+  // @@protoc_insertion_point(field_set:gateway.AuthRegisterRequest.account)
+}
+inline ::std::string* PROTOBUF_NONNULL AuthRegisterRequest::mutable_account()
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  SetHasBit(_impl_._has_bits_[0], 0x00000001U);
+  ::std::string* _s = _internal_mutable_account();
+  // @@protoc_insertion_point(field_mutable:gateway.AuthRegisterRequest.account)
+  return _s;
+}
+inline const ::std::string& AuthRegisterRequest::_internal_account() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.account_.Get();
+}
+inline void AuthRegisterRequest::_internal_set_account(const ::std::string& value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.account_.Set(value, GetArena());
+}
+inline ::std::string* PROTOBUF_NONNULL AuthRegisterRequest::_internal_mutable_account() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  return _impl_.account_.Mutable( GetArena());
+}
+inline ::std::string* PROTOBUF_NULLABLE AuthRegisterRequest::release_account() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  // @@protoc_insertion_point(field_release:gateway.AuthRegisterRequest.account)
+  if (!CheckHasBit(_impl_._has_bits_[0], 0x00000001U)) {
+    return nullptr;
+  }
+  ClearHasBit(_impl_._has_bits_[0], 0x00000001U);
+  auto* released = _impl_.account_.Release();
+  if (::google::protobuf::internal::DebugHardenForceCopyDefaultString()) {
+    _impl_.account_.Set("", GetArena());
+  }
+  return released;
+}
+inline void AuthRegisterRequest::set_allocated_account(::std::string* PROTOBUF_NULLABLE value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (value != nullptr) {
+    SetHasBit(_impl_._has_bits_[0], 0x00000001U);
+  } else {
+    ClearHasBit(_impl_._has_bits_[0], 0x00000001U);
+  }
+  _impl_.account_.SetAllocated(value, GetArena());
+  if (::google::protobuf::internal::DebugHardenForceCopyDefaultString() && _impl_.account_.IsDefault()) {
+    _impl_.account_.Set("", GetArena());
+  }
+  // @@protoc_insertion_point(field_set_allocated:gateway.AuthRegisterRequest.account)
+}
+
+// string password = 2;
+inline void AuthRegisterRequest::clear_password() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.password_.ClearToEmpty();
+  ClearHasBit(_impl_._has_bits_[0],
+                  0x00000002U);
+}
+inline const ::std::string& AuthRegisterRequest::password() const
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_get:gateway.AuthRegisterRequest.password)
+  return _internal_password();
+}
+template <typename Arg_, typename... Args_>
+PROTOBUF_ALWAYS_INLINE void AuthRegisterRequest::set_password(Arg_&& arg, Args_... args) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  SetHasBit(_impl_._has_bits_[0], 0x00000002U);
+  _impl_.password_.Set(static_cast<Arg_&&>(arg), args..., GetArena());
+  // @@protoc_insertion_point(field_set:gateway.AuthRegisterRequest.password)
+}
+inline ::std::string* PROTOBUF_NONNULL AuthRegisterRequest::mutable_password()
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  SetHasBit(_impl_._has_bits_[0], 0x00000002U);
+  ::std::string* _s = _internal_mutable_password();
+  // @@protoc_insertion_point(field_mutable:gateway.AuthRegisterRequest.password)
+  return _s;
+}
+inline const ::std::string& AuthRegisterRequest::_internal_password() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.password_.Get();
+}
+inline void AuthRegisterRequest::_internal_set_password(const ::std::string& value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.password_.Set(value, GetArena());
+}
+inline ::std::string* PROTOBUF_NONNULL AuthRegisterRequest::_internal_mutable_password() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  return _impl_.password_.Mutable( GetArena());
+}
+inline ::std::string* PROTOBUF_NULLABLE AuthRegisterRequest::release_password() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  // @@protoc_insertion_point(field_release:gateway.AuthRegisterRequest.password)
+  if (!CheckHasBit(_impl_._has_bits_[0], 0x00000002U)) {
+    return nullptr;
+  }
+  ClearHasBit(_impl_._has_bits_[0], 0x00000002U);
+  auto* released = _impl_.password_.Release();
+  if (::google::protobuf::internal::DebugHardenForceCopyDefaultString()) {
+    _impl_.password_.Set("", GetArena());
+  }
+  return released;
+}
+inline void AuthRegisterRequest::set_allocated_password(::std::string* PROTOBUF_NULLABLE value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (value != nullptr) {
+    SetHasBit(_impl_._has_bits_[0], 0x00000002U);
+  } else {
+    ClearHasBit(_impl_._has_bits_[0], 0x00000002U);
+  }
+  _impl_.password_.SetAllocated(value, GetArena());
+  if (::google::protobuf::internal::DebugHardenForceCopyDefaultString() && _impl_.password_.IsDefault()) {
+    _impl_.password_.Set("", GetArena());
+  }
+  // @@protoc_insertion_point(field_set_allocated:gateway.AuthRegisterRequest.password)
+}
+
+// -------------------------------------------------------------------
+
+// AuthRegisterResponse
+
+// int32 code = 1;
+inline void AuthRegisterResponse::clear_code() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.code_ = 0;
+  ClearHasBit(_impl_._has_bits_[0],
+                  0x00000008U);
+}
+inline ::int32_t AuthRegisterResponse::code() const {
+  // @@protoc_insertion_point(field_get:gateway.AuthRegisterResponse.code)
+  return _internal_code();
+}
+inline void AuthRegisterResponse::set_code(::int32_t value) {
+  _internal_set_code(value);
+  SetHasBit(_impl_._has_bits_[0], 0x00000008U);
+  // @@protoc_insertion_point(field_set:gateway.AuthRegisterResponse.code)
+}
+inline ::int32_t AuthRegisterResponse::_internal_code() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.code_;
+}
+inline void AuthRegisterResponse::_internal_set_code(::int32_t value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.code_ = value;
+}
+
+// string message = 2;
+inline void AuthRegisterResponse::clear_message() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.message_.ClearToEmpty();
+  ClearHasBit(_impl_._has_bits_[0],
+                  0x00000001U);
+}
+inline const ::std::string& AuthRegisterResponse::message() const
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_get:gateway.AuthRegisterResponse.message)
+  return _internal_message();
+}
+template <typename Arg_, typename... Args_>
+PROTOBUF_ALWAYS_INLINE void AuthRegisterResponse::set_message(Arg_&& arg, Args_... args) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  SetHasBit(_impl_._has_bits_[0], 0x00000001U);
+  _impl_.message_.Set(static_cast<Arg_&&>(arg), args..., GetArena());
+  // @@protoc_insertion_point(field_set:gateway.AuthRegisterResponse.message)
+}
+inline ::std::string* PROTOBUF_NONNULL AuthRegisterResponse::mutable_message()
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  SetHasBit(_impl_._has_bits_[0], 0x00000001U);
+  ::std::string* _s = _internal_mutable_message();
+  // @@protoc_insertion_point(field_mutable:gateway.AuthRegisterResponse.message)
+  return _s;
+}
+inline const ::std::string& AuthRegisterResponse::_internal_message() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.message_.Get();
+}
+inline void AuthRegisterResponse::_internal_set_message(const ::std::string& value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.message_.Set(value, GetArena());
+}
+inline ::std::string* PROTOBUF_NONNULL AuthRegisterResponse::_internal_mutable_message() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  return _impl_.message_.Mutable( GetArena());
+}
+inline ::std::string* PROTOBUF_NULLABLE AuthRegisterResponse::release_message() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  // @@protoc_insertion_point(field_release:gateway.AuthRegisterResponse.message)
+  if (!CheckHasBit(_impl_._has_bits_[0], 0x00000001U)) {
+    return nullptr;
+  }
+  ClearHasBit(_impl_._has_bits_[0], 0x00000001U);
+  auto* released = _impl_.message_.Release();
+  if (::google::protobuf::internal::DebugHardenForceCopyDefaultString()) {
+    _impl_.message_.Set("", GetArena());
+  }
+  return released;
+}
+inline void AuthRegisterResponse::set_allocated_message(::std::string* PROTOBUF_NULLABLE value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (value != nullptr) {
+    SetHasBit(_impl_._has_bits_[0], 0x00000001U);
+  } else {
+    ClearHasBit(_impl_._has_bits_[0], 0x00000001U);
+  }
+  _impl_.message_.SetAllocated(value, GetArena());
+  if (::google::protobuf::internal::DebugHardenForceCopyDefaultString() && _impl_.message_.IsDefault()) {
+    _impl_.message_.Set("", GetArena());
+  }
+  // @@protoc_insertion_point(field_set_allocated:gateway.AuthRegisterResponse.message)
+}
+
+// string trace_id = 3;
+inline void AuthRegisterResponse::clear_trace_id() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.trace_id_.ClearToEmpty();
+  ClearHasBit(_impl_._has_bits_[0],
+                  0x00000002U);
+}
+inline const ::std::string& AuthRegisterResponse::trace_id() const
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_get:gateway.AuthRegisterResponse.trace_id)
+  return _internal_trace_id();
+}
+template <typename Arg_, typename... Args_>
+PROTOBUF_ALWAYS_INLINE void AuthRegisterResponse::set_trace_id(Arg_&& arg, Args_... args) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  SetHasBit(_impl_._has_bits_[0], 0x00000002U);
+  _impl_.trace_id_.Set(static_cast<Arg_&&>(arg), args..., GetArena());
+  // @@protoc_insertion_point(field_set:gateway.AuthRegisterResponse.trace_id)
+}
+inline ::std::string* PROTOBUF_NONNULL AuthRegisterResponse::mutable_trace_id()
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  SetHasBit(_impl_._has_bits_[0], 0x00000002U);
+  ::std::string* _s = _internal_mutable_trace_id();
+  // @@protoc_insertion_point(field_mutable:gateway.AuthRegisterResponse.trace_id)
+  return _s;
+}
+inline const ::std::string& AuthRegisterResponse::_internal_trace_id() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.trace_id_.Get();
+}
+inline void AuthRegisterResponse::_internal_set_trace_id(const ::std::string& value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.trace_id_.Set(value, GetArena());
+}
+inline ::std::string* PROTOBUF_NONNULL AuthRegisterResponse::_internal_mutable_trace_id() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  return _impl_.trace_id_.Mutable( GetArena());
+}
+inline ::std::string* PROTOBUF_NULLABLE AuthRegisterResponse::release_trace_id() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  // @@protoc_insertion_point(field_release:gateway.AuthRegisterResponse.trace_id)
+  if (!CheckHasBit(_impl_._has_bits_[0], 0x00000002U)) {
+    return nullptr;
+  }
+  ClearHasBit(_impl_._has_bits_[0], 0x00000002U);
+  auto* released = _impl_.trace_id_.Release();
+  if (::google::protobuf::internal::DebugHardenForceCopyDefaultString()) {
+    _impl_.trace_id_.Set("", GetArena());
+  }
+  return released;
+}
+inline void AuthRegisterResponse::set_allocated_trace_id(::std::string* PROTOBUF_NULLABLE value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (value != nullptr) {
+    SetHasBit(_impl_._has_bits_[0], 0x00000002U);
+  } else {
+    ClearHasBit(_impl_._has_bits_[0], 0x00000002U);
+  }
+  _impl_.trace_id_.SetAllocated(value, GetArena());
+  if (::google::protobuf::internal::DebugHardenForceCopyDefaultString() && _impl_.trace_id_.IsDefault()) {
+    _impl_.trace_id_.Set("", GetArena());
+  }
+  // @@protoc_insertion_point(field_set_allocated:gateway.AuthRegisterResponse.trace_id)
+}
+
+// int64 server_time_ms = 4;
+inline void AuthRegisterResponse::clear_server_time_ms() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.server_time_ms_ = ::int64_t{0};
+  ClearHasBit(_impl_._has_bits_[0],
+                  0x00000004U);
+}
+inline ::int64_t AuthRegisterResponse::server_time_ms() const {
+  // @@protoc_insertion_point(field_get:gateway.AuthRegisterResponse.server_time_ms)
+  return _internal_server_time_ms();
+}
+inline void AuthRegisterResponse::set_server_time_ms(::int64_t value) {
+  _internal_set_server_time_ms(value);
+  SetHasBit(_impl_._has_bits_[0], 0x00000004U);
+  // @@protoc_insertion_point(field_set:gateway.AuthRegisterResponse.server_time_ms)
+}
+inline ::int64_t AuthRegisterResponse::_internal_server_time_ms() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.server_time_ms_;
+}
+inline void AuthRegisterResponse::_internal_set_server_time_ms(::int64_t value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.server_time_ms_ = value;
+}
+
+// -------------------------------------------------------------------
+
 // AuthLoginResponse
 
 // int32 code = 1;
@@ -2218,7 +3173,7 @@ inline void AuthLoginResponse::clear_code() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   _impl_.code_ = 0;
   ClearHasBit(_impl_._has_bits_[0],
-                  0x00000008U);
+                  0x00000020U);
 }
 inline ::int32_t AuthLoginResponse::code() const {
   // @@protoc_insertion_point(field_get:gateway.AuthLoginResponse.code)
@@ -2226,7 +3181,7 @@ inline ::int32_t AuthLoginResponse::code() const {
 }
 inline void AuthLoginResponse::set_code(::int32_t value) {
   _internal_set_code(value);
-  SetHasBit(_impl_._has_bits_[0], 0x00000008U);
+  SetHasBit(_impl_._has_bits_[0], 0x00000020U);
   // @@protoc_insertion_point(field_set:gateway.AuthLoginResponse.code)
 }
 inline ::int32_t AuthLoginResponse::_internal_code() const {
@@ -2305,7 +3260,7 @@ inline void AuthLoginResponse::set_allocated_jwt(::std::string* PROTOBUF_NULLABL
 
 // .gateway.Endpoint game_endpoint = 3;
 inline bool AuthLoginResponse::has_game_endpoint() const {
-  bool value = CheckHasBit(_impl_._has_bits_[0], 0x00000004U);
+  bool value = CheckHasBit(_impl_._has_bits_[0], 0x00000008U);
   PROTOBUF_ASSUME(!value || _impl_.game_endpoint_ != nullptr);
   return value;
 }
@@ -2313,7 +3268,7 @@ inline void AuthLoginResponse::clear_game_endpoint() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   if (_impl_.game_endpoint_ != nullptr) _impl_.game_endpoint_->Clear();
   ClearHasBit(_impl_._has_bits_[0],
-                  0x00000004U);
+                  0x00000008U);
 }
 inline const ::gateway::Endpoint& AuthLoginResponse::_internal_game_endpoint() const {
   ::google::protobuf::internal::TSanRead(&_impl_);
@@ -2332,16 +3287,16 @@ inline void AuthLoginResponse::unsafe_arena_set_allocated_game_endpoint(
   }
   _impl_.game_endpoint_ = reinterpret_cast<::gateway::Endpoint*>(value);
   if (value != nullptr) {
-    SetHasBit(_impl_._has_bits_[0], 0x00000004U);
+    SetHasBit(_impl_._has_bits_[0], 0x00000008U);
   } else {
-    ClearHasBit(_impl_._has_bits_[0], 0x00000004U);
+    ClearHasBit(_impl_._has_bits_[0], 0x00000008U);
   }
   // @@protoc_insertion_point(field_unsafe_arena_set_allocated:gateway.AuthLoginResponse.game_endpoint)
 }
 inline ::gateway::Endpoint* PROTOBUF_NULLABLE AuthLoginResponse::release_game_endpoint() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
 
-  ClearHasBit(_impl_._has_bits_[0], 0x00000004U);
+  ClearHasBit(_impl_._has_bits_[0], 0x00000008U);
   ::gateway::Endpoint* released = _impl_.game_endpoint_;
   _impl_.game_endpoint_ = nullptr;
   if (::google::protobuf::internal::DebugHardenForceCopyInRelease()) {
@@ -2361,7 +3316,7 @@ inline ::gateway::Endpoint* PROTOBUF_NULLABLE AuthLoginResponse::unsafe_arena_re
   ::google::protobuf::internal::TSanWrite(&_impl_);
   // @@protoc_insertion_point(field_release:gateway.AuthLoginResponse.game_endpoint)
 
-  ClearHasBit(_impl_._has_bits_[0], 0x00000004U);
+  ClearHasBit(_impl_._has_bits_[0], 0x00000008U);
   ::gateway::Endpoint* temp = _impl_.game_endpoint_;
   _impl_.game_endpoint_ = nullptr;
   return temp;
@@ -2376,7 +3331,7 @@ inline ::gateway::Endpoint* PROTOBUF_NONNULL AuthLoginResponse::_internal_mutabl
 }
 inline ::gateway::Endpoint* PROTOBUF_NONNULL AuthLoginResponse::mutable_game_endpoint()
     ABSL_ATTRIBUTE_LIFETIME_BOUND {
-  SetHasBit(_impl_._has_bits_[0], 0x00000004U);
+  SetHasBit(_impl_._has_bits_[0], 0x00000008U);
   ::gateway::Endpoint* _msg = _internal_mutable_game_endpoint();
   // @@protoc_insertion_point(field_mutable:gateway.AuthLoginResponse.game_endpoint)
   return _msg;
@@ -2393,9 +3348,9 @@ inline void AuthLoginResponse::set_allocated_game_endpoint(::gateway::Endpoint* 
     if (message_arena != submessage_arena) {
       value = ::google::protobuf::internal::GetOwnedMessage(message_arena, value, submessage_arena);
     }
-    SetHasBit(_impl_._has_bits_[0], 0x00000004U);
+    SetHasBit(_impl_._has_bits_[0], 0x00000008U);
   } else {
-    ClearHasBit(_impl_._has_bits_[0], 0x00000004U);
+    ClearHasBit(_impl_._has_bits_[0], 0x00000008U);
   }
 
   _impl_.game_endpoint_ = reinterpret_cast<::gateway::Endpoint*>(value);
@@ -2465,6 +3420,96 @@ inline void AuthLoginResponse::set_allocated_message(::std::string* PROTOBUF_NUL
     _impl_.message_.Set("", GetArena());
   }
   // @@protoc_insertion_point(field_set_allocated:gateway.AuthLoginResponse.message)
+}
+
+// string trace_id = 5;
+inline void AuthLoginResponse::clear_trace_id() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.trace_id_.ClearToEmpty();
+  ClearHasBit(_impl_._has_bits_[0],
+                  0x00000004U);
+}
+inline const ::std::string& AuthLoginResponse::trace_id() const
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_get:gateway.AuthLoginResponse.trace_id)
+  return _internal_trace_id();
+}
+template <typename Arg_, typename... Args_>
+PROTOBUF_ALWAYS_INLINE void AuthLoginResponse::set_trace_id(Arg_&& arg, Args_... args) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  SetHasBit(_impl_._has_bits_[0], 0x00000004U);
+  _impl_.trace_id_.Set(static_cast<Arg_&&>(arg), args..., GetArena());
+  // @@protoc_insertion_point(field_set:gateway.AuthLoginResponse.trace_id)
+}
+inline ::std::string* PROTOBUF_NONNULL AuthLoginResponse::mutable_trace_id()
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  SetHasBit(_impl_._has_bits_[0], 0x00000004U);
+  ::std::string* _s = _internal_mutable_trace_id();
+  // @@protoc_insertion_point(field_mutable:gateway.AuthLoginResponse.trace_id)
+  return _s;
+}
+inline const ::std::string& AuthLoginResponse::_internal_trace_id() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.trace_id_.Get();
+}
+inline void AuthLoginResponse::_internal_set_trace_id(const ::std::string& value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.trace_id_.Set(value, GetArena());
+}
+inline ::std::string* PROTOBUF_NONNULL AuthLoginResponse::_internal_mutable_trace_id() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  return _impl_.trace_id_.Mutable( GetArena());
+}
+inline ::std::string* PROTOBUF_NULLABLE AuthLoginResponse::release_trace_id() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  // @@protoc_insertion_point(field_release:gateway.AuthLoginResponse.trace_id)
+  if (!CheckHasBit(_impl_._has_bits_[0], 0x00000004U)) {
+    return nullptr;
+  }
+  ClearHasBit(_impl_._has_bits_[0], 0x00000004U);
+  auto* released = _impl_.trace_id_.Release();
+  if (::google::protobuf::internal::DebugHardenForceCopyDefaultString()) {
+    _impl_.trace_id_.Set("", GetArena());
+  }
+  return released;
+}
+inline void AuthLoginResponse::set_allocated_trace_id(::std::string* PROTOBUF_NULLABLE value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (value != nullptr) {
+    SetHasBit(_impl_._has_bits_[0], 0x00000004U);
+  } else {
+    ClearHasBit(_impl_._has_bits_[0], 0x00000004U);
+  }
+  _impl_.trace_id_.SetAllocated(value, GetArena());
+  if (::google::protobuf::internal::DebugHardenForceCopyDefaultString() && _impl_.trace_id_.IsDefault()) {
+    _impl_.trace_id_.Set("", GetArena());
+  }
+  // @@protoc_insertion_point(field_set_allocated:gateway.AuthLoginResponse.trace_id)
+}
+
+// int64 server_time_ms = 6;
+inline void AuthLoginResponse::clear_server_time_ms() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.server_time_ms_ = ::int64_t{0};
+  ClearHasBit(_impl_._has_bits_[0],
+                  0x00000010U);
+}
+inline ::int64_t AuthLoginResponse::server_time_ms() const {
+  // @@protoc_insertion_point(field_get:gateway.AuthLoginResponse.server_time_ms)
+  return _internal_server_time_ms();
+}
+inline void AuthLoginResponse::set_server_time_ms(::int64_t value) {
+  _internal_set_server_time_ms(value);
+  SetHasBit(_impl_._has_bits_[0], 0x00000010U);
+  // @@protoc_insertion_point(field_set:gateway.AuthLoginResponse.server_time_ms)
+}
+inline ::int64_t AuthLoginResponse::_internal_server_time_ms() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.server_time_ms_;
+}
+inline void AuthLoginResponse::_internal_set_server_time_ms(::int64_t value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.server_time_ms_ = value;
 }
 
 // -------------------------------------------------------------------
@@ -2545,7 +3590,7 @@ inline void GameEnterResponse::clear_code() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   _impl_.code_ = 0;
   ClearHasBit(_impl_._has_bits_[0],
-                  0x00000002U);
+                  0x00000008U);
 }
 inline ::int32_t GameEnterResponse::code() const {
   // @@protoc_insertion_point(field_get:gateway.GameEnterResponse.code)
@@ -2553,7 +3598,7 @@ inline ::int32_t GameEnterResponse::code() const {
 }
 inline void GameEnterResponse::set_code(::int32_t value) {
   _internal_set_code(value);
-  SetHasBit(_impl_._has_bits_[0], 0x00000002U);
+  SetHasBit(_impl_._has_bits_[0], 0x00000008U);
   // @@protoc_insertion_point(field_set:gateway.GameEnterResponse.code)
 }
 inline ::int32_t GameEnterResponse::_internal_code() const {
@@ -2628,6 +3673,96 @@ inline void GameEnterResponse::set_allocated_message(::std::string* PROTOBUF_NUL
     _impl_.message_.Set("", GetArena());
   }
   // @@protoc_insertion_point(field_set_allocated:gateway.GameEnterResponse.message)
+}
+
+// string trace_id = 3;
+inline void GameEnterResponse::clear_trace_id() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.trace_id_.ClearToEmpty();
+  ClearHasBit(_impl_._has_bits_[0],
+                  0x00000002U);
+}
+inline const ::std::string& GameEnterResponse::trace_id() const
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_get:gateway.GameEnterResponse.trace_id)
+  return _internal_trace_id();
+}
+template <typename Arg_, typename... Args_>
+PROTOBUF_ALWAYS_INLINE void GameEnterResponse::set_trace_id(Arg_&& arg, Args_... args) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  SetHasBit(_impl_._has_bits_[0], 0x00000002U);
+  _impl_.trace_id_.Set(static_cast<Arg_&&>(arg), args..., GetArena());
+  // @@protoc_insertion_point(field_set:gateway.GameEnterResponse.trace_id)
+}
+inline ::std::string* PROTOBUF_NONNULL GameEnterResponse::mutable_trace_id()
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  SetHasBit(_impl_._has_bits_[0], 0x00000002U);
+  ::std::string* _s = _internal_mutable_trace_id();
+  // @@protoc_insertion_point(field_mutable:gateway.GameEnterResponse.trace_id)
+  return _s;
+}
+inline const ::std::string& GameEnterResponse::_internal_trace_id() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.trace_id_.Get();
+}
+inline void GameEnterResponse::_internal_set_trace_id(const ::std::string& value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.trace_id_.Set(value, GetArena());
+}
+inline ::std::string* PROTOBUF_NONNULL GameEnterResponse::_internal_mutable_trace_id() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  return _impl_.trace_id_.Mutable( GetArena());
+}
+inline ::std::string* PROTOBUF_NULLABLE GameEnterResponse::release_trace_id() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  // @@protoc_insertion_point(field_release:gateway.GameEnterResponse.trace_id)
+  if (!CheckHasBit(_impl_._has_bits_[0], 0x00000002U)) {
+    return nullptr;
+  }
+  ClearHasBit(_impl_._has_bits_[0], 0x00000002U);
+  auto* released = _impl_.trace_id_.Release();
+  if (::google::protobuf::internal::DebugHardenForceCopyDefaultString()) {
+    _impl_.trace_id_.Set("", GetArena());
+  }
+  return released;
+}
+inline void GameEnterResponse::set_allocated_trace_id(::std::string* PROTOBUF_NULLABLE value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (value != nullptr) {
+    SetHasBit(_impl_._has_bits_[0], 0x00000002U);
+  } else {
+    ClearHasBit(_impl_._has_bits_[0], 0x00000002U);
+  }
+  _impl_.trace_id_.SetAllocated(value, GetArena());
+  if (::google::protobuf::internal::DebugHardenForceCopyDefaultString() && _impl_.trace_id_.IsDefault()) {
+    _impl_.trace_id_.Set("", GetArena());
+  }
+  // @@protoc_insertion_point(field_set_allocated:gateway.GameEnterResponse.trace_id)
+}
+
+// int64 server_time_ms = 4;
+inline void GameEnterResponse::clear_server_time_ms() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.server_time_ms_ = ::int64_t{0};
+  ClearHasBit(_impl_._has_bits_[0],
+                  0x00000004U);
+}
+inline ::int64_t GameEnterResponse::server_time_ms() const {
+  // @@protoc_insertion_point(field_get:gateway.GameEnterResponse.server_time_ms)
+  return _internal_server_time_ms();
+}
+inline void GameEnterResponse::set_server_time_ms(::int64_t value) {
+  _internal_set_server_time_ms(value);
+  SetHasBit(_impl_._has_bits_[0], 0x00000004U);
+  // @@protoc_insertion_point(field_set:gateway.GameEnterResponse.server_time_ms)
+}
+inline ::int64_t GameEnterResponse::_internal_server_time_ms() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.server_time_ms_;
+}
+inline void GameEnterResponse::_internal_set_server_time_ms(::int64_t value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.server_time_ms_ = value;
 }
 
 #ifdef __GNUC__

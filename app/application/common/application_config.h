@@ -35,6 +35,34 @@ struct ServerConfig
     EndpointConfig game{"127.0.0.1", 18082};
 };
 
+struct RedisConfig
+{
+    std::string host = "127.0.0.1";
+    uint16_t port = 6379;
+    std::string password;
+    int db = 0;
+    std::string key_prefix = "svc";
+    int ttl_sec = 15;
+    int refresh_sec = 5;
+};
+
+struct MySqlConfig
+{
+    std::string host = "127.0.0.1";
+    uint16_t port = 3306;
+    std::string user = "game_app";
+    std::string password;
+    std::string database = "game";
+    int connect_timeout_ms = 2000;
+};
+
+struct JwtConfig
+{
+    std::string issuer = "game-login";
+    std::string secret;
+    int expire_sec = 7200;
+};
+
 struct ClientPressureTargetConfig
 {
     std::string discovery_role = "manager";
@@ -71,6 +99,9 @@ struct ClientPressureConfig
 struct RuntimeConfig
 {
     ServerConfig server;
+    RedisConfig redis;
+    MySqlConfig mysql;
+    JwtConfig jwt;
     ClientPressureConfig client_pressure;
 };
 

@@ -29,6 +29,7 @@
 
 class Service;
 class ClientPressureService;
+struct ServerContext;
 
 enum class AppMode
 {
@@ -70,6 +71,7 @@ private:
     int m_thread_count = 1;
     ApplicationOptions m_options;
     RuntimeConfig m_runtime_config;
+    std::shared_ptr<ServerContext> m_server_context;
     bool m_should_exit = false;
     ClientPressureService* m_client_service = nullptr;
     std::map<int, std::unique_ptr<Service>> m_services;

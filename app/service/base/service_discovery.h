@@ -16,31 +16,30 @@
 // 3. This notice may not be removed or altered from any source distribution.
 //
 
-#include "login_service.h"
+#pragma once
 
-#include "protocol/gateway.pb.h"
+#include "application_config.h"
 
-LoginService::LoginService(const RuntimeConfig& config)
-    : BasicHttpService("login", config.server.login)
+#include <string>
+#include <vector>
+
+struct ServiceInstance
 {
-    register_handler("/v1/auth/login", [config](evhttp_request* request) {
-        gateway::AuthLoginRequest login_request;
-        auto body = read_request_body(request);
-        if(!login_request.ParseFromString(body))
-        {
-            evhttp_send_error(request, 400, "invalid protobuf");
-            return;
-        }
+    std::string role;
+    EndpointConfig endpoint;
+    int weight = 1;
+    std::string instance_id;
+};
 
-        gateway::AuthLoginResponse response;
-        response.set_code(0);
-        response.set_jwt("mock.jwt.token." + login_request.account());
-        response.mutable_game_endpoint()->set_host(config.server.game.host);
-        response.mutable_game_endpoint()->set_port(static_cast<uint32_t>(config.server.game.port));
+class IServiceDiscovery
+{
+public:
+    virtual ~IServiceDiscovery() = default;
 
-        write_protobuf_response(request, response, 200);
-    });
-}
-
-LoginService::~LoginService() = default;
+public:
+    virtual bool register_instance(const ServiceInstance& instance) = 0;
+    virtual bool heartbeat(const ServiceInstance& instance) = 0;
+    virtual std::vector<ServiceInstance> list_instances(const std::string& role) = 0;
+    virtual bool unregister_instance(const ServiceInstance& instance) = 0;
+};
 

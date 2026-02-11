@@ -18,21 +18,23 @@
 
 #pragma once
 
-#include "client_pressure_types.h"
+#include "account_repository.h"
 
-#include <string>
+#include <mutex>
+#include <unordered_map>
 
-class ClientWorker
+class MemoryAccountRepository : public IAccountRepository
 {
 public:
-    ClientWorker() = default;
-    ~ClientWorker() = default;
+    MemoryAccountRepository();
 
-    WorkerCycleResult run(ClientPressureTask* task) const;
+public:
+    std::optional<AccountRecord> find_account(const std::string& account) override;
+    bool verify_password(const std::string& account, const std::string& password) override;
+    bool create_account(const std::string& account, const std::string& password) override;
 
 private:
-    bool do_manager_route(ClientPressureTask* task, StageSample* sample) const;
-    bool do_login(ClientPressureTask* task, StageSample* sample) const;
-    bool do_register(ClientPressureTask* task, std::string* error_reason) const;
-    bool do_enter_game(const ClientPressureTask& task, StageSample* sample) const;
+    std::unordered_map<std::string, AccountRecord> m_accounts;
+    std::mutex m_mutex;
 };
+

@@ -46,7 +46,12 @@ include_directories(
     ${SERVICE_DIR}/base
     ${SERVICE_DIR}/maskword/common
     ${SERVICE_DIR}/maskword/logic
-    ${SERVICE_DIR}/server/common
+    ${SERVICE_DIR}/manager/common
+    ${SERVICE_DIR}/manager/logic
+    ${SERVICE_DIR}/login/common
+    ${SERVICE_DIR}/login/logic
+    ${SERVICE_DIR}/game/common
+    ${SERVICE_DIR}/game/logic
     ${SERVICE_DIR}/client/common
     ${SERVICE_DIR}/client/logic
 )
@@ -56,9 +61,11 @@ add_subdirectory(${PROJECT_SOURCE_DIR}/app/protocol)
 
 add_subdirectory(${SERVICE_DIR}/base)
 add_subdirectory(${SERVICE_DIR}/maskword)
+add_subdirectory(${SERVICE_DIR}/manager)
+add_subdirectory(${SERVICE_DIR}/login)
+add_subdirectory(${SERVICE_DIR}/game)
 add_subdirectory(${SERVICE_DIR}/server)
 add_subdirectory(${SERVICE_DIR}/client)
 
 add_subdirectory(${PROJECT_SOURCE_DIR}/app/application)
 add_subdirectory(${PROJECT_SOURCE_DIR}/app/apptool)
-

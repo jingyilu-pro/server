@@ -18,21 +18,24 @@
 
 #pragma once
 
-#include "client_pressure_types.h"
-
+#include <optional>
 #include <string>
 
-class ClientWorker
+struct VerifiedToken
+{
+    std::string subject;
+    std::string issuer;
+    int64_t issued_at = 0;
+    int64_t expire_at = 0;
+};
+
+class ITokenProvider
 {
 public:
-    ClientWorker() = default;
-    ~ClientWorker() = default;
+    virtual ~ITokenProvider() = default;
 
-    WorkerCycleResult run(ClientPressureTask* task) const;
-
-private:
-    bool do_manager_route(ClientPressureTask* task, StageSample* sample) const;
-    bool do_login(ClientPressureTask* task, StageSample* sample) const;
-    bool do_register(ClientPressureTask* task, std::string* error_reason) const;
-    bool do_enter_game(const ClientPressureTask& task, StageSample* sample) const;
+public:
+    virtual std::string issue(const std::string& subject, int expire_sec) = 0;
+    virtual std::optional<VerifiedToken> verify(const std::string& token) = 0;
 };
+

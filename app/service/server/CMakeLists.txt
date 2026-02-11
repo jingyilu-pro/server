@@ -1,11 +1,7 @@
 Project(server_service)
 
-include_directories(
-    common
+add_library(server_service
+    $<TARGET_OBJECTS:manager_service_obj>
+    $<TARGET_OBJECTS:login_service_obj>
+    $<TARGET_OBJECTS:game_service_obj>
 )
-
-file(GLOB_RECURSE FileSources *.cpp *.c *.cc)
-file(GLOB_RECURSE FileHeaders *.h *.hpp)
-
-add_library(server_service ${FileHeaders} ${FileSources})
-

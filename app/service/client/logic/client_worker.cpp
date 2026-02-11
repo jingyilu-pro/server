@@ -317,7 +317,7 @@ WorkerCycleResult ClientWorker::run(ClientPressureTask* task) const
 
     StageSample manager_sample;
     manager_sample.stage = StageType::manager;
-    if(!do_manager_route(*task, &manager_sample))
+    if(!do_manager_route(task, &manager_sample))
     {
         result.stages.push_back(manager_sample);
         result.failure_reason = manager_sample.error_reason.empty() ? "manager_failed" : manager_sample.error_reason;
@@ -359,9 +359,9 @@ WorkerCycleResult ClientWorker::run(ClientPressureTask* task) const
     return result;
 }
 
-bool ClientWorker::do_manager_route(const ClientPressureTask& task, StageSample* sample) const
+bool ClientWorker::do_manager_route(ClientPressureTask* task, StageSample* sample) const
 {
-    if(sample == nullptr)
+    if(sample == nullptr || task == nullptr)
     {
         return false;
     }
@@ -373,10 +373,10 @@ bool ClientWorker::do_manager_route(const ClientPressureTask& task, StageSample*
     request.SerializeToString(&request_data);
 
     auto begin = std::chrono::steady_clock::now();
-    auto response = http_post(task.manager_endpoint,
+    auto response = http_post(task->manager_endpoint,
                               "/v1/route/login",
                               request_data,
-                              task.request_timeout_ms,
+                              task->request_timeout_ms,
                               {});
 
     sample->latency_us = duration_us(begin);
@@ -406,8 +406,82 @@ bool ClientWorker::do_manager_route(const ClientPressureTask& task, StageSample*
         return false;
     }
 
+    if(route_response.has_login_endpoint() && route_response.login_endpoint().port() > 0)
+    {
+        task->login_endpoint.host = route_response.login_endpoint().host();
+        task->login_endpoint.port = static_cast<uint16_t>(route_response.login_endpoint().port());
+    }
+    if(route_response.has_game_endpoint() && route_response.game_endpoint().port() > 0)
+    {
+        task->game_endpoint.host = route_response.game_endpoint().host();
+        task->game_endpoint.port = static_cast<uint16_t>(route_response.game_endpoint().port());
+    }
+
     sample->success = true;
     return true;
+}
+
+bool ClientWorker::do_register(ClientPressureTask* task, std::string* error_reason) const
+{
+    if(task == nullptr)
+    {
+        if(error_reason != nullptr)
+        {
+            *error_reason = "register_null_task";
+        }
+        return false;
+    }
+
+    gateway::AuthRegisterRequest request;
+    request.set_account(task->account);
+    request.set_password("pressure_password");
+
+    std::string request_data;
+    request.SerializeToString(&request_data);
+
+    auto response = http_post(task->login_endpoint,
+                              "/v1/auth/register",
+                              request_data,
+                              task->request_timeout_ms,
+                              {});
+
+    if(!response.ok)
+    {
+        if(error_reason != nullptr)
+        {
+            *error_reason = response.timed_out ? "register_timeout" : "register_network_error";
+        }
+        return false;
+    }
+    if(response.status_code != 200)
+    {
+        if(error_reason != nullptr)
+        {
+            *error_reason = "register_http_status_" + std::to_string(response.status_code);
+        }
+        return false;
+    }
+
+    gateway::AuthRegisterResponse register_response;
+    if(!register_response.ParseFromString(response.body))
+    {
+        if(error_reason != nullptr)
+        {
+            *error_reason = "register_parse_error";
+        }
+        return false;
+    }
+
+    if(register_response.code() == 0 || register_response.code() == 40001)
+    {
+        return true;
+    }
+
+    if(error_reason != nullptr)
+    {
+        *error_reason = "register_code_" + std::to_string(register_response.code());
+    }
+    return false;
 }
 
 bool ClientWorker::do_login(ClientPressureTask* task, StageSample* sample) const
@@ -454,12 +528,62 @@ bool ClientWorker::do_login(ClientPressureTask* task, StageSample* sample) const
     }
     if(login_response.code() != 0)
     {
-        sample->error_reason = "login_code_" + std::to_string(login_response.code());
-        return false;
+        if(login_response.code() == 40101)
+        {
+            std::string register_error;
+            if(do_register(task, &register_error))
+            {
+                response = http_post(task->login_endpoint,
+                                     "/v1/auth/login",
+                                     request_data,
+                                     task->request_timeout_ms,
+                                     {});
+                sample->status_code = response.status_code;
+                sample->timeout = response.timed_out;
+                sample->latency_us = duration_us(begin);
+
+                if(!response.ok)
+                {
+                    sample->error_reason = response.timed_out ? "login_timeout" : "login_network_error";
+                    return false;
+                }
+                if(response.status_code != 200)
+                {
+                    sample->error_reason = "login_http_status_" + std::to_string(response.status_code);
+                    return false;
+                }
+
+                if(!login_response.ParseFromString(response.body))
+                {
+                    sample->error_reason = "login_parse_error";
+                    return false;
+                }
+                if(login_response.code() != 0)
+                {
+                    sample->error_reason = "login_code_" + std::to_string(login_response.code());
+                    return false;
+                }
+            }
+            else
+            {
+                sample->error_reason = register_error.empty() ? "register_failed" : register_error;
+                return false;
+            }
+        }
+        else
+        {
+            sample->error_reason = "login_code_" + std::to_string(login_response.code());
+            return false;
+        }
     }
 
     task->jwt_token = login_response.jwt();
     task->has_token = !task->jwt_token.empty();
+    if(login_response.has_game_endpoint() && login_response.game_endpoint().port() > 0)
+    {
+        task->game_endpoint.host = login_response.game_endpoint().host();
+        task->game_endpoint.port = static_cast<uint16_t>(login_response.game_endpoint().port());
+    }
     if(!task->has_token)
     {
         sample->error_reason = "login_token_empty";

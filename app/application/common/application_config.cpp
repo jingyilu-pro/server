@@ -20,6 +20,7 @@
 
 #include <algorithm>
 #include <cctype>
+#include <cstdlib>
 #include <fstream>
 
 namespace
@@ -113,6 +114,29 @@ bool parse_uint16_value(const std::string& value, uint16_t* output)
     }
     *output = static_cast<uint16_t>(parsed);
     return true;
+}
+
+void apply_env_override(RuntimeConfig* config)
+{
+    if(config == nullptr)
+    {
+        return;
+    }
+
+    if(const char* mysql_password = std::getenv("GAME_MYSQL_PASSWORD"); mysql_password != nullptr)
+    {
+        config->mysql.password = mysql_password;
+    }
+
+    if(const char* jwt_secret = std::getenv("GAME_JWT_SECRET"); jwt_secret != nullptr)
+    {
+        config->jwt.secret = jwt_secret;
+    }
+
+    if(const char* redis_password = std::getenv("GAME_REDIS_PASSWORD"); redis_password != nullptr)
+    {
+        config->redis.password = redis_password;
+    }
 }
 
 bool set_config_value(RuntimeConfig* config, const std::string& key, const std::string& value, std::string* error_message)
@@ -249,6 +273,152 @@ bool set_config_value(RuntimeConfig* config, const std::string& key, const std::
             return false;
         }
         config->server.game.port = port;
+        return true;
+    }
+
+    if(key == "redis.host")
+    {
+        config->redis.host = trim(value);
+        return true;
+    }
+    if(key == "redis.port")
+    {
+        uint16_t port = 0;
+        if(!parse_uint16_value(value, &port))
+        {
+            if(error_message != nullptr)
+            {
+                *error_message = "invalid uint16 value for redis.port";
+            }
+            return false;
+        }
+        config->redis.port = port;
+        return true;
+    }
+    if(key == "redis.password")
+    {
+        config->redis.password = value;
+        return true;
+    }
+    if(key == "redis.db")
+    {
+        int parsed = 0;
+        if(!parse_int_value(value, &parsed) || parsed < 0)
+        {
+            if(error_message != nullptr)
+            {
+                *error_message = "invalid non-negative int value for redis.db";
+            }
+            return false;
+        }
+        config->redis.db = parsed;
+        return true;
+    }
+    if(key == "redis.key_prefix")
+    {
+        config->redis.key_prefix = trim(value);
+        return true;
+    }
+    if(key == "redis.ttl_sec")
+    {
+        int parsed = 0;
+        if(!parse_int_value(value, &parsed) || parsed <= 0)
+        {
+            if(error_message != nullptr)
+            {
+                *error_message = "invalid positive int value for redis.ttl_sec";
+            }
+            return false;
+        }
+        config->redis.ttl_sec = parsed;
+        return true;
+    }
+    if(key == "redis.refresh_sec")
+    {
+        int parsed = 0;
+        if(!parse_int_value(value, &parsed) || parsed <= 0)
+        {
+            if(error_message != nullptr)
+            {
+                *error_message = "invalid positive int value for redis.refresh_sec";
+            }
+            return false;
+        }
+        config->redis.refresh_sec = parsed;
+        return true;
+    }
+
+    if(key == "mysql.host")
+    {
+        config->mysql.host = trim(value);
+        return true;
+    }
+    if(key == "mysql.port")
+    {
+        uint16_t port = 0;
+        if(!parse_uint16_value(value, &port))
+        {
+            if(error_message != nullptr)
+            {
+                *error_message = "invalid uint16 value for mysql.port";
+            }
+            return false;
+        }
+        config->mysql.port = port;
+        return true;
+    }
+    if(key == "mysql.user")
+    {
+        config->mysql.user = trim(value);
+        return true;
+    }
+    if(key == "mysql.password")
+    {
+        config->mysql.password = value;
+        return true;
+    }
+    if(key == "mysql.database")
+    {
+        config->mysql.database = trim(value);
+        return true;
+    }
+    if(key == "mysql.connect_timeout_ms")
+    {
+        int timeout_ms = 0;
+        if(!parse_int_value(value, &timeout_ms) || timeout_ms <= 0)
+        {
+            if(error_message != nullptr)
+            {
+                *error_message = "invalid positive int value for mysql.connect_timeout_ms";
+            }
+            return false;
+        }
+        config->mysql.connect_timeout_ms = timeout_ms;
+        return true;
+    }
+
+    if(key == "jwt.issuer")
+    {
+        config->jwt.issuer = trim(value);
+        return true;
+    }
+    if(key == "jwt.secret")
+    {
+        config->jwt.secret = value;
+        return true;
+    }
+    if(key == "jwt.expire_sec")
+    {
+        int expire_sec = 0;
+        if(!parse_int_value(value, &expire_sec) || expire_sec <= 0)
+        {
+            if(error_message != nullptr)
+            {
+                *error_message = "invalid positive int value for jwt.expire_sec";
+            }
+            return false;
+        }
+        config->jwt.expire_sec = expire_sec;
         return true;
     }
 
@@ -423,6 +593,8 @@ bool load_runtime_config(const std::string& config_path, RuntimeConfig* config, 
             "user_0003",
             "user_0004"};
     }
+
+    apply_env_override(config);
 
     return true;
 }

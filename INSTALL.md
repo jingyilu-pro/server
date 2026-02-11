@@ -1,4 +1,4 @@
-# Build & Run
+﻿# Build & Run
 
 ## 1. Clone
 
@@ -7,37 +7,50 @@ git clone --recursive https://github.com/jingyilu-pro/server
 cd server
 ```
 
-若已 clone，可补齐子模块：
+If you already cloned the repo, sync submodules with:
 
 ```bash
 git submodule update --init --recursive
 ```
 
-## 2. Build
-
-示例（WSL / Linux）：
+## 2. Build (WSL / Linux)
 
 ```bash
 mkdir -p build-wsl-main
 cd build-wsl-main
 cmake ..
-make -j
+cmake --build . -j
 ```
 
-## 3. 配置
+## 3. Service layout (post-refactor)
 
-默认配置文件：项目根目录 `all.yaml`。
+Server side directories are split by role (maskword-style):
 
-关键字段：
+- `app/service/manager/common|logic`
+- `app/service/login/common|logic`
+- `app/service/game/common|logic`
+- `app/service/base` (shared server components)
+- `app/service/server` (aggregator-only CMake target `server_service`)
 
-- `server.manager/login/game`：三个 HTTP 服务监听地址
-- `client_pressure.enabled`：是否自动发压
-- `client_pressure.scenario`：时长、并发、RPS、超时
-- `client_pressure.report`：日志/JSON 报告输出
+## 4. Runtime config (`all.yaml`)
 
-## 4. 启动模式
+Core sections:
 
-统一通过 `application --mode` 控制角色，不新增独立可执行程序。
+- `server.manager/login/game`: HTTP listener endpoints.
+- `redis`: service-discovery backend for manager/login/game.
+- `mysql`: account storage for login.
+- `jwt`: token issuer + secret for login/game.
+- `client_pressure`: full-chain pressure settings.
+
+Environment overrides (recommended):
+
+- `GAME_MYSQL_PASSWORD`
+- `GAME_JWT_SECRET`
+- `GAME_REDIS_PASSWORD`
+
+## 5. Run modes
+
+Unified entrypoint is `application --mode`:
 
 ```bash
 ./build-wsl-main/app/application/application --mode manager --config all.yaml
@@ -47,27 +60,58 @@ make -j
 ./build-wsl-main/app/application/application --mode all --config all.yaml
 ```
 
-模式含义：
+Mode semantics:
 
-- `manager`：仅 manager
-- `login`：仅 login
-- `game`：仅 game
-- `client`：仅 client pressure
-- `all`：manager + login + game + client pressure
+- `manager`: manager only.
+- `login`: login only.
+- `game`: game only.
+- `client`: pressure client only (auto-exit when completed).
+- `all`: manager + login + game + client pressure.
 
-`all` 模式下 client 总是启动，但仅在 `client_pressure.enabled=true` 时发流量。
+`all` always starts `client_pressure`, but actual load depends on `client_pressure.enabled`.
 
-## 5. 快速验证
+## 6. WSL dependencies (MariaDB + Redis)
 
-PowerShell 脚本：
+Install inside WSL Ubuntu:
 
-- `scripts/smoke_modes.ps1`：模式 smoke
-- `scripts/short_pressure.ps1`：短压测回归
+```bash
+sudo apt-get update
+sudo DEBIAN_FRONTEND=noninteractive apt-get install -y mariadb-server redis-server
+sudo systemctl enable mariadb redis-server
+sudo systemctl start mariadb redis-server
+```
 
-运行示例：
+Keep services WSL-local only:
+
+- MariaDB: `/etc/mysql/mariadb.conf.d/50-server.cnf` -> `bind-address = 127.0.0.1`
+- Redis: `/etc/redis/redis.conf` -> `bind 127.0.0.1` and `protected-mode yes`
+
+Minimal DB init (example):
+
+```sql
+CREATE DATABASE IF NOT EXISTS game CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE USER IF NOT EXISTS 'game_app'@'127.0.0.1' IDENTIFIED BY '***';
+GRANT ALL PRIVILEGES ON game.* TO 'game_app'@'127.0.0.1';
+FLUSH PRIVILEGES;
+```
+
+Health checks:
+
+```bash
+mysql --protocol=TCP -h127.0.0.1 -P3306 -ugame_app -p -D game -e "SELECT 1"
+redis-cli -h 127.0.0.1 -p 6379 ping
+systemctl is-active mariadb redis-server
+systemctl is-enabled mariadb redis-server
+```
+
+## 7. Smoke scripts
+
+- `scripts/smoke_modes.ps1`: mode-level smoke start.
+- `scripts/short_pressure.ps1`: short full-chain pressure regression.
+
+Run from PowerShell:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File scripts/smoke_modes.ps1
 powershell -ExecutionPolicy Bypass -File scripts/short_pressure.ps1
 ```
-

@@ -18,21 +18,32 @@
 
 #pragma once
 
-#include "client_pressure_types.h"
+#include "application_config.h"
+#include "basic_http_service.h"
 
-#include <string>
+#include "service_discovery.h"
+#include "token_provider.h"
 
-class ClientWorker
+#include <chrono>
+#include <memory>
+
+class GameService : public BasicHttpService
 {
 public:
-    ClientWorker() = default;
-    ~ClientWorker() = default;
+    GameService(const RuntimeConfig& config,
+                std::shared_ptr<IServiceDiscovery> discovery,
+                std::shared_ptr<ITokenProvider> token_provider);
+    ~GameService() override;
 
-    WorkerCycleResult run(ClientPressureTask* task) const;
+public:
+    bool start() override;
+    bool stop() override;
+    void update(std::chrono::milliseconds delta_time, std::chrono::milliseconds last_tick_time) override;
 
 private:
-    bool do_manager_route(ClientPressureTask* task, StageSample* sample) const;
-    bool do_login(ClientPressureTask* task, StageSample* sample) const;
-    bool do_register(ClientPressureTask* task, std::string* error_reason) const;
-    bool do_enter_game(const ClientPressureTask& task, StageSample* sample) const;
+    RuntimeConfig m_config;
+    std::shared_ptr<IServiceDiscovery> m_discovery;
+    std::shared_ptr<ITokenProvider> m_token_provider;
+    ServiceInstance m_local_instance;
+    std::chrono::steady_clock::time_point m_last_heartbeat;
 };

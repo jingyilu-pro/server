@@ -18,13 +18,24 @@
 
 #pragma once
 
-#include "application_config.h"
-#include "basic_http_service.h"
+#include <optional>
+#include <string>
 
-class LoginService : public BasicHttpService
+struct AccountRecord
+{
+    std::string account;
+    std::string password_hash;
+    std::string salt;
+};
+
+class IAccountRepository
 {
 public:
-    explicit LoginService(const RuntimeConfig& config);
-    ~LoginService() override;
+    virtual ~IAccountRepository() = default;
+
+public:
+    virtual std::optional<AccountRecord> find_account(const std::string& account) = 0;
+    virtual bool verify_password(const std::string& account, const std::string& password) = 0;
+    virtual bool create_account(const std::string& account, const std::string& password) = 0;
 };
 

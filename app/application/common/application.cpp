@@ -26,6 +26,7 @@
 #include "game_service.h"
 #include "login_service.h"
 #include "manager_service.h"
+#include "server_context.h"
 #include "service.h"
 
 #include "log/glogger.h"
@@ -122,6 +123,8 @@ bool Application::start(const ApplicationOptions& options)
         return false;
     }
 
+    m_server_context = std::make_shared<ServerContext>(create_server_context(m_runtime_config));
+
     spdlog::info("application start mode={}, config={}", to_string(options.mode), options.config_path);
 
     if(!start_services_by_mode())
@@ -145,11 +148,17 @@ bool Application::start_services_by_mode()
         }
         return start_client_service();
     case AppMode::manager:
-        return register_service(std::make_unique<ManagerService>(m_runtime_config));
+        return register_service(std::make_unique<ManagerService>(m_runtime_config,
+                                                                 m_server_context ? m_server_context->discovery : nullptr));
     case AppMode::login:
-        return register_service(std::make_unique<LoginService>(m_runtime_config));
+        return register_service(std::make_unique<LoginService>(m_runtime_config,
+                                                               m_server_context ? m_server_context->discovery : nullptr,
+                                                               m_server_context ? m_server_context->account_repository : nullptr,
+                                                               m_server_context ? m_server_context->token_provider : nullptr));
     case AppMode::game:
-        return register_service(std::make_unique<GameService>(m_runtime_config));
+        return register_service(std::make_unique<GameService>(m_runtime_config,
+                                                              m_server_context ? m_server_context->discovery : nullptr,
+                                                              m_server_context ? m_server_context->token_provider : nullptr));
     case AppMode::client:
         return start_client_service();
     }
@@ -158,15 +167,24 @@ bool Application::start_services_by_mode()
 
 bool Application::start_non_client_services()
 {
-    if(!register_service(std::make_unique<ManagerService>(m_runtime_config)))
+    auto discovery = m_server_context ? m_server_context->discovery : nullptr;
+    auto account_repository = m_server_context ? m_server_context->account_repository : nullptr;
+    auto token_provider = m_server_context ? m_server_context->token_provider : nullptr;
+
+    if(!register_service(std::make_unique<ManagerService>(m_runtime_config, discovery)))
     {
         return false;
     }
-    if(!register_service(std::make_unique<LoginService>(m_runtime_config)))
+    if(!register_service(std::make_unique<LoginService>(m_runtime_config,
+                                                        discovery,
+                                                        account_repository,
+                                                        token_provider)))
     {
         return false;
     }
-    if(!register_service(std::make_unique<GameService>(m_runtime_config)))
+    if(!register_service(std::make_unique<GameService>(m_runtime_config,
+                                                       discovery,
+                                                       token_provider)))
     {
         return false;
     }
@@ -233,6 +251,7 @@ bool Application::stop()
         }
     }
     m_services.clear();
+    m_server_context.reset();
     m_client_service = nullptr;
     m_should_exit = true;
 

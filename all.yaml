@@ -9,6 +9,28 @@ server:
     host: 127.0.0.1
     port: 18082
 
+redis:
+  host: 127.0.0.1
+  port: 6379
+  password: ""
+  db: 0
+  key_prefix: svc
+  ttl_sec: 15
+  refresh_sec: 5
+
+mysql:
+  host: 127.0.0.1
+  port: 3306
+  user: game_app
+  password: ""
+  database: game
+  connect_timeout_ms: 2000
+
+jwt:
+  issuer: game-login
+  secret: ""
+  expire_sec: 7200
+
 client_pressure:
   enabled: false
   target:
@@ -31,4 +53,3 @@ client_pressure:
     interval_sec: 5
     output: log
     json_path: client_pressure_report.json
-

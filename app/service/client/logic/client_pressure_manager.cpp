@@ -526,19 +526,14 @@ void ClientPressureManager::write_json_report() const
     }
 
     output << "{\n";
-    output << "  \"summary\": {\n";
-    output << "    \"total_request\": " << snapshot.total_request << ",\n";
-    output << "    \"total_success\": " << snapshot.total_success << ",\n";
-    output << "    \"total_timeout\": " << snapshot.total_timeout << ",\n";
-    output << "    \"qps\": " << std::fixed << std::setprecision(3) << qps << ",\n";
-    output << "    \"success_rate\": " << std::fixed << std::setprecision(6) << safe_ratio(snapshot.total_success, snapshot.total_request) << ",\n";
-    output << "    \"timeout_rate\": " << std::fixed << std::setprecision(6) << safe_ratio(snapshot.total_timeout, snapshot.total_request) << ",\n";
-    output << "    \"p50_us\": " << percentile_us(snapshot.chain_latency_us, 0.50) << ",\n";
-    output << "    \"p95_us\": " << percentile_us(snapshot.chain_latency_us, 0.95) << ",\n";
-    output << "    \"p99_us\": " << percentile_us(snapshot.chain_latency_us, 0.99) << "\n";
-    output << "  },\n";
+    output << "  \"qps\": " << std::fixed << std::setprecision(3) << qps << ",\n";
+    output << "  \"success_rate\": " << std::fixed << std::setprecision(6) << safe_ratio(snapshot.total_success, snapshot.total_request) << ",\n";
+    output << "  \"timeout_rate\": " << std::fixed << std::setprecision(6) << safe_ratio(snapshot.total_timeout, snapshot.total_request) << ",\n";
+    output << "  \"p50\": " << percentile_us(snapshot.chain_latency_us, 0.50) << ",\n";
+    output << "  \"p95\": " << percentile_us(snapshot.chain_latency_us, 0.95) << ",\n";
+    output << "  \"p99\": " << percentile_us(snapshot.chain_latency_us, 0.99) << ",\n";
 
-    output << "  \"failure_reason_distribution\": {\n";
+    output << "  \"failure_reasons\": {\n";
     bool first_reason = true;
     for(const auto& [reason, count] : snapshot.failure_reason_count)
     {
@@ -551,7 +546,7 @@ void ClientPressureManager::write_json_report() const
     }
     output << "\n  },\n";
 
-    output << "  \"stages\": {\n";
+    output << "  \"stage_breakdown\": {\n";
     bool first_stage = true;
     for(const auto& [stage, metrics] : snapshot.stage_metrics)
     {
@@ -563,9 +558,13 @@ void ClientPressureManager::write_json_report() const
         output << "      \"request_total\": " << metrics.request_total << ",\n";
         output << "      \"success_total\": " << metrics.success_total << ",\n";
         output << "      \"timeout_total\": " << metrics.timeout_total << ",\n";
-        output << "      \"p95_us\": " << percentile_us(metrics.latency_us, 0.95) << ",\n";
+        output << "      \"success_rate\": " << std::fixed << std::setprecision(6)
+               << safe_ratio(metrics.success_total, metrics.request_total) << ",\n";
+        output << "      \"timeout_rate\": " << std::fixed << std::setprecision(6)
+               << safe_ratio(metrics.timeout_total, metrics.request_total) << ",\n";
+        output << "      \"p95\": " << percentile_us(metrics.latency_us, 0.95) << ",\n";
 
-        output << "      \"failure_reason_distribution\": {";
+        output << "      \"failure_reasons\": {";
         bool first_stage_reason = true;
         for(const auto& [reason, count] : metrics.failure_reason_count)
         {

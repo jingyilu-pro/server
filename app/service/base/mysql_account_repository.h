@@ -18,21 +18,34 @@
 
 #pragma once
 
-#include "client_pressure_types.h"
+#include "account_repository.h"
+#include "application_config.h"
 
-#include <string>
+#include <mariadb/mysql.h>
 
-class ClientWorker
+#include <mutex>
+
+class MySqlAccountRepository : public IAccountRepository
 {
 public:
-    ClientWorker() = default;
-    ~ClientWorker() = default;
+    explicit MySqlAccountRepository(const MySqlConfig& config);
+    ~MySqlAccountRepository() override;
 
-    WorkerCycleResult run(ClientPressureTask* task) const;
+public:
+    bool ready() const;
+    std::optional<AccountRecord> find_account(const std::string& account) override;
+    bool verify_password(const std::string& account, const std::string& password) override;
+    bool create_account(const std::string& account, const std::string& password) override;
 
 private:
-    bool do_manager_route(ClientPressureTask* task, StageSample* sample) const;
-    bool do_login(ClientPressureTask* task, StageSample* sample) const;
-    bool do_register(ClientPressureTask* task, std::string* error_reason) const;
-    bool do_enter_game(const ClientPressureTask& task, StageSample* sample) const;
+    bool ensure_connected();
+    bool ensure_table();
+    std::string escape_string(const std::string& input);
+
+private:
+    MySqlConfig m_config;
+    MYSQL* m_mysql = nullptr;
+    bool m_ready = false;
+    std::mutex m_mutex;
 };
+

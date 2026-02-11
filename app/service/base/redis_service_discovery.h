@@ -18,13 +18,34 @@
 
 #pragma once
 
-#include "application_config.h"
-#include "basic_http_service.h"
+#include "service_discovery.h"
 
-class ManagerService : public BasicHttpService
+#include <hiredis/hiredis.h>
+
+#include <mutex>
+
+class RedisServiceDiscovery : public IServiceDiscovery
 {
 public:
-    explicit ManagerService(const RuntimeConfig& config);
-    ~ManagerService() override;
+    explicit RedisServiceDiscovery(const RedisConfig& config);
+    ~RedisServiceDiscovery() override;
+
+public:
+    bool register_instance(const ServiceInstance& instance) override;
+    bool heartbeat(const ServiceInstance& instance) override;
+    std::vector<ServiceInstance> list_instances(const std::string& role) override;
+    bool unregister_instance(const ServiceInstance& instance) override;
+
+private:
+    bool ensure_connected();
+    bool set_instance_hash(const ServiceInstance& instance);
+    bool expire_instance(const ServiceInstance& instance);
+    std::string make_instance_key(const ServiceInstance& instance) const;
+    std::string make_role_set_key(const std::string& role) const;
+
+private:
+    RedisConfig m_config;
+    redisContext* m_context = nullptr;
+    std::mutex m_mutex;
 };
 

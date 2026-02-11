@@ -16,6 +16,8 @@ message RouteLoginResponse {
   Endpoint login_endpoint = 2;
   Endpoint game_endpoint = 3;
   string message = 4;
+  string trace_id = 5;
+  int64 server_time_ms = 6;
 }
 
 message AuthLoginRequest {
@@ -23,11 +25,25 @@ message AuthLoginRequest {
   string password = 2;
 }
 
+message AuthRegisterRequest {
+  string account = 1;
+  string password = 2;
+}
+
+message AuthRegisterResponse {
+  int32 code = 1;
+  string message = 2;
+  string trace_id = 3;
+  int64 server_time_ms = 4;
+}
+
 message AuthLoginResponse {
   int32 code = 1;
   string jwt = 2;
   Endpoint game_endpoint = 3;
   string message = 4;
+  string trace_id = 5;
+  int64 server_time_ms = 6;
 }
 
 message GameEnterRequest {
@@ -37,5 +53,6 @@ message GameEnterRequest {
 message GameEnterResponse {
   int32 code = 1;
   string message = 2;
+  string trace_id = 3;
+  int64 server_time_ms = 4;
 }
-

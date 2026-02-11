@@ -21,6 +21,7 @@
 #include "log/glogger.h"
 
 #include <algorithm>
+#include <cctype>
 #include <event2/buffer.h>
 #include <event2/keyvalq_struct.h>
 #include <event2/thread.h>
@@ -212,6 +213,48 @@ std::string BasicHttpService::extract_authorization_token(evhttp_request* reques
     return token;
 }
 
+bool BasicHttpService::is_protobuf_content_type(evhttp_request* request)
+{
+    if(request == nullptr)
+    {
+        return false;
+    }
+
+    auto* headers = evhttp_request_get_input_headers(request);
+    if(headers == nullptr)
+    {
+        return false;
+    }
+
+    const char* content_type = evhttp_find_header(headers, "Content-Type");
+    if(content_type == nullptr)
+    {
+        return false;
+    }
+
+    std::string normalized = content_type;
+    std::transform(normalized.begin(), normalized.end(), normalized.begin(), [](unsigned char ch) {
+        return static_cast<char>(std::tolower(ch));
+    });
+
+    const auto semicolon_pos = normalized.find(';');
+    if(semicolon_pos != std::string::npos)
+    {
+        normalized = normalized.substr(0, semicolon_pos);
+    }
+
+    while(!normalized.empty() && std::isspace(static_cast<unsigned char>(normalized.back())) != 0)
+    {
+        normalized.pop_back();
+    }
+    while(!normalized.empty() && std::isspace(static_cast<unsigned char>(normalized.front())) != 0)
+    {
+        normalized.erase(normalized.begin());
+    }
+
+    return normalized == "application/x-protobuf" || normalized == "application/octet-stream";
+}
+
 std::string BasicHttpService::make_endpoint_text(const EndpointConfig& endpoint)
 {
     return endpoint.host + ":" + std::to_string(endpoint.port);
@@ -239,6 +282,12 @@ void BasicHttpService::on_request(evhttp_request* request)
     if(command != EVHTTP_REQ_POST)
     {
         evhttp_send_error(request, 405, "method not allowed");
+        return;
+    }
+
+    if(!is_protobuf_content_type(request))
+    {
+        evhttp_send_error(request, 415, "unsupported media type");
         return;
     }
 

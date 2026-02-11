@@ -1,235 +1,241 @@
 # Architecture
 
-更新时间：2026-02-10
+Updated: 2026-02-11
 
-## 1. 启动模型（统一 `application`）
+## 1. Process model (`application --mode`)
 
-项目保持单可执行入口：`application`，通过 `--mode` 选择角色。
+Single binary with role composition:
 
-- `--mode manager`：仅启动 `ManagerService`
-- `--mode login`：仅启动 `LoginService`
-- `--mode game`：仅启动 `GameService`
-- `--mode client`：仅启动 `ClientPressureService`
-- `--mode all`：启动 `ManagerService + LoginService + GameService + ClientPressureService`
+- `manager`: start `ManagerService`
+- `login`: start `LoginService`
+- `game`: start `GameService`
+- `client`: start `ClientPressureService` only (auto-exit on completion)
+- `all`: start `manager + login + game + client_pressure`
 
-在 `all` 模式下，启动顺序固定为：`manager -> login -> game -> client`，确保 client 首批流量不会命中未就绪 listener。
+`all` keeps the pressure service loaded, while traffic generation is controlled by `client_pressure.enabled` in config.
 
-核心代码：
+Key files:
 
 - `app/application/common/application.h`
 - `app/application/common/application.cpp`
-- `app/application/main.cpp`
 
-## 2. Service 抽象扩展
+## 2. Transport and protocol constraints
 
-`Service` 接口保留生命周期函数：
+- HTTP method: `POST` only.
+- Payload: protobuf binary request/response.
+- Required header: `Content-Type: application/x-protobuf`.
+- Error handling baseline:
+  - method mismatch -> `405`
+  - unsupported content type -> `415`
+  - empty/invalid protobuf -> `400`
 
-- `start()`
-- `stop()`
-- `update(delta_time, last_tick_time)`
+Key files:
 
-新增：
-
-- `virtual const char* name() const;`
-
-用于日志输出与服务归类。
-
-核心代码：
-
-- `app/service/base/service.h`
-- `app/service/base/service.cpp`
-
-## 3. 协议（HTTP + protobuf）
-
-新增 `gateway.proto`，用于 manager/login/game 全链路压测请求。
-
-关键接口：
-
-- `POST /v1/route/login`
-  - `gateway::RouteLoginRequest`
-  - `gateway::RouteLoginResponse`
-- `POST /v1/auth/login`
-  - `gateway::AuthLoginRequest`
-  - `gateway::AuthLoginResponse`
-- `POST /v1/game/enter`
-  - `gateway::GameEnterRequest`
-  - `gateway::GameEnterResponse`
-
-核心代码：
-
+- `app/service/base/basic_http_service.h`
+- `app/service/base/basic_http_service.cpp`
 - `app/protocol/gateway.proto`
-- `app/protocol/protocol/gateway.pb.h`
-- `app/protocol/protocol/gateway.pb.cc`
 
-## 4. 新增服务
+## 3. Business chain
 
-### 4.1 Manager/Login/Game（HTTP listener）
+Standard chain:
 
-新增 `BasicHttpService` 抽象，基于 `libevent evhttp` 提供：
+1. `client -> manager` (`/v1/route/login`)
+2. `client -> login` (`/v1/auth/login`, plus `/v1/auth/register` for account bootstrap)
+3. `client -> game` (`/v1/game/enter` with Bearer JWT)
 
-- endpoint 绑定
-- POST 路由分发
-- protobuf 请求读取/响应写回
-- `Authorization` token 抽取
+Response body uses protobuf `code/message`; HTTP status is reserved for transport/protocol errors.
 
-在此基础上实现三个角色服务：
+## 4. Service responsibilities
 
-- `ManagerService`：返回 login/game 路由
-- `LoginService`：返回 JWT 和 game endpoint
-- `GameService`：校验 JWT 并完成入服响应
+### Manager
 
-核心代码：
+- Route discovery endpoint `/v1/route/login`.
+- Returns login/game endpoints from Redis discovery; fallback to static config if discovery unavailable.
+- Registers/heartbeats/unregisters itself in Redis.
 
-- `app/service/server/common/basic_http_service.h`
-- `app/service/server/common/basic_http_service.cpp`
-- `app/service/server/common/manager_service.h`
-- `app/service/server/common/manager_service.cpp`
-- `app/service/server/common/login_service.h`
-- `app/service/server/common/login_service.cpp`
-- `app/service/server/common/game_service.h`
-- `app/service/server/common/game_service.cpp`
+Files:
 
-### 4.2 ClientPressureService（主动压测发起方）
+- `app/service/manager/common/manager_service.h`
+- `app/service/manager/common/manager_service.cpp`
 
-`ClientPressureService` 不监听业务端口，仅主动请求链路。
+### Login
 
-生命周期行为：
+- `/v1/auth/register`: create account.
+- `/v1/auth/login`: verify account/password and issue JWT.
+- Picks game endpoint from Redis discovery with weighted round-robin; fallback to config.
+- Registers/heartbeats/unregisters itself in Redis.
 
-- `start()`：读取场景并自动起跑
-- `update()`：节流发包、周期报告、结束判定
-- `stop()`：停止 worker 并输出最终报告
+Files:
 
-核心代码：
+- `app/service/login/common/login_service.h`
+- `app/service/login/common/login_service.cpp`
+
+### Game
+
+- `/v1/game/enter`: validate JWT and subject/account match.
+- Returns business auth errors (`401xx`) in protobuf response.
+- Registers/heartbeats/unregisters itself in Redis.
+
+Files:
+
+- `app/service/game/common/game_service.h`
+- `app/service/game/common/game_service.cpp`
+
+## 5. Dependency abstractions and implementations
+
+### Service discovery
+
+Interface:
+
+- `register_instance(role, endpoint, weight)`
+- `heartbeat(role, instance_id)`
+- `list_instances(role)`
+- `unregister_instance(role, instance_id)`
+
+Redis implementation stores per-role sets + instance hash with TTL.
+
+Files:
+
+- `app/service/base/service_discovery.h`
+- `app/service/base/redis_service_discovery.h`
+- `app/service/base/redis_service_discovery.cpp`
+
+### Account repository
+
+Interface:
+
+- `find_account(account)`
+- `verify_password(account, password)`
+- `create_account(account, password)`
+
+Implementations:
+
+- MySQL/MariaDB-backed repo
+- In-memory fallback repo
+
+Files:
+
+- `app/service/base/account_repository.h`
+- `app/service/base/mysql_account_repository.h`
+- `app/service/base/mysql_account_repository.cpp`
+- `app/service/base/memory_account_repository.h`
+- `app/service/base/memory_account_repository.cpp`
+
+### Token provider
+
+Interface:
+
+- `issue(subject, expire_sec)`
+- `verify(token)`
+
+Implementation:
+
+- JWT provider based on `libjwt` (HS256)
+- Fallback mock token path when secret is empty
+
+Files:
+
+- `app/service/base/token_provider.h`
+- `app/service/base/jwt_token_provider.h`
+- `app/service/base/jwt_token_provider.cpp`
+
+### Runtime context wiring
+
+`Application` builds shared server-side dependencies once and injects them into manager/login/game services.
+
+Files:
+
+- `app/service/base/server_context.h`
+- `app/service/base/server_context.cpp`
+- `app/application/common/application.cpp`
+
+## 6. Runtime config model
+
+`RuntimeConfig` now includes:
+
+- `server`
+- `redis`
+- `mysql`
+- `jwt`
+- `client_pressure`
+
+Env override support:
+
+- `GAME_MYSQL_PASSWORD`
+- `GAME_JWT_SECRET`
+- `GAME_REDIS_PASSWORD`
+
+Files:
+
+- `app/application/common/application_config.h`
+- `app/application/common/application_config.cpp`
+- `all.yaml`
+
+## 7. Client pressure architecture
+
+`ClientPressureService` wraps `ClientPressureManager` worker pool.
+
+- Full chain execution: manager -> login -> game
+- Token bucket + fixed workers + inflight control
+- Stage-wise metrics (`manager/login/game`)
+- Supports JSON report output
+
+JSON report fields (stable):
+
+- `qps`
+- `success_rate`
+- `timeout_rate`
+- `p50`
+- `p95`
+- `p99`
+- `stage_breakdown`
+- `failure_reasons`
+
+Files:
 
 - `app/service/client/common/client_pressure_service.h`
 - `app/service/client/common/client_pressure_service.cpp`
-
-## 5. Client 压测执行模型
-
-### 5.1 链路
-
-每次压测 cycle 走全链路：
-
-1. `manager`：`/v1/route/login`
-2. `login`：`/v1/auth/login`（获取 JWT）
-3. `game`：`/v1/game/enter`（Bearer JWT）
-
-实现：
-
+- `app/service/client/logic/client_pressure_manager.h`
+- `app/service/client/logic/client_pressure_manager.cpp`
 - `app/service/client/logic/client_worker.h`
 - `app/service/client/logic/client_worker.cpp`
 
-### 5.2 并发与限流
+## 8. Service layout and build wiring
 
-`ClientPressureManager` 负责：
+Directory split (aligned with `maskword` style):
 
-- worker 线程池（固定 `virtual_users`）
-- token bucket 节流（目标 `target_rps`）
-- ramp-up（`ramp_up_sec`）
-- 任务轮询分发
+- `app/service/manager/common|logic`
+- `app/service/login/common|logic`
+- `app/service/game/common|logic`
+- `app/service/base` for shared server-side components
 
-实现：
+Build model keeps one final server target:
 
-- `app/service/client/logic/client_pressure_manager.h`
-- `app/service/client/logic/client_pressure_manager.cpp`
+- `app/service/manager/CMakeLists.txt` builds `manager_service_obj`
+- `app/service/login/CMakeLists.txt` builds `login_service_obj`
+- `app/service/game/CMakeLists.txt` builds `game_service_obj`
+- `app/service/server/CMakeLists.txt` aggregates object targets into `server_service`
 
-### 5.3 指标聚合
+`app/service/server` now acts as an aggregator-only directory (no business implementation files).
 
-全局指标：
+## 9. Build linkage notes
 
-- `QPS`
-- `success_rate`
-- `timeout_rate`
-- `P50/P95/P99`
+New server features require extra linked libraries:
 
-分阶段指标（manager/login/game）：
+- `hiredis`
+- `mariadb`
+- `jwt`
+- `ssl`
+- `crypto`
+- `jansson`
 
-- 请求总量、成功率、超时率
-- 分位耗时
-- HTTP 状态分布
-- 失败原因分布
+CMake updates in:
 
-输出方式：
-
-- `report.output=log`：周期日志
-- `report.output=json`：结束时写入 `json_path`
-
-## 6. 配置模型（YAML）
-
-主配置文件默认：`all.yaml`
-
-```yaml
-server:
-  manager:
-    host: 127.0.0.1
-    port: 18080
-  login:
-    host: 127.0.0.1
-    port: 18081
-  game:
-    host: 127.0.0.1
-    port: 18082
-
-client_pressure:
-  enabled: false
-  target:
-    discovery_role: manager
-    # manager_host: 127.0.0.1
-    # manager_port: 18080
-  scenario:
-    duration_sec: 30
-    virtual_users: 20
-    target_rps: 120
-    ramp_up_sec: 5
-    request_timeout_ms: 2000
-    auto_relogin: true
-    login_account_pool:
-      - user_0001
-      - user_0002
-  report:
-    interval_sec: 5
-    output: log
-    json_path: client_pressure_report.json
-```
-
-说明：
-
-- `all` 模式默认包含 client 服务
-- `client_pressure.enabled=false` 时 client 启动但不发压
-
-## 7. 构建结构
-
-新增模块：
-
-- `app/service/server/CMakeLists.txt` -> `server_service`
-- `app/service/client/CMakeLists.txt` -> `client_pressure_service`
-
-顶层 `SERVICE_LIB` 由单值改为列表，`application` 统一链接：
-
-- `maskword_service`
-- `server_service`
-- `client_pressure_service`
-
-同时加入 `libevent` / `curl` 链接依赖。
-
-核心代码：
-
-- `CMakeLists.txt`
 - `cmake/dependencise_libs.cmake`
-- `app/application/CMakeLists.txt`
 
-## 8. 回归脚本
+## 10. Verified baseline (2026-02-11)
 
-新增脚本：
-
-- `scripts/smoke_modes.ps1`
-  - 依次拉起 `manager/login/game/client/all`（短时）
-- `scripts/short_pressure.ps1`
-  - 生成短压测配置并执行 `all` 模式
-
-用于验证：
-
-- 模式装配正确性
-- all 模式完整启动链
-- client 全链路发压与指标输出
-
+- Build: `build-wsl-main` compiles `application` and `apptool`.
+- Modes: `manager/login/game/client/all` all start successfully.
+- WSL services: MariaDB and Redis active/enabled, bound to `127.0.0.1`.
+- Pressure regression with real JWT + MySQL + Redis: full chain passes.

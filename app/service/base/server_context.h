@@ -18,21 +18,19 @@
 
 #pragma once
 
-#include "client_pressure_types.h"
+#include "application_config.h"
+#include "account_repository.h"
+#include "service_discovery.h"
+#include "token_provider.h"
 
-#include <string>
+#include <memory>
 
-class ClientWorker
+struct ServerContext
 {
-public:
-    ClientWorker() = default;
-    ~ClientWorker() = default;
-
-    WorkerCycleResult run(ClientPressureTask* task) const;
-
-private:
-    bool do_manager_route(ClientPressureTask* task, StageSample* sample) const;
-    bool do_login(ClientPressureTask* task, StageSample* sample) const;
-    bool do_register(ClientPressureTask* task, std::string* error_reason) const;
-    bool do_enter_game(const ClientPressureTask& task, StageSample* sample) const;
+    std::shared_ptr<IServiceDiscovery> discovery;
+    std::shared_ptr<IAccountRepository> account_repository;
+    std::shared_ptr<ITokenProvider> token_provider;
 };
+
+ServerContext create_server_context(const RuntimeConfig& config);
+

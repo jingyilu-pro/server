@@ -57,6 +57,7 @@ protected:
     static std::string read_request_body(evhttp_request* request);
     static bool write_protobuf_response(evhttp_request* request, const google::protobuf::Message& response, int http_status = 200);
     static std::string extract_authorization_token(evhttp_request* request);
+    static bool is_protobuf_content_type(evhttp_request* request);
     static std::string make_endpoint_text(const EndpointConfig& endpoint);
 
 private:
