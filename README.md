@@ -96,7 +96,7 @@ Flow (client pressure):
 - `app/service/login/common|logic`: login service.
 - `app/service/game/common|logic`: game service.
 - `app/service/client/common|logic`: pressure client.
-- `app/service/server`: aggregator-only `server_service` target.
+- `server_service` is now defined directly in root `CMakeLists.txt` by aggregating manager/login/game object targets.
 
 ## Config (`all.yaml`)
 

@@ -30,7 +30,7 @@ Server side directories are split by role (maskword-style):
 - `app/service/login/common|logic`
 - `app/service/game/common|logic`
 - `app/service/base` (shared server components)
-- `app/service/server` (aggregator-only CMake target `server_service`)
+- `server_service` is defined in root `CMakeLists.txt` by aggregating `manager/login/game` object targets.
 
 ## 4. Runtime config (`all.yaml`)
 

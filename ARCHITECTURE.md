@@ -165,9 +165,9 @@ Service split:
 - `app/service/game/common|logic`
 - `app/service/base`
 
-Aggregator-only target:
+Aggregator target:
 
-- `app/service/server/CMakeLists.txt` -> `server_service`
+- `server_service` is defined in root `CMakeLists.txt` and aggregates manager/login/game object targets.
 
 ## 11. Pressure Metrics Compatibility
 
