@@ -1,0 +1,30 @@
+{
+  "qps": 400.005,
+  "success_rate": 1.000000,
+  "timeout_rate": 0.000000,
+  "p50": 9693,
+  "p95": 23929,
+  "p99": 41452,
+  "early_stopped_by_timeout_guard": false,
+  "warmup": {
+    "duration_sec": 20,
+    "total": 4398,
+    "success": 4398,
+    "timeout": 0
+  },
+  "failure_reasons": {
+
+  },
+  "stage_breakdown": {
+    "manager": {
+      "request_total": 48018,
+      "success_total": 48018,
+      "timeout_total": 0,
+      "success_rate": 1.000000,
+      "timeout_rate": 0.000000,
+      "p95": 23904,
+      "failure_reasons": {},
+      "status_code_distribution": {"200": 48018}
+    }
+  }
+}

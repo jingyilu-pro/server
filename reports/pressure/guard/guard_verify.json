@@ -1,0 +1,40 @@
+{
+  "qps": 41.428,
+  "success_rate": 0.000000,
+  "timeout_rate": 1.000000,
+  "p50": 960424,
+  "p95": 986980,
+  "p99": 989910,
+  "early_stopped_by_timeout_guard": true,
+  "warmup": {
+    "duration_sec": 5,
+    "total": 212,
+    "success": 34,
+    "timeout": 178
+  },
+  "failure_reasons": {
+    "login_timeout": 140
+  },
+  "stage_breakdown": {
+    "manager": {
+      "request_total": 140,
+      "success_total": 140,
+      "timeout_total": 0,
+      "success_rate": 1.000000,
+      "timeout_rate": 0.000000,
+      "p95": 184882,
+      "failure_reasons": {},
+      "status_code_distribution": {"200": 140}
+    },
+    "login": {
+      "request_total": 140,
+      "success_total": 0,
+      "timeout_total": 140,
+      "success_rate": 0.000000,
+      "timeout_rate": 1.000000,
+      "p95": 802046,
+      "failure_reasons": {"login_timeout": 140},
+      "status_code_distribution": {"0": 140}
+    }
+  }
+}

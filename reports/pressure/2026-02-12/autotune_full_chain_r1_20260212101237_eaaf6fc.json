@@ -1,0 +1,40 @@
+{
+  "qps": 319.700,
+  "success_rate": 0.000000,
+  "timeout_rate": 0.000000,
+  "p50": 351885,
+  "p95": 554680,
+  "p99": 736065,
+  "early_stopped_by_timeout_guard": false,
+  "warmup": {
+    "duration_sec": 10,
+    "total": 1752,
+    "success": 0,
+    "timeout": 0
+  },
+  "failure_reasons": {
+    "login_code_40101": 19409
+  },
+  "stage_breakdown": {
+    "manager": {
+      "request_total": 19409,
+      "success_total": 19409,
+      "timeout_total": 0,
+      "success_rate": 1.000000,
+      "timeout_rate": 0.000000,
+      "p95": 14341,
+      "failure_reasons": {},
+      "status_code_distribution": {"200": 19409}
+    },
+    "login": {
+      "request_total": 19409,
+      "success_total": 0,
+      "timeout_total": 0,
+      "success_rate": 0.000000,
+      "timeout_rate": 0.000000,
+      "p95": 550548,
+      "failure_reasons": {"login_code_40101": 19409},
+      "status_code_distribution": {"200": 19409}
+    }
+  }
+}

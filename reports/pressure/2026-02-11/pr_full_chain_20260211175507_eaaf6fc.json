@@ -1,0 +1,39 @@
+{
+  "qps": 39.855,
+  "success_rate": 0.000000,
+  "timeout_rate": 1.000000,
+  "p50": 1003470,
+  "p95": 1006877,
+  "p99": 1008086,
+  "warmup": {
+    "duration_sec": 30,
+    "total": 1187,
+    "success": 22,
+    "timeout": 1165
+  },
+  "failure_reasons": {
+    "login_timeout": 11997
+  },
+  "stage_breakdown": {
+    "manager": {
+      "request_total": 11997,
+      "success_total": 11997,
+      "timeout_total": 0,
+      "success_rate": 1.000000,
+      "timeout_rate": 0.000000,
+      "p95": 205254,
+      "failure_reasons": {},
+      "status_code_distribution": {"200": 11997}
+    },
+    "login": {
+      "request_total": 11997,
+      "success_total": 0,
+      "timeout_total": 11997,
+      "success_rate": 0.000000,
+      "timeout_rate": 1.000000,
+      "p95": 802041,
+      "failure_reasons": {"login_timeout": 11997},
+      "status_code_distribution": {"0": 11997}
+    }
+  }
+}

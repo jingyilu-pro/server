@@ -1,0 +1,50 @@
+{
+  "qps": 174.870,
+  "success_rate": 1.000000,
+  "timeout_rate": 0.000000,
+  "p50": 682122,
+  "p95": 793842,
+  "p99": 869056,
+  "early_stopped_by_timeout_guard": false,
+  "warmup": {
+    "duration_sec": 10,
+    "total": 1694,
+    "success": 1694,
+    "timeout": 0
+  },
+  "failure_reasons": {
+
+  },
+  "stage_breakdown": {
+    "manager": {
+      "request_total": 10616,
+      "success_total": 10616,
+      "timeout_total": 0,
+      "success_rate": 1.000000,
+      "timeout_rate": 0.000000,
+      "p95": 6881,
+      "failure_reasons": {},
+      "status_code_distribution": {"200": 10616}
+    },
+    "login": {
+      "request_total": 10616,
+      "success_total": 10616,
+      "timeout_total": 0,
+      "success_rate": 1.000000,
+      "timeout_rate": 0.000000,
+      "p95": 789103,
+      "failure_reasons": {},
+      "status_code_distribution": {"200": 10616}
+    },
+    "game": {
+      "request_total": 10616,
+      "success_total": 10616,
+      "timeout_total": 0,
+      "success_rate": 1.000000,
+      "timeout_rate": 0.000000,
+      "p95": 2332,
+      "failure_reasons": {},
+      "status_code_distribution": {"200": 10616}
+    }
+  }
+}

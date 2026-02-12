@@ -1,0 +1,9 @@
+﻿{
+    "run_id":  "20260212144217_eaaf6fc",
+    "run_time":  "2026-02-12 15:05:09",
+    "gate_status":  "PASS",
+    "full_chain_success_rate":  1,
+    "full_chain_timeout_rate":  0,
+    "full_chain_p95_ms":  24.181,
+    "compare_report":  "reports/pressure/2026-02-12/pr_gate_compare_20260212144217_eaaf6fc_vs_20260212133634_eaaf6fc.md"
+}

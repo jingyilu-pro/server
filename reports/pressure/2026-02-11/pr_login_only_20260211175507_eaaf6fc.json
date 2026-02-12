@@ -1,0 +1,29 @@
+{
+  "qps": 37.453,
+  "success_rate": 0.000000,
+  "timeout_rate": 1.000000,
+  "p50": 801564,
+  "p95": 802044,
+  "p99": 802099,
+  "warmup": {
+    "duration_sec": 20,
+    "total": 740,
+    "success": 22,
+    "timeout": 718
+  },
+  "failure_reasons": {
+    "login_timeout": 4525
+  },
+  "stage_breakdown": {
+    "login": {
+      "request_total": 4525,
+      "success_total": 0,
+      "timeout_total": 4525,
+      "success_rate": 0.000000,
+      "timeout_rate": 1.000000,
+      "p95": 802030,
+      "failure_reasons": {"login_timeout": 4525},
+      "status_code_distribution": {"0": 4525}
+    }
+  }
+}

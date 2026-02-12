@@ -1,0 +1,30 @@
+{
+  "qps": 79.960,
+  "success_rate": 1.000000,
+  "timeout_rate": 0.000000,
+  "p50": 1137,
+  "p95": 1294,
+  "p99": 1384,
+  "early_stopped_by_timeout_guard": false,
+  "warmup": {
+    "duration_sec": 5,
+    "total": 279,
+    "success": 279,
+    "timeout": 0
+  },
+  "failure_reasons": {
+
+  },
+  "stage_breakdown": {
+    "game": {
+      "request_total": 2400,
+      "success_total": 2400,
+      "timeout_total": 0,
+      "success_rate": 1.000000,
+      "timeout_rate": 0.000000,
+      "p95": 1278,
+      "failure_reasons": {},
+      "status_code_distribution": {"200": 2400}
+    }
+  }
+}
