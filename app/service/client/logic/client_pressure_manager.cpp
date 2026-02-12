@@ -266,16 +266,24 @@ void ClientPressureManager::update(std::chrono::milliseconds delta_time, std::ch
     m_token_bucket.store(bucket);
 
     int launched = 0;
-    int dispatch_limit = std::max(1, static_cast<int>(m_workers.size()));
+    const int worker_count = std::max(1, static_cast<int>(m_workers.size()));
+    int dispatch_limit = worker_count;
     while(m_token_bucket.load() >= 1.0 && launched < dispatch_limit)
     {
-        const auto next_index = static_cast<int>(m_dispatch_round_robin.fetch_add(1) % m_workers.size());
-        if(dispatch_one(next_index))
+        bool dispatched = false;
+        for(int attempt = 0; attempt < worker_count; ++attempt)
         {
-            m_token_bucket.store(m_token_bucket.load() - 1.0);
-            ++launched;
+            const auto next_index = static_cast<int>(m_dispatch_round_robin.fetch_add(1) % m_workers.size());
+            if(dispatch_one(next_index))
+            {
+                m_token_bucket.store(m_token_bucket.load() - 1.0);
+                ++launched;
+                dispatched = true;
+                break;
+            }
         }
-        else
+
+        if(!dispatched)
         {
             break;
         }
@@ -385,6 +393,12 @@ bool ClientPressureManager::dispatch_one(int worker_index)
         {
             return false;
         }
+
+        if(slot->running || slot->pending > 0)
+        {
+            return false;
+        }
+
         slot->pending += 1;
         slot->launch_count += 1;
     }

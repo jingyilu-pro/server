@@ -42,6 +42,21 @@ std::string make_trace_id()
     return "mgr-" + std::to_string(ticks);
 }
 
+bool is_valid_endpoint(const EndpointConfig& endpoint)
+{
+    return !endpoint.host.empty() && endpoint.port > 0;
+}
+
+ServiceInstance make_fallback_instance(const char* role, const EndpointConfig& endpoint)
+{
+    ServiceInstance instance;
+    instance.role = role == nullptr ? "" : role;
+    instance.endpoint = endpoint;
+    instance.weight = 1;
+    instance.instance_id = std::string(role == nullptr ? "" : role) + "@config";
+    return instance;
+}
+
 } // namespace
 
 ManagerService::ManagerService(const RuntimeConfig& config, std::shared_ptr<IServiceDiscovery> discovery)
@@ -75,24 +90,8 @@ bool ManagerService::start()
         return false;
     }
 
-    ServiceDiscoveryOpResult register_result;
-    if(!wait_service_discovery_result(m_discovery.get(),
-                                      m_discovery->register_instance(m_local_instance),
-                                      &register_result,
-                                      std::max(1000, m_config.redis.op_timeout_ms)))
-    {
-        spdlog::error("manager register to redis timeout or empty result");
-        BasicHttpService::stop();
-        return false;
-    }
-
-    if(!register_result.success)
-    {
-        spdlog::error("manager register to redis failed: {}",
-                      register_result.error);
-        BasicHttpService::stop();
-        return false;
-    }
+    m_registered.store(false);
+    m_register_inflight.store(false);
 
     m_last_heartbeat = std::chrono::steady_clock::now();
     return true;
@@ -100,7 +99,7 @@ bool ManagerService::start()
 
 bool ManagerService::stop()
 {
-    if(m_discovery)
+    if(m_discovery && m_registered.load())
     {
         ServiceDiscoveryOpResult unregister_result;
         wait_service_discovery_result(m_discovery.get(),
@@ -108,6 +107,9 @@ bool ManagerService::stop()
                                       &unregister_result,
                                       m_config.redis.op_timeout_ms);
     }
+
+    m_registered.store(false);
+    m_register_inflight.store(false);
 
     return BasicHttpService::stop();
 }
@@ -122,15 +124,37 @@ void ManagerService::on_event_loop_tick()
     if(m_discovery)
     {
         m_discovery->poll();
+
+        if(!m_registered.load() && !m_register_inflight.load())
+        {
+            register_instance_async();
+        }
     }
 
     auto now = std::chrono::steady_clock::now();
-    if(m_discovery && !m_heartbeat_inflight &&
+    if(m_discovery && m_registered.load() && !m_heartbeat_inflight &&
        now - m_last_heartbeat >= std::chrono::seconds(std::max(1, m_config.redis.refresh_sec)))
     {
         heartbeat_async();
         m_last_heartbeat = now;
     }
+}
+
+coro_task_t ManagerService::register_instance_async()
+{
+    m_register_inflight.store(true);
+    auto* register_result = dynamic_cast<ServiceDiscoveryOpResult*>(co_await m_discovery->register_instance(m_local_instance));
+    if(register_result != nullptr && register_result->success)
+    {
+        m_registered.store(true);
+        m_last_heartbeat = std::chrono::steady_clock::now();
+    }
+    else
+    {
+        spdlog::warn("manager register to redis failed: {}",
+                     register_result == nullptr ? "null result" : register_result->error);
+    }
+    m_register_inflight.store(false);
 }
 
 EndpointConfig ManagerService::choose_weighted_endpoint(const std::vector<ServiceInstance>& instances,
@@ -201,28 +225,63 @@ coro_task_t ManagerService::route_login_async(evhttp_request* request)
         co_return;
     }
 
-    auto* login_result = dynamic_cast<ServiceDiscoveryOpResult*>(co_await m_discovery->list_instances("login"));
-    auto* game_result = dynamic_cast<ServiceDiscoveryOpResult*>(co_await m_discovery->list_instances("game"));
-
     std::vector<ServiceInstance> login_instances;
     std::vector<ServiceInstance> game_instances;
-    if(login_result != nullptr && login_result->success)
+
+    if(auto* login_result = dynamic_cast<ServiceDiscoveryOpResult*>(co_await m_discovery->list_instances("login"));
+       login_result != nullptr && login_result->success)
     {
         login_instances = login_result->instances;
     }
-    if(game_result != nullptr && game_result->success)
+    if(auto* game_result = dynamic_cast<ServiceDiscoveryOpResult*>(co_await m_discovery->list_instances("game"));
+       game_result != nullptr && game_result->success)
     {
         game_instances = game_result->instances;
     }
 
+    if(login_instances.empty() && is_valid_endpoint(m_config.server.login))
+    {
+        login_instances.push_back(make_fallback_instance("login", m_config.server.login));
+    }
+    if(game_instances.empty() && is_valid_endpoint(m_config.server.game))
+    {
+        game_instances.push_back(make_fallback_instance("game", m_config.server.game));
+    }
+
     gateway::RouteLoginResponse response;
+    response.set_trace_id(make_trace_id());
+    response.set_server_time_ms(now_ms());
+
+    const bool login_available = !login_instances.empty();
+    const bool game_available = !game_instances.empty();
+    if(!login_available || !game_available)
+    {
+        if(!login_available && !game_available)
+        {
+            response.set_code(50013);
+            response.set_message("login and game service unavailable");
+        }
+        else if(!login_available)
+        {
+            response.set_code(50011);
+            response.set_message("login service unavailable");
+        }
+        else
+        {
+            response.set_code(50012);
+            response.set_message("game service unavailable");
+        }
+
+        write_protobuf_response(request, response, 200);
+        release_request(request);
+        co_return;
+    }
+
     auto picked_login = choose_weighted_endpoint(login_instances, m_config.server.login, &m_login_round_robin_counter);
     auto picked_game = choose_weighted_endpoint(game_instances, m_config.server.game, &m_game_round_robin_counter);
 
     response.set_code(0);
     response.set_message("ok");
-    response.set_trace_id(make_trace_id());
-    response.set_server_time_ms(now_ms());
     response.mutable_login_endpoint()->set_host(picked_login.host);
     response.mutable_login_endpoint()->set_port(static_cast<uint32_t>(picked_login.port));
     response.mutable_game_endpoint()->set_host(picked_game.host);

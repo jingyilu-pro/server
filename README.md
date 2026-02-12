@@ -103,6 +103,8 @@ Flow (client pressure):
 Core sections:
 
 - `server`: role listener endpoints.
+  - `server.manager.port` 固定（统一入口）。
+  - `server.login.port` 与 `server.game.port` 建议配置为 `0`，启动时自动分配并注册到 Redis。
 - `redis`: service discovery (`coro_workers` supported).
   - `op_timeout_ms` controls register/list/unregister synchronous wait timeout.
 - `mysql`: account store (`coro_workers` supported).

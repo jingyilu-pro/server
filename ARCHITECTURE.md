@@ -14,6 +14,11 @@ Single binary with role composition:
 
 `all` keeps pressure service loaded; traffic generation depends on `client_pressure.enabled`.
 
+端口绑定策略：
+
+- `manager` 使用固定端口（入口地址稳定）。
+- `login` 与 `game` 使用自动分配端口（配置为 `port: 0`），启动后将真实端口注册到 Redis。
+
 ## 2. HTTP / Protocol Baseline
 
 - method: `POST`

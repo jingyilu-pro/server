@@ -47,15 +47,13 @@ std::string make_trace_id()
 GameService::GameService(const RuntimeConfig& config,
                          std::shared_ptr<IServiceDiscovery> discovery,
                          std::shared_ptr<ITokenProvider> token_provider)
-    : BasicHttpService("game", config.server.game),
+    : BasicHttpService("game", config.server.game, true),
       m_config(config),
       m_discovery(std::move(discovery)),
       m_token_provider(std::move(token_provider))
 {
     m_local_instance.role = "game";
-    m_local_instance.endpoint = config.server.game;
     m_local_instance.weight = 1;
-    m_local_instance.instance_id = name() + std::string("@") + make_endpoint_text(config.server.game);
 
     register_handler("/v1/game/enter", [this](evhttp_request* request) {
         enter_game_async(request);
@@ -71,6 +69,9 @@ bool GameService::start()
         return false;
     }
 
+    m_local_instance.endpoint = endpoint();
+    m_local_instance.instance_id = std::string(name()) + "@" + make_endpoint_text(m_local_instance.endpoint);
+
     if(!m_discovery)
     {
         spdlog::error("game discovery unavailable");
@@ -78,24 +79,8 @@ bool GameService::start()
         return false;
     }
 
-    ServiceDiscoveryOpResult register_result;
-    if(!wait_service_discovery_result(m_discovery.get(),
-                                      m_discovery->register_instance(m_local_instance),
-                                      &register_result,
-                                      std::max(1000, m_config.redis.op_timeout_ms)))
-    {
-        spdlog::error("game register to redis timeout or empty result");
-        BasicHttpService::stop();
-        return false;
-    }
-
-    if(!register_result.success)
-    {
-        spdlog::error("game register to redis failed: {}",
-                      register_result.error);
-        BasicHttpService::stop();
-        return false;
-    }
+    m_registered.store(false);
+    m_register_inflight.store(false);
 
     m_last_heartbeat = std::chrono::steady_clock::now();
     return true;
@@ -103,7 +88,7 @@ bool GameService::start()
 
 bool GameService::stop()
 {
-    if(m_discovery)
+    if(m_discovery && m_registered.load())
     {
         ServiceDiscoveryOpResult unregister_result;
         wait_service_discovery_result(m_discovery.get(),
@@ -111,6 +96,9 @@ bool GameService::stop()
                                       &unregister_result,
                                       m_config.redis.op_timeout_ms);
     }
+
+    m_registered.store(false);
+    m_register_inflight.store(false);
 
     return BasicHttpService::stop();
 }
@@ -125,15 +113,36 @@ void GameService::on_event_loop_tick()
     if(m_discovery)
     {
         m_discovery->poll();
+        if(!m_registered.load() && !m_register_inflight.load())
+        {
+            register_instance_async();
+        }
     }
 
     auto now = std::chrono::steady_clock::now();
-    if(m_discovery && !m_heartbeat_inflight &&
+    if(m_discovery && m_registered.load() && !m_heartbeat_inflight &&
        now - m_last_heartbeat >= std::chrono::seconds(std::max(1, m_config.redis.refresh_sec)))
     {
         heartbeat_async();
         m_last_heartbeat = now;
     }
+}
+
+coro_task_t GameService::register_instance_async()
+{
+    m_register_inflight.store(true);
+    auto* register_result = dynamic_cast<ServiceDiscoveryOpResult*>(co_await m_discovery->register_instance(m_local_instance));
+    if(register_result != nullptr && register_result->success)
+    {
+        m_registered.store(true);
+        m_last_heartbeat = std::chrono::steady_clock::now();
+    }
+    else
+    {
+        spdlog::warn("game register to redis failed: {}",
+                     register_result == nullptr ? "null result" : register_result->error);
+    }
+    m_register_inflight.store(false);
 }
 
 coro_task_t GameService::heartbeat_async()

@@ -18,7 +18,8 @@ function New-PressureYaml {
         [int]$TimeoutMs,
         [int]$AccountPoolSize,
         [string]$OutputDir,
-        [string]$Prefix
+        [string]$Prefix,
+        [string]$RedisKeyPrefix
     )
 
     @"
@@ -28,10 +29,10 @@ server:
     port: 18080
   login:
     host: 127.0.0.1
-    port: 18081
+    port: 0
   game:
     host: 127.0.0.1
-    port: 18082
+    port: 0
 
 client_pressure:
   enabled: true
@@ -55,6 +56,11 @@ client_pressure:
     json_path: $OutputDir/$Prefix.json
   http:
     coro_workers: 1
+
+redis:
+  host: 127.0.0.1
+  port: 6379
+  key_prefix: $RedisKeyPrefix
 "@ | Set-Content -Path $Path -Encoding ASCII
 }
 
@@ -75,6 +81,7 @@ function Invoke-OneScenario {
     $configName = "scripts/pressure/generated.daily.$Scenario.$RunId.yaml"
     $configPath = Join-Path (Resolve-Path ".").Path $configName
     $reportPrefix = "daily_${Scenario}_$RunId"
+    $redisKeyPrefix = "svc_${RunId}_${Scenario}"
 
     New-PressureYaml -Path $configPath `
         -Scenario $Scenario `
@@ -86,7 +93,8 @@ function Invoke-OneScenario {
         -TimeoutMs $TimeoutMs `
         -AccountPoolSize $AccountPoolSize `
         -OutputDir $ReportDirRelative `
-        -Prefix $reportPrefix
+        -Prefix $reportPrefix `
+        -RedisKeyPrefix $redisKeyPrefix
 
     $configPathWsl = "/mnt/c/Work/Projects/server/$($configName.Replace('\\','/'))"
     $binaryWsl = "./$BuildDir/app/application/application"

@@ -25,10 +25,61 @@
 #include <event2/buffer.h>
 #include <event2/keyvalq_struct.h>
 #include <event2/thread.h>
+#include <event2/util.h>
 #include <google/protobuf/message.h>
 
-BasicHttpService::BasicHttpService(std::string service_name, EndpointConfig endpoint)
-    : m_service_name(std::move(service_name)), m_endpoint(std::move(endpoint))
+#ifdef _WIN32
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#else
+#include <arpa/inet.h>
+#include <netinet/in.h>
+#include <sys/socket.h>
+#endif
+
+namespace
+{
+
+uint16_t resolve_bound_port(evhttp_bound_socket* bound_socket)
+{
+    if(bound_socket == nullptr)
+    {
+        return 0;
+    }
+
+    const evutil_socket_t fd = evhttp_bound_socket_get_fd(bound_socket);
+    if(fd < 0)
+    {
+        return 0;
+    }
+
+    sockaddr_storage address{};
+    ev_socklen_t address_length = static_cast<ev_socklen_t>(sizeof(address));
+    if(getsockname(fd, reinterpret_cast<sockaddr*>(&address), &address_length) != 0)
+    {
+        return 0;
+    }
+
+    if(address.ss_family == AF_INET)
+    {
+        const auto* ipv4 = reinterpret_cast<const sockaddr_in*>(&address);
+        return ntohs(ipv4->sin_port);
+    }
+    if(address.ss_family == AF_INET6)
+    {
+        const auto* ipv6 = reinterpret_cast<const sockaddr_in6*>(&address);
+        return ntohs(ipv6->sin6_port);
+    }
+
+    return 0;
+}
+
+} // namespace
+
+BasicHttpService::BasicHttpService(std::string service_name, EndpointConfig endpoint, bool auto_assign_port)
+    : m_service_name(std::move(service_name)),
+      m_endpoint(std::move(endpoint)),
+      m_auto_assign_port(auto_assign_port)
 {
 }
 
@@ -68,15 +119,43 @@ bool BasicHttpService::start()
 
     evhttp_set_gencb(m_evhttp, &BasicHttpService::global_request_callback, this);
 
-    auto bind_result = evhttp_bind_socket(m_evhttp, m_endpoint.host.c_str(), static_cast<ev_uint16_t>(m_endpoint.port));
-    if(bind_result != 0)
+    if(m_auto_assign_port)
     {
-        spdlog::error("{} failed to bind endpoint {}", m_service_name, make_endpoint_text(m_endpoint));
-        evhttp_free(m_evhttp);
-        m_evhttp = nullptr;
-        event_base_free(m_event_base);
-        m_event_base = nullptr;
-        return false;
+        auto* bound_socket = evhttp_bind_socket_with_handle(m_evhttp, m_endpoint.host.c_str(), 0);
+        if(bound_socket == nullptr)
+        {
+            spdlog::error("{} failed to bind endpoint {}", m_service_name, make_endpoint_text(m_endpoint));
+            evhttp_free(m_evhttp);
+            m_evhttp = nullptr;
+            event_base_free(m_event_base);
+            m_event_base = nullptr;
+            return false;
+        }
+
+        const uint16_t bound_port = resolve_bound_port(bound_socket);
+        if(bound_port == 0)
+        {
+            spdlog::error("{} failed to resolve auto-assigned port", m_service_name);
+            evhttp_free(m_evhttp);
+            m_evhttp = nullptr;
+            event_base_free(m_event_base);
+            m_event_base = nullptr;
+            return false;
+        }
+        m_endpoint.port = bound_port;
+    }
+    else
+    {
+        const auto bind_result = evhttp_bind_socket(m_evhttp, m_endpoint.host.c_str(), static_cast<ev_uint16_t>(m_endpoint.port));
+        if(bind_result != 0)
+        {
+            spdlog::error("{} failed to bind endpoint {}", m_service_name, make_endpoint_text(m_endpoint));
+            evhttp_free(m_evhttp);
+            m_evhttp = nullptr;
+            event_base_free(m_event_base);
+            m_event_base = nullptr;
+            return false;
+        }
     }
 
     m_running.store(true);
@@ -143,6 +222,11 @@ bool BasicHttpService::register_handler(const std::string& path, Handler handler
     }
     m_handlers[path] = std::move(handler);
     return true;
+}
+
+const EndpointConfig& BasicHttpService::endpoint() const
+{
+    return m_endpoint;
 }
 
 void BasicHttpService::retain_request(evhttp_request* request)

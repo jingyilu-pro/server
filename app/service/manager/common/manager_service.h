@@ -24,6 +24,7 @@
 
 #include "service_discovery.h"
 
+#include <atomic>
 #include <chrono>
 #include <memory>
 
@@ -45,6 +46,7 @@ private:
     EndpointConfig choose_weighted_endpoint(const std::vector<ServiceInstance>& instances,
                                             const EndpointConfig& fallback,
                                             std::size_t* round_robin_counter);
+    coro_task_t register_instance_async();
     coro_task_t heartbeat_async();
     coro_task_t route_login_async(evhttp_request* request);
 
@@ -56,4 +58,6 @@ private:
     std::size_t m_login_round_robin_counter = 0;
     std::size_t m_game_round_robin_counter = 0;
     bool m_heartbeat_inflight = false;
+    std::atomic<bool> m_register_inflight{false};
+    std::atomic<bool> m_registered{false};
 };

@@ -26,6 +26,7 @@ function New-PressureYaml {
         [int]$AccountPoolSize,
         [string]$OutputDir,
         [string]$Prefix,
+        [string]$RedisKeyPrefix,
         [int]$MySqlCoroWorkers,
         [int]$RedisCoroWorkers,
         [int]$MySqlPasswordHashIterations
@@ -38,14 +39,15 @@ server:
     port: 18080
   login:
     host: 127.0.0.1
-    port: 18081
+    port: 0
   game:
     host: 127.0.0.1
-    port: 18082
+    port: 0
 
 redis:
   host: 127.0.0.1
   port: 6379
+  key_prefix: $RedisKeyPrefix
   coro_workers: $RedisCoroWorkers
 
 mysql:
@@ -105,6 +107,7 @@ function Invoke-OnePressure {
     $configName = "scripts/pressure/generated.pr.$Scenario.$RunId.yaml"
     $configPath = Join-Path (Resolve-Path ".").Path $configName
     $reportPrefix = "pr_${Scenario}_$RunId"
+    $redisKeyPrefix = "svc_${RunId}_${Scenario}"
 
     New-PressureYaml -Path $configPath `
         -Scenario $Scenario `
@@ -117,6 +120,7 @@ function Invoke-OnePressure {
         -AccountPoolSize $AccountPoolSize `
         -OutputDir $ReportDirRelative `
         -Prefix $reportPrefix `
+        -RedisKeyPrefix $redisKeyPrefix `
         -MySqlCoroWorkers $MySqlCoroWorkers `
         -RedisCoroWorkers $RedisCoroWorkers `
         -MySqlPasswordHashIterations $MySqlPasswordHashIterations

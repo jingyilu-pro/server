@@ -25,6 +25,7 @@
 #include "service_discovery.h"
 #include "token_provider.h"
 
+#include <atomic>
 #include <chrono>
 #include <memory>
 
@@ -45,6 +46,7 @@ protected:
     void on_event_loop_tick() override;
 
 private:
+    coro_task_t register_instance_async();
     coro_task_t heartbeat_async();
     coro_task_t enter_game_async(evhttp_request* request);
 
@@ -55,4 +57,6 @@ private:
     ServiceInstance m_local_instance;
     std::chrono::steady_clock::time_point m_last_heartbeat;
     bool m_heartbeat_inflight = false;
+    std::atomic<bool> m_register_inflight{false};
+    std::atomic<bool> m_registered{false};
 };

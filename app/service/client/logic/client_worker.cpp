@@ -52,6 +52,11 @@ std::string endpoint_path(const char* path)
     return std::string(path == nullptr ? "/" : path);
 }
 
+bool endpoint_valid(const EndpointConfig& endpoint)
+{
+    return !endpoint.host.empty() && endpoint.port > 0;
+}
+
 struct HttpClientOpResult : public CoroResult
 {
     EndpointConfig endpoint;
@@ -382,6 +387,29 @@ WorkerCycleResult ClientWorker::run(ClientPressureTask* task) const
     auto begin = std::chrono::steady_clock::now();
     const auto scenario = task->scenario.empty() ? std::string("full_chain") : task->scenario;
 
+    auto refresh_route_endpoints = [&]() -> bool {
+        if(!endpoint_valid(task->manager_endpoint))
+        {
+            result.failure_reason = "manager_endpoint_invalid";
+            result.chain_latency_us = duration_us(begin);
+            return false;
+        }
+
+        StageSample manager_sample;
+        manager_sample.stage = StageType::manager;
+        if(!do_manager_route(task, &manager_sample))
+        {
+            result.stages.push_back(manager_sample);
+            result.failure_reason = manager_sample.error_reason.empty() ? "manager_failed" : manager_sample.error_reason;
+            result.timeout = manager_sample.timeout;
+            result.chain_latency_us = duration_us(begin);
+            return false;
+        }
+
+        result.stages.push_back(manager_sample);
+        return true;
+    };
+
     if(scenario == "manager_only")
     {
         StageSample manager_sample;
@@ -402,6 +430,14 @@ WorkerCycleResult ClientWorker::run(ClientPressureTask* task) const
 
     if(scenario == "login_only")
     {
+        if(!endpoint_valid(task->login_endpoint))
+        {
+            if(!refresh_route_endpoints())
+            {
+                return result;
+            }
+        }
+
         StageSample login_sample;
         login_sample.stage = StageType::login;
         if(!do_login(task, &login_sample))
@@ -420,6 +456,14 @@ WorkerCycleResult ClientWorker::run(ClientPressureTask* task) const
 
     if(scenario == "game_only")
     {
+        if(!endpoint_valid(task->game_endpoint) || !endpoint_valid(task->login_endpoint))
+        {
+            if(!refresh_route_endpoints())
+            {
+                return result;
+            }
+        }
+
         if(!task->has_token)
         {
             StageSample login_sample;

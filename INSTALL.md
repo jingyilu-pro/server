@@ -37,6 +37,8 @@ Server side directories are split by role (maskword-style):
 Core sections:
 
 - `server.manager/login/game`: HTTP listener endpoints.
+  - `server.manager.port` 建议固定（统一入口）。
+  - `server.login.port`、`server.game.port` 建议设为 `0`，由系统自动分配端口并在启动后注册到 Redis。
 - `redis`: service-discovery backend for manager/login/game (`coro_workers` supported).
   - `redis.op_timeout_ms` controls sync wait timeout for startup registration and sync list/unregister helper paths.
 - `mysql`: account storage for login (`coro_workers` supported).

@@ -1,13 +1,16 @@
 server:
   manager:
     host: 127.0.0.1
+    # manager 保持固定端口，作为统一入口
     port: 18080
   login:
     host: 127.0.0.1
-    port: 18081
+    # login 由系统自动分配端口（启动后注册到 redis）
+    port: 0
   game:
     host: 127.0.0.1
-    port: 18082
+    # game 由系统自动分配端口（启动后注册到 redis）
+    port: 0
 
 redis:
   host: 127.0.0.1

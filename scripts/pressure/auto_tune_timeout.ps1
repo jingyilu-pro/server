@@ -33,6 +33,7 @@ function New-AutoTuneYaml {
         [int]$AccountPoolSize,
         [string]$OutputDir,
         [string]$Prefix,
+        [string]$RedisKeyPrefix,
         [int]$MySqlCoroWorkers,
         [int]$RedisCoroWorkers,
         [int]$MySqlPasswordHashIterations
@@ -45,14 +46,15 @@ server:
     port: 18080
   login:
     host: 127.0.0.1
-    port: 18081
+    port: 0
   game:
     host: 127.0.0.1
-    port: 18082
+    port: 0
 
 redis:
   host: 127.0.0.1
   port: 6379
+  key_prefix: $RedisKeyPrefix
   coro_workers: $RedisCoroWorkers
 
 mysql:
@@ -115,6 +117,7 @@ $success = $false
 
 for ($round = 1; $round -le $MaxRounds; $round++) {
     $prefix = "autotune_${Scenario}_r${round}_$runId"
+    $redisKeyPrefix = "svc_${runId}_${Scenario}_r${round}"
     $configName = "scripts/pressure/generated.autotune.r${round}.$runId.yaml"
     $configPath = Join-Path (Resolve-Path ".").Path $configName
     $reportPath = Join-Path $reportDirWindows "$prefix.json"
@@ -131,6 +134,7 @@ for ($round = 1; $round -le $MaxRounds; $round++) {
             -AccountPoolSize $accountPoolSize `
             -OutputDir $reportDirRelative `
             -Prefix $prefix `
+            -RedisKeyPrefix $redisKeyPrefix `
             -MySqlCoroWorkers $MySqlCoroWorkers `
             -RedisCoroWorkers $RedisCoroWorkers `
             -MySqlPasswordHashIterations $MySqlPasswordHashIterations

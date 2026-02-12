@@ -45,7 +45,7 @@ public:
     using Handler = std::function<void(evhttp_request*)>;
 
 public:
-    BasicHttpService(std::string service_name, EndpointConfig endpoint);
+    BasicHttpService(std::string service_name, EndpointConfig endpoint, bool auto_assign_port = false);
     ~BasicHttpService() override;
 
 public:
@@ -56,6 +56,7 @@ public:
 
 protected:
     bool register_handler(const std::string& path, Handler handler);
+    const EndpointConfig& endpoint() const;
     static std::string read_request_body(evhttp_request* request);
     static bool write_protobuf_response(evhttp_request* request, const google::protobuf::Message& response, int http_status = 200);
     static std::string extract_authorization_token(evhttp_request* request);
@@ -73,6 +74,7 @@ private:
 private:
     std::string m_service_name;
     EndpointConfig m_endpoint;
+    bool m_auto_assign_port = false;
     std::unordered_map<std::string, Handler> m_handlers;
 
     event_base* m_event_base = nullptr;
