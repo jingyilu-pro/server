@@ -57,6 +57,7 @@ struct MySqlConfig
     std::string database = "game";
     int connect_timeout_ms = 2000;
     int coro_workers = 1;
+    int password_hash_iterations = 120000;
 };
 
 struct ClientPressureHttpConfig
@@ -80,11 +81,14 @@ struct ClientPressureTargetConfig
 
 struct ClientPressureScenarioConfig
 {
+    std::string scenario = "full_chain";
     int duration_sec = 30;
+    int warmup_sec = 0;
     int virtual_users = 20;
     int target_rps = 120;
     int ramp_up_sec = 5;
-    int request_timeout_ms = 2000;
+    int timeout_ms = 2000;
+    int account_pool_size = 0;
     std::vector<std::string> login_account_pool;
     bool auto_relogin = true;
 };
@@ -93,7 +97,9 @@ struct ClientPressureReportConfig
 {
     int interval_sec = 5;
     std::string output = "log";
-    std::string json_path = "client_pressure_report.json";
+    std::string output_dir = "reports/pressure";
+    std::string prefix = "client_pressure";
+    std::string json_path;
 };
 
 struct ClientPressureConfig

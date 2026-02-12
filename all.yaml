@@ -43,11 +43,15 @@ client_pressure:
     # manager_host: 127.0.0.1
     # manager_port: 18080
   scenario:
+    # full_chain | manager_only | login_only | game_only
+    scenario: full_chain
+    warmup_sec: 0
     duration_sec: 30
     virtual_users: 20
     target_rps: 120
     ramp_up_sec: 5
-    request_timeout_ms: 2000
+    timeout_ms: 2000
+    account_pool_size: 20
     auto_relogin: true
     login_account_pool:
       - user_0001
@@ -57,6 +61,8 @@ client_pressure:
   report:
     interval_sec: 5
     output: log
-    json_path: client_pressure_report.json
+    output_dir: reports/pressure
+    prefix: client_pressure
+    json_path: reports/pressure/client_pressure.json
   http:
     coro_workers: 1

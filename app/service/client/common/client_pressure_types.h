@@ -79,6 +79,7 @@ struct PressureMetricsSnapshot
 struct ClientPressureTask
 {
     int worker_id = 0;
+    std::string scenario = "full_chain";
     std::string account;
     EndpointConfig manager_endpoint;
     EndpointConfig login_endpoint;
@@ -88,4 +89,3 @@ struct ClientPressureTask
     std::string jwt_token;
     bool has_token = false;
 };
-

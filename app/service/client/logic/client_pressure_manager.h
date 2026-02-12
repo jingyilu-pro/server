@@ -57,6 +57,7 @@ private:
     };
 
     bool should_dispatch() const;
+    bool should_stop_by_timeout_guard();
     bool dispatch_one(int worker_index);
     void worker_loop(int worker_index);
     void on_cycle_result(const WorkerCycleResult& result);
@@ -71,13 +72,17 @@ private:
     std::vector<std::unique_ptr<WorkerSlot>> m_workers;
 
     mutable std::mutex m_metrics_mutex;
+    mutable std::mutex m_warmup_metrics_mutex;
     PressureMetricsSnapshot m_metrics;
+    PressureMetricsSnapshot m_warmup_metrics;
 
     std::atomic<bool> m_running{false};
     std::atomic<bool> m_stop_requested{false};
     std::atomic<bool> m_finished{false};
+    std::atomic<bool> m_timeout_guard_triggered{false};
 
     std::chrono::steady_clock::time_point m_start_time;
+    std::chrono::steady_clock::time_point m_warmup_end_time;
     std::chrono::steady_clock::time_point m_end_time;
     std::chrono::steady_clock::time_point m_last_dispatch_time;
     std::chrono::steady_clock::time_point m_last_report_time;

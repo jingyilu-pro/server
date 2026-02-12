@@ -48,7 +48,7 @@ constexpr const char* kFindAccountSql =
 constexpr const char* kInsertAccountSql =
     "INSERT INTO account(account,password_hash,salt) VALUES(?,?,?)";
 
-constexpr int kPasswordHashIterations = 120000;
+constexpr int kDefaultPasswordHashIterations = 120000;
 
 std::string bytes_to_hex(const unsigned char* data, size_t len)
 {
@@ -96,14 +96,15 @@ std::string generate_salt_hex()
     return bytes_to_hex(salt_bytes.data(), salt_bytes.size());
 }
 
-std::string make_password_hash(const std::string& password, const std::string& salt)
+std::string make_password_hash(const std::string& password, const std::string& salt, int iterations)
 {
     std::array<unsigned char, 32> digest{};
+    const int rounds = std::max(1, iterations);
     const int rc = PKCS5_PBKDF2_HMAC(password.c_str(),
                                      static_cast<int>(password.size()),
                                      reinterpret_cast<const unsigned char*>(salt.data()),
                                      static_cast<int>(salt.size()),
-                                     kPasswordHashIterations,
+                                     rounds,
                                      EVP_sha256(),
                                      static_cast<int>(digest.size()),
                                      digest.data());
@@ -119,21 +120,59 @@ std::string make_password_hash_legacy(const std::string& password, const std::st
     return sha256_hex(salt + ":" + password);
 }
 
-bool verify_password_value(const std::string& password, const AccountRecord& record)
+bool verify_password_value(const std::string& password, AccountRecord* record, int iterations)
 {
-    const auto expected_hash = make_password_hash(password, record.salt);
-    if(record.password_hash == expected_hash)
+    if(record == nullptr)
+    {
+        return false;
+    }
+
+    const int normalized_iterations = std::max(1, iterations);
+    const auto expected_hash = make_password_hash(password, record->salt, normalized_iterations);
+    if(expected_hash.empty())
+    {
+        return false;
+    }
+
+    if(record->password_hash == expected_hash)
     {
         return true;
     }
 
-    const auto expected_legacy_hash = make_password_hash_legacy(password, record.salt);
-    if(record.password_hash == expected_legacy_hash)
+    if(normalized_iterations != 20000)
     {
+        const auto fast_hash = make_password_hash(password, record->salt, 20000);
+        if(record->password_hash == fast_hash)
+        {
+            record->password_hash = expected_hash;
+            return true;
+        }
+    }
+
+    if(normalized_iterations != kDefaultPasswordHashIterations)
+    {
+        const auto default_hash = make_password_hash(password, record->salt, kDefaultPasswordHashIterations);
+        if(record->password_hash == default_hash)
+        {
+            record->password_hash = expected_hash;
+            return true;
+        }
+    }
+
+    const auto expected_legacy_hash = make_password_hash_legacy(password, record->salt);
+    if(record->password_hash == expected_legacy_hash)
+    {
+        record->password_hash = expected_hash;
         return true;
     }
 
-    return record.salt.empty() && record.password_hash == password;
+    if(record->salt.empty() && record->password_hash == password)
+    {
+        record->password_hash = expected_hash;
+        return true;
+    }
+
+    return false;
 }
 
 } // namespace
@@ -159,6 +198,50 @@ MySqlAccountRepository::MySqlAccountRepository(const MySqlConfig& config)
 
     std::lock_guard lock(m_mutex);
     m_ready = ensure_connected() && ensure_table();
+}
+
+int MySqlAccountRepository::password_hash_iterations() const
+{
+    return std::max(1, m_config.password_hash_iterations);
+}
+
+bool MySqlAccountRepository::get_cached_account(const std::string& account, AccountRecord* out_record) const
+{
+    if(out_record == nullptr || account.empty())
+    {
+        return false;
+    }
+
+    std::shared_lock lock(m_cache_mutex);
+    const auto iter = m_account_cache.find(account);
+    if(iter == m_account_cache.end())
+    {
+        return false;
+    }
+
+    *out_record = iter->second;
+    return true;
+}
+
+void MySqlAccountRepository::put_cached_account(const AccountRecord& record)
+{
+    if(record.account.empty())
+    {
+        return;
+    }
+
+    std::unique_lock lock(m_cache_mutex);
+    m_account_cache[record.account] = record;
+}
+
+MYSQL* MySqlAccountRepository::ensure_worker_connection(std::string* error)
+{
+    thread_local MYSQL* worker_mysql = nullptr;
+    if(ensure_connected(&worker_mysql, error))
+    {
+        return worker_mysql;
+    }
+    return nullptr;
 }
 
 MySqlAccountRepository::~MySqlAccountRepository()
@@ -253,11 +336,17 @@ void MySqlAccountRepository::execute_operation(AccountRepositoryOpResult* result
         return;
     }
 
-    std::lock_guard lock(m_mutex);
-    if(!ensure_connected())
+    const std::string request_account = result->request_account;
+    const std::string request_password = result->request_password;
+
+    std::optional<AccountRecord> record;
+    std::string error;
+
+    MYSQL* worker_mysql = ensure_worker_connection(&error);
+    if(worker_mysql == nullptr)
     {
         result->success = false;
-        result->error = "mysql_unavailable";
+        result->error = error.empty() ? "mysql_unavailable" : error;
         return;
     }
 
@@ -265,11 +354,21 @@ void MySqlAccountRepository::execute_operation(AccountRepositoryOpResult* result
     {
     case AccountRepositoryOpType::find_account:
     {
-        std::optional<AccountRecord> record;
-        std::string error;
-        const bool ok = query_account_record(result->request_account, &record, &error);
+        AccountRecord cached_record;
+        if(get_cached_account(request_account, &cached_record))
+        {
+            result->success = true;
+            result->record = cached_record;
+            break;
+        }
+
+        const bool ok = query_account_record(worker_mysql, request_account, &record, &error);
         result->success = ok;
         result->record = record;
+        if(ok && record.has_value())
+        {
+            put_cached_account(*record);
+        }
         if(!ok)
         {
             result->error = error.empty() ? "mysql_find_failed" : error;
@@ -278,9 +377,23 @@ void MySqlAccountRepository::execute_operation(AccountRepositoryOpResult* result
     }
     case AccountRepositoryOpType::verify_password:
     {
-        std::optional<AccountRecord> record;
-        std::string error;
-        const bool ok = query_account_record(result->request_account, &record, &error);
+        AccountRecord cached_record;
+        if(get_cached_account(request_account, &cached_record))
+        {
+            result->success = true;
+            result->password_ok = verify_password_value(request_password,
+                                                        &cached_record,
+                                                        password_hash_iterations());
+            result->record = cached_record;
+            if(result->password_ok)
+            {
+                put_cached_account(cached_record);
+            }
+            break;
+        }
+
+        const bool ok = query_account_record(worker_mysql, request_account, &record, &error);
+
         result->success = ok;
         if(!ok)
         {
@@ -288,25 +401,57 @@ void MySqlAccountRepository::execute_operation(AccountRepositoryOpResult* result
             break;
         }
 
+        result->password_ok = false;
+        if(record.has_value())
+        {
+            result->password_ok = verify_password_value(request_password,
+                                                        &(*record),
+                                                        password_hash_iterations());
+            put_cached_account(*record);
+        }
         result->record = record;
-        result->password_ok = record.has_value() && verify_password_value(result->request_password, *record);
         break;
     }
     case AccountRepositoryOpType::create_account:
     {
-        if(result->request_account.empty())
+        if(request_account.empty())
         {
             result->success = true;
             result->create_ok = false;
             break;
         }
 
-        std::string error;
-        result->create_ok = insert_account_record(result->request_account, result->request_password, &error);
+        const std::string salt = generate_salt_hex();
+        if(salt.empty())
+        {
+            result->success = false;
+            result->error = "mysql_salt_generate_failed";
+            break;
+        }
+
+        const std::string password_hash = make_password_hash(request_password,
+                                                             salt,
+                                                             password_hash_iterations());
+        if(password_hash.empty())
+        {
+            result->success = false;
+            result->error = "mysql_password_hash_failed";
+            break;
+        }
+
+        result->create_ok = insert_account_record(worker_mysql, request_account, password_hash, salt, &error);
         result->success = error.empty();
         if(!error.empty())
         {
             result->error = error;
+        }
+        if(result->create_ok)
+        {
+            AccountRecord created_record;
+            created_record.account = request_account;
+            created_record.password_hash = password_hash;
+            created_record.salt = salt;
+            put_cached_account(created_record);
         }
         break;
     }
@@ -317,29 +462,42 @@ void MySqlAccountRepository::execute_operation(AccountRepositoryOpResult* result
     }
 }
 
-bool MySqlAccountRepository::ensure_connected()
+bool MySqlAccountRepository::ensure_connected(MYSQL** mysql_handle, std::string* error)
 {
-    if(m_mysql != nullptr)
+    if(mysql_handle == nullptr)
+    {
+        if(error != nullptr)
+        {
+            *error = "mysql_invalid_handle";
+        }
+        return false;
+    }
+
+    if(*mysql_handle != nullptr)
     {
         return true;
     }
 
-    m_mysql = mysql_init(nullptr);
-    if(m_mysql == nullptr)
+    *mysql_handle = mysql_init(nullptr);
+    if(*mysql_handle == nullptr)
     {
+        if(error != nullptr)
+        {
+            *error = "mysql_init_failed";
+        }
         spdlog::error("mysql_init failed");
         return false;
     }
 
     const unsigned int timeout_sec = static_cast<unsigned int>(std::max(1, m_config.connect_timeout_ms / 1000));
-    mysql_options(m_mysql, MYSQL_OPT_CONNECT_TIMEOUT, &timeout_sec);
+    mysql_options(*mysql_handle, MYSQL_OPT_CONNECT_TIMEOUT, &timeout_sec);
 
     const my_bool ssl_verify_server_cert = 0;
     const my_bool ssl_enforce = 0;
-    mysql_options(m_mysql, MYSQL_OPT_SSL_VERIFY_SERVER_CERT, &ssl_verify_server_cert);
-    mysql_options(m_mysql, MYSQL_OPT_SSL_ENFORCE, &ssl_enforce);
+    mysql_options(*mysql_handle, MYSQL_OPT_SSL_VERIFY_SERVER_CERT, &ssl_verify_server_cert);
+    mysql_options(*mysql_handle, MYSQL_OPT_SSL_ENFORCE, &ssl_enforce);
 
-    if(mysql_real_connect(m_mysql,
+    if(mysql_real_connect(*mysql_handle,
                           m_config.host.c_str(),
                           m_config.user.c_str(),
                           m_config.password.c_str(),
@@ -348,18 +506,28 @@ bool MySqlAccountRepository::ensure_connected()
                           nullptr,
                           0) == nullptr)
     {
+        const char* mysql_error_text = mysql_error(*mysql_handle);
+        if(error != nullptr)
+        {
+            *error = mysql_error_text == nullptr ? "mysql_connect_failed" : mysql_error_text;
+        }
         spdlog::error("mysql_real_connect failed host={} port={} user={} db={} err={}",
                       m_config.host,
                       m_config.port,
                       m_config.user,
                       m_config.database,
-                      mysql_error(m_mysql));
-        mysql_close(m_mysql);
-        m_mysql = nullptr;
+                      mysql_error_text == nullptr ? "unknown" : mysql_error_text);
+        mysql_close(*mysql_handle);
+        *mysql_handle = nullptr;
         return false;
     }
 
     return true;
+}
+
+bool MySqlAccountRepository::ensure_connected()
+{
+    return ensure_connected(&m_mysql, nullptr);
 }
 
 bool MySqlAccountRepository::ensure_table()
@@ -377,10 +545,20 @@ bool MySqlAccountRepository::ensure_table()
     return true;
 }
 
-bool MySqlAccountRepository::query_account_record(const std::string& account,
+bool MySqlAccountRepository::query_account_record(MYSQL* mysql_handle,
+                                                  const std::string& account,
                                                   std::optional<AccountRecord>* out_record,
                                                   std::string* error)
 {
+    if(mysql_handle == nullptr)
+    {
+        if(error != nullptr)
+        {
+            *error = "mysql_unavailable";
+        }
+        return false;
+    }
+
     if(out_record == nullptr)
     {
         if(error != nullptr)
@@ -392,7 +570,7 @@ bool MySqlAccountRepository::query_account_record(const std::string& account,
 
     out_record->reset();
 
-    MYSQL_STMT* stmt = mysql_stmt_init(m_mysql);
+    MYSQL_STMT* stmt = mysql_stmt_init(mysql_handle);
     if(stmt == nullptr)
     {
         if(error != nullptr)
@@ -504,11 +682,22 @@ bool MySqlAccountRepository::query_account_record(const std::string& account,
     return ok;
 }
 
-bool MySqlAccountRepository::insert_account_record(const std::string& account,
-                                                   const std::string& password,
+bool MySqlAccountRepository::insert_account_record(MYSQL* mysql_handle,
+                                                   const std::string& account,
+                                                   const std::string& password_hash,
+                                                   const std::string& salt,
                                                    std::string* error)
 {
-    MYSQL_STMT* stmt = mysql_stmt_init(m_mysql);
+    if(mysql_handle == nullptr)
+    {
+        if(error != nullptr)
+        {
+            *error = "mysql_unavailable";
+        }
+        return false;
+    }
+
+    MYSQL_STMT* stmt = mysql_stmt_init(mysql_handle);
     if(stmt == nullptr)
     {
         if(error != nullptr)
@@ -530,8 +719,15 @@ bool MySqlAccountRepository::insert_account_record(const std::string& account,
             break;
         }
 
-        const std::string salt = generate_salt_hex();
-        const std::string password_hash = make_password_hash(password, salt);
+        if(password_hash.empty() || salt.empty())
+        {
+            if(error != nullptr)
+            {
+                *error = "mysql_invalid_hash_or_salt";
+            }
+            break;
+        }
+
         unsigned long account_len = static_cast<unsigned long>(account.size());
         unsigned long password_len = static_cast<unsigned long>(password_hash.size());
         unsigned long salt_len = static_cast<unsigned long>(salt.size());

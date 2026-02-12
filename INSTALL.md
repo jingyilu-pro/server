@@ -43,6 +43,27 @@ Core sections:
 - `jwt`: token issuer + secret for login/game.
 - `client_pressure`: full-chain pressure settings (`http.coro_workers` supported).
 
+`client_pressure.scenario` fields:
+
+- `scenario`: `full_chain | manager_only | login_only | game_only`
+- `warmup_sec`
+- `duration_sec`
+- `virtual_users`
+- `target_rps`
+- `ramp_up_sec`
+- `timeout_ms`
+- `account_pool_size`
+
+`client_pressure.report` fields:
+
+- `output_dir`
+- `prefix`
+- `json_path`
+
+Backward compatible key:
+
+- `request_timeout_ms` (maps to `timeout_ms`)
+
 Runtime behavior notes:
 
 - Redis and MySQL are startup hard dependencies for server modes.
@@ -121,7 +142,11 @@ systemctl is-enabled mariadb redis-server
 ## 7. Smoke scripts
 
 - `scripts/smoke_modes.ps1`: mode-level smoke start.
-- `scripts/short_pressure.ps1`: short full-chain pressure regression.
+- `scripts/short_pressure.ps1`: PR gate shortcut.
+- `scripts/pressure/pr_gate.ps1`: PR gate profile.
+- `scripts/pressure/daily_regression.ps1`: daily medium profile.
+- `scripts/pressure/weekly_soak.ps1`: weekly long profile.
+- `scripts/pressure/evaluate_sla.ps1`: SLA evaluation helper.
 
 Run from PowerShell:
 

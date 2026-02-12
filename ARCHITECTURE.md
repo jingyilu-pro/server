@@ -181,3 +181,24 @@ Aggregator target:
 - `p99`
 - `stage_breakdown`
 - `failure_reasons`
+
+## 12. Pressure Scenario Matrix
+
+`client_pressure.scenario.scenario` supports:
+
+- `full_chain`: `manager -> login -> game`
+- `manager_only`
+- `login_only`
+- `game_only`
+
+Warmup and measurement windows are separated:
+
+- warmup metrics are recorded but excluded from final SLA counters.
+- effective measured window starts after `warmup_sec`.
+
+## 13. Pressure Automation Scripts
+
+- `scripts/pressure/pr_gate.ps1`: PR gate profile with SLA check.
+- `scripts/pressure/daily_regression.ps1`: daily medium regression profile.
+- `scripts/pressure/weekly_soak.ps1`: weekly soak/burst/recovery profile.
+- `scripts/pressure/evaluate_sla.ps1`: report evaluator.

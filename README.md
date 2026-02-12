@@ -109,6 +109,25 @@ Core sections:
 - `jwt`: issue/verify config.
 - `client_pressure`: scenario and report (`http.coro_workers` supported).
 
+`client_pressure.scenario` supports:
+
+- `scenario`: `full_chain | manager_only | login_only | game_only`
+- `warmup_sec`
+- `duration_sec`
+- `virtual_users`
+- `target_rps`
+- `ramp_up_sec`
+- `timeout_ms`
+- `account_pool_size`
+
+`client_pressure.report` supports:
+
+- `output_dir`
+- `prefix`
+- `json_path`
+
+`request_timeout_ms` remains backward compatible and maps to `timeout_ms`.
+
 Sensitive values can be overridden by env:
 
 - `GAME_MYSQL_PASSWORD`
@@ -127,6 +146,41 @@ export $(grep -v '^#' .env | xargs)
 - install/run: `INSTALL.md`
 - architecture: `ARCHITECTURE.md`
 - code style: `CODE_STYLE.md`
+
+## Pressure Scripts
+
+- `scripts/pressure/pr_gate.ps1`: PR gate pressure set (full-chain + manager/login/game single-point).
+- `scripts/pressure/daily_regression.ps1`: daily medium pressure set.
+- `scripts/pressure/weekly_soak.ps1`: weekly long-running soak/burst/recovery set.
+- `scripts/pressure/evaluate_sla.ps1`: JSON report SLA evaluator.
+- `scripts/short_pressure.ps1`: shortcut wrapper to `pr_gate.ps1`.
+
+## PR 门禁与自动对比报告
+
+- 执行门禁压测：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/pressure/pr_gate.ps1
+```
+
+- 每次 `pr_gate` 执行后会自动生成：
+  - 四场景门禁结果：`reports/pressure/<yyyy-mm-dd>/pr_{scenario}_{run_id}.json`
+  - 最近两次对比报告：`reports/pressure/<yyyy-mm-dd>/pr_gate_compare_{current_run_id}_vs_{previous_run_id}.md`
+  - 最新汇总看板：`reports/pressure/latest_summary.md`
+
+- 仅生成对比报告（不重跑压测）：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/pressure/generate_pr_compare_report.ps1 -CurrentRunId <run_id>
+```
+
+- `run_id` 来自门禁报告文件名，例如：`pr_full_chain_20260212133634_eaaf6fc.json`。
+
+- 仅更新最新汇总（不重跑压测）：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/pressure/update_latest_summary.ps1 -CurrentRunId <run_id> -GateStatus PASS
+```
 
 ## Project Skills
 

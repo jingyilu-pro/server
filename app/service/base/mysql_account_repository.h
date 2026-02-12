@@ -25,6 +25,8 @@
 
 #include <memory>
 #include <mutex>
+#include <shared_mutex>
+#include <unordered_map>
 
 class MySqlAccountCoroManager : public CoroManager
 {
@@ -50,12 +52,24 @@ public:
     CoroAwaitable create_account(const std::string& account, const std::string& password) override;
 
 private:
+    int password_hash_iterations() const;
     AccountRepositoryOpResult* alloc_result();
     void execute_operation(AccountRepositoryOpResult* result);
+    bool get_cached_account(const std::string& account, AccountRecord* out_record) const;
+    void put_cached_account(const AccountRecord& record);
+    bool ensure_connected(MYSQL** mysql_handle, std::string* error = nullptr);
+    MYSQL* ensure_worker_connection(std::string* error);
     bool ensure_connected();
     bool ensure_table();
-    bool query_account_record(const std::string& account, std::optional<AccountRecord>* out_record, std::string* error);
-    bool insert_account_record(const std::string& account, const std::string& password, std::string* error);
+    bool query_account_record(MYSQL* mysql_handle,
+                              const std::string& account,
+                              std::optional<AccountRecord>* out_record,
+                              std::string* error);
+    bool insert_account_record(MYSQL* mysql_handle,
+                               const std::string& account,
+                               const std::string& password_hash,
+                               const std::string& salt,
+                               std::string* error);
 
 private:
     MySqlConfig m_config;
@@ -63,5 +77,6 @@ private:
     bool m_ready = false;
     std::unique_ptr<MySqlAccountCoroManager> m_manager;
     mutable std::mutex m_mutex;
+    mutable std::shared_mutex m_cache_mutex;
+    std::unordered_map<std::string, AccountRecord> m_account_cache;
 };
-

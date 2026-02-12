@@ -8,3 +8,4 @@ bin/logs/
 build-wsl-main/
 build-wsl/
 bin/apptool
+reports/

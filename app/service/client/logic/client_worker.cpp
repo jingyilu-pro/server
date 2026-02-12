@@ -380,6 +380,76 @@ WorkerCycleResult ClientWorker::run(ClientPressureTask* task) const
     }
 
     auto begin = std::chrono::steady_clock::now();
+    const auto scenario = task->scenario.empty() ? std::string("full_chain") : task->scenario;
+
+    if(scenario == "manager_only")
+    {
+        StageSample manager_sample;
+        manager_sample.stage = StageType::manager;
+        if(!do_manager_route(task, &manager_sample))
+        {
+            result.stages.push_back(manager_sample);
+            result.failure_reason = manager_sample.error_reason.empty() ? "manager_failed" : manager_sample.error_reason;
+            result.timeout = manager_sample.timeout;
+            result.chain_latency_us = duration_us(begin);
+            return result;
+        }
+        result.stages.push_back(manager_sample);
+        result.success = true;
+        result.chain_latency_us = duration_us(begin);
+        return result;
+    }
+
+    if(scenario == "login_only")
+    {
+        StageSample login_sample;
+        login_sample.stage = StageType::login;
+        if(!do_login(task, &login_sample))
+        {
+            result.stages.push_back(login_sample);
+            result.failure_reason = login_sample.error_reason.empty() ? "login_failed" : login_sample.error_reason;
+            result.timeout = login_sample.timeout;
+            result.chain_latency_us = duration_us(begin);
+            return result;
+        }
+        result.stages.push_back(login_sample);
+        result.success = true;
+        result.chain_latency_us = duration_us(begin);
+        return result;
+    }
+
+    if(scenario == "game_only")
+    {
+        if(!task->has_token)
+        {
+            StageSample login_sample;
+            login_sample.stage = StageType::login;
+            if(!do_login(task, &login_sample))
+            {
+                result.stages.push_back(login_sample);
+                result.failure_reason = login_sample.error_reason.empty() ? "login_failed" : login_sample.error_reason;
+                result.timeout = login_sample.timeout;
+                result.chain_latency_us = duration_us(begin);
+                return result;
+            }
+            result.stages.push_back(login_sample);
+        }
+
+        StageSample game_sample;
+        game_sample.stage = StageType::game;
+        if(!do_enter_game(*task, &game_sample))
+        {
+            result.stages.push_back(game_sample);
+            result.failure_reason = game_sample.error_reason.empty() ? "game_enter_failed" : game_sample.error_reason;
+            result.timeout = game_sample.timeout;
+            result.chain_latency_us = duration_us(begin);
+            return result;
+        }
+        result.stages.push_back(game_sample);
+        result.success = true;
+        result.chain_latency_us = duration_us(begin);
+        return result;
+    }
 
     StageSample manager_sample;
     manager_sample.stage = StageType::manager;

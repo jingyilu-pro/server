@@ -22,6 +22,8 @@
 #include <cctype>
 #include <cstdlib>
 #include <fstream>
+#include <cstdio>
+#include <unordered_set>
 
 namespace
 {
@@ -74,6 +76,14 @@ std::string to_lower(std::string text)
         return static_cast<char>(std::tolower(ch));
     });
     return text;
+}
+
+bool is_supported_pressure_scenario(const std::string& scenario)
+{
+    return scenario == "full_chain" ||
+           scenario == "manager_only" ||
+           scenario == "login_only" ||
+           scenario == "game_only";
 }
 
 bool parse_bool_value(const std::string& value, bool* output)
@@ -184,6 +194,15 @@ bool set_config_value(RuntimeConfig* config, const std::string& key, const std::
     {
         return parse_int_value(value, &config->client_pressure.scenario.duration_sec);
     }
+    if(key == "client_pressure.scenario.scenario")
+    {
+        config->client_pressure.scenario.scenario = to_lower(trim(value));
+        return true;
+    }
+    if(key == "client_pressure.scenario.warmup_sec")
+    {
+        return parse_int_value(value, &config->client_pressure.scenario.warmup_sec);
+    }
     if(key == "client_pressure.scenario.virtual_users")
     {
         return parse_int_value(value, &config->client_pressure.scenario.virtual_users);
@@ -196,9 +215,13 @@ bool set_config_value(RuntimeConfig* config, const std::string& key, const std::
     {
         return parse_int_value(value, &config->client_pressure.scenario.ramp_up_sec);
     }
-    if(key == "client_pressure.scenario.request_timeout_ms")
+    if(key == "client_pressure.scenario.timeout_ms" || key == "client_pressure.scenario.request_timeout_ms")
     {
-        return parse_int_value(value, &config->client_pressure.scenario.request_timeout_ms);
+        return parse_int_value(value, &config->client_pressure.scenario.timeout_ms);
+    }
+    if(key == "client_pressure.scenario.account_pool_size")
+    {
+        return parse_int_value(value, &config->client_pressure.scenario.account_pool_size);
     }
     if(key == "client_pressure.scenario.auto_relogin")
     {
@@ -227,6 +250,16 @@ bool set_config_value(RuntimeConfig* config, const std::string& key, const std::
     if(key == "client_pressure.report.json_path")
     {
         config->client_pressure.report.json_path = trim(value);
+        return true;
+    }
+    if(key == "client_pressure.report.output_dir")
+    {
+        config->client_pressure.report.output_dir = trim(value);
+        return true;
+    }
+    if(key == "client_pressure.report.prefix")
+    {
+        config->client_pressure.report.prefix = trim(value);
         return true;
     }
     if(key == "client_pressure.http.coro_workers")
@@ -452,6 +485,20 @@ bool set_config_value(RuntimeConfig* config, const std::string& key, const std::
         config->mysql.coro_workers = workers;
         return true;
     }
+    if(key == "mysql.password_hash_iterations")
+    {
+        int iterations = 0;
+        if(!parse_int_value(value, &iterations) || iterations <= 0)
+        {
+            if(error_message != nullptr)
+            {
+                *error_message = "invalid positive int value for mysql.password_hash_iterations";
+            }
+            return false;
+        }
+        config->mysql.password_hash_iterations = iterations;
+        return true;
+    }
 
     if(key == "jwt.issuer")
     {
@@ -507,6 +554,8 @@ bool load_runtime_config(const std::string& config_path, RuntimeConfig* config, 
         }
         return false;
     }
+
+    *config = RuntimeConfig{};
 
     struct SectionState
     {
@@ -632,22 +681,80 @@ bool load_runtime_config(const std::string& config_path, RuntimeConfig* config, 
     {
         config->client_pressure.scenario.duration_sec = 1;
     }
-    if(config->client_pressure.scenario.request_timeout_ms <= 0)
+    if(config->client_pressure.scenario.timeout_ms <= 0)
     {
-        config->client_pressure.scenario.request_timeout_ms = 500;
+        config->client_pressure.scenario.timeout_ms = 500;
+    }
+    if(config->client_pressure.scenario.warmup_sec < 0)
+    {
+        config->client_pressure.scenario.warmup_sec = 0;
+    }
+    if(config->client_pressure.scenario.ramp_up_sec < 0)
+    {
+        config->client_pressure.scenario.ramp_up_sec = 0;
+    }
+    if(config->client_pressure.scenario.account_pool_size < 0)
+    {
+        config->client_pressure.scenario.account_pool_size = 0;
+    }
+    if(config->client_pressure.scenario.scenario.empty())
+    {
+        config->client_pressure.scenario.scenario = "full_chain";
+    }
+    if(!is_supported_pressure_scenario(config->client_pressure.scenario.scenario))
+    {
+        config->client_pressure.scenario.scenario = "full_chain";
     }
     if(config->client_pressure.report.interval_sec <= 0)
     {
         config->client_pressure.report.interval_sec = 5;
     }
+    if(config->client_pressure.report.output_dir.empty())
+    {
+        config->client_pressure.report.output_dir = "reports/pressure";
+    }
+    if(config->client_pressure.report.prefix.empty())
+    {
+        config->client_pressure.report.prefix = "client_pressure";
+    }
+    if(config->client_pressure.report.json_path.empty())
+    {
+        config->client_pressure.report.json_path = config->client_pressure.report.output_dir + "/" +
+                                                   config->client_pressure.report.prefix + ".json";
+    }
 
     if(config->client_pressure.scenario.login_account_pool.empty())
     {
-        config->client_pressure.scenario.login_account_pool = {
-            "user_0001",
-            "user_0002",
-            "user_0003",
-            "user_0004"};
+        const int account_pool_size = std::max(4, config->client_pressure.scenario.account_pool_size);
+        config->client_pressure.scenario.login_account_pool.reserve(static_cast<size_t>(account_pool_size));
+        for(int index = 1; index <= account_pool_size; ++index)
+        {
+            char account_buffer[32] = {};
+            std::snprintf(account_buffer, sizeof(account_buffer), "user_%04d", index);
+            config->client_pressure.scenario.login_account_pool.emplace_back(account_buffer);
+        }
+    }
+    else if(config->client_pressure.scenario.account_pool_size <= 0)
+    {
+        config->client_pressure.scenario.account_pool_size = static_cast<int>(config->client_pressure.scenario.login_account_pool.size());
+    }
+
+    if(config->client_pressure.scenario.account_pool_size > static_cast<int>(config->client_pressure.scenario.login_account_pool.size()))
+    {
+        std::unordered_set<std::string> accounts(config->client_pressure.scenario.login_account_pool.begin(),
+                                                 config->client_pressure.scenario.login_account_pool.end());
+        int index = 1;
+        while(static_cast<int>(config->client_pressure.scenario.login_account_pool.size()) <
+              config->client_pressure.scenario.account_pool_size)
+        {
+            char account_buffer[32] = {};
+            std::snprintf(account_buffer, sizeof(account_buffer), "user_%04d", index++);
+            std::string candidate(account_buffer);
+            if(accounts.insert(candidate).second)
+            {
+                config->client_pressure.scenario.login_account_pool.push_back(std::move(candidate));
+            }
+        }
     }
 
     apply_env_override(config);

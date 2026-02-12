@@ -22,6 +22,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <filesystem>
 #include <iomanip>
 #include <sstream>
 
@@ -159,11 +160,12 @@ bool ClientPressureManager::start()
     {
         auto slot = std::make_unique<WorkerSlot>();
         slot->task.worker_id = i;
+        slot->task.scenario = scenario.scenario;
         slot->task.account = scenario.login_account_pool[static_cast<size_t>(i) % scenario.login_account_pool.size()];
         slot->task.manager_endpoint = m_config.server.manager;
         slot->task.login_endpoint = m_config.server.login;
         slot->task.game_endpoint = m_config.server.game;
-        slot->task.request_timeout_ms = scenario.request_timeout_ms;
+        slot->task.request_timeout_ms = scenario.timeout_ms;
         slot->task.auto_relogin = scenario.auto_relogin;
 
         if(!m_config.client_pressure.target.manager_host.empty())
@@ -188,13 +190,18 @@ bool ClientPressureManager::start()
 
     auto now = std::chrono::steady_clock::now();
     m_start_time = now;
-    m_end_time = m_start_time + std::chrono::seconds(scenario.duration_sec);
+    m_warmup_end_time = m_start_time + std::chrono::seconds(std::max(0, scenario.warmup_sec));
+    m_end_time = m_warmup_end_time + std::chrono::seconds(std::max(1, scenario.duration_sec));
     m_last_dispatch_time = now;
     m_last_report_time = now;
 
+    m_warmup_metrics = PressureMetricsSnapshot{};
+    m_warmup_metrics.begin_time = m_start_time;
+    m_warmup_metrics.end_time = m_start_time;
+
     m_metrics = PressureMetricsSnapshot{};
-    m_metrics.begin_time = now;
-    m_metrics.end_time = now;
+    m_metrics.begin_time = m_warmup_end_time;
+    m_metrics.end_time = m_warmup_end_time;
 
     m_bucket_capacity = static_cast<double>(std::max(1, scenario.target_rps));
     m_token_bucket.store(m_bucket_capacity);
@@ -202,11 +209,14 @@ bool ClientPressureManager::start()
     m_inflight_count.store(0);
     m_stop_requested.store(false);
     m_finished.store(false);
+    m_timeout_guard_triggered.store(false);
     m_running.store(true);
 
-    spdlog::info("client pressure manager start: vus={}, rps={}, duration={}s, ramp={}s",
+    spdlog::info("client pressure manager start: scenario={}, vus={}, rps={}, warmup={}s, duration={}s, ramp={}s",
+                 scenario.scenario,
                  scenario.virtual_users,
                  scenario.target_rps,
+                 scenario.warmup_sec,
                  scenario.duration_sec,
                  scenario.ramp_up_sec);
     return true;
@@ -224,6 +234,13 @@ void ClientPressureManager::update(std::chrono::milliseconds delta_time, std::ch
 
     auto now = std::chrono::steady_clock::now();
     const auto elapsed = now - m_start_time;
+    if(should_stop_by_timeout_guard())
+    {
+        spdlog::warn("[client-pressure] timeout guard triggered (>5%), stop pressure early");
+        stop();
+        return;
+    }
+
     if(now >= m_end_time)
     {
         stop();
@@ -301,6 +318,10 @@ void ClientPressureManager::stop()
     m_running.store(false);
     m_finished.store(true);
     {
+        std::lock_guard lock(m_warmup_metrics_mutex);
+        m_warmup_metrics.end_time = std::chrono::steady_clock::now();
+    }
+    {
         std::lock_guard lock(m_metrics_mutex);
         m_metrics.end_time = std::chrono::steady_clock::now();
     }
@@ -315,6 +336,35 @@ bool ClientPressureManager::completed() const
 bool ClientPressureManager::should_dispatch() const
 {
     return m_running.load() && !m_stop_requested.load() && std::chrono::steady_clock::now() < m_end_time;
+}
+
+bool ClientPressureManager::should_stop_by_timeout_guard()
+{
+    if(m_timeout_guard_triggered.load())
+    {
+        return true;
+    }
+
+    PressureMetricsSnapshot snapshot;
+    {
+        std::lock_guard lock(m_metrics_mutex);
+        snapshot = m_metrics;
+    }
+
+    const uint64_t min_samples = 100;
+    if(snapshot.total_request < min_samples)
+    {
+        return false;
+    }
+
+    const double timeout_rate = safe_ratio(snapshot.total_timeout, snapshot.total_request);
+    if(timeout_rate > 0.05)
+    {
+        m_timeout_guard_triggered.store(true);
+        return true;
+    }
+
+    return false;
 }
 
 bool ClientPressureManager::dispatch_one(int worker_index)
@@ -392,27 +442,33 @@ void ClientPressureManager::worker_loop(int worker_index)
 
 void ClientPressureManager::on_cycle_result(const WorkerCycleResult& result)
 {
-    std::lock_guard lock(m_metrics_mutex);
-    m_metrics.total_request += 1;
-    m_metrics.end_time = std::chrono::steady_clock::now();
-    m_metrics.chain_latency_us.push_back(result.chain_latency_us);
+    const auto now = std::chrono::steady_clock::now();
+    const bool in_warmup = now < m_warmup_end_time;
+
+    auto* metrics_mutex = in_warmup ? &m_warmup_metrics_mutex : &m_metrics_mutex;
+    auto* metrics = in_warmup ? &m_warmup_metrics : &m_metrics;
+
+    std::lock_guard lock(*metrics_mutex);
+    metrics->total_request += 1;
+    metrics->end_time = now;
+    metrics->chain_latency_us.push_back(result.chain_latency_us);
 
     if(result.success)
     {
-        m_metrics.total_success += 1;
+        metrics->total_success += 1;
     }
     if(result.timeout)
     {
-        m_metrics.total_timeout += 1;
+        metrics->total_timeout += 1;
     }
     if(!result.success)
     {
-        m_metrics.failure_reason_count[first_failure(result)] += 1;
+        metrics->failure_reason_count[first_failure(result)] += 1;
     }
 
     for(const auto& stage : result.stages)
     {
-        auto& stage_metrics = m_metrics.stage_metrics[stage.stage];
+        auto& stage_metrics = metrics->stage_metrics[stage.stage];
         stage_metrics.request_total += 1;
         if(stage.success)
         {
@@ -444,6 +500,11 @@ void ClientPressureManager::report_if_due(bool force)
     }
 
     PressureMetricsSnapshot snapshot;
+    PressureMetricsSnapshot warmup_snapshot;
+    {
+        std::lock_guard lock(m_warmup_metrics_mutex);
+        warmup_snapshot = m_warmup_metrics;
+    }
     {
         std::lock_guard lock(m_metrics_mutex);
         snapshot = m_metrics;
@@ -468,6 +529,13 @@ void ClientPressureManager::report_if_due(bool force)
                  p95,
                  p99,
                  m_inflight_count.load());
+    if(m_config.client_pressure.scenario.warmup_sec > 0)
+    {
+        spdlog::info("[client-pressure] warmup_total={}, warmup_success={}, warmup_timeout={}",
+                     warmup_snapshot.total_request,
+                     warmup_snapshot.total_success,
+                     warmup_snapshot.total_timeout);
+    }
     if(!snapshot.failure_reason_count.empty())
     {
         spdlog::info("[client-pressure] failure_reason_distribution={}", format_reason_distribution(snapshot.failure_reason_count));
@@ -508,6 +576,12 @@ void ClientPressureManager::report_if_due(bool force)
 
 void ClientPressureManager::write_json_report() const
 {
+    PressureMetricsSnapshot warmup_snapshot;
+    {
+        std::lock_guard lock(m_warmup_metrics_mutex);
+        warmup_snapshot = m_warmup_metrics;
+    }
+
     PressureMetricsSnapshot snapshot;
     {
         std::lock_guard lock(m_metrics_mutex);
@@ -518,7 +592,19 @@ void ClientPressureManager::write_json_report() const
                                           std::chrono::duration_cast<std::chrono::duration<double>>(snapshot.end_time - snapshot.begin_time).count());
     const auto qps = static_cast<double>(snapshot.total_request) / elapsed_seconds;
 
-    std::ofstream output(m_config.client_pressure.report.json_path, std::ios::trunc);
+    const std::filesystem::path json_path(m_config.client_pressure.report.json_path);
+    if(json_path.has_parent_path())
+    {
+        std::error_code ec;
+        std::filesystem::create_directories(json_path.parent_path(), ec);
+        if(ec)
+        {
+            spdlog::error("failed to create json report directory '{}': {}", json_path.parent_path().string(), ec.message());
+            return;
+        }
+    }
+
+    std::ofstream output(json_path, std::ios::trunc);
     if(!output)
     {
         spdlog::error("failed to open json report path: {}", m_config.client_pressure.report.json_path);
@@ -532,6 +618,15 @@ void ClientPressureManager::write_json_report() const
     output << "  \"p50\": " << percentile_us(snapshot.chain_latency_us, 0.50) << ",\n";
     output << "  \"p95\": " << percentile_us(snapshot.chain_latency_us, 0.95) << ",\n";
     output << "  \"p99\": " << percentile_us(snapshot.chain_latency_us, 0.99) << ",\n";
+    output << "  \"early_stopped_by_timeout_guard\": "
+           << (m_timeout_guard_triggered.load() ? "true" : "false")
+           << ",\n";
+    output << "  \"warmup\": {\n";
+    output << "    \"duration_sec\": " << std::max(0, m_config.client_pressure.scenario.warmup_sec) << ",\n";
+    output << "    \"total\": " << warmup_snapshot.total_request << ",\n";
+    output << "    \"success\": " << warmup_snapshot.total_success << ",\n";
+    output << "    \"timeout\": " << warmup_snapshot.total_timeout << "\n";
+    output << "  },\n";
 
     output << "  \"failure_reasons\": {\n";
     bool first_reason = true;
