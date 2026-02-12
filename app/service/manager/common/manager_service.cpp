@@ -18,6 +18,7 @@
 
 #include "manager_service.h"
 
+#include "http_code_message.h"
 #include "log/glogger.h"
 #include "protocol/gateway.pb.h"
 
@@ -214,13 +215,17 @@ coro_task_t ManagerService::route_login_async(evhttp_request* request)
     auto body = read_request_body(request);
     if(body.empty())
     {
-        evhttp_send_error(request, 400, "empty protobuf body");
+        evhttp_send_error(request,
+                          http_code_message::transport::status::kBadRequest,
+                          http_code_message::transport::message::kEmptyProtobufBody);
         release_request(request);
         co_return;
     }
     if(!route_request.ParseFromString(body))
     {
-        evhttp_send_error(request, 400, "invalid protobuf");
+        evhttp_send_error(request,
+                          http_code_message::transport::status::kBadRequest,
+                          http_code_message::transport::message::kInvalidProtobuf);
         release_request(request);
         co_return;
     }
@@ -258,18 +263,21 @@ coro_task_t ManagerService::route_login_async(evhttp_request* request)
     {
         if(!login_available && !game_available)
         {
-            response.set_code(50013);
-            response.set_message("login and game service unavailable");
+            http_code_message::gateway::set_code_message(&response,
+                                                         http_code_message::gateway::code::kLoginAndGameServiceUnavailable,
+                                                         http_code_message::gateway::message::kLoginAndGameServiceUnavailable);
         }
         else if(!login_available)
         {
-            response.set_code(50011);
-            response.set_message("login service unavailable");
+            http_code_message::gateway::set_code_message(&response,
+                                                         http_code_message::gateway::code::kLoginServiceUnavailable,
+                                                         http_code_message::gateway::message::kLoginServiceUnavailable);
         }
         else
         {
-            response.set_code(50012);
-            response.set_message("game service unavailable");
+            http_code_message::gateway::set_code_message(&response,
+                                                         http_code_message::gateway::code::kGameServiceUnavailable,
+                                                         http_code_message::gateway::message::kGameServiceUnavailable);
         }
 
         write_protobuf_response(request, response, 200);
@@ -280,8 +288,9 @@ coro_task_t ManagerService::route_login_async(evhttp_request* request)
     auto picked_login = choose_weighted_endpoint(login_instances, m_config.server.login, &m_login_round_robin_counter);
     auto picked_game = choose_weighted_endpoint(game_instances, m_config.server.game, &m_game_round_robin_counter);
 
-    response.set_code(0);
-    response.set_message("ok");
+    http_code_message::gateway::set_code_message(&response,
+                                                 http_code_message::gateway::code::kSuccess,
+                                                 http_code_message::gateway::message::kOk);
     response.mutable_login_endpoint()->set_host(picked_login.host);
     response.mutable_login_endpoint()->set_port(static_cast<uint32_t>(picked_login.port));
     response.mutable_game_endpoint()->set_host(picked_game.host);

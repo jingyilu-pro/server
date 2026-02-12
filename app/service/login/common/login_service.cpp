@@ -18,6 +18,7 @@
 
 #include "login_service.h"
 
+#include "http_code_message.h"
 #include "log/glogger.h"
 #include "protocol/gateway.pb.h"
 
@@ -237,13 +238,17 @@ coro_task_t LoginService::register_async(evhttp_request* request)
     auto body = read_request_body(request);
     if(body.empty())
     {
-        evhttp_send_error(request, 400, "empty protobuf body");
+        evhttp_send_error(request,
+                          http_code_message::transport::status::kBadRequest,
+                          http_code_message::transport::message::kEmptyProtobufBody);
         release_request(request);
         co_return;
     }
     if(!register_request.ParseFromString(body))
     {
-        evhttp_send_error(request, 400, "invalid protobuf");
+        evhttp_send_error(request,
+                          http_code_message::transport::status::kBadRequest,
+                          http_code_message::transport::message::kInvalidProtobuf);
         release_request(request);
         co_return;
     }
@@ -254,8 +259,9 @@ coro_task_t LoginService::register_async(evhttp_request* request)
 
     if(m_account_repository == nullptr)
     {
-        response.set_code(50001);
-        response.set_message("account repository unavailable");
+        http_code_message::gateway::set_code_message(&response,
+                                                     http_code_message::gateway::code::kAccountRepositoryUnavailable,
+                                                     http_code_message::gateway::message::kAccountRepositoryUnavailable);
         write_protobuf_response(request, response, 200);
         release_request(request);
         co_return;
@@ -266,8 +272,9 @@ coro_task_t LoginService::register_async(evhttp_request* request)
 
     if(create_result == nullptr || !create_result->success)
     {
-        response.set_code(50001);
-        response.set_message("account repository unavailable");
+        http_code_message::gateway::set_code_message(&response,
+                                                     http_code_message::gateway::code::kAccountRepositoryUnavailable,
+                                                     http_code_message::gateway::message::kAccountRepositoryUnavailable);
         write_protobuf_response(request, response, 200);
         release_request(request);
         co_return;
@@ -275,15 +282,17 @@ coro_task_t LoginService::register_async(evhttp_request* request)
 
     if(!create_result->create_ok)
     {
-        response.set_code(40001);
-        response.set_message("account already exists or invalid input");
+        http_code_message::gateway::set_code_message(&response,
+                                                     http_code_message::gateway::code::kAccountAlreadyExistsOrInvalidInput,
+                                                     http_code_message::gateway::message::kAccountAlreadyExistsOrInvalidInput);
         write_protobuf_response(request, response, 200);
         release_request(request);
         co_return;
     }
 
-    response.set_code(0);
-    response.set_message("registered");
+    http_code_message::gateway::set_code_message(&response,
+                                                 http_code_message::gateway::code::kSuccess,
+                                                 http_code_message::gateway::message::kRegistered);
     write_protobuf_response(request, response, 200);
     release_request(request);
 }
@@ -296,13 +305,17 @@ coro_task_t LoginService::login_async(evhttp_request* request)
     auto body = read_request_body(request);
     if(body.empty())
     {
-        evhttp_send_error(request, 400, "empty protobuf body");
+        evhttp_send_error(request,
+                          http_code_message::transport::status::kBadRequest,
+                          http_code_message::transport::message::kEmptyProtobufBody);
         release_request(request);
         co_return;
     }
     if(!login_request.ParseFromString(body))
     {
-        evhttp_send_error(request, 400, "invalid protobuf");
+        evhttp_send_error(request,
+                          http_code_message::transport::status::kBadRequest,
+                          http_code_message::transport::message::kInvalidProtobuf);
         release_request(request);
         co_return;
     }
@@ -313,8 +326,9 @@ coro_task_t LoginService::login_async(evhttp_request* request)
 
     if(m_account_repository == nullptr)
     {
-        response.set_code(50001);
-        response.set_message("account repository unavailable");
+        http_code_message::gateway::set_code_message(&response,
+                                                     http_code_message::gateway::code::kAccountRepositoryUnavailable,
+                                                     http_code_message::gateway::message::kAccountRepositoryUnavailable);
         write_protobuf_response(request, response, 200);
         release_request(request);
         co_return;
@@ -324,8 +338,9 @@ coro_task_t LoginService::login_async(evhttp_request* request)
         co_await m_account_repository->verify_password(login_request.account(), login_request.password()));
     if(verify_result == nullptr || !verify_result->success)
     {
-        response.set_code(50001);
-        response.set_message("account repository unavailable");
+        http_code_message::gateway::set_code_message(&response,
+                                                     http_code_message::gateway::code::kAccountRepositoryUnavailable,
+                                                     http_code_message::gateway::message::kAccountRepositoryUnavailable);
         write_protobuf_response(request, response, 200);
         release_request(request);
         co_return;
@@ -333,8 +348,9 @@ coro_task_t LoginService::login_async(evhttp_request* request)
 
     if(!verify_result->password_ok)
     {
-        response.set_code(40101);
-        response.set_message("invalid account or password");
+        http_code_message::gateway::set_code_message(&response,
+                                                     http_code_message::gateway::code::kInvalidAccountOrPassword,
+                                                     http_code_message::gateway::message::kInvalidAccountOrPassword);
         write_protobuf_response(request, response, 200);
         release_request(request);
         co_return;
@@ -342,8 +358,9 @@ coro_task_t LoginService::login_async(evhttp_request* request)
 
     if(m_token_provider == nullptr)
     {
-        response.set_code(50002);
-        response.set_message("token provider unavailable");
+        http_code_message::gateway::set_code_message(&response,
+                                                     http_code_message::gateway::code::kTokenProviderUnavailable,
+                                                     http_code_message::gateway::message::kTokenProviderUnavailable);
         write_protobuf_response(request, response, 200);
         release_request(request);
         co_return;
@@ -352,8 +369,9 @@ coro_task_t LoginService::login_async(evhttp_request* request)
     const auto token = m_token_provider->issue(login_request.account(), m_config.jwt.expire_sec);
     if(token.empty())
     {
-        response.set_code(50003);
-        response.set_message("token issue failed");
+        http_code_message::gateway::set_code_message(&response,
+                                                     http_code_message::gateway::code::kTokenIssueFailed,
+                                                     http_code_message::gateway::message::kTokenIssueFailed);
         write_protobuf_response(request, response, 200);
         release_request(request);
         co_return;
@@ -372,8 +390,9 @@ coro_task_t LoginService::login_async(evhttp_request* request)
 
     if(game_instances.empty())
     {
-        response.set_code(50012);
-        response.set_message("game service unavailable");
+        http_code_message::gateway::set_code_message(&response,
+                                                     http_code_message::gateway::code::kGameServiceUnavailable,
+                                                     http_code_message::gateway::message::kGameServiceUnavailable);
         write_protobuf_response(request, response, 200);
         release_request(request);
         co_return;
@@ -381,8 +400,9 @@ coro_task_t LoginService::login_async(evhttp_request* request)
 
     auto game_endpoint = choose_weighted_game_endpoint(game_instances);
 
-    response.set_code(0);
-    response.set_message("ok");
+    http_code_message::gateway::set_code_message(&response,
+                                                 http_code_message::gateway::code::kSuccess,
+                                                 http_code_message::gateway::message::kOk);
     response.set_jwt(token);
     response.mutable_game_endpoint()->set_host(game_endpoint.host);
     response.mutable_game_endpoint()->set_port(static_cast<uint32_t>(game_endpoint.port));

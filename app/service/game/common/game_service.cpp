@@ -18,6 +18,7 @@
 
 #include "game_service.h"
 
+#include "http_code_message.h"
 #include "log/glogger.h"
 #include "protocol/gateway.pb.h"
 
@@ -165,13 +166,17 @@ coro_task_t GameService::enter_game_async(evhttp_request* request)
     auto body = read_request_body(request);
     if(body.empty())
     {
-        evhttp_send_error(request, 400, "empty protobuf body");
+        evhttp_send_error(request,
+                          http_code_message::transport::status::kBadRequest,
+                          http_code_message::transport::message::kEmptyProtobufBody);
         release_request(request);
         co_return;
     }
     if(!game_request.ParseFromString(body))
     {
-        evhttp_send_error(request, 400, "invalid protobuf");
+        evhttp_send_error(request,
+                          http_code_message::transport::status::kBadRequest,
+                          http_code_message::transport::message::kInvalidProtobuf);
         release_request(request);
         co_return;
     }
@@ -182,31 +187,36 @@ coro_task_t GameService::enter_game_async(evhttp_request* request)
     response.set_server_time_ms(now_ms());
     if(token.empty())
     {
-        response.set_code(40101);
-        response.set_message("missing jwt");
+        http_code_message::gateway::set_code_message(&response,
+                                                     http_code_message::gateway::code::kMissingJwt,
+                                                     http_code_message::gateway::message::kMissingJwt);
     }
     else if(m_token_provider == nullptr)
     {
-        response.set_code(50002);
-        response.set_message("token provider unavailable");
+        http_code_message::gateway::set_code_message(&response,
+                                                     http_code_message::gateway::code::kTokenProviderUnavailable,
+                                                     http_code_message::gateway::message::kTokenProviderUnavailable);
     }
     else
     {
         auto verified = m_token_provider->verify(token);
         if(!verified)
         {
-            response.set_code(40102);
-            response.set_message("invalid or expired jwt");
+            http_code_message::gateway::set_code_message(&response,
+                                                         http_code_message::gateway::code::kInvalidOrExpiredJwt,
+                                                         http_code_message::gateway::message::kInvalidOrExpiredJwt);
         }
         else if(!game_request.account().empty() && verified->subject != game_request.account())
         {
-            response.set_code(40103);
-            response.set_message("jwt subject mismatch");
+            http_code_message::gateway::set_code_message(&response,
+                                                         http_code_message::gateway::code::kJwtSubjectMismatch,
+                                                         http_code_message::gateway::message::kJwtSubjectMismatch);
         }
         else
         {
-            response.set_code(0);
-            response.set_message("welcome " + verified->subject);
+            http_code_message::gateway::set_code_message(&response,
+                                                         http_code_message::gateway::code::kSuccess,
+                                                         "welcome " + verified->subject);
         }
     }
 

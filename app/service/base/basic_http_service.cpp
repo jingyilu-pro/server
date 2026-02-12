@@ -18,6 +18,8 @@
 
 #include "basic_http_service.h"
 
+#include "http_code_message.h"
+
 #include "log/glogger.h"
 
 #include <algorithm>
@@ -421,7 +423,9 @@ void BasicHttpService::global_request_callback(evhttp_request* request, void* ar
     auto* self = static_cast<BasicHttpService*>(arg);
     if(self == nullptr)
     {
-        evhttp_send_error(request, 500, "internal error");
+        evhttp_send_error(request,
+                          http_code_message::transport::status::kInternalServerError,
+                          http_code_message::transport::message::kInternalError);
         return;
     }
     self->on_request(request);
@@ -437,20 +441,26 @@ void BasicHttpService::on_request(evhttp_request* request)
     const auto command = evhttp_request_get_command(request);
     if(command != EVHTTP_REQ_POST)
     {
-        evhttp_send_error(request, 405, "method not allowed");
+        evhttp_send_error(request,
+                          http_code_message::transport::status::kMethodNotAllowed,
+                          http_code_message::transport::message::kMethodNotAllowed);
         return;
     }
 
     if(!is_protobuf_content_type(request))
     {
-        evhttp_send_error(request, 415, "unsupported media type");
+        evhttp_send_error(request,
+                          http_code_message::transport::status::kUnsupportedMediaType,
+                          http_code_message::transport::message::kUnsupportedMediaType);
         return;
     }
 
     const char* raw_uri = evhttp_request_get_uri(request);
     if(raw_uri == nullptr)
     {
-        evhttp_send_error(request, 400, "invalid uri");
+        evhttp_send_error(request,
+                          http_code_message::transport::status::kBadRequest,
+                          http_code_message::transport::message::kInvalidUri);
         return;
     }
 
@@ -464,7 +474,9 @@ void BasicHttpService::on_request(evhttp_request* request)
     auto it = m_handlers.find(uri);
     if(it == m_handlers.end())
     {
-        evhttp_send_error(request, 404, "not found");
+        evhttp_send_error(request,
+                          http_code_message::transport::status::kNotFound,
+                          http_code_message::transport::message::kNotFound);
         return;
     }
 

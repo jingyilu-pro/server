@@ -157,6 +157,18 @@ export $(grep -v '^#' .env | xargs)
 - `scripts/pressure/evaluate_sla.ps1`: JSON report SLA evaluator.
 - `scripts/short_pressure.ps1`: shortcut wrapper to `pr_gate.ps1`.
 
+## Lint（code/message 硬编码检查）
+
+- `scripts/lint/check_http_code_message.ps1`
+
+用于检查核心服务代码中是否直接硬编码 `set_code/set_message/evhttp_send_error` 的数字与字符串字面量。
+
+执行示例：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/lint/check_http_code_message.ps1
+```
+
 ## PR 门禁与自动对比报告
 
 - 执行门禁压测：
