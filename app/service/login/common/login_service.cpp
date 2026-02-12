@@ -22,7 +22,10 @@
 #include "log/glogger.h"
 #include "protocol/gateway.pb.h"
 
+#include <openssl/evp.h>
+
 #include <algorithm>
+#include <array>
 #include <chrono>
 
 namespace
@@ -43,19 +46,36 @@ std::string make_trace_id()
     return "login-" + std::to_string(ticks);
 }
 
-bool is_valid_endpoint(const EndpointConfig& endpoint)
+std::string sha256_hex_string(const std::string& input)
 {
-    return !endpoint.host.empty() && endpoint.port > 0;
-}
+    std::array<unsigned char, EVP_MAX_MD_SIZE> digest{};
+    unsigned int digest_len = 0;
 
-ServiceInstance make_fallback_game_instance(const EndpointConfig& endpoint)
-{
-    ServiceInstance instance;
-    instance.role = "game";
-    instance.endpoint = endpoint;
-    instance.weight = 1;
-    instance.instance_id = "game@config";
-    return instance;
+    EVP_MD_CTX* context = EVP_MD_CTX_new();
+    if(context == nullptr)
+    {
+        return {};
+    }
+
+    const bool ok = EVP_DigestInit_ex(context, EVP_sha256(), nullptr) == 1 &&
+                    EVP_DigestUpdate(context, input.data(), input.size()) == 1 &&
+                    EVP_DigestFinal_ex(context, digest.data(), &digest_len) == 1;
+
+    EVP_MD_CTX_free(context);
+    if(!ok)
+    {
+        return {};
+    }
+
+    static constexpr char kHexTable[] = "0123456789abcdef";
+    std::string out;
+    out.resize(digest_len * 2);
+    for(unsigned int i = 0; i < digest_len; ++i)
+    {
+        out[2 * i] = kHexTable[digest[i] >> 4];
+        out[2 * i + 1] = kHexTable[digest[i] & 0x0F];
+    }
+    return out;
 }
 
 } // namespace
@@ -63,12 +83,14 @@ ServiceInstance make_fallback_game_instance(const EndpointConfig& endpoint)
 LoginService::LoginService(const RuntimeConfig& config,
                            std::shared_ptr<IServiceDiscovery> discovery,
                            std::shared_ptr<IAccountRepository> account_repository,
-                           std::shared_ptr<ITokenProvider> token_provider)
+                           std::shared_ptr<ITokenProvider> token_provider,
+                           std::shared_ptr<ISessionStore> session_store)
     : BasicHttpService("login", config.server.login, true),
       m_config(config),
       m_discovery(std::move(discovery)),
       m_account_repository(std::move(account_repository)),
-      m_token_provider(std::move(token_provider))
+      m_token_provider(std::move(token_provider)),
+      m_session_store(std::move(session_store))
 {
     m_local_instance.role = "login";
     m_local_instance.weight = 1;
@@ -155,6 +177,10 @@ void LoginService::on_event_loop_tick()
     if(m_account_repository)
     {
         m_account_repository->poll();
+    }
+    if(m_session_store)
+    {
+        m_session_store->poll();
     }
 
     auto now = std::chrono::steady_clock::now();
@@ -377,17 +403,35 @@ coro_task_t LoginService::login_async(evhttp_request* request)
         co_return;
     }
 
+    if(m_session_store)
+    {
+        SessionRecord session;
+        session.account = login_request.account();
+        session.token_digest = sha256_hex_string(token);
+        session.expire_at = now_ms() / 1000 + std::max(1, m_config.jwt.expire_sec);
+
+        if(session.token_digest.empty())
+        {
+            spdlog::warn("login session digest empty, skip session upsert");
+        }
+        else
+        {
+            auto* session_result = dynamic_cast<SessionStoreOpResult*>(
+                co_await m_session_store->upsert_session(session, std::max(1, m_config.jwt.expire_sec)));
+            if(session_result == nullptr || !session_result->success || !session_result->upsert_ok)
+            {
+                spdlog::warn("login session upsert failed: {}",
+                             session_result == nullptr ? "null result" : session_result->error);
+            }
+        }
+    }
+
     std::vector<ServiceInstance> game_instances;
     if(auto* list_result = dynamic_cast<ServiceDiscoveryOpResult*>(co_await m_discovery->list_instances("game"));
        list_result != nullptr && list_result->success)
     {
         game_instances = list_result->instances;
     }
-    if(game_instances.empty() && is_valid_endpoint(m_config.server.game))
-    {
-        game_instances.push_back(make_fallback_game_instance(m_config.server.game));
-    }
-
     if(game_instances.empty())
     {
         http_code_message::gateway::set_code_message(&response,

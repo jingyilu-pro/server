@@ -22,7 +22,10 @@
 #include "log/glogger.h"
 #include "protocol/gateway.pb.h"
 
+#include <openssl/evp.h>
+
 #include <algorithm>
+#include <array>
 #include <chrono>
 
 namespace
@@ -43,15 +46,49 @@ std::string make_trace_id()
     return "game-" + std::to_string(ticks);
 }
 
+std::string sha256_hex_string(const std::string& input)
+{
+    std::array<unsigned char, EVP_MAX_MD_SIZE> digest{};
+    unsigned int digest_len = 0;
+
+    EVP_MD_CTX* context = EVP_MD_CTX_new();
+    if(context == nullptr)
+    {
+        return {};
+    }
+
+    const bool ok = EVP_DigestInit_ex(context, EVP_sha256(), nullptr) == 1 &&
+                    EVP_DigestUpdate(context, input.data(), input.size()) == 1 &&
+                    EVP_DigestFinal_ex(context, digest.data(), &digest_len) == 1;
+
+    EVP_MD_CTX_free(context);
+    if(!ok)
+    {
+        return {};
+    }
+
+    static constexpr char kHexTable[] = "0123456789abcdef";
+    std::string out;
+    out.resize(digest_len * 2);
+    for(unsigned int i = 0; i < digest_len; ++i)
+    {
+        out[2 * i] = kHexTable[digest[i] >> 4];
+        out[2 * i + 1] = kHexTable[digest[i] & 0x0F];
+    }
+    return out;
+}
+
 } // namespace
 
 GameService::GameService(const RuntimeConfig& config,
                          std::shared_ptr<IServiceDiscovery> discovery,
-                         std::shared_ptr<ITokenProvider> token_provider)
+                         std::shared_ptr<ITokenProvider> token_provider,
+                         std::shared_ptr<ISessionStore> session_store)
     : BasicHttpService("game", config.server.game, true),
       m_config(config),
       m_discovery(std::move(discovery)),
-      m_token_provider(std::move(token_provider))
+      m_token_provider(std::move(token_provider)),
+      m_session_store(std::move(session_store))
 {
     m_local_instance.role = "game";
     m_local_instance.weight = 1;
@@ -118,6 +155,10 @@ void GameService::on_event_loop_tick()
         {
             register_instance_async();
         }
+    }
+    if(m_session_store)
+    {
+        m_session_store->poll();
     }
 
     auto now = std::chrono::steady_clock::now();
@@ -214,9 +255,51 @@ coro_task_t GameService::enter_game_async(evhttp_request* request)
         }
         else
         {
+            bool session_mismatch = false;
+            if(m_session_store && !verified->subject.empty())
+            {
+                auto* session_result = dynamic_cast<SessionStoreOpResult*>(
+                    co_await m_session_store->get_session(verified->subject));
+                if(session_result != nullptr && session_result->success && session_result->hit &&
+                   session_result->session.has_value())
+                {
+                    const auto token_digest = sha256_hex_string(token);
+                    if(!token_digest.empty() && session_result->session->token_digest != token_digest)
+                    {
+                        session_mismatch = true;
+                    }
+                    else if(session_result->session->expire_at > 0)
+                    {
+                        const int64_t now_sec = now_ms() / 1000;
+                        int ttl_sec = static_cast<int>(session_result->session->expire_at - now_sec);
+                        ttl_sec = std::max(1, ttl_sec);
+                        auto* touch_result = dynamic_cast<SessionStoreOpResult*>(
+                            co_await m_session_store->touch_session(verified->subject, ttl_sec));
+                        if(touch_result == nullptr || !touch_result->success)
+                        {
+                            spdlog::warn("game session touch failed: {}",
+                                         touch_result == nullptr ? "null result" : touch_result->error);
+                        }
+                    }
+                }
+                else if(session_result != nullptr && !session_result->success)
+                {
+                    spdlog::warn("game session query failed: {}", session_result->error);
+                }
+            }
+
+            if(session_mismatch)
+            {
+                http_code_message::gateway::set_code_message(&response,
+                                                             http_code_message::gateway::code::kInvalidOrExpiredJwt,
+                                                             http_code_message::gateway::message::kInvalidOrExpiredJwt);
+            }
+            else
+            {
             http_code_message::gateway::set_code_message(&response,
                                                          http_code_message::gateway::code::kSuccess,
                                                          "welcome " + verified->subject);
+            }
         }
     }
 

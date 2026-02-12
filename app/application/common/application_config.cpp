@@ -115,6 +115,19 @@ bool parse_int_value(const std::string& value, int* output)
     }
 }
 
+bool parse_double_value(const std::string& value, double* output)
+{
+    try
+    {
+        *output = std::stod(trim(value));
+        return true;
+    }
+    catch(...)
+    {
+        return false;
+    }
+}
+
 bool parse_uint16_value(const std::string& value, uint16_t* output)
 {
     int parsed = 0;
@@ -260,6 +273,90 @@ bool set_config_value(RuntimeConfig* config, const std::string& key, const std::
     if(key == "client_pressure.report.prefix")
     {
         config->client_pressure.report.prefix = trim(value);
+        return true;
+    }
+    if(key == "client_pressure.guard.enabled")
+    {
+        bool enabled = true;
+        if(!parse_bool_value(value, &enabled))
+        {
+            if(error_message != nullptr)
+            {
+                *error_message = "invalid bool value for client_pressure.guard.enabled";
+            }
+            return false;
+        }
+        config->client_pressure.guard.enabled = enabled;
+        return true;
+    }
+    if(key == "client_pressure.guard.min_samples")
+    {
+        int value_int = 0;
+        if(!parse_int_value(value, &value_int) || value_int < 1)
+        {
+            if(error_message != nullptr)
+            {
+                *error_message = "invalid positive int value for client_pressure.guard.min_samples";
+            }
+            return false;
+        }
+        config->client_pressure.guard.min_samples = value_int;
+        return true;
+    }
+    if(key == "client_pressure.guard.min_success_rate")
+    {
+        double value_double = 0.0;
+        if(!parse_double_value(value, &value_double) || value_double < 0.0 || value_double > 1.0)
+        {
+            if(error_message != nullptr)
+            {
+                *error_message = "invalid ratio value for client_pressure.guard.min_success_rate";
+            }
+            return false;
+        }
+        config->client_pressure.guard.min_success_rate = value_double;
+        return true;
+    }
+    if(key == "client_pressure.guard.max_timeout_rate")
+    {
+        double value_double = 0.0;
+        if(!parse_double_value(value, &value_double) || value_double < 0.0 || value_double > 1.0)
+        {
+            if(error_message != nullptr)
+            {
+                *error_message = "invalid ratio value for client_pressure.guard.max_timeout_rate";
+            }
+            return false;
+        }
+        config->client_pressure.guard.max_timeout_rate = value_double;
+        return true;
+    }
+    if(key == "client_pressure.guard.max_p95_ms")
+    {
+        double value_double = 0.0;
+        if(!parse_double_value(value, &value_double) || value_double <= 0.0)
+        {
+            if(error_message != nullptr)
+            {
+                *error_message = "invalid positive value for client_pressure.guard.max_p95_ms";
+            }
+            return false;
+        }
+        config->client_pressure.guard.max_p95_ms = value_double;
+        return true;
+    }
+    if(key == "client_pressure.guard.max_p99_ms")
+    {
+        double value_double = 0.0;
+        if(!parse_double_value(value, &value_double) || value_double <= 0.0)
+        {
+            if(error_message != nullptr)
+            {
+                *error_message = "invalid positive value for client_pressure.guard.max_p99_ms";
+            }
+            return false;
+        }
+        config->client_pressure.guard.max_p99_ms = value_double;
         return true;
     }
     if(key == "client_pressure.http.coro_workers")
@@ -420,6 +517,20 @@ bool set_config_value(RuntimeConfig* config, const std::string& key, const std::
             return false;
         }
         config->redis.coro_workers = workers;
+        return true;
+    }
+    if(key == "redis.account_cache_ttl_sec")
+    {
+        int ttl_sec = 0;
+        if(!parse_int_value(value, &ttl_sec) || ttl_sec <= 0)
+        {
+            if(error_message != nullptr)
+            {
+                *error_message = "invalid positive int value for redis.account_cache_ttl_sec";
+            }
+            return false;
+        }
+        config->redis.account_cache_ttl_sec = ttl_sec;
         return true;
     }
 
@@ -721,6 +832,26 @@ bool load_runtime_config(const std::string& config_path, RuntimeConfig* config, 
     {
         config->client_pressure.report.json_path = config->client_pressure.report.output_dir + "/" +
                                                    config->client_pressure.report.prefix + ".json";
+    }
+    if(config->client_pressure.guard.min_samples <= 0)
+    {
+        config->client_pressure.guard.min_samples = 100;
+    }
+    config->client_pressure.guard.min_success_rate =
+        std::clamp(config->client_pressure.guard.min_success_rate, 0.0, 1.0);
+    config->client_pressure.guard.max_timeout_rate =
+        std::clamp(config->client_pressure.guard.max_timeout_rate, 0.0, 1.0);
+    if(config->client_pressure.guard.max_p95_ms <= 0.0)
+    {
+        config->client_pressure.guard.max_p95_ms = 150.0;
+    }
+    if(config->client_pressure.guard.max_p99_ms <= 0.0)
+    {
+        config->client_pressure.guard.max_p99_ms = 300.0;
+    }
+    if(config->redis.account_cache_ttl_sec <= 0)
+    {
+        config->redis.account_cache_ttl_sec = 300;
     }
 
     if(config->client_pressure.scenario.login_account_pool.empty())

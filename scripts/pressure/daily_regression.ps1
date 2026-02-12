@@ -48,6 +48,13 @@ client_pressure:
     timeout_ms: $TimeoutMs
     account_pool_size: $AccountPoolSize
     auto_relogin: true
+  guard:
+    enabled: true
+    min_samples: 100
+    min_success_rate: 0.995
+    max_timeout_rate: 0.005
+    max_p95_ms: 150
+    max_p99_ms: 300
   report:
     interval_sec: 5
     output: json

@@ -1,11 +1,12 @@
 param(
     [string]$BuildDir = "build-wsl-main",
     [string]$ReportRoot = "reports/pressure",
+    [int]$ManagerPort = 18080,
     [double]$TargetTimeoutRate = 0.05,
     [int]$MaxRounds = 6,
-    [int]$MySqlCoroWorkers = 4,
-    [int]$RedisCoroWorkers = 2,
-    [int]$MySqlPasswordHashIterations = 20000,
+    [int]$MySqlCoroWorkers = 16,
+    [int]$RedisCoroWorkers = 4,
+    [int]$MySqlPasswordHashIterations = 12000,
     [double]$MinSuccessRate = 0.995,
     [string]$Scenario = "full_chain",
     [int]$WarmupSec = 10,
@@ -23,6 +24,7 @@ $ErrorActionPreference = "Stop"
 function New-AutoTuneYaml {
     param(
         [string]$Path,
+        [int]$ManagerPort,
         [string]$Scenario,
         [int]$WarmupSec,
         [int]$DurationSec,
@@ -36,14 +38,18 @@ function New-AutoTuneYaml {
         [string]$RedisKeyPrefix,
         [int]$MySqlCoroWorkers,
         [int]$RedisCoroWorkers,
-        [int]$MySqlPasswordHashIterations
+        [int]$MySqlPasswordHashIterations,
+        [double]$GuardMinSuccessRate,
+        [double]$GuardMaxTimeoutRate,
+        [double]$GuardMaxP95Ms,
+        [double]$GuardMaxP99Ms
     )
 
     @"
 server:
   manager:
     host: 127.0.0.1
-    port: 18080
+    port: $ManagerPort
   login:
     host: 127.0.0.1
     port: 0
@@ -81,6 +87,13 @@ client_pressure:
     timeout_ms: $TimeoutMs
     account_pool_size: $AccountPoolSize
     auto_relogin: true
+  guard:
+    enabled: true
+    min_samples: 100
+    min_success_rate: $GuardMinSuccessRate
+    max_timeout_rate: $GuardMaxTimeoutRate
+    max_p95_ms: $GuardMaxP95Ms
+    max_p99_ms: $GuardMaxP99Ms
   report:
     interval_sec: 2
     output: json
@@ -124,6 +137,7 @@ for ($round = 1; $round -le $MaxRounds; $round++) {
 
     try {
         New-AutoTuneYaml -Path $configPath `
+            -ManagerPort $ManagerPort `
             -Scenario $Scenario `
             -WarmupSec $WarmupSec `
             -DurationSec $durationSec `
@@ -137,7 +151,11 @@ for ($round = 1; $round -le $MaxRounds; $round++) {
             -RedisKeyPrefix $redisKeyPrefix `
             -MySqlCoroWorkers $MySqlCoroWorkers `
             -RedisCoroWorkers $RedisCoroWorkers `
-            -MySqlPasswordHashIterations $MySqlPasswordHashIterations
+            -MySqlPasswordHashIterations $MySqlPasswordHashIterations `
+            -GuardMinSuccessRate $MinSuccessRate `
+            -GuardMaxTimeoutRate $TargetTimeoutRate `
+            -GuardMaxP95Ms 150 `
+            -GuardMaxP99Ms 300
 
         $configPathWsl = "/mnt/c/Work/Projects/server/$($configName.Replace('\\','/'))"
         $binaryWsl = "./$BuildDir/app/application/application"

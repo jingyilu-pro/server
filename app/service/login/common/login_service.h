@@ -23,6 +23,7 @@
 #include "corocoroutine.h"
 
 #include "account_repository.h"
+#include "session_store.h"
 #include "service_discovery.h"
 #include "token_provider.h"
 
@@ -36,7 +37,8 @@ public:
     LoginService(const RuntimeConfig& config,
                  std::shared_ptr<IServiceDiscovery> discovery,
                  std::shared_ptr<IAccountRepository> account_repository,
-                 std::shared_ptr<ITokenProvider> token_provider);
+                 std::shared_ptr<ITokenProvider> token_provider,
+                 std::shared_ptr<ISessionStore> session_store);
     ~LoginService() override;
 
 public:
@@ -59,6 +61,7 @@ private:
     std::shared_ptr<IServiceDiscovery> m_discovery;
     std::shared_ptr<IAccountRepository> m_account_repository;
     std::shared_ptr<ITokenProvider> m_token_provider;
+    std::shared_ptr<ISessionStore> m_session_store;
     ServiceInstance m_local_instance;
     std::chrono::steady_clock::time_point m_last_heartbeat;
     std::size_t m_game_round_robin_counter = 0;

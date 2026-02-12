@@ -1,5 +1,77 @@
 ﻿[
     {
+        "run_id":  "20260212230417_3b5e7e5",
+        "run_time":  "2026-02-12 23:18:05",
+        "gate_status":  "PASS",
+        "full_chain_success_rate":  1,
+        "full_chain_timeout_rate":  0,
+        "full_chain_p95_ms":  20.815,
+        "compare_report":  "reports/pressure/2026-02-12/pr_gate_compare_20260212230417_3b5e7e5_vs_20260212222741_3b5e7e5.md"
+    },
+    {
+        "run_id":  "20260212222741_3b5e7e5",
+        "run_time":  "2026-02-12 22:41:33",
+        "gate_status":  "PASS",
+        "full_chain_success_rate":  1,
+        "full_chain_timeout_rate":  0,
+        "full_chain_p95_ms":  20.58,
+        "compare_report":  "reports/pressure/2026-02-12/pr_gate_compare_20260212222741_3b5e7e5_vs_20260212220854_3b5e7e5.md"
+    },
+    {
+        "run_id":  "20260212220854_3b5e7e5",
+        "run_time":  "2026-02-12 22:22:42",
+        "gate_status":  "FAILED",
+        "full_chain_success_rate":  1,
+        "full_chain_timeout_rate":  0,
+        "full_chain_p95_ms":  261.521,
+        "compare_report":  "reports/pressure/2026-02-12/pr_gate_compare_20260212220854_3b5e7e5_vs_20260212212605_3b5e7e5.md"
+    },
+    {
+        "run_id":  "20260212215824_3b5e7e5",
+        "run_time":  "2026-02-12 22:04:30",
+        "gate_status":  "FAILED",
+        "full_chain_success_rate":  null,
+        "full_chain_timeout_rate":  null,
+        "full_chain_p95_ms":  null,
+        "compare_report":  "reports/pressure/2026-02-12/pr_gate_compare_20260212215824_3b5e7e5_vs_20260212212605_3b5e7e5.md"
+    },
+    {
+        "run_id":  "20260212215307_3b5e7e5",
+        "run_time":  "2026-02-12 21:53:40",
+        "gate_status":  "FAILED",
+        "full_chain_success_rate":  null,
+        "full_chain_timeout_rate":  null,
+        "full_chain_p95_ms":  null,
+        "compare_report":  "reports/pressure/2026-02-12/pr_gate_compare_20260212215307_3b5e7e5_vs_20260212212605_3b5e7e5.md"
+    },
+    {
+        "run_id":  "20260212214017_3b5e7e5",
+        "run_time":  "2026-02-12 21:46:39",
+        "gate_status":  "FAILED",
+        "full_chain_success_rate":  null,
+        "full_chain_timeout_rate":  null,
+        "full_chain_p95_ms":  null,
+        "compare_report":  "reports/pressure/2026-02-12/pr_gate_compare_20260212214017_3b5e7e5_vs_20260212212605_3b5e7e5.md"
+    },
+    {
+        "run_id":  "20260212212605_3b5e7e5",
+        "run_time":  "2026-02-12 21:37:56",
+        "gate_status":  "FAILED",
+        "full_chain_success_rate":  0.80597,
+        "full_chain_timeout_rate":  0.19403,
+        "full_chain_p95_ms":  809.778,
+        "compare_report":  "reports/pressure/2026-02-12/pr_gate_compare_20260212212605_3b5e7e5_vs_20260212204627_3b5e7e5.md"
+    },
+    {
+        "run_id":  "20260212212339_3b5e7e5",
+        "run_time":  "2026-02-12 21:23:41",
+        "gate_status":  "FAILED",
+        "full_chain_success_rate":  null,
+        "full_chain_timeout_rate":  null,
+        "full_chain_p95_ms":  null,
+        "compare_report":  "reports/pressure/2026-02-12/pr_gate_compare_20260212212339_3b5e7e5_vs_20260212204627_3b5e7e5.md"
+    },
+    {
         "run_id":  "20260212171900_e8d627b",
         "run_time":  "2026-02-12 17:32:47",
         "gate_status":  "PASS",

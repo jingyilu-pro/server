@@ -18,34 +18,28 @@
 
 #pragma once
 
-#include "application_config.h"
-#include "account_cache_store.h"
-#include "account_repository.h"
 #include "session_store.h"
-#include "service_discovery.h"
-#include "token_provider.h"
 
 #include <memory>
 
-struct ServerContext
+class NoopSessionStore final : public ISessionStore
 {
-    bool ready = false;
-    std::string error;
+public:
+    NoopSessionStore();
+    ~NoopSessionStore() override;
 
-    std::shared_ptr<IServiceDiscovery> manager_discovery;
-    std::shared_ptr<IServiceDiscovery> login_discovery;
-    std::shared_ptr<IServiceDiscovery> game_discovery;
+public:
+    bool ready() const override;
+    void poll() override;
+    CoroAwaitable get_session(const std::string& account) override;
+    CoroAwaitable upsert_session(const SessionRecord& session, int ttl_sec) override;
+    CoroAwaitable touch_session(const std::string& account, int ttl_sec) override;
+    CoroAwaitable remove_session(const std::string& account) override;
 
-    std::shared_ptr<IAccountCacheStore> login_account_cache_store;
-    std::shared_ptr<ISessionStore> login_session_store;
-    std::shared_ptr<ISessionStore> game_session_store;
+private:
+    class NoopSessionManager;
 
-    std::shared_ptr<IAccountRepository> login_account_repository;
-
-    std::shared_ptr<ITokenProvider> login_token_provider;
-    std::shared_ptr<ITokenProvider> game_token_provider;
+private:
+    std::unique_ptr<NoopSessionManager> m_manager;
 };
 
-ServerContext create_server_context(const RuntimeConfig& config,
-                                    bool require_manager_discovery,
-                                    bool require_login_repository);

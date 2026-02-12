@@ -80,6 +80,7 @@ private:
     std::atomic<bool> m_stop_requested{false};
     std::atomic<bool> m_finished{false};
     std::atomic<bool> m_timeout_guard_triggered{false};
+    std::string m_early_stop_reason;
 
     std::chrono::steady_clock::time_point m_start_time;
     std::chrono::steady_clock::time_point m_warmup_end_time;

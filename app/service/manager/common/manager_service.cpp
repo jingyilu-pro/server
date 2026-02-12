@@ -43,21 +43,6 @@ std::string make_trace_id()
     return "mgr-" + std::to_string(ticks);
 }
 
-bool is_valid_endpoint(const EndpointConfig& endpoint)
-{
-    return !endpoint.host.empty() && endpoint.port > 0;
-}
-
-ServiceInstance make_fallback_instance(const char* role, const EndpointConfig& endpoint)
-{
-    ServiceInstance instance;
-    instance.role = role == nullptr ? "" : role;
-    instance.endpoint = endpoint;
-    instance.weight = 1;
-    instance.instance_id = std::string(role == nullptr ? "" : role) + "@config";
-    return instance;
-}
-
 } // namespace
 
 ManagerService::ManagerService(const RuntimeConfig& config, std::shared_ptr<IServiceDiscovery> discovery)
@@ -242,15 +227,6 @@ coro_task_t ManagerService::route_login_async(evhttp_request* request)
        game_result != nullptr && game_result->success)
     {
         game_instances = game_result->instances;
-    }
-
-    if(login_instances.empty() && is_valid_endpoint(m_config.server.login))
-    {
-        login_instances.push_back(make_fallback_instance("login", m_config.server.login));
-    }
-    if(game_instances.empty() && is_valid_endpoint(m_config.server.game))
-    {
-        game_instances.push_back(make_fallback_instance("game", m_config.server.game));
     }
 
     gateway::RouteLoginResponse response;

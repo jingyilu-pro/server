@@ -25,6 +25,29 @@
 namespace
 {
 
+class NoopDiscoveryOpManager : public CoroManager
+{
+public:
+    NoopDiscoveryOpManager()
+        : CoroManager(1)
+    {
+        init();
+    }
+    ~NoopDiscoveryOpManager() override = default;
+
+public:
+    CoroResult* alloc() override
+    {
+        expand<ServiceDiscoveryOpResult>();
+        return inner_alloc();
+    }
+};
+
+} // namespace
+
+namespace
+{
+
 struct ServiceDiscoveryWaitState
 {
     bool done = false;
@@ -103,4 +126,116 @@ bool wait_service_discovery_result(IServiceDiscovery* discovery,
     }
 
     return false;
+}
+
+class NoopServiceDiscovery::NoopDiscoveryManager : public NoopDiscoveryOpManager
+{
+};
+
+NoopServiceDiscovery::NoopServiceDiscovery()
+{
+    m_manager = std::make_unique<NoopDiscoveryManager>();
+}
+
+NoopServiceDiscovery::~NoopServiceDiscovery() = default;
+
+bool NoopServiceDiscovery::ready() const
+{
+    return true;
+}
+
+void NoopServiceDiscovery::poll()
+{
+    if(m_manager)
+    {
+        m_manager->update();
+    }
+}
+
+CoroAwaitable NoopServiceDiscovery::register_instance(const ServiceInstance& instance)
+{
+    auto* result = dynamic_cast<ServiceDiscoveryOpResult*>(m_manager->alloc());
+    if(result == nullptr)
+    {
+        return CoroAwaitable{m_manager.get(), nullptr};
+    }
+
+    result->init(ServiceDiscoveryOpType::register_instance,
+                 instance,
+                 instance.role,
+                 [](ServiceDiscoveryOpResult* op) {
+                     if(op == nullptr)
+                     {
+                         return;
+                     }
+                     op->success = true;
+                 });
+    return CoroAwaitable{m_manager.get(), result};
+}
+
+CoroAwaitable NoopServiceDiscovery::heartbeat(const ServiceInstance& instance)
+{
+    auto* result = dynamic_cast<ServiceDiscoveryOpResult*>(m_manager->alloc());
+    if(result == nullptr)
+    {
+        return CoroAwaitable{m_manager.get(), nullptr};
+    }
+
+    result->init(ServiceDiscoveryOpType::heartbeat,
+                 instance,
+                 instance.role,
+                 [](ServiceDiscoveryOpResult* op) {
+                     if(op == nullptr)
+                     {
+                         return;
+                     }
+                     op->success = true;
+                 });
+    return CoroAwaitable{m_manager.get(), result};
+}
+
+CoroAwaitable NoopServiceDiscovery::list_instances(const std::string& role)
+{
+    ServiceInstance instance;
+    instance.role = role;
+
+    auto* result = dynamic_cast<ServiceDiscoveryOpResult*>(m_manager->alloc());
+    if(result == nullptr)
+    {
+        return CoroAwaitable{m_manager.get(), nullptr};
+    }
+
+    result->init(ServiceDiscoveryOpType::list_instances,
+                 instance,
+                 role,
+                 [](ServiceDiscoveryOpResult* op) {
+                     if(op == nullptr)
+                     {
+                         return;
+                     }
+                     op->success = true;
+                     op->instances.clear();
+                 });
+    return CoroAwaitable{m_manager.get(), result};
+}
+
+CoroAwaitable NoopServiceDiscovery::unregister_instance(const ServiceInstance& instance)
+{
+    auto* result = dynamic_cast<ServiceDiscoveryOpResult*>(m_manager->alloc());
+    if(result == nullptr)
+    {
+        return CoroAwaitable{m_manager.get(), nullptr};
+    }
+
+    result->init(ServiceDiscoveryOpType::unregister_instance,
+                 instance,
+                 instance.role,
+                 [](ServiceDiscoveryOpResult* op) {
+                     if(op == nullptr)
+                     {
+                         return;
+                     }
+                     op->success = true;
+                 });
+    return CoroAwaitable{m_manager.get(), result};
 }

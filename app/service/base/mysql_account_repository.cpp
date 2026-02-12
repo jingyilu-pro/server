@@ -205,104 +205,6 @@ int MySqlAccountRepository::password_hash_iterations() const
     return std::max(1, m_config.password_hash_iterations);
 }
 
-bool MySqlAccountRepository::get_cached_account(const std::string& account, AccountRecord* out_record) const
-{
-    if(out_record == nullptr || account.empty())
-    {
-        return false;
-    }
-
-    std::shared_lock lock(m_cache_mutex);
-    const auto iter = m_account_cache.find(account);
-    if(iter == m_account_cache.end())
-    {
-        return false;
-    }
-
-    *out_record = iter->second;
-    return true;
-}
-
-void MySqlAccountRepository::put_cached_account(const AccountRecord& record)
-{
-    if(record.account.empty())
-    {
-        return;
-    }
-
-    std::unique_lock lock(m_cache_mutex);
-    m_account_cache[record.account] = record;
-    const auto verified_iter = m_verified_password_cache.find(record.account);
-    if(verified_iter != m_verified_password_cache.end() &&
-       (verified_iter->second.password_hash != record.password_hash ||
-        verified_iter->second.salt != record.salt))
-    {
-        m_verified_password_cache.erase(verified_iter);
-    }
-}
-
-bool MySqlAccountRepository::is_verified_password_cached(const std::string& account,
-                                                         const std::string& password,
-                                                         const AccountRecord& record) const
-{
-    if(account.empty() || password.empty())
-    {
-        return false;
-    }
-
-    const auto password_digest = sha256_hex(password);
-    if(password_digest.empty())
-    {
-        return false;
-    }
-
-    std::shared_lock lock(m_cache_mutex);
-    const auto iter = m_verified_password_cache.find(account);
-    if(iter == m_verified_password_cache.end())
-    {
-        return false;
-    }
-
-    const auto& cache_entry = iter->second;
-    return cache_entry.password_digest == password_digest &&
-           cache_entry.password_hash == record.password_hash &&
-           cache_entry.salt == record.salt;
-}
-
-void MySqlAccountRepository::remember_verified_password(const std::string& account,
-                                                        const std::string& password,
-                                                        const AccountRecord& record)
-{
-    if(account.empty() || password.empty())
-    {
-        return;
-    }
-
-    const auto password_digest = sha256_hex(password);
-    if(password_digest.empty())
-    {
-        return;
-    }
-
-    std::unique_lock lock(m_cache_mutex);
-    m_verified_password_cache[account] = VerifiedPasswordCacheEntry{
-        password_digest,
-        record.password_hash,
-        record.salt,
-    };
-}
-
-void MySqlAccountRepository::invalidate_verified_password_cache(const std::string& account)
-{
-    if(account.empty())
-    {
-        return;
-    }
-
-    std::unique_lock lock(m_cache_mutex);
-    m_verified_password_cache.erase(account);
-}
-
 MYSQL* MySqlAccountRepository::ensure_worker_connection(std::string* error)
 {
     thread_local MYSQL* worker_mysql = nullptr;
@@ -423,21 +325,9 @@ void MySqlAccountRepository::execute_operation(AccountRepositoryOpResult* result
     {
     case AccountRepositoryOpType::find_account:
     {
-        AccountRecord cached_record;
-        if(get_cached_account(request_account, &cached_record))
-        {
-            result->success = true;
-            result->record = cached_record;
-            break;
-        }
-
         const bool ok = query_account_record(worker_mysql, request_account, &record, &error);
         result->success = ok;
         result->record = record;
-        if(ok && record.has_value())
-        {
-            put_cached_account(*record);
-        }
         if(!ok)
         {
             result->error = error.empty() ? "mysql_find_failed" : error;
@@ -446,29 +336,6 @@ void MySqlAccountRepository::execute_operation(AccountRepositoryOpResult* result
     }
     case AccountRepositoryOpType::verify_password:
     {
-        AccountRecord cached_record;
-        if(get_cached_account(request_account, &cached_record))
-        {
-            result->success = true;
-            if(is_verified_password_cached(request_account, request_password, cached_record))
-            {
-                result->password_ok = true;
-            }
-            else
-            {
-                result->password_ok = verify_password_value(request_password,
-                                                            &cached_record,
-                                                            password_hash_iterations());
-            }
-            result->record = cached_record;
-            if(result->password_ok)
-            {
-                put_cached_account(cached_record);
-                remember_verified_password(request_account, request_password, cached_record);
-            }
-            break;
-        }
-
         const bool ok = query_account_record(worker_mysql, request_account, &record, &error);
 
         result->success = ok;
@@ -484,11 +351,6 @@ void MySqlAccountRepository::execute_operation(AccountRepositoryOpResult* result
             result->password_ok = verify_password_value(request_password,
                                                         &(*record),
                                                         password_hash_iterations());
-            put_cached_account(*record);
-            if(result->password_ok)
-            {
-                remember_verified_password(request_account, request_password, *record);
-            }
         }
         result->record = record;
         break;
@@ -532,8 +394,7 @@ void MySqlAccountRepository::execute_operation(AccountRepositoryOpResult* result
             created_record.account = request_account;
             created_record.password_hash = password_hash;
             created_record.salt = salt;
-            put_cached_account(created_record);
-            invalidate_verified_password_cache(request_account);
+            result->record = created_record;
         }
         break;
     }

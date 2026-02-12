@@ -22,6 +22,7 @@
 #include "coromanager.h"
 
 #include <functional>
+#include <memory>
 
 #include <string>
 #include <vector>
@@ -114,4 +115,25 @@ public:
     virtual CoroAwaitable heartbeat(const ServiceInstance& instance) = 0;
     virtual CoroAwaitable list_instances(const std::string& role) = 0;
     virtual CoroAwaitable unregister_instance(const ServiceInstance& instance) = 0;
+};
+
+class NoopServiceDiscovery final : public IServiceDiscovery
+{
+public:
+    NoopServiceDiscovery();
+    ~NoopServiceDiscovery() override;
+
+public:
+    bool ready() const override;
+    void poll() override;
+    CoroAwaitable register_instance(const ServiceInstance& instance) override;
+    CoroAwaitable heartbeat(const ServiceInstance& instance) override;
+    CoroAwaitable list_instances(const std::string& role) override;
+    CoroAwaitable unregister_instance(const ServiceInstance& instance) override;
+
+private:
+    class NoopDiscoveryManager;
+
+private:
+    std::unique_ptr<NoopDiscoveryManager> m_manager;
 };

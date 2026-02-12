@@ -46,6 +46,7 @@ struct RedisConfig
     int refresh_sec = 5;
     int op_timeout_ms = 2000;
     int coro_workers = 1;
+    int account_cache_ttl_sec = 300;
 };
 
 struct MySqlConfig
@@ -63,6 +64,16 @@ struct MySqlConfig
 struct ClientPressureHttpConfig
 {
     int coro_workers = 1;
+};
+
+struct ClientPressureGuardConfig
+{
+    bool enabled = true;
+    int min_samples = 100;
+    double min_success_rate = 0.995;
+    double max_timeout_rate = 0.005;
+    double max_p95_ms = 150.0;
+    double max_p99_ms = 300.0;
 };
 
 struct JwtConfig
@@ -107,6 +118,7 @@ struct ClientPressureConfig
     bool enabled = false;
     ClientPressureTargetConfig target;
     ClientPressureScenarioConfig scenario;
+    ClientPressureGuardConfig guard;
     ClientPressureReportConfig report;
     ClientPressureHttpConfig http;
 };

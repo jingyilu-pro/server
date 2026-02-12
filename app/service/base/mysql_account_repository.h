@@ -25,8 +25,6 @@
 
 #include <memory>
 #include <mutex>
-#include <shared_mutex>
-#include <unordered_map>
 
 class MySqlAccountCoroManager : public CoroManager
 {
@@ -52,25 +50,9 @@ public:
     CoroAwaitable create_account(const std::string& account, const std::string& password) override;
 
 private:
-    struct VerifiedPasswordCacheEntry
-    {
-        std::string password_digest;
-        std::string password_hash;
-        std::string salt;
-    };
-
     int password_hash_iterations() const;
     AccountRepositoryOpResult* alloc_result();
     void execute_operation(AccountRepositoryOpResult* result);
-    bool get_cached_account(const std::string& account, AccountRecord* out_record) const;
-    void put_cached_account(const AccountRecord& record);
-    bool is_verified_password_cached(const std::string& account,
-                                     const std::string& password,
-                                     const AccountRecord& record) const;
-    void remember_verified_password(const std::string& account,
-                                    const std::string& password,
-                                    const AccountRecord& record);
-    void invalidate_verified_password_cache(const std::string& account);
     bool ensure_connected(MYSQL** mysql_handle, std::string* error = nullptr);
     MYSQL* ensure_worker_connection(std::string* error);
     bool ensure_connected();
@@ -91,7 +73,4 @@ private:
     bool m_ready = false;
     std::unique_ptr<MySqlAccountCoroManager> m_manager;
     mutable std::mutex m_mutex;
-    mutable std::shared_mutex m_cache_mutex;
-    std::unordered_map<std::string, AccountRecord> m_account_cache;
-    std::unordered_map<std::string, VerifiedPasswordCacheEntry> m_verified_password_cache;
 };

@@ -1,19 +1,19 @@
-﻿# Build & Run
+# 构建与运行
 
-## 1. Clone
+## 1. 克隆仓库
 
 ```bash
 git clone --recursive https://github.com/jingyilu-pro/server
 cd server
 ```
 
-If you already cloned the repo, sync submodules with:
+如果仓库已存在，先同步子模块：
 
 ```bash
 git submodule update --init --recursive
 ```
 
-## 2. Build (WSL / Linux)
+## 2. 编译（WSL / Linux）
 
 ```bash
 mkdir -p build-wsl-main
@@ -22,30 +22,34 @@ cmake ..
 cmake --build . -j
 ```
 
-## 3. Service layout (post-refactor)
+## 3. 服务目录结构
 
-Server side directories are split by role (maskword-style):
+服务端按角色拆分：
 
 - `app/service/manager/common|logic`
 - `app/service/login/common|logic`
 - `app/service/game/common|logic`
-- `app/service/base` (shared server components)
-- `server_service` is defined in root `CMakeLists.txt` by aggregating `manager/login/game` object targets.
+- `app/service/base`（共享组件）
 
-## 4. Runtime config (`all.yaml`)
+`server_service` 在根 `CMakeLists.txt` 中聚合 `manager/login/game` 目标。
 
-Core sections:
+## 4. 运行配置（`all.yaml`）
 
-- `server.manager/login/game`: HTTP listener endpoints.
-  - `server.manager.port` 建议固定（统一入口）。
-  - `server.login.port`、`server.game.port` 建议设为 `0`，由系统自动分配端口并在启动后注册到 Redis。
-- `redis`: service-discovery backend for manager/login/game (`coro_workers` supported).
-  - `redis.op_timeout_ms` controls sync wait timeout for startup registration and sync list/unregister helper paths.
-- `mysql`: account storage for login (`coro_workers` supported).
-- `jwt`: token issuer + secret for login/game.
-- `client_pressure`: full-chain pressure settings (`http.coro_workers` supported).
+核心配置段：
 
-`client_pressure.scenario` fields:
+- `server.manager/login/game`：HTTP 监听。
+  - `server.manager.port` 建议固定。
+  - `server.login.port`、`server.game.port` 建议配置为 `0` 自动分配。
+- `redis`：服务发现 + 账号缓存 + 会话层。
+  - `coro_workers`：Redis 协程 worker 数。
+  - `account_cache_ttl_sec`：账号缓存 TTL（默认 300 秒）。
+  - `op_timeout_ms`：启动阶段同步等待超时。
+- `mysql`：登录账号库。
+  - `coro_workers`：MySQL 协程 worker 数。
+- `jwt`：登录签发与游戏校验。
+- `client_pressure`：压测参数、门禁与报告。
+
+`client_pressure.scenario` 支持字段：
 
 - `scenario`: `full_chain | manager_only | login_only | game_only`
 - `warmup_sec`
@@ -56,38 +60,43 @@ Core sections:
 - `timeout_ms`
 - `account_pool_size`
 
-`client_pressure.report` fields:
+`client_pressure.guard` 支持字段：
 
-- `output_dir`
-- `prefix`
-- `json_path`
+- `enabled`
+- `min_samples`
+- `min_success_rate`
+- `max_timeout_rate`
+- `max_p95_ms`
+- `max_p99_ms`
 
-Backward compatible key:
+兼容字段：
 
-- `request_timeout_ms` (maps to `timeout_ms`)
+- `request_timeout_ms`（会映射到 `timeout_ms`）
 
-Runtime behavior notes:
+## 5. 依赖策略说明
 
-- Redis and MySQL are startup hard dependencies for server modes.
-- If Redis/MySQL is unavailable, related service startup fails.
-- Startup includes blocking service registration into Redis.
+架构为“程序 + Redis + MySQL”，依赖边界如下：
 
-Environment overrides (recommended):
+- `manager`：Redis discovery 硬依赖，不可降级。
+- `login`：MySQL 硬依赖；Redis discovery/cache/session 可降级。
+- `game`：JWT 硬依赖；Redis discovery/session 可降级。
+
+## 6. 环境变量覆盖（推荐）
 
 - `GAME_MYSQL_PASSWORD`
 - `GAME_JWT_SECRET`
 - `GAME_REDIS_PASSWORD`
 
-You can bootstrap from `.env.example`:
+建议从 `.env.example` 初始化：
 
 ```bash
 cp .env.example .env
 export $(grep -v '^#' .env | xargs)
 ```
 
-## 5. Run modes
+## 7. 启动方式
 
-Unified entrypoint is `application --mode`:
+统一入口：`application --mode`
 
 ```bash
 ./build-wsl-main/app/application/application --mode manager --config all.yaml
@@ -97,19 +106,17 @@ Unified entrypoint is `application --mode`:
 ./build-wsl-main/app/application/application --mode all --config all.yaml
 ```
 
-Mode semantics:
+模式语义：
 
-- `manager`: manager only.
-- `login`: login only.
-- `game`: game only.
-- `client`: pressure client only (auto-exit when completed).
-- `all`: manager + login + game + client pressure.
+- `manager`：仅 manager。
+- `login`：仅 login。
+- `game`：仅 game。
+- `client`：仅压测客户端，结束后退出。
+- `all`：`manager + login + game + client_pressure`。
 
-`all` always starts `client_pressure`, but actual load depends on `client_pressure.enabled`.
+## 8. WSL 依赖安装（MariaDB + Redis）
 
-## 6. WSL dependencies (MariaDB + Redis)
-
-Install inside WSL Ubuntu:
+在 WSL Ubuntu 执行：
 
 ```bash
 sudo apt-get update
@@ -118,12 +125,12 @@ sudo systemctl enable mariadb redis-server
 sudo systemctl start mariadb redis-server
 ```
 
-Keep services WSL-local only:
+推荐仅本机监听：
 
-- MariaDB: `/etc/mysql/mariadb.conf.d/50-server.cnf` -> `bind-address = 127.0.0.1`
-- Redis: `/etc/redis/redis.conf` -> `bind 127.0.0.1` and `protected-mode yes`
+- MariaDB：`/etc/mysql/mariadb.conf.d/50-server.cnf` 设置 `bind-address = 127.0.0.1`
+- Redis：`/etc/redis/redis.conf` 设置 `bind 127.0.0.1` 与 `protected-mode yes`
 
-Minimal DB init (example):
+最小数据库初始化示例：
 
 ```sql
 CREATE DATABASE IF NOT EXISTS game CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -132,7 +139,7 @@ GRANT ALL PRIVILEGES ON game.* TO 'game_app'@'127.0.0.1';
 FLUSH PRIVILEGES;
 ```
 
-Health checks:
+健康检查：
 
 ```bash
 mysql --protocol=TCP -h127.0.0.1 -P3306 -ugame_app -p -D game -e "SELECT 1"
@@ -141,16 +148,16 @@ systemctl is-active mariadb redis-server
 systemctl is-enabled mariadb redis-server
 ```
 
-## 7. Smoke scripts
+## 9. 压测与冒烟脚本
 
-- `scripts/smoke_modes.ps1`: mode-level smoke start.
-- `scripts/short_pressure.ps1`: PR gate shortcut.
-- `scripts/pressure/pr_gate.ps1`: PR gate profile.
-- `scripts/pressure/daily_regression.ps1`: daily medium profile.
-- `scripts/pressure/weekly_soak.ps1`: weekly long profile.
-- `scripts/pressure/evaluate_sla.ps1`: SLA evaluation helper.
+- `scripts/smoke_modes.ps1`：模式级冒烟。
+- `scripts/short_pressure.ps1`：PR 门禁快捷入口。
+- `scripts/pressure/pr_gate.ps1`：PR 门禁四场景。
+- `scripts/pressure/daily_regression.ps1`：每日中压测。
+- `scripts/pressure/weekly_soak.ps1`：每周长稳压测。
+- `scripts/pressure/evaluate_sla.ps1`：SLA 判定。
 
-Run from PowerShell:
+PowerShell 执行示例：
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File scripts/smoke_modes.ps1

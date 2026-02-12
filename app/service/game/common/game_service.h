@@ -22,6 +22,7 @@
 #include "basic_http_service.h"
 #include "corocoroutine.h"
 
+#include "session_store.h"
 #include "service_discovery.h"
 #include "token_provider.h"
 
@@ -34,7 +35,8 @@ class GameService : public BasicHttpService
 public:
     GameService(const RuntimeConfig& config,
                 std::shared_ptr<IServiceDiscovery> discovery,
-                std::shared_ptr<ITokenProvider> token_provider);
+                std::shared_ptr<ITokenProvider> token_provider,
+                std::shared_ptr<ISessionStore> session_store);
     ~GameService() override;
 
 public:
@@ -54,6 +56,7 @@ private:
     RuntimeConfig m_config;
     std::shared_ptr<IServiceDiscovery> m_discovery;
     std::shared_ptr<ITokenProvider> m_token_provider;
+    std::shared_ptr<ISessionStore> m_session_store;
     ServiceInstance m_local_instance;
     std::chrono::steady_clock::time_point m_last_heartbeat;
     bool m_heartbeat_inflight = false;

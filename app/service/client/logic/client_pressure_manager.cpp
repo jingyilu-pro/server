@@ -210,6 +210,7 @@ bool ClientPressureManager::start()
     m_stop_requested.store(false);
     m_finished.store(false);
     m_timeout_guard_triggered.store(false);
+    m_early_stop_reason.clear();
     m_running.store(true);
 
     spdlog::info("client pressure manager start: scenario={}, vus={}, rps={}, warmup={}s, duration={}s, ramp={}s",
@@ -236,7 +237,7 @@ void ClientPressureManager::update(std::chrono::milliseconds delta_time, std::ch
     const auto elapsed = now - m_start_time;
     if(should_stop_by_timeout_guard())
     {
-        spdlog::warn("[client-pressure] timeout guard triggered (>5%), stop pressure early");
+        spdlog::warn("[client-pressure] sla guard triggered reason={}, stop pressure early", m_early_stop_reason);
         stop();
         return;
     }
@@ -359,15 +360,43 @@ bool ClientPressureManager::should_stop_by_timeout_guard()
         snapshot = m_metrics;
     }
 
-    const uint64_t min_samples = 100;
+    const uint64_t min_samples = static_cast<uint64_t>(std::max(1, m_config.client_pressure.guard.min_samples));
     if(snapshot.total_request < min_samples)
     {
         return false;
     }
 
-    const double timeout_rate = safe_ratio(snapshot.total_timeout, snapshot.total_request);
-    if(timeout_rate > 0.05)
+    if(!m_config.client_pressure.guard.enabled)
     {
+        return false;
+    }
+
+    const double success_rate = safe_ratio(snapshot.total_success, snapshot.total_request);
+    const double timeout_rate = safe_ratio(snapshot.total_timeout, snapshot.total_request);
+    const double p95_ms = static_cast<double>(percentile_us(snapshot.chain_latency_us, 0.95)) / 1000.0;
+    const double p99_ms = static_cast<double>(percentile_us(snapshot.chain_latency_us, 0.99)) / 1000.0;
+
+    if(success_rate < m_config.client_pressure.guard.min_success_rate)
+    {
+        m_early_stop_reason = "success_rate_below_threshold";
+        m_timeout_guard_triggered.store(true);
+        return true;
+    }
+    if(timeout_rate > m_config.client_pressure.guard.max_timeout_rate)
+    {
+        m_early_stop_reason = "timeout_rate_above_threshold";
+        m_timeout_guard_triggered.store(true);
+        return true;
+    }
+    if(p95_ms > m_config.client_pressure.guard.max_p95_ms)
+    {
+        m_early_stop_reason = "p95_above_threshold";
+        m_timeout_guard_triggered.store(true);
+        return true;
+    }
+    if(p99_ms > m_config.client_pressure.guard.max_p99_ms)
+    {
+        m_early_stop_reason = "p99_above_threshold";
         m_timeout_guard_triggered.store(true);
         return true;
     }
@@ -635,6 +664,10 @@ void ClientPressureManager::write_json_report() const
     output << "  \"early_stopped_by_timeout_guard\": "
            << (m_timeout_guard_triggered.load() ? "true" : "false")
            << ",\n";
+    output << "  \"early_stopped_by_sla_guard\": "
+           << (m_timeout_guard_triggered.load() ? "true" : "false")
+           << ",\n";
+    output << "  \"early_stop_reason\": \"" << json_escape(m_early_stop_reason) << "\",\n";
     output << "  \"warmup\": {\n";
     output << "    \"duration_sec\": " << std::max(0, m_config.client_pressure.scenario.warmup_sec) << ",\n";
     output << "    \"total\": " << warmup_snapshot.total_request << ",\n";

@@ -18,34 +18,27 @@
 
 #pragma once
 
-#include "application_config.h"
 #include "account_cache_store.h"
-#include "account_repository.h"
-#include "session_store.h"
-#include "service_discovery.h"
-#include "token_provider.h"
 
 #include <memory>
 
-struct ServerContext
+class NoopAccountCacheStore final : public IAccountCacheStore
 {
-    bool ready = false;
-    std::string error;
+public:
+    NoopAccountCacheStore();
+    ~NoopAccountCacheStore() override;
 
-    std::shared_ptr<IServiceDiscovery> manager_discovery;
-    std::shared_ptr<IServiceDiscovery> login_discovery;
-    std::shared_ptr<IServiceDiscovery> game_discovery;
+public:
+    bool ready() const override;
+    void poll() override;
+    CoroAwaitable get_account(const std::string& account) override;
+    CoroAwaitable put_account(const AccountRecord& record, int ttl_sec) override;
+    CoroAwaitable erase_account(const std::string& account) override;
 
-    std::shared_ptr<IAccountCacheStore> login_account_cache_store;
-    std::shared_ptr<ISessionStore> login_session_store;
-    std::shared_ptr<ISessionStore> game_session_store;
+private:
+    class NoopAccountCacheManager;
 
-    std::shared_ptr<IAccountRepository> login_account_repository;
-
-    std::shared_ptr<ITokenProvider> login_token_provider;
-    std::shared_ptr<ITokenProvider> game_token_provider;
+private:
+    std::unique_ptr<NoopAccountCacheManager> m_manager;
 };
 
-ServerContext create_server_context(const RuntimeConfig& config,
-                                    bool require_manager_discovery,
-                                    bool require_login_repository);

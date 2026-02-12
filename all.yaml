@@ -1,7 +1,7 @@
-server:
+﻿server:
   manager:
     host: 127.0.0.1
-    # manager 保持固定端口，作为统一入口
+    # manager 使用固定端口，作为统一入口
     port: 18080
   login:
     host: 127.0.0.1
@@ -22,12 +22,14 @@ redis:
   refresh_sec: 5
   op_timeout_ms: 2000
   coro_workers: 1
+  # 账号缓存 TTL（秒）
+  account_cache_ttl_sec: 300
 
 mysql:
   host: 127.0.0.1
   port: 3306
   user: game_app
-  # 推荐用环境变量 GAME_MYSQL_PASSWORD 覆盖，不在仓库保存真实密码
+  # 建议用环境变量 GAME_MYSQL_PASSWORD 覆盖，不在仓库保存真实密码
   password: ""
   database: game
   connect_timeout_ms: 2000
@@ -35,7 +37,7 @@ mysql:
 
 jwt:
   issuer: game-login
-  # 推荐用环境变量 GAME_JWT_SECRET 覆盖，不在仓库保存真实密钥
+  # 建议用环境变量 GAME_JWT_SECRET 覆盖，不在仓库保存真实密钥
   secret: ""
   expire_sec: 7200
 
@@ -61,6 +63,13 @@ client_pressure:
       - user_0002
       - user_0003
       - user_0004
+  guard:
+    enabled: true
+    min_samples: 100
+    min_success_rate: 0.995
+    max_timeout_rate: 0.005
+    max_p95_ms: 150
+    max_p99_ms: 300
   report:
     interval_sec: 5
     output: log

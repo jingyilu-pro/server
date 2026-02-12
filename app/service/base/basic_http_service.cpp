@@ -261,7 +261,6 @@ void BasicHttpService::release_request(evhttp_request* request)
 
     if(evhttp_request_get_connection(request) != nullptr)
     {
-        evhttp_send_reply_end(request);
         return;
     }
 

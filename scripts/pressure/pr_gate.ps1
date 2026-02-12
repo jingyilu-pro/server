@@ -6,8 +6,8 @@ param(
     [double]$AutoTuneMinSuccessRate = 0.995,
     [int]$AutoTuneMaxRounds = 6,
     [int]$MySqlCoroWorkers = 4,
-    [int]$RedisCoroWorkers = 2,
-    [int]$MySqlPasswordHashIterations = 20000
+    [int]$RedisCoroWorkers = 4,
+    [int]$MySqlPasswordHashIterations = 12000
 )
 
 Set-StrictMode -Version Latest
@@ -16,6 +16,7 @@ $ErrorActionPreference = "Stop"
 function New-PressureYaml {
     param(
         [string]$Path,
+        [int]$ManagerPort,
         [string]$Scenario,
         [int]$WarmupSec,
         [int]$DurationSec,
@@ -29,14 +30,18 @@ function New-PressureYaml {
         [string]$RedisKeyPrefix,
         [int]$MySqlCoroWorkers,
         [int]$RedisCoroWorkers,
-        [int]$MySqlPasswordHashIterations
+        [int]$MySqlPasswordHashIterations,
+        [double]$GuardMinSuccessRate,
+        [double]$GuardMaxTimeoutRate,
+        [double]$GuardMaxP95Ms,
+        [double]$GuardMaxP99Ms
     )
 
     @"
 server:
   manager:
     host: 127.0.0.1
-    port: 18080
+    port: $ManagerPort
   login:
     host: 127.0.0.1
     port: 0
@@ -74,6 +79,13 @@ client_pressure:
     timeout_ms: $TimeoutMs
     account_pool_size: $AccountPoolSize
     auto_relogin: true
+  guard:
+    enabled: true
+    min_samples: 100
+    min_success_rate: $GuardMinSuccessRate
+    max_timeout_rate: $GuardMaxTimeoutRate
+    max_p95_ms: $GuardMaxP95Ms
+    max_p99_ms: $GuardMaxP99Ms
   report:
     interval_sec: 2
     output: json
@@ -88,6 +100,7 @@ client_pressure:
 function Invoke-OnePressure {
     param(
         [string]$Scenario,
+        [int]$ManagerPort,
         [int]$WarmupSec,
         [int]$DurationSec,
         [int]$VirtualUsers,
@@ -110,6 +123,7 @@ function Invoke-OnePressure {
     $redisKeyPrefix = "svc_${RunId}_${Scenario}"
 
     New-PressureYaml -Path $configPath `
+        -ManagerPort $ManagerPort `
         -Scenario $Scenario `
         -WarmupSec $WarmupSec `
         -DurationSec $DurationSec `
@@ -123,7 +137,11 @@ function Invoke-OnePressure {
         -RedisKeyPrefix $redisKeyPrefix `
         -MySqlCoroWorkers $MySqlCoroWorkers `
         -RedisCoroWorkers $RedisCoroWorkers `
-        -MySqlPasswordHashIterations $MySqlPasswordHashIterations
+        -MySqlPasswordHashIterations $MySqlPasswordHashIterations `
+        -GuardMinSuccessRate $MinSuccessRate `
+        -GuardMaxTimeoutRate $MaxTimeoutRate `
+        -GuardMaxP95Ms $MaxP95Ms `
+        -GuardMaxP99Ms $MaxP99Ms
 
     $configPathWsl = "/mnt/c/Work/Projects/server/$($configName.Replace('\\','/'))"
     $binaryWsl = "./$BuildDir/app/application/application"
@@ -194,6 +212,7 @@ $failed = $false
 function Invoke-ScenarioWithOptionalAutoTune {
     param(
         [string]$Scenario,
+        [int]$ManagerPort,
         [int]$WarmupSec,
         [int]$DurationSec,
         [int]$VirtualUsers,
@@ -210,7 +229,7 @@ function Invoke-ScenarioWithOptionalAutoTune {
         [string]$RunId
     )
 
-    $result = Invoke-OnePressure -Scenario $Scenario -WarmupSec $WarmupSec -DurationSec $DurationSec -VirtualUsers $VirtualUsers -TargetRps $TargetRps -RampUpSec $RampUpSec -TimeoutMs $TimeoutMs -AccountPoolSize $AccountPoolSize -MinSuccessRate $MinSuccessRate -MaxTimeoutRate $MaxTimeoutRate -MaxP95Ms $MaxP95Ms -MaxP99Ms $MaxP99Ms -ReportDirRelative $ReportDirRelative -ReportDirWindows $ReportDirWindows -RunId $RunId
+    $result = Invoke-OnePressure -Scenario $Scenario -ManagerPort $ManagerPort -WarmupSec $WarmupSec -DurationSec $DurationSec -VirtualUsers $VirtualUsers -TargetRps $TargetRps -RampUpSec $RampUpSec -TimeoutMs $TimeoutMs -AccountPoolSize $AccountPoolSize -MinSuccessRate $MinSuccessRate -MaxTimeoutRate $MaxTimeoutRate -MaxP95Ms $MaxP95Ms -MaxP99Ms $MaxP99Ms -ReportDirRelative $ReportDirRelative -ReportDirWindows $ReportDirWindows -RunId $RunId
 
     if ($result -is [System.Array]) {
         $result = $result | Where-Object {
@@ -238,6 +257,7 @@ function Invoke-ScenarioWithOptionalAutoTune {
     & powershell -ExecutionPolicy Bypass -File scripts/pressure/auto_tune_timeout.ps1 `
         -BuildDir $BuildDir `
         -ReportRoot $ReportRoot `
+        -ManagerPort $ManagerPort `
         -TargetTimeoutRate $AutoTuneTargetTimeoutRate `
         -MinSuccessRate $AutoTuneMinSuccessRate `
         -MaxRounds $AutoTuneMaxRounds `
@@ -257,7 +277,7 @@ function Invoke-ScenarioWithOptionalAutoTune {
 }
 
 try {
-    if (-not (Invoke-ScenarioWithOptionalAutoTune -Scenario "full_chain" -WarmupSec 30 -DurationSec 300 -VirtualUsers 40 -TargetRps 200 -RampUpSec 30 -TimeoutMs 800 -AccountPoolSize 160 -MinSuccessRate 0.995 -MaxTimeoutRate 0.005 -MaxP95Ms 150 -MaxP99Ms 300 -ReportDirRelative $reportDirRelative -ReportDirWindows $reportDirWindows -RunId $runId)) {
+    if (-not (Invoke-ScenarioWithOptionalAutoTune -Scenario "full_chain" -ManagerPort (Get-Random -Minimum 20080 -Maximum 20999) -WarmupSec 30 -DurationSec 300 -VirtualUsers 40 -TargetRps 200 -RampUpSec 30 -TimeoutMs 800 -AccountPoolSize 160 -MinSuccessRate 0.995 -MaxTimeoutRate 0.005 -MaxP95Ms 150 -MaxP99Ms 300 -ReportDirRelative $reportDirRelative -ReportDirWindows $reportDirWindows -RunId $runId)) {
         throw "full_chain failed"
     }
 } catch {
@@ -266,7 +286,7 @@ try {
 }
 
 try {
-    if (-not (Invoke-ScenarioWithOptionalAutoTune -Scenario "manager_only" -WarmupSec 20 -DurationSec 120 -VirtualUsers 50 -TargetRps 400 -RampUpSec 20 -TimeoutMs 300 -AccountPoolSize 200 -MinSuccessRate 0.999 -MaxTimeoutRate 0.002 -MaxP95Ms 40 -MaxP99Ms 80 -ReportDirRelative $reportDirRelative -ReportDirWindows $reportDirWindows -RunId $runId)) {
+    if (-not (Invoke-ScenarioWithOptionalAutoTune -Scenario "manager_only" -ManagerPort (Get-Random -Minimum 21000 -Maximum 21999) -WarmupSec 20 -DurationSec 120 -VirtualUsers 50 -TargetRps 400 -RampUpSec 20 -TimeoutMs 300 -AccountPoolSize 200 -MinSuccessRate 0.999 -MaxTimeoutRate 0.002 -MaxP95Ms 40 -MaxP99Ms 80 -ReportDirRelative $reportDirRelative -ReportDirWindows $reportDirWindows -RunId $runId)) {
         throw "manager_only failed"
     }
 } catch {
@@ -275,7 +295,7 @@ try {
 }
 
 try {
-    if (-not (Invoke-ScenarioWithOptionalAutoTune -Scenario "login_only" -WarmupSec 20 -DurationSec 120 -VirtualUsers 30 -TargetRps 150 -RampUpSec 20 -TimeoutMs 800 -AccountPoolSize 120 -MinSuccessRate 0.997 -MaxTimeoutRate 0.003 -MaxP95Ms 120 -MaxP99Ms 250 -ReportDirRelative $reportDirRelative -ReportDirWindows $reportDirWindows -RunId $runId)) {
+    if (-not (Invoke-ScenarioWithOptionalAutoTune -Scenario "login_only" -ManagerPort (Get-Random -Minimum 22000 -Maximum 22999) -WarmupSec 20 -DurationSec 120 -VirtualUsers 30 -TargetRps 150 -RampUpSec 20 -TimeoutMs 800 -AccountPoolSize 120 -MinSuccessRate 0.997 -MaxTimeoutRate 0.003 -MaxP95Ms 120 -MaxP99Ms 250 -ReportDirRelative $reportDirRelative -ReportDirWindows $reportDirWindows -RunId $runId)) {
         throw "login_only failed"
     }
 } catch {
@@ -284,7 +304,7 @@ try {
 }
 
 try {
-    if (-not (Invoke-ScenarioWithOptionalAutoTune -Scenario "game_only" -WarmupSec 20 -DurationSec 120 -VirtualUsers 50 -TargetRps 250 -RampUpSec 20 -TimeoutMs 500 -AccountPoolSize 200 -MinSuccessRate 0.998 -MaxTimeoutRate 0.003 -MaxP95Ms 80 -MaxP99Ms 180 -ReportDirRelative $reportDirRelative -ReportDirWindows $reportDirWindows -RunId $runId)) {
+    if (-not (Invoke-ScenarioWithOptionalAutoTune -Scenario "game_only" -ManagerPort (Get-Random -Minimum 23000 -Maximum 23999) -WarmupSec 20 -DurationSec 120 -VirtualUsers 50 -TargetRps 250 -RampUpSec 20 -TimeoutMs 500 -AccountPoolSize 200 -MinSuccessRate 0.998 -MaxTimeoutRate 0.003 -MaxP95Ms 80 -MaxP99Ms 180 -ReportDirRelative $reportDirRelative -ReportDirWindows $reportDirWindows -RunId $runId)) {
         throw "game_only failed"
     }
 } catch {
