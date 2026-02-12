@@ -315,7 +315,26 @@ bool BasicHttpService::write_protobuf_response(evhttp_request* request, const go
     if(headers != nullptr)
     {
         evhttp_add_header(headers, "Content-Type", "application/x-protobuf");
-        evhttp_add_header(headers, "Connection", "close");
+
+        bool client_wants_close = false;
+        auto* input_headers = evhttp_request_get_input_headers(request);
+        if(input_headers != nullptr)
+        {
+            if(const char* connection_header = evhttp_find_header(input_headers, "Connection");
+               connection_header != nullptr)
+            {
+                std::string value = connection_header;
+                std::transform(value.begin(), value.end(), value.begin(), [](unsigned char ch) {
+                    return static_cast<char>(std::tolower(ch));
+                });
+                client_wants_close = value.find("close") != std::string::npos;
+            }
+        }
+
+        if(client_wants_close)
+        {
+            evhttp_add_header(headers, "Connection", "close");
+        }
     }
     evhttp_send_reply(request, http_status, "OK", output);
     evbuffer_free(output);

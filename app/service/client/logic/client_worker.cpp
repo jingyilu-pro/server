@@ -29,6 +29,7 @@
 #include <chrono>
 #include <memory>
 #include <thread>
+#include <unordered_map>
 
 struct HttpResponse
 {
@@ -57,6 +58,116 @@ bool endpoint_valid(const EndpointConfig& endpoint)
     return !endpoint.host.empty() && endpoint.port > 0;
 }
 
+std::string endpoint_key(const EndpointConfig& endpoint)
+{
+    return endpoint.host + ":" + std::to_string(endpoint.port);
+}
+
+struct WorkerHttpContext
+{
+    event_base* base = nullptr;
+    std::unordered_map<std::string, evhttp_connection*> connections;
+
+    ~WorkerHttpContext()
+    {
+        for(auto& item : connections)
+        {
+            if(item.second != nullptr)
+            {
+                evhttp_connection_free(item.second);
+            }
+        }
+        connections.clear();
+
+        if(base != nullptr)
+        {
+            event_base_free(base);
+            base = nullptr;
+        }
+    }
+};
+
+WorkerHttpContext* ensure_worker_http_context(std::string* error)
+{
+    thread_local WorkerHttpContext context;
+    if(context.base != nullptr)
+    {
+        return &context;
+    }
+
+    context.base = event_base_new();
+    if(context.base == nullptr)
+    {
+        if(error != nullptr)
+        {
+            *error = "event_base_new_failed";
+        }
+        return nullptr;
+    }
+
+    return &context;
+}
+
+void drop_worker_connection(WorkerHttpContext* context, const std::string& key)
+{
+    if(context == nullptr || key.empty())
+    {
+        return;
+    }
+
+    auto iter = context->connections.find(key);
+    if(iter == context->connections.end())
+    {
+        return;
+    }
+
+    if(iter->second != nullptr)
+    {
+        evhttp_connection_free(iter->second);
+    }
+    context->connections.erase(iter);
+}
+
+evhttp_connection* get_worker_connection(WorkerHttpContext* context,
+                                         const EndpointConfig& endpoint,
+                                         int timeout_ms,
+                                         std::string* error)
+{
+    if(context == nullptr || context->base == nullptr)
+    {
+        if(error != nullptr)
+        {
+            *error = "event_base_unavailable";
+        }
+        return nullptr;
+    }
+
+    const auto key = endpoint_key(endpoint);
+    if(auto iter = context->connections.find(key); iter != context->connections.end() && iter->second != nullptr)
+    {
+        evhttp_connection_set_timeout(iter->second, std::max(1, timeout_ms / 1000));
+        return iter->second;
+    }
+
+    auto* connection = evhttp_connection_base_new(context->base,
+                                                  nullptr,
+                                                  endpoint.host.c_str(),
+                                                  static_cast<ev_uint16_t>(endpoint.port));
+    if(connection == nullptr)
+    {
+        if(error != nullptr)
+        {
+            *error = "evhttp_connection_base_new_failed";
+        }
+        return nullptr;
+    }
+
+    evhttp_connection_set_retries(connection, 1);
+    evhttp_connection_set_timeout(connection, std::max(1, timeout_ms / 1000));
+    context->connections[key] = connection;
+    return connection;
+}
+
 struct HttpClientOpResult : public CoroResult
 {
     EndpointConfig endpoint;
@@ -83,28 +194,26 @@ struct HttpClientOpResult : public CoroResult
         response = {};
         error.clear();
 
-        event_base* base = event_base_new();
-        if(base == nullptr)
+        auto* context = ensure_worker_http_context(&error);
+        if(context == nullptr || context->base == nullptr)
         {
-            error = "event_base_new_failed";
             return;
         }
 
-        evhttp_connection* connection = evhttp_connection_base_new(base,
-                                                                   nullptr,
-                                                                   endpoint.host.c_str(),
-                                                                   static_cast<ev_uint16_t>(endpoint.port));
+        const auto connection_key = endpoint_key(endpoint);
+        evhttp_connection* connection = get_worker_connection(context,
+                                                              endpoint,
+                                                              timeout_ms,
+                                                              &error);
         if(connection == nullptr)
         {
-            event_base_free(base);
-            error = "evhttp_connection_base_new_failed";
             return;
         }
-        evhttp_connection_set_timeout(connection, std::max(1, timeout_ms / 1000));
 
         struct RequestState
         {
             HttpClientOpResult* result = nullptr;
+            bool done = false;
         };
 
         RequestState state;
@@ -125,6 +234,7 @@ struct HttpClientOpResult : public CoroResult
                     {
                         req_state->result->error = "http_request_null";
                     }
+                    req_state->done = true;
                     return;
                 }
 
@@ -141,13 +251,12 @@ struct HttpClientOpResult : public CoroResult
 
                 req_state->result->response.status_code = evhttp_request_get_response_code(req);
                 req_state->result->response.ok = req_state->result->response.status_code > 0;
+                req_state->done = true;
             },
             &state);
 
         if(request == nullptr)
         {
-            evhttp_connection_free(connection);
-            event_base_free(base);
             error = "evhttp_request_new_failed";
             return;
         }
@@ -163,6 +272,7 @@ struct HttpClientOpResult : public CoroResult
 
                 req_state->result->response.ok = false;
                 req_state->result->response.timed_out = (err == EVREQ_HTTP_TIMEOUT);
+                req_state->done = true;
                 if(req_state->result->error.empty())
                 {
                     switch(err)
@@ -194,7 +304,7 @@ struct HttpClientOpResult : public CoroResult
 
         auto* output_headers = evhttp_request_get_output_headers(request);
         evhttp_add_header(output_headers, "Host", (endpoint.host + ":" + std::to_string(endpoint.port)).c_str());
-        evhttp_add_header(output_headers, "Connection", "close");
+        evhttp_add_header(output_headers, "Connection", "keep-alive");
         evhttp_add_header(output_headers, "Content-Type", "application/x-protobuf");
         for(const auto& header : headers)
         {
@@ -224,21 +334,40 @@ struct HttpClientOpResult : public CoroResult
         if(evhttp_make_request(connection, request, EVHTTP_REQ_POST, endpoint_path(path.c_str()).c_str()) != 0)
         {
             evhttp_request_free(request);
-            evhttp_connection_free(connection);
-            event_base_free(base);
+            drop_worker_connection(context, connection_key);
             error = "evhttp_make_request_failed";
             return;
         }
 
-        event_base_dispatch(base);
+        while(!state.done)
+        {
+            const int loop_rc = event_base_loop(context->base, EVLOOP_ONCE);
+            if(state.done)
+            {
+                break;
+            }
+
+            if(loop_rc < 0)
+            {
+                error = "event_base_loop_failed";
+                break;
+            }
+
+            if(loop_rc == 1)
+            {
+                std::this_thread::sleep_for(std::chrono::milliseconds(1));
+            }
+        }
 
         if(!response.ok && error.empty() && response.status_code <= 0)
         {
             error = "http_request_failed";
         }
 
-        evhttp_connection_free(connection);
-        event_base_free(base);
+        if(!response.ok)
+        {
+            drop_worker_connection(context, connection_key);
+        }
     }
 };
 
