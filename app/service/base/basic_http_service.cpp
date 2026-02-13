@@ -356,11 +356,35 @@ std::string BasicHttpService::extract_authorization_token(evhttp_request* reques
     }
 
     std::string token = authorization;
-    const std::string prefix = "Bearer ";
-    if(token.rfind(prefix, 0) == 0)
+    while(!token.empty() && std::isspace(static_cast<unsigned char>(token.front())) != 0)
     {
-        token = token.substr(prefix.size());
+        token.erase(token.begin());
     }
+    while(!token.empty() && std::isspace(static_cast<unsigned char>(token.back())) != 0)
+    {
+        token.pop_back();
+    }
+
+    const std::string bearer_scheme = "bearer";
+    if(token.size() > bearer_scheme.size())
+    {
+        std::string scheme = token.substr(0, bearer_scheme.size());
+        std::transform(scheme.begin(), scheme.end(), scheme.begin(), [](unsigned char ch) {
+            return static_cast<char>(std::tolower(ch));
+        });
+
+        if(scheme == bearer_scheme && std::isspace(static_cast<unsigned char>(token[bearer_scheme.size()])) != 0)
+        {
+            std::size_t value_offset = bearer_scheme.size();
+            while(value_offset < token.size() &&
+                  std::isspace(static_cast<unsigned char>(token[value_offset])) != 0)
+            {
+                ++value_offset;
+            }
+            token = token.substr(value_offset);
+        }
+    }
+
     return token;
 }
 
