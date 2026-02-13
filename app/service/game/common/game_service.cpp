@@ -150,7 +150,6 @@ bool GameService::start()
     {
         spdlog::error("game register to redis failed: {}",
                       register_done ? register_error : "register_wait_timeout");
-        m_register_inflight.store(false);
         BasicHttpService::stop();
         return false;
     }

@@ -1,6 +1,6 @@
 # 架构说明
 
-更新时间：2026-02-12
+更新时间：2026-02-13
 
 ## 1. 进程模型（`application --mode`）
 
@@ -86,8 +86,10 @@
 - 会话接口：`ISessionStore`
   - Redis 实现：`RedisSessionStore`
   - 降级实现：`NoopSessionStore`
-- 缓存仓储装饰器：`CachedAccountRepository`
-  - 组合 `inner=mysql` 与 `cache=redis/noop`
+- 缓存策略：由 `LoginService` 在协程链路内执行
+  - 先读 `IAccountCacheStore`
+  - 未命中或校验失败时回源 `IAccountRepository`
+  - 回源成功后回填缓存（best-effort）
 
 键约定：
 
@@ -138,9 +140,17 @@
 - `login_account_cache_store`
 - `login_session_store`
 - `game_session_store`
-- `login_account_repository`（`CachedAccountRepository`）
+- `login_account_repository`（`MySqlAccountRepository`）
 - `login_token_provider`
 - `game_token_provider`
+
+## 12. 近期关键变更（2026-02-13）
+
+- 协程调度改为严格单线程模型：业务线程负责 `alloc/update/poll`，工作线程仅执行 `worker()`。
+- 在 `CoroManager` 增加线程归属校验，跨线程调用协程调度入口会直接失败，避免隐式并发。
+- `manager/login/game` 的启动注册与停止反注册统一改为事件线程内发起并完成，`start()/stop()` 仅阻塞等待结果。
+- 移除业务层冗余调度锁（`m_manager_mutex`），由线程模型约束替代。
+- 本轮门禁压测通过：`reports/pressure/latest_summary.md`（run_id: `20260213152539_87c0208`）。
 
 ## 9. 配置模型
 
