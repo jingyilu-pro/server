@@ -359,14 +359,18 @@ bool ClientPressureManager::should_stop_by_timeout_guard()
         return true;
     }
 
-    PressureMetricsSnapshot snapshot;
+    uint64_t total_request = 0;
+    uint64_t total_success = 0;
+    uint64_t total_timeout = 0;
     {
         std::lock_guard lock(m_metrics_mutex);
-        snapshot = m_metrics;
+        total_request = m_metrics.total_request;
+        total_success = m_metrics.total_success;
+        total_timeout = m_metrics.total_timeout;
     }
 
     const uint64_t min_samples = static_cast<uint64_t>(std::max(1, m_config.client_pressure.guard.min_samples));
-    if(snapshot.total_request < min_samples)
+    if(total_request < min_samples)
     {
         return false;
     }
@@ -376,17 +380,22 @@ bool ClientPressureManager::should_stop_by_timeout_guard()
         return false;
     }
 
-    const double success_rate = safe_ratio(snapshot.total_success, snapshot.total_request);
-    const double timeout_rate = safe_ratio(snapshot.total_timeout, snapshot.total_request);
+    const double success_rate = safe_ratio(total_success, total_request);
+    const double timeout_rate = safe_ratio(total_timeout, total_request);
 
     const auto now = std::chrono::steady_clock::now();
-    const bool enough_new_samples = snapshot.total_request >= (m_last_guard_eval_samples + 128);
+    const bool enough_new_samples = total_request >= (m_last_guard_eval_samples + 128);
     const bool reached_eval_interval = now - m_last_guard_eval_time >= std::chrono::seconds(1);
     if(!m_guard_latency_cache_ready || enough_new_samples || reached_eval_interval)
     {
-        m_last_guard_p95_ms = static_cast<double>(percentile_us(snapshot.chain_latency_us, 0.95)) / 1000.0;
-        m_last_guard_p99_ms = static_cast<double>(percentile_us(snapshot.chain_latency_us, 0.99)) / 1000.0;
-        m_last_guard_eval_samples = snapshot.total_request;
+        std::vector<int64_t> latencies_us;
+        {
+            std::lock_guard lock(m_metrics_mutex);
+            latencies_us = m_metrics.chain_latency_us;
+            m_last_guard_eval_samples = m_metrics.total_request;
+        }
+        m_last_guard_p95_ms = static_cast<double>(percentile_us(latencies_us, 0.95)) / 1000.0;
+        m_last_guard_p99_ms = static_cast<double>(percentile_us(latencies_us, 0.99)) / 1000.0;
         m_last_guard_eval_time = now;
         m_guard_latency_cache_ready = true;
     }
@@ -679,11 +688,13 @@ void ClientPressureManager::write_json_report() const
     output << "  \"p50\": " << percentile_us(snapshot.chain_latency_us, 0.50) << ",\n";
     output << "  \"p95\": " << percentile_us(snapshot.chain_latency_us, 0.95) << ",\n";
     output << "  \"p99\": " << percentile_us(snapshot.chain_latency_us, 0.99) << ",\n";
+    const bool early_stopped = m_timeout_guard_triggered.load();
+    const bool early_stopped_by_timeout = early_stopped && m_early_stop_reason == "timeout_rate_above_threshold";
     output << "  \"early_stopped_by_timeout_guard\": "
-           << (m_timeout_guard_triggered.load() ? "true" : "false")
+           << (early_stopped_by_timeout ? "true" : "false")
            << ",\n";
     output << "  \"early_stopped_by_sla_guard\": "
-           << (m_timeout_guard_triggered.load() ? "true" : "false")
+           << (early_stopped ? "true" : "false")
            << ",\n";
     output << "  \"early_stop_reason\": \"" << json_escape(m_early_stop_reason) << "\",\n";
     output << "  \"warmup\": {\n";
