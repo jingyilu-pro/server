@@ -53,7 +53,8 @@ public:
 private:
     SessionStoreOpResult* alloc_result();
     void execute_operation(SessionStoreOpResult* result);
-    bool ensure_connected();
+    bool ensure_connected(redisContext** context, std::string* error = nullptr);
+    redisContext* ensure_worker_connection(std::string* error = nullptr);
     std::string make_session_key(const std::string& account) const;
 
 private:
@@ -63,4 +64,3 @@ private:
     std::unique_ptr<RedisSessionManager> m_manager;
     mutable std::mutex m_mutex;
 };
-

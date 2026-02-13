@@ -92,4 +92,10 @@ private:
     double m_bucket_capacity = 1.0;
     std::atomic<uint64_t> m_dispatch_round_robin{0};
     std::atomic<int> m_inflight_count{0};
+
+    std::chrono::steady_clock::time_point m_last_guard_eval_time{};
+    uint64_t m_last_guard_eval_samples = 0;
+    double m_last_guard_p95_ms = 0.0;
+    double m_last_guard_p99_ms = 0.0;
+    bool m_guard_latency_cache_ready = false;
 };

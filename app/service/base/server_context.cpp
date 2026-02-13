@@ -18,7 +18,6 @@
 
 #include "server_context.h"
 
-#include "cached_account_repository.h"
 #include "jwt_token_provider.h"
 #include "mysql_account_repository.h"
 #include "noop_account_cache_store.h"
@@ -87,11 +86,7 @@ ServerContext create_server_context(const RuntimeConfig& config,
 
     if(require_login_repository)
     {
-        context.login_account_repository = std::make_shared<CachedAccountRepository>(mysql_repository,
-                                                                                     context.login_account_cache_store,
-                                                                                     std::max(1, config.redis.account_cache_ttl_sec),
-                                                                                     std::max(1, config.mysql.coro_workers),
-                                                                                     std::max(1, config.mysql.password_hash_iterations));
+        context.login_account_repository = std::move(mysql_repository);
     }
     context.login_token_provider = std::make_shared<JwtTokenProvider>(config.jwt);
     context.game_token_provider = context.login_token_provider;

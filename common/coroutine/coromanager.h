@@ -23,6 +23,8 @@
 #include <vector>
 #include "workerthread.h"
 #include <list>
+#include <mutex>
+#include <thread>
 #include "cororesult.h"
 
 using namespace std;
@@ -49,6 +51,7 @@ public:
 
 protected:
     virtual CoroResult* alloc() = 0;
+    void ensure_owner_thread(const char* api_name);
     template <class T>
     void expand()
     {
@@ -63,6 +66,7 @@ protected:
     [[nodiscard]] bool pool_empty() const { return m_result_pool.empty(); }
     CoroResult* inner_alloc()
     {
+        ensure_owner_thread("inner_alloc");
         if(!m_result_pool.empty())
         {
             CoroResult* result = m_result_pool.front();
@@ -77,12 +81,14 @@ protected:
     }
     void release(CoroResult* result, bool init = false)
     {
+        ensure_owner_thread("release");
         if(!init)
             result->clear();
         m_result_pool.push_back(result);
     }
     void add_async_result(CoroResult* result) const
     {
+        const_cast<CoroManager*>(this)->ensure_owner_thread("add_async_result");
         m_worker_threads[result->uid() % m_worker_count]->insert(result);
     }
     void recycle();
@@ -96,6 +102,8 @@ protected:
     time_t m_update_time;
     time_t m_recycle_time;
     CoroResult* m_results[block_size];
+    std::thread::id m_owner_thread_id;
+    mutable std::mutex m_owner_thread_mutex;
 };
 
 struct CoroAwaitable : public coro_awaitable<CoroResult*>

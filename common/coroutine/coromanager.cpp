@@ -18,6 +18,9 @@
 
 #include "coromanager.h"
 #include "define.h"
+#include <cstdio>
+#include <cstdlib>
+#include <functional>
 #include <iostream>
 
 CoroManager::CoroManager(int worker_count)
@@ -52,6 +55,7 @@ void CoroManager::init()
 
 void CoroManager::update()
 {
+    ensure_owner_thread("update");
     for(const auto& var : m_worker_threads)
     {
         const size_t co = var->get_results().try_dequeue_bulk(m_results, block_size);
@@ -68,6 +72,32 @@ void CoroManager::update()
 
     // racy
     recycle();
+}
+
+void CoroManager::ensure_owner_thread(const char* api_name)
+{
+    const auto current_thread_id = std::this_thread::get_id();
+
+    std::lock_guard<std::mutex> lock(m_owner_thread_mutex);
+    if(m_owner_thread_id == std::thread::id{})
+    {
+        m_owner_thread_id = current_thread_id;
+        return;
+    }
+
+    if(m_owner_thread_id == current_thread_id)
+    {
+        return;
+    }
+
+    const auto owner_hash = std::hash<std::thread::id>{}(m_owner_thread_id);
+    const auto current_hash = std::hash<std::thread::id>{}(current_thread_id);
+    std::fprintf(stderr,
+                 "CoroManager thread-affinity violation at %s, owner=%zu current=%zu\n",
+                 api_name == nullptr ? "unknown" : api_name,
+                 owner_hash,
+                 current_hash);
+    std::abort();
 }
 
 CoroAwaitable CoroManager::start_coroutine(CoroManager* manager)

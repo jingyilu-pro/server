@@ -133,4 +133,3 @@ CoroAwaitable NoopAccountCacheStore::erase_account(const std::string& account)
                  });
     return CoroAwaitable{m_manager.get(), result};
 }
-

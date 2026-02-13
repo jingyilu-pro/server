@@ -211,6 +211,11 @@ bool ClientPressureManager::start()
     m_finished.store(false);
     m_timeout_guard_triggered.store(false);
     m_early_stop_reason.clear();
+    m_last_guard_eval_time = now;
+    m_last_guard_eval_samples = 0;
+    m_last_guard_p95_ms = 0.0;
+    m_last_guard_p99_ms = 0.0;
+    m_guard_latency_cache_ready = false;
     m_running.store(true);
 
     spdlog::info("client pressure manager start: scenario={}, vus={}, rps={}, warmup={}s, duration={}s, ramp={}s",
@@ -373,8 +378,21 @@ bool ClientPressureManager::should_stop_by_timeout_guard()
 
     const double success_rate = safe_ratio(snapshot.total_success, snapshot.total_request);
     const double timeout_rate = safe_ratio(snapshot.total_timeout, snapshot.total_request);
-    const double p95_ms = static_cast<double>(percentile_us(snapshot.chain_latency_us, 0.95)) / 1000.0;
-    const double p99_ms = static_cast<double>(percentile_us(snapshot.chain_latency_us, 0.99)) / 1000.0;
+
+    const auto now = std::chrono::steady_clock::now();
+    const bool enough_new_samples = snapshot.total_request >= (m_last_guard_eval_samples + 128);
+    const bool reached_eval_interval = now - m_last_guard_eval_time >= std::chrono::seconds(1);
+    if(!m_guard_latency_cache_ready || enough_new_samples || reached_eval_interval)
+    {
+        m_last_guard_p95_ms = static_cast<double>(percentile_us(snapshot.chain_latency_us, 0.95)) / 1000.0;
+        m_last_guard_p99_ms = static_cast<double>(percentile_us(snapshot.chain_latency_us, 0.99)) / 1000.0;
+        m_last_guard_eval_samples = snapshot.total_request;
+        m_last_guard_eval_time = now;
+        m_guard_latency_cache_ready = true;
+    }
+
+    const double p95_ms = m_last_guard_p95_ms;
+    const double p99_ms = m_last_guard_p99_ms;
 
     if(success_rate < m_config.client_pressure.guard.min_success_rate)
     {

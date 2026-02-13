@@ -22,7 +22,6 @@
 #include "account_repository.h"
 
 #include <memory>
-#include <mutex>
 
 class CachedAccountRepository final : public IAccountRepository
 {
@@ -42,14 +41,6 @@ public:
     CoroAwaitable create_account(const std::string& account, const std::string& password) override;
 
 private:
-    class CachedAccountRepoManager;
-
-private:
     std::shared_ptr<IAccountRepository> m_inner;
     std::shared_ptr<IAccountCacheStore> m_cache_store;
-    int m_cache_ttl_sec = 300;
-    int m_coro_workers = 1;
-    int m_password_hash_iterations = 120000;
-    mutable std::mutex m_wait_mutex;
-    std::unique_ptr<CachedAccountRepoManager> m_manager;
 };

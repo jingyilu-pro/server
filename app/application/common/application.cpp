@@ -170,6 +170,7 @@ bool Application::start_services_by_mode()
         return register_service(std::make_unique<LoginService>(m_runtime_config,
                                                                m_server_context ? m_server_context->login_discovery : nullptr,
                                                                m_server_context ? m_server_context->login_account_repository : nullptr,
+                                                               m_server_context ? m_server_context->login_account_cache_store : nullptr,
                                                                m_server_context ? m_server_context->login_token_provider : nullptr,
                                                                m_server_context ? m_server_context->login_session_store : nullptr));
     case AppMode::game:
@@ -189,6 +190,7 @@ bool Application::start_non_client_services()
     auto login_discovery = m_server_context ? m_server_context->login_discovery : nullptr;
     auto game_discovery = m_server_context ? m_server_context->game_discovery : nullptr;
     auto account_repository = m_server_context ? m_server_context->login_account_repository : nullptr;
+    auto account_cache_store = m_server_context ? m_server_context->login_account_cache_store : nullptr;
     auto login_token_provider = m_server_context ? m_server_context->login_token_provider : nullptr;
     auto game_token_provider = m_server_context ? m_server_context->game_token_provider : nullptr;
     auto login_session_store = m_server_context ? m_server_context->login_session_store : nullptr;
@@ -201,6 +203,7 @@ bool Application::start_non_client_services()
     if(!register_service(std::make_unique<LoginService>(m_runtime_config,
                                                         login_discovery,
                                                         account_repository,
+                                                        account_cache_store,
                                                         login_token_provider,
                                                         login_session_store)))
     {

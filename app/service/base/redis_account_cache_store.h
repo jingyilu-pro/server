@@ -52,7 +52,8 @@ public:
 private:
     AccountCacheOpResult* alloc_result();
     void execute_operation(AccountCacheOpResult* result);
-    bool ensure_connected();
+    bool ensure_connected(redisContext** context, std::string* error = nullptr);
+    redisContext* ensure_worker_connection(std::string* error = nullptr);
     std::string make_account_key(const std::string& account) const;
 
 private:
@@ -62,4 +63,3 @@ private:
     std::unique_ptr<RedisAccountCacheManager> m_manager;
     mutable std::mutex m_mutex;
 };
-

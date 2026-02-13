@@ -28,7 +28,9 @@
 
 #include <atomic>
 #include <chrono>
+#include <condition_variable>
 #include <memory>
+#include <mutex>
 
 class GameService : public BasicHttpService
 {
@@ -49,6 +51,7 @@ protected:
 
 private:
     coro_task_t register_instance_async();
+    coro_task_t unregister_instance_async();
     coro_task_t heartbeat_async();
     coro_task_t enter_game_async(evhttp_request* request);
 
@@ -62,4 +65,17 @@ private:
     bool m_heartbeat_inflight = false;
     std::atomic<bool> m_register_inflight{false};
     std::atomic<bool> m_registered{false};
+    std::atomic<bool> m_stopping{false};
+
+    std::mutex m_lifecycle_mutex;
+    std::condition_variable m_lifecycle_cv;
+    bool m_start_register_waiting = false;
+    bool m_start_register_done = false;
+    bool m_start_register_success = false;
+    std::string m_start_register_error;
+    bool m_stop_unregister_waiting = false;
+    bool m_stop_unregister_requested = false;
+    bool m_stop_unregister_done = false;
+    bool m_stop_unregister_success = false;
+    std::string m_stop_unregister_error;
 };

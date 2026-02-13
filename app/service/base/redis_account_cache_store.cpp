@@ -56,7 +56,7 @@ RedisAccountCacheStore::RedisAccountCacheStore(const RedisConfig& config)
     m_manager = std::make_unique<RedisAccountCacheManager>(std::max(1, m_config.coro_workers));
 
     std::lock_guard lock(m_mutex);
-    m_ready = ensure_connected();
+    m_ready = ensure_connected(&m_context, nullptr);
 }
 
 RedisAccountCacheStore::~RedisAccountCacheStore()
@@ -153,11 +153,12 @@ void RedisAccountCacheStore::execute_operation(AccountCacheOpResult* result)
         return;
     }
 
-    std::lock_guard lock(m_mutex);
-    if(!ensure_connected())
+    std::string connect_error;
+    redisContext* worker_context = ensure_worker_connection(&connect_error);
+    if(worker_context == nullptr)
     {
         result->success = false;
-        result->error = "redis_unavailable";
+        result->error = connect_error.empty() ? "redis_unavailable" : connect_error;
         return;
     }
 
@@ -173,7 +174,7 @@ void RedisAccountCacheStore::execute_operation(AccountCacheOpResult* result)
         }
 
         const auto key = make_account_key(result->request_account);
-        auto* reply = static_cast<redisReply*>(redisCommand(m_context,
+        auto* reply = static_cast<redisReply*>(redisCommand(worker_context,
                                                             "HMGET %s account password_hash salt",
                                                             key.c_str()));
         if(reply == nullptr)
@@ -235,7 +236,7 @@ void RedisAccountCacheStore::execute_operation(AccountCacheOpResult* result)
 
         const auto ttl_sec = std::max(1, result->request_ttl_sec);
         const auto key = make_account_key(result->request_record->account);
-        auto* reply = static_cast<redisReply*>(redisCommand(m_context,
+        auto* reply = static_cast<redisReply*>(redisCommand(worker_context,
                                                             "HSET %s account %s password_hash %s salt %s",
                                                             key.c_str(),
                                                             result->request_record->account.c_str(),
@@ -249,7 +250,7 @@ void RedisAccountCacheStore::execute_operation(AccountCacheOpResult* result)
         }
         freeReplyObject(reply);
 
-        reply = static_cast<redisReply*>(redisCommand(m_context, "EXPIRE %s %d", key.c_str(), ttl_sec));
+        reply = static_cast<redisReply*>(redisCommand(worker_context, "EXPIRE %s %d", key.c_str(), ttl_sec));
         if(reply == nullptr)
         {
             result->success = false;
@@ -277,7 +278,7 @@ void RedisAccountCacheStore::execute_operation(AccountCacheOpResult* result)
         }
 
         const auto key = make_account_key(result->request_account);
-        auto* reply = static_cast<redisReply*>(redisCommand(m_context, "DEL %s", key.c_str()));
+        auto* reply = static_cast<redisReply*>(redisCommand(worker_context, "DEL %s", key.c_str()));
         if(reply == nullptr)
         {
             result->success = false;
@@ -297,41 +298,54 @@ void RedisAccountCacheStore::execute_operation(AccountCacheOpResult* result)
     }
 }
 
-bool RedisAccountCacheStore::ensure_connected()
+bool RedisAccountCacheStore::ensure_connected(redisContext** context, std::string* error)
 {
-    if(m_context != nullptr && m_context->err == 0)
+    if(context == nullptr)
+    {
+        if(error != nullptr)
+        {
+            *error = "redis_invalid_context";
+        }
+        return false;
+    }
+
+    if(*context != nullptr && (*context)->err == 0)
     {
         return true;
     }
 
-    if(m_context != nullptr)
+    if(*context != nullptr)
     {
-        redisFree(m_context);
-        m_context = nullptr;
+        redisFree(*context);
+        *context = nullptr;
     }
 
     timeval timeout{};
     timeout.tv_sec = 1;
     timeout.tv_usec = 500 * 1000;
 
-    m_context = redisConnectWithTimeout(m_config.host.c_str(), m_config.port, timeout);
-    if(m_context == nullptr || m_context->err != 0)
+    *context = redisConnectWithTimeout(m_config.host.c_str(), m_config.port, timeout);
+    if(*context == nullptr || (*context)->err != 0)
     {
         spdlog::error("redis account cache connect failed host={} port={} err={}",
                       m_config.host,
                       m_config.port,
-                      m_context == nullptr ? "null context" : m_context->errstr);
-        if(m_context != nullptr)
+                      *context == nullptr ? "null context" : (*context)->errstr);
+        if(*context != nullptr)
         {
-            redisFree(m_context);
-            m_context = nullptr;
+            redisFree(*context);
+            *context = nullptr;
+        }
+        if(error != nullptr)
+        {
+            *error = "redis_connect_failed";
         }
         return false;
     }
 
     if(!m_config.password.empty())
     {
-        auto* auth_reply = static_cast<redisReply*>(redisCommand(m_context, "AUTH %s", m_config.password.c_str()));
+        auto* auth_reply = static_cast<redisReply*>(redisCommand(*context, "AUTH %s", m_config.password.c_str()));
         if(!is_reply_ok(auth_reply))
         {
             spdlog::error("redis account cache auth failed");
@@ -339,8 +353,12 @@ bool RedisAccountCacheStore::ensure_connected()
             {
                 freeReplyObject(auth_reply);
             }
-            redisFree(m_context);
-            m_context = nullptr;
+            redisFree(*context);
+            *context = nullptr;
+            if(error != nullptr)
+            {
+                *error = "redis_auth_failed";
+            }
             return false;
         }
         freeReplyObject(auth_reply);
@@ -348,7 +366,7 @@ bool RedisAccountCacheStore::ensure_connected()
 
     if(m_config.db > 0)
     {
-        auto* select_reply = static_cast<redisReply*>(redisCommand(m_context, "SELECT %d", m_config.db));
+        auto* select_reply = static_cast<redisReply*>(redisCommand(*context, "SELECT %d", m_config.db));
         if(!is_reply_ok(select_reply))
         {
             spdlog::error("redis account cache select db={} failed", m_config.db);
@@ -356,8 +374,12 @@ bool RedisAccountCacheStore::ensure_connected()
             {
                 freeReplyObject(select_reply);
             }
-            redisFree(m_context);
-            m_context = nullptr;
+            redisFree(*context);
+            *context = nullptr;
+            if(error != nullptr)
+            {
+                *error = "redis_select_db_failed";
+            }
             return false;
         }
         freeReplyObject(select_reply);
@@ -366,10 +388,31 @@ bool RedisAccountCacheStore::ensure_connected()
     return true;
 }
 
+redisContext* RedisAccountCacheStore::ensure_worker_connection(std::string* error)
+{
+    thread_local const RedisAccountCacheStore* tls_owner = nullptr;
+    thread_local redisContext* tls_context = nullptr;
+
+    if(tls_owner != this)
+    {
+        if(tls_context != nullptr)
+        {
+            redisFree(tls_context);
+            tls_context = nullptr;
+        }
+        tls_owner = this;
+    }
+
+    if(ensure_connected(&tls_context, error))
+    {
+        return tls_context;
+    }
+    return nullptr;
+}
+
 std::string RedisAccountCacheStore::make_account_key(const std::string& account) const
 {
     std::ostringstream output;
     output << m_config.key_prefix << ":acct:" << account;
     return output.str();
 }
-

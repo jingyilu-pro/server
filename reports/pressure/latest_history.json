@@ -1,5 +1,23 @@
 ﻿[
     {
+        "run_id":  "20260213152539_87c0208",
+        "run_time":  "2026-02-13 15:39:35",
+        "gate_status":  "PASS",
+        "full_chain_success_rate":  1,
+        "full_chain_timeout_rate":  0,
+        "full_chain_p95_ms":  50.072,
+        "compare_report":  "reports/pressure/2026-02-13/pr_gate_compare_20260213152539_87c0208_vs_20260212230417_3b5e7e5.md"
+    },
+    {
+        "run_id":  "20260213150334_87c0208",
+        "run_time":  "2026-02-13 15:04:00",
+        "gate_status":  "FAILED",
+        "full_chain_success_rate":  null,
+        "full_chain_timeout_rate":  null,
+        "full_chain_p95_ms":  null,
+        "compare_report":  "reports/pressure/2026-02-13/pr_gate_compare_20260213150334_87c0208_vs_20260212230417_3b5e7e5.md"
+    },
+    {
         "run_id":  "20260212230417_3b5e7e5",
         "run_time":  "2026-02-12 23:18:05",
         "gate_status":  "PASS",

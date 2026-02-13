@@ -156,4 +156,3 @@ CoroAwaitable NoopSessionStore::remove_session(const std::string& account)
                  });
     return CoroAwaitable{m_manager.get(), result};
 }
-

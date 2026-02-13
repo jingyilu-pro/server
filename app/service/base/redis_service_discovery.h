@@ -66,4 +66,3 @@ private:
     std::unique_ptr<RedisDiscoveryCoroManager> m_manager;
     mutable std::mutex m_mutex;
 };
-

@@ -41,4 +41,3 @@ private:
 private:
     std::unique_ptr<NoopAccountCacheManager> m_manager;
 };
-

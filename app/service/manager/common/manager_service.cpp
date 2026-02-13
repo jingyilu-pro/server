@@ -64,34 +64,96 @@ ManagerService::~ManagerService() = default;
 
 bool ManagerService::start()
 {
-    if(!BasicHttpService::start())
-    {
-        return false;
-    }
-
     if(!m_discovery)
     {
         spdlog::error("manager discovery unavailable");
+        return false;
+    }
+
+    m_stopping.store(false);
+    m_registered.store(false);
+    m_register_inflight.store(false);
+    m_heartbeat_inflight = false;
+
+    {
+        std::lock_guard<std::mutex> lock(m_lifecycle_mutex);
+        m_start_register_waiting = true;
+        m_start_register_done = false;
+        m_start_register_success = false;
+        m_start_register_error.clear();
+    }
+
+    if(!BasicHttpService::start())
+    {
+        std::lock_guard<std::mutex> lock(m_lifecycle_mutex);
+        m_start_register_waiting = false;
+        m_start_register_done = false;
+        return false;
+    }
+
+    m_local_instance.endpoint = endpoint();
+    m_local_instance.instance_id = name() + std::string("@") + make_endpoint_text(m_local_instance.endpoint);
+
+    bool register_done = false;
+    bool register_success = false;
+    std::string register_error;
+    {
+        const auto timeout_ms = std::max(1000, m_config.redis.op_timeout_ms + 500);
+        std::unique_lock<std::mutex> lock(m_lifecycle_mutex);
+        register_done = m_lifecycle_cv.wait_for(lock,
+                                                std::chrono::milliseconds(timeout_ms),
+                                                [this]() { return m_start_register_done; });
+        register_success = m_start_register_success;
+        register_error = m_start_register_error;
+        m_start_register_waiting = false;
+    }
+
+    if(!register_done || !register_success)
+    {
+        spdlog::error("manager register to redis failed: {}",
+                      register_done ? register_error : "register_wait_timeout");
+        m_register_inflight.store(false);
         BasicHttpService::stop();
         return false;
     }
 
-    m_registered.store(false);
-    m_register_inflight.store(false);
-
-    m_last_heartbeat = std::chrono::steady_clock::now();
     return true;
 }
 
 bool ManagerService::stop()
 {
+    m_stopping.store(true);
+
     if(m_discovery && m_registered.load())
     {
-        ServiceDiscoveryOpResult unregister_result;
-        wait_service_discovery_result(m_discovery.get(),
-                                      m_discovery->unregister_instance(m_local_instance),
-                                      &unregister_result,
-                                      m_config.redis.op_timeout_ms);
+        {
+            std::lock_guard<std::mutex> lock(m_lifecycle_mutex);
+            m_stop_unregister_waiting = true;
+            m_stop_unregister_requested = true;
+            m_stop_unregister_done = false;
+            m_stop_unregister_success = false;
+            m_stop_unregister_error.clear();
+        }
+
+        bool unregister_done = false;
+        bool unregister_success = false;
+        std::string unregister_error;
+        {
+            const auto timeout_ms = std::max(1000, m_config.redis.op_timeout_ms + 500);
+            std::unique_lock<std::mutex> lock(m_lifecycle_mutex);
+            unregister_done = m_lifecycle_cv.wait_for(lock,
+                                                      std::chrono::milliseconds(timeout_ms),
+                                                      [this]() { return m_stop_unregister_done; });
+            unregister_success = m_stop_unregister_success;
+            unregister_error = m_stop_unregister_error;
+            m_stop_unregister_waiting = false;
+        }
+
+        if(!unregister_done || !unregister_success)
+        {
+            spdlog::warn("manager unregister from redis failed: {}",
+                         unregister_done ? unregister_error : "unregister_wait_timeout");
+        }
     }
 
     m_registered.store(false);
@@ -107,6 +169,31 @@ void ManagerService::update(std::chrono::milliseconds delta_time, std::chrono::m
 
 void ManagerService::on_event_loop_tick()
 {
+    if(m_stopping.load())
+    {
+        if(m_discovery)
+        {
+            m_discovery->poll();
+        }
+
+        bool should_unregister = false;
+        {
+            std::lock_guard<std::mutex> lock(m_lifecycle_mutex);
+            should_unregister = m_stop_unregister_waiting &&
+                               m_stop_unregister_requested &&
+                               !m_stop_unregister_done;
+            if(should_unregister)
+            {
+                m_stop_unregister_requested = false;
+            }
+        }
+        if(should_unregister)
+        {
+            unregister_instance_async();
+        }
+        return;
+    }
+
     if(m_discovery)
     {
         m_discovery->poll();
@@ -130,17 +217,69 @@ coro_task_t ManagerService::register_instance_async()
 {
     m_register_inflight.store(true);
     auto* register_result = dynamic_cast<ServiceDiscoveryOpResult*>(co_await m_discovery->register_instance(m_local_instance));
+    bool register_success = false;
+    std::string register_error = "null result";
     if(register_result != nullptr && register_result->success)
     {
+        register_success = true;
+        register_error.clear();
         m_registered.store(true);
         m_last_heartbeat = std::chrono::steady_clock::now();
     }
     else
     {
+        register_error = register_result == nullptr ? "null result" : register_result->error;
         spdlog::warn("manager register to redis failed: {}",
-                     register_result == nullptr ? "null result" : register_result->error);
+                     register_error);
     }
+
+    bool notify_startup_waiter = false;
+    {
+        std::lock_guard<std::mutex> lock(m_lifecycle_mutex);
+        if(m_start_register_waiting && !m_start_register_done)
+        {
+            m_start_register_done = true;
+            m_start_register_success = register_success;
+            m_start_register_error = register_error;
+            notify_startup_waiter = true;
+        }
+    }
+
     m_register_inflight.store(false);
+    if(notify_startup_waiter)
+    {
+        m_lifecycle_cv.notify_all();
+    }
+}
+
+coro_task_t ManagerService::unregister_instance_async()
+{
+    auto* unregister_result = dynamic_cast<ServiceDiscoveryOpResult*>(co_await m_discovery->unregister_instance(m_local_instance));
+    const bool unregister_success = unregister_result != nullptr && unregister_result->success;
+    const std::string unregister_error = unregister_result == nullptr ? "null result" : unregister_result->error;
+
+    if(unregister_success)
+    {
+        m_registered.store(false);
+    }
+
+    bool notify_stop_waiter = false;
+    {
+        std::lock_guard<std::mutex> lock(m_lifecycle_mutex);
+        if(m_stop_unregister_waiting && !m_stop_unregister_done)
+        {
+            m_stop_unregister_done = true;
+            m_stop_unregister_requested = false;
+            m_stop_unregister_success = unregister_success;
+            m_stop_unregister_error = unregister_error;
+            notify_stop_waiter = true;
+        }
+    }
+
+    if(notify_stop_waiter)
+    {
+        m_lifecycle_cv.notify_all();
+    }
 }
 
 EndpointConfig ManagerService::choose_weighted_endpoint(const std::vector<ServiceInstance>& instances,

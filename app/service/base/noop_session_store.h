@@ -42,4 +42,3 @@ private:
 private:
     std::unique_ptr<NoopSessionManager> m_manager;
 };
-

@@ -27,6 +27,8 @@
 #include <algorithm>
 #include <array>
 #include <chrono>
+#include <iomanip>
+#include <sstream>
 
 namespace
 {
@@ -78,17 +80,78 @@ std::string sha256_hex_string(const std::string& input)
     return out;
 }
 
+std::string bytes_to_hex(const unsigned char* data, size_t len)
+{
+    std::ostringstream output;
+    output << std::hex << std::setfill('0');
+    for(size_t i = 0; i < len; ++i)
+    {
+        output << std::setw(2) << static_cast<int>(data[i]);
+    }
+    return output.str();
+}
+
+std::string make_password_hash(const std::string& password, const std::string& salt, int iterations)
+{
+    std::array<unsigned char, 32> digest{};
+    const int rounds = std::max(1, iterations);
+    const int rc = PKCS5_PBKDF2_HMAC(password.c_str(),
+                                     static_cast<int>(password.size()),
+                                     reinterpret_cast<const unsigned char*>(salt.data()),
+                                     static_cast<int>(salt.size()),
+                                     rounds,
+                                     EVP_sha256(),
+                                     static_cast<int>(digest.size()),
+                                     digest.data());
+    if(rc != 1)
+    {
+        return {};
+    }
+    return bytes_to_hex(digest.data(), digest.size());
+}
+
+bool verify_password_by_record(const std::string& password,
+                               const AccountRecord& record,
+                               int password_hash_iterations)
+{
+    const int normalized_iterations = std::max(1, password_hash_iterations);
+    const auto expected_hash = make_password_hash(password, record.salt, normalized_iterations);
+    if(!expected_hash.empty() && record.password_hash == expected_hash)
+    {
+        return true;
+    }
+
+    if(normalized_iterations != 20000)
+    {
+        const auto fast_hash = make_password_hash(password, record.salt, 20000);
+        if(!fast_hash.empty() && record.password_hash == fast_hash)
+        {
+            return true;
+        }
+    }
+
+    const auto legacy_hash = sha256_hex_string(record.salt + ":" + password);
+    if(!legacy_hash.empty() && record.password_hash == legacy_hash)
+    {
+        return true;
+    }
+
+    return record.salt.empty() && record.password_hash == password;
+}
+
 } // namespace
 
 LoginService::LoginService(const RuntimeConfig& config,
                            std::shared_ptr<IServiceDiscovery> discovery,
                            std::shared_ptr<IAccountRepository> account_repository,
+                           std::shared_ptr<IAccountCacheStore> account_cache_store,
                            std::shared_ptr<ITokenProvider> token_provider,
                            std::shared_ptr<ISessionStore> session_store)
     : BasicHttpService("login", config.server.login, true),
       m_config(config),
       m_discovery(std::move(discovery)),
       m_account_repository(std::move(account_repository)),
+      m_account_cache_store(std::move(account_cache_store)),
       m_token_provider(std::move(token_provider)),
       m_session_store(std::move(session_store))
 {
@@ -108,49 +171,106 @@ LoginService::~LoginService() = default;
 
 bool LoginService::start()
 {
+    if(!m_discovery)
+    {
+        spdlog::error("login discovery unavailable");
+        return false;
+    }
+    if(!m_account_repository)
+    {
+        spdlog::error("login account repository unavailable");
+        return false;
+    }
+    if(!m_account_repository->ready())
+    {
+        spdlog::error("login account repository not ready");
+        return false;
+    }
+
+    m_stopping.store(false);
+    m_registered.store(false);
+    m_register_inflight.store(false);
+    m_heartbeat_inflight = false;
+
+    {
+        std::lock_guard<std::mutex> lock(m_lifecycle_mutex);
+        m_start_register_waiting = true;
+        m_start_register_done = false;
+        m_start_register_success = false;
+        m_start_register_error.clear();
+    }
+
     if(!BasicHttpService::start())
     {
+        std::lock_guard<std::mutex> lock(m_lifecycle_mutex);
+        m_start_register_waiting = false;
+        m_start_register_done = false;
         return false;
     }
 
     m_local_instance.endpoint = endpoint();
     m_local_instance.instance_id = std::string(name()) + "@" + make_endpoint_text(m_local_instance.endpoint);
 
-    if(!m_discovery)
+    bool register_done = false;
+    bool register_success = false;
+    std::string register_error;
     {
-        spdlog::error("login discovery unavailable");
-        BasicHttpService::stop();
-        return false;
+        const auto timeout_ms = std::max(1000, m_config.redis.op_timeout_ms + 500);
+        std::unique_lock<std::mutex> lock(m_lifecycle_mutex);
+        register_done = m_lifecycle_cv.wait_for(lock,
+                                                std::chrono::milliseconds(timeout_ms),
+                                                [this]() { return m_start_register_done; });
+        register_success = m_start_register_success;
+        register_error = m_start_register_error;
+        m_start_register_waiting = false;
     }
-    if(!m_account_repository)
+
+    if(!register_done || !register_success)
     {
-        spdlog::error("login account repository unavailable");
-        BasicHttpService::stop();
-        return false;
-    }
-    if(!m_account_repository->ready())
-    {
-        spdlog::error("login account repository not ready");
+        spdlog::error("login register to redis failed: {}",
+                      register_done ? register_error : "register_wait_timeout");
+        m_register_inflight.store(false);
         BasicHttpService::stop();
         return false;
     }
 
-    m_registered.store(false);
-    m_register_inflight.store(false);
-
-    m_last_heartbeat = std::chrono::steady_clock::now();
     return true;
 }
 
 bool LoginService::stop()
 {
+    m_stopping.store(true);
+
     if(m_discovery && m_registered.load())
     {
-        ServiceDiscoveryOpResult unregister_result;
-        wait_service_discovery_result(m_discovery.get(),
-                                      m_discovery->unregister_instance(m_local_instance),
-                                      &unregister_result,
-                                      m_config.redis.op_timeout_ms);
+        {
+            std::lock_guard<std::mutex> lock(m_lifecycle_mutex);
+            m_stop_unregister_waiting = true;
+            m_stop_unregister_requested = true;
+            m_stop_unregister_done = false;
+            m_stop_unregister_success = false;
+            m_stop_unregister_error.clear();
+        }
+
+        bool unregister_done = false;
+        bool unregister_success = false;
+        std::string unregister_error;
+        {
+            const auto timeout_ms = std::max(1000, m_config.redis.op_timeout_ms + 500);
+            std::unique_lock<std::mutex> lock(m_lifecycle_mutex);
+            unregister_done = m_lifecycle_cv.wait_for(lock,
+                                                      std::chrono::milliseconds(timeout_ms),
+                                                      [this]() { return m_stop_unregister_done; });
+            unregister_success = m_stop_unregister_success;
+            unregister_error = m_stop_unregister_error;
+            m_stop_unregister_waiting = false;
+        }
+
+        if(!unregister_done || !unregister_success)
+        {
+            spdlog::warn("login unregister from redis failed: {}",
+                         unregister_done ? unregister_error : "unregister_wait_timeout");
+        }
     }
 
     m_registered.store(false);
@@ -166,6 +286,43 @@ void LoginService::update(std::chrono::milliseconds delta_time, std::chrono::mil
 
 void LoginService::on_event_loop_tick()
 {
+    if(m_stopping.load())
+    {
+        if(m_discovery)
+        {
+            m_discovery->poll();
+        }
+        if(m_account_repository)
+        {
+            m_account_repository->poll();
+        }
+        if(m_account_cache_store)
+        {
+            m_account_cache_store->poll();
+        }
+        if(m_session_store)
+        {
+            m_session_store->poll();
+        }
+
+        bool should_unregister = false;
+        {
+            std::lock_guard<std::mutex> lock(m_lifecycle_mutex);
+            should_unregister = m_stop_unregister_waiting &&
+                               m_stop_unregister_requested &&
+                               !m_stop_unregister_done;
+            if(should_unregister)
+            {
+                m_stop_unregister_requested = false;
+            }
+        }
+        if(should_unregister)
+        {
+            unregister_instance_async();
+        }
+        return;
+    }
+
     if(m_discovery)
     {
         m_discovery->poll();
@@ -177,6 +334,10 @@ void LoginService::on_event_loop_tick()
     if(m_account_repository)
     {
         m_account_repository->poll();
+    }
+    if(m_account_cache_store)
+    {
+        m_account_cache_store->poll();
     }
     if(m_session_store)
     {
@@ -196,17 +357,69 @@ coro_task_t LoginService::register_instance_async()
 {
     m_register_inflight.store(true);
     auto* register_result = dynamic_cast<ServiceDiscoveryOpResult*>(co_await m_discovery->register_instance(m_local_instance));
+    bool register_success = false;
+    std::string register_error = "null result";
     if(register_result != nullptr && register_result->success)
     {
+        register_success = true;
+        register_error.clear();
         m_registered.store(true);
         m_last_heartbeat = std::chrono::steady_clock::now();
     }
     else
     {
+        register_error = register_result == nullptr ? "null result" : register_result->error;
         spdlog::warn("login register to redis failed: {}",
-                     register_result == nullptr ? "null result" : register_result->error);
+                     register_error);
     }
+
+    bool notify_startup_waiter = false;
+    {
+        std::lock_guard<std::mutex> lock(m_lifecycle_mutex);
+        if(m_start_register_waiting && !m_start_register_done)
+        {
+            m_start_register_done = true;
+            m_start_register_success = register_success;
+            m_start_register_error = register_error;
+            notify_startup_waiter = true;
+        }
+    }
+
     m_register_inflight.store(false);
+    if(notify_startup_waiter)
+    {
+        m_lifecycle_cv.notify_all();
+    }
+}
+
+coro_task_t LoginService::unregister_instance_async()
+{
+    auto* unregister_result = dynamic_cast<ServiceDiscoveryOpResult*>(co_await m_discovery->unregister_instance(m_local_instance));
+    const bool unregister_success = unregister_result != nullptr && unregister_result->success;
+    const std::string unregister_error = unregister_result == nullptr ? "null result" : unregister_result->error;
+
+    if(unregister_success)
+    {
+        m_registered.store(false);
+    }
+
+    bool notify_stop_waiter = false;
+    {
+        std::lock_guard<std::mutex> lock(m_lifecycle_mutex);
+        if(m_stop_unregister_waiting && !m_stop_unregister_done)
+        {
+            m_stop_unregister_done = true;
+            m_stop_unregister_requested = false;
+            m_stop_unregister_success = unregister_success;
+            m_stop_unregister_error = unregister_error;
+            notify_stop_waiter = true;
+        }
+    }
+
+    if(notify_stop_waiter)
+    {
+        m_lifecycle_cv.notify_all();
+    }
 }
 
 EndpointConfig LoginService::choose_weighted_game_endpoint(const std::vector<ServiceInstance>& instances)
@@ -316,6 +529,17 @@ coro_task_t LoginService::register_async(evhttp_request* request)
         co_return;
     }
 
+    if(m_account_cache_store)
+    {
+        auto* cache_erase_result = dynamic_cast<AccountCacheOpResult*>(
+            co_await m_account_cache_store->erase_account(register_request.account()));
+        if(cache_erase_result == nullptr || !cache_erase_result->success)
+        {
+            spdlog::warn("login register erase cache failed: {}",
+                         cache_erase_result == nullptr ? "null result" : cache_erase_result->error);
+        }
+    }
+
     http_code_message::gateway::set_code_message(&response,
                                                  http_code_message::gateway::code::kSuccess,
                                                  http_code_message::gateway::message::kRegistered);
@@ -360,19 +584,46 @@ coro_task_t LoginService::login_async(evhttp_request* request)
         co_return;
     }
 
-    auto* verify_result = dynamic_cast<AccountRepositoryOpResult*>(
-        co_await m_account_repository->verify_password(login_request.account(), login_request.password()));
-    if(verify_result == nullptr || !verify_result->success)
+    bool password_ok = false;
+    bool verified_by_repository = false;
+    std::optional<AccountRecord> verified_record;
+    if(m_account_cache_store)
     {
-        http_code_message::gateway::set_code_message(&response,
-                                                     http_code_message::gateway::code::kAccountRepositoryUnavailable,
-                                                     http_code_message::gateway::message::kAccountRepositoryUnavailable);
-        write_protobuf_response(request, response, 200);
-        release_request(request);
-        co_return;
+        auto* cache_result = dynamic_cast<AccountCacheOpResult*>(
+            co_await m_account_cache_store->get_account(login_request.account()));
+        if(cache_result != nullptr && cache_result->success && cache_result->hit && cache_result->record.has_value())
+        {
+            verified_record = cache_result->record;
+            password_ok = verify_password_by_record(login_request.password(),
+                                                    *cache_result->record,
+                                                    m_config.mysql.password_hash_iterations);
+        }
+        else if(cache_result != nullptr && !cache_result->success)
+        {
+            spdlog::warn("login get account cache failed: {}", cache_result->error);
+        }
     }
 
-    if(!verify_result->password_ok)
+    if(!password_ok)
+    {
+        auto* verify_result = dynamic_cast<AccountRepositoryOpResult*>(
+            co_await m_account_repository->verify_password(login_request.account(), login_request.password()));
+        if(verify_result == nullptr || !verify_result->success)
+        {
+            http_code_message::gateway::set_code_message(&response,
+                                                         http_code_message::gateway::code::kAccountRepositoryUnavailable,
+                                                         http_code_message::gateway::message::kAccountRepositoryUnavailable);
+            write_protobuf_response(request, response, 200);
+            release_request(request);
+            co_return;
+        }
+
+        verified_by_repository = true;
+        password_ok = verify_result->password_ok;
+        verified_record = verify_result->record;
+    }
+
+    if(!password_ok)
     {
         http_code_message::gateway::set_code_message(&response,
                                                      http_code_message::gateway::code::kInvalidAccountOrPassword,
@@ -380,6 +631,18 @@ coro_task_t LoginService::login_async(evhttp_request* request)
         write_protobuf_response(request, response, 200);
         release_request(request);
         co_return;
+    }
+
+    if(verified_by_repository && m_account_cache_store && verified_record.has_value())
+    {
+        auto* cache_put_result = dynamic_cast<AccountCacheOpResult*>(
+            co_await m_account_cache_store->put_account(*verified_record,
+                                                        std::max(1, m_config.redis.account_cache_ttl_sec)));
+        if(cache_put_result == nullptr || !cache_put_result->success)
+        {
+            spdlog::warn("login put account cache failed: {}",
+                         cache_put_result == nullptr ? "null result" : cache_put_result->error);
+        }
     }
 
     if(m_token_provider == nullptr)
