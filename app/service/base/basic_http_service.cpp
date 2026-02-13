@@ -258,6 +258,12 @@ void BasicHttpService::release_request(evhttp_request* request)
     }
 
     m_owned_requests.erase(iter);
+
+    if(evhttp_request_get_connection(request) != nullptr)
+    {
+        return;
+    }
+
     evhttp_request_free(request);
 }
 

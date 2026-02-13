@@ -369,8 +369,12 @@ bool ClientPressureManager::should_stop_by_timeout_guard()
         total_timeout = m_metrics.total_timeout;
     }
 
-    const uint64_t min_samples = static_cast<uint64_t>(std::max(1, m_config.client_pressure.guard.min_samples));
-    if(total_request < min_samples)
+    const uint64_t configured_min_samples = static_cast<uint64_t>(std::max(1, m_config.client_pressure.guard.min_samples));
+    const uint64_t adaptive_min_samples = static_cast<uint64_t>(
+        std::max<int>(
+            static_cast<int>(configured_min_samples),
+            std::max(1, m_config.client_pressure.scenario.target_rps) * 5));
+    if(total_request < adaptive_min_samples)
     {
         return false;
     }

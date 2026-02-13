@@ -1,5 +1,59 @@
 ﻿[
     {
+        "run_id":  "20260213180409_ad6fffb",
+        "run_time":  "2026-02-13 18:18:18",
+        "gate_status":  "PASS",
+        "full_chain_success_rate":  1,
+        "full_chain_timeout_rate":  0,
+        "full_chain_p95_ms":  43.519,
+        "compare_report":  "reports/pressure/2026-02-13/pr_gate_compare_20260213180409_ad6fffb_vs_20260213174746_ad6fffb.md"
+    },
+    {
+        "run_id":  "20260213174746_ad6fffb",
+        "run_time":  "2026-02-13 18:01:56",
+        "gate_status":  "PASS",
+        "full_chain_success_rate":  1,
+        "full_chain_timeout_rate":  0,
+        "full_chain_p95_ms":  48.975,
+        "compare_report":  "reports/pressure/2026-02-13/pr_gate_compare_20260213174746_ad6fffb_vs_20260213172659_ad6fffb.md"
+    },
+    {
+        "run_id":  "20260213172659_ad6fffb",
+        "run_time":  "2026-02-13 17:41:04",
+        "gate_status":  "FAILED",
+        "full_chain_success_rate":  1,
+        "full_chain_timeout_rate":  0,
+        "full_chain_p95_ms":  276.62,
+        "compare_report":  "reports/pressure/2026-02-13/pr_gate_compare_20260213172659_ad6fffb_vs_20260213170540_ad6fffb.md"
+    },
+    {
+        "run_id":  "20260213170540_ad6fffb",
+        "run_time":  "2026-02-13 17:19:43",
+        "gate_status":  "FAILED",
+        "full_chain_success_rate":  1,
+        "full_chain_timeout_rate":  0,
+        "full_chain_p95_ms":  167.578,
+        "compare_report":  "reports/pressure/2026-02-13/pr_gate_compare_20260213170540_ad6fffb_vs_20260213164909_ad6fffb.md"
+    },
+    {
+        "run_id":  "20260213164909_ad6fffb",
+        "run_time":  "2026-02-13 17:03:07",
+        "gate_status":  "FAILED",
+        "full_chain_success_rate":  0,
+        "full_chain_timeout_rate":  0,
+        "full_chain_p95_ms":  9.996,
+        "compare_report":  "reports/pressure/2026-02-13/pr_gate_compare_20260213164909_ad6fffb_vs_20260213152539_87c0208.md"
+    },
+    {
+        "run_id":  "20260213164040_ad6fffb",
+        "run_time":  "2026-02-13 16:41:09",
+        "gate_status":  "FAILED",
+        "full_chain_success_rate":  null,
+        "full_chain_timeout_rate":  null,
+        "full_chain_p95_ms":  null,
+        "compare_report":  "reports/pressure/2026-02-13/pr_gate_compare_20260213164040_ad6fffb_vs_20260213152539_87c0208.md"
+    },
+    {
         "run_id":  "20260213152539_87c0208",
         "run_time":  "2026-02-13 15:39:35",
         "gate_status":  "PASS",

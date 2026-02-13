@@ -191,6 +191,9 @@ bool LoginService::start()
     m_registered.store(false);
     m_register_inflight.store(false);
     m_heartbeat_inflight = false;
+    m_game_instances_refresh_inflight = false;
+    m_last_game_instances_refresh = std::chrono::steady_clock::time_point{};
+    m_cached_game_instances.clear();
 
     {
         std::lock_guard<std::mutex> lock(m_lifecycle_mutex);
@@ -350,6 +353,16 @@ void LoginService::on_event_loop_tick()
         heartbeat_async();
         m_last_heartbeat = now;
     }
+
+    if(m_discovery && m_registered.load() && !m_game_instances_refresh_inflight)
+    {
+        const bool never_refreshed =
+            m_last_game_instances_refresh.time_since_epoch() == std::chrono::steady_clock::duration::zero();
+        if(never_refreshed || now - m_last_game_instances_refresh >= std::chrono::seconds(1))
+        {
+            refresh_game_instances_async();
+        }
+    }
 }
 
 coro_task_t LoginService::register_instance_async()
@@ -466,6 +479,23 @@ coro_task_t LoginService::heartbeat_async()
                      result == nullptr ? "null result" : result->error);
     }
     m_heartbeat_inflight = false;
+}
+
+coro_task_t LoginService::refresh_game_instances_async()
+{
+    m_game_instances_refresh_inflight = true;
+    auto* result = dynamic_cast<ServiceDiscoveryOpResult*>(co_await m_discovery->list_instances("game"));
+    if(result != nullptr && result->success)
+    {
+        m_cached_game_instances = result->instances;
+    }
+    else
+    {
+        spdlog::warn("login refresh game instances failed: {}",
+                     result == nullptr ? "null result" : result->error);
+    }
+    m_last_game_instances_refresh = std::chrono::steady_clock::now();
+    m_game_instances_refresh_inflight = false;
 }
 
 coro_task_t LoginService::register_async(evhttp_request* request)
@@ -688,11 +718,16 @@ coro_task_t LoginService::login_async(evhttp_request* request)
         }
     }
 
-    std::vector<ServiceInstance> game_instances;
-    if(auto* list_result = dynamic_cast<ServiceDiscoveryOpResult*>(co_await m_discovery->list_instances("game"));
-       list_result != nullptr && list_result->success)
+    std::vector<ServiceInstance> game_instances = m_cached_game_instances;
+    if(game_instances.empty())
     {
-        game_instances = list_result->instances;
+        if(auto* list_result = dynamic_cast<ServiceDiscoveryOpResult*>(co_await m_discovery->list_instances("game"));
+           list_result != nullptr && list_result->success)
+        {
+            game_instances = list_result->instances;
+            m_cached_game_instances = game_instances;
+            m_last_game_instances_refresh = std::chrono::steady_clock::now();
+        }
     }
     if(game_instances.empty())
     {

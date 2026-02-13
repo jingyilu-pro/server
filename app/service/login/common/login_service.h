@@ -58,6 +58,7 @@ private:
     coro_task_t register_instance_async();
     coro_task_t unregister_instance_async();
     coro_task_t heartbeat_async();
+    coro_task_t refresh_game_instances_async();
     coro_task_t register_async(evhttp_request* request);
     coro_task_t login_async(evhttp_request* request);
 
@@ -72,6 +73,9 @@ private:
     std::chrono::steady_clock::time_point m_last_heartbeat;
     std::size_t m_game_round_robin_counter = 0;
     bool m_heartbeat_inflight = false;
+    bool m_game_instances_refresh_inflight = false;
+    std::chrono::steady_clock::time_point m_last_game_instances_refresh;
+    std::vector<ServiceInstance> m_cached_game_instances;
     std::atomic<bool> m_register_inflight{false};
     std::atomic<bool> m_registered{false};
     std::atomic<bool> m_stopping{false};
