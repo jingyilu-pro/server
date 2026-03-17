@@ -51,6 +51,7 @@
 1. `client -> manager`（`/v1/route/login`）
 2. `client -> login`（`/v1/auth/register`、`/v1/auth/login`）
 3. `client -> game`（`/v1/game/enter`）
+4. `client -> game`（`/v1/game/bootstrap`、`/v1/game/character/create`、`/v1/game/command/execute`、`/v1/game/feed/pull`）
 
 服务端请求链路：
 
@@ -129,6 +130,8 @@
 - JWT 校验与账号一致性校验
 - 若会话可用，进行 token 摘要一致性校验并 touch TTL
 - 会话不可用时降级为 JWT-only
+- MUD 角色创建、场景快照、命令执行与事件 Feed
+- 通过 `doc/mud/world_data.json` 加载首批人界可玩区配置
 
 ## 8. 运行时装配
 

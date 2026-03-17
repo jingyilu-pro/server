@@ -1,0 +1,23 @@
+server {
+    listen 80;
+    server_name _;
+
+    root /srv/fanren-mud-client/dist;
+    index index.html;
+
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    location /api/manager/ {
+        proxy_pass http://127.0.0.1:18080/;
+    }
+
+    location /api/login/ {
+        proxy_pass http://127.0.0.1:18081/;
+    }
+
+    location /api/game/ {
+        proxy_pass http://127.0.0.1:18082/;
+    }
+}

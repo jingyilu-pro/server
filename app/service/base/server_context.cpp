@@ -20,6 +20,7 @@
 
 #include "jwt_token_provider.h"
 #include "mysql_account_repository.h"
+#include "mud_player_repository.h"
 #include "noop_account_cache_store.h"
 #include "noop_session_store.h"
 #include "redis_account_cache_store.h"
@@ -30,7 +31,8 @@
 
 ServerContext create_server_context(const RuntimeConfig& config,
                                     bool require_manager_discovery,
-                                    bool require_login_repository)
+                                    bool require_login_repository,
+                                    bool require_game_repository)
 {
     ServerContext context;
 
@@ -56,6 +58,10 @@ ServerContext create_server_context(const RuntimeConfig& config,
     if(require_login_repository)
     {
         mysql_repository = std::make_shared<MySqlAccountRepository>(config.mysql);
+    }
+    if(require_game_repository)
+    {
+        context.game_mud_player_repository = std::make_shared<MySqlMudPlayerRepository>(config.mysql);
     }
 
     if(context.login_discovery == nullptr || !context.login_discovery->ready())
@@ -102,6 +108,13 @@ ServerContext create_server_context(const RuntimeConfig& config,
     {
         context.ready = false;
         context.error = "mysql account repository not ready";
+        return context;
+    }
+    if(require_game_repository &&
+       (context.game_mud_player_repository == nullptr || !context.game_mud_player_repository->ready()))
+    {
+        context.ready = false;
+        context.error = "mysql mud player repository not ready";
         return context;
     }
     if(context.login_token_provider == nullptr || context.game_token_provider == nullptr)

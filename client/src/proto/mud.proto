@@ -1,0 +1,163 @@
+syntax = "proto3";
+
+package mud;
+
+message InventoryItem {
+  string item_id = 1;
+  string name = 2;
+  int32 quantity = 3;
+  bool equipped = 4;
+  string description = 5;
+  string item_type = 6;
+}
+
+message QuestSummary {
+  string quest_id = 1;
+  string title = 2;
+  string status = 3;
+  int32 progress = 4;
+  int32 target = 5;
+  string description = 6;
+}
+
+message CultivationState {
+  string realm_name = 1;
+  int32 realm_stage = 2;
+  int64 exp = 3;
+  int64 next_breakthrough_exp = 4;
+  string primary_skill = 5;
+  int32 skill_level = 6;
+}
+
+message SectState {
+  string sect_id = 1;
+  string sect_name = 2;
+  string sect_rank = 3;
+  bool joined = 4;
+}
+
+message SceneExit {
+  string direction = 1;
+  string target_scene_id = 2;
+  string target_scene_name = 3;
+}
+
+message SceneNpc {
+  string npc_id = 1;
+  string name = 2;
+  bool has_quest = 3;
+  string hint = 4;
+}
+
+message SceneSnapshot {
+  string scene_id = 1;
+  string scene_name = 2;
+  string region_name = 3;
+  string description = 4;
+  repeated SceneExit exits = 5;
+  repeated SceneNpc npcs = 6;
+  repeated string monsters = 7;
+  repeated string shops = 8;
+}
+
+message PlayerSnapshot {
+  string account = 1;
+  string character_name = 2;
+  int32 level = 3;
+  int32 hp = 4;
+  int32 max_hp = 5;
+  int32 attack_power = 6;
+  int32 defense_power = 7;
+  int64 spirit_stone = 8;
+  string title = 9;
+  string location_scene_id = 10;
+  repeated InventoryItem inventory = 11;
+  repeated QuestSummary quests = 12;
+  CultivationState cultivation = 13;
+  SectState sect = 14;
+  repeated string known_commands = 15;
+  int32 recommended_poll_interval_ms = 16;
+}
+
+message GameEvent {
+  uint64 event_id = 1;
+  string type = 2;
+  string title = 3;
+  string content = 4;
+  int64 server_time_ms = 5;
+  bool unread = 6;
+}
+
+message CommandResult {
+  string command = 1;
+  bool success = 2;
+  string title = 3;
+  string summary = 4;
+  repeated string hints = 5;
+  int32 recommended_poll_interval_ms = 6;
+}
+
+message BootstrapRequest {
+  string account = 1;
+}
+
+message BootstrapResponse {
+  int32 code = 1;
+  string message = 2;
+  string trace_id = 3;
+  int64 server_time_ms = 4;
+  bool need_create_character = 5;
+  PlayerSnapshot player = 6;
+  SceneSnapshot scene = 7;
+  repeated GameEvent events = 8;
+  uint64 next_event_id = 9;
+}
+
+message CharacterCreateRequest {
+  string account = 1;
+  string character_name = 2;
+}
+
+message CharacterCreateResponse {
+  int32 code = 1;
+  string message = 2;
+  string trace_id = 3;
+  int64 server_time_ms = 4;
+  PlayerSnapshot player = 5;
+  SceneSnapshot scene = 6;
+  repeated GameEvent events = 7;
+  uint64 next_event_id = 8;
+}
+
+message CommandExecuteRequest {
+  string account = 1;
+  string command = 2;
+}
+
+message CommandExecuteResponse {
+  int32 code = 1;
+  string message = 2;
+  string trace_id = 3;
+  int64 server_time_ms = 4;
+  CommandResult result = 5;
+  PlayerSnapshot player = 6;
+  SceneSnapshot scene = 7;
+  repeated GameEvent events = 8;
+  uint64 next_event_id = 9;
+}
+
+message FeedPullRequest {
+  string account = 1;
+  uint64 after_event_id = 2;
+  int32 limit = 3;
+}
+
+message FeedPullResponse {
+  int32 code = 1;
+  string message = 2;
+  string trace_id = 3;
+  int64 server_time_ms = 4;
+  repeated GameEvent events = 5;
+  uint64 next_event_id = 6;
+  int32 recommended_poll_interval_ms = 7;
+}

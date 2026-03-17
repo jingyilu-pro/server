@@ -9,3 +9,5 @@ build-wsl-main/
 build-wsl/
 bin/apptool
 reports/
+client/node_modules/
+client/dist/

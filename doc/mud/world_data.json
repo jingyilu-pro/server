@@ -1,0 +1,258 @@
+{
+  "defaults": {
+    "starting_scene_id": "qixuan_square",
+    "starter_title": "初入修仙路",
+    "starter_skill": "长春功",
+    "starter_realm_name": "凡躯",
+    "starter_realm_stage": 0,
+    "starter_hp": 120,
+    "starter_attack": 22,
+    "starter_defense": 12,
+    "starter_spirit_stone": 90,
+    "starter_next_breakthrough_exp": 120,
+    "realm_names": ["凡躯", "炼气一层", "炼气二层", "炼气三层", "炼气中期", "炼气后期", "筑基初期"],
+    "starter_inventory": [
+      { "item_id": "rust_sword", "quantity": 1, "equipped": true },
+      { "item_id": "small_recover_pill", "quantity": 2, "equipped": false }
+    ]
+  },
+  "items": [
+    {
+      "item_id": "rust_sword",
+      "name": "青竹短剑",
+      "item_type": "weapon",
+      "description": "七玄门外门弟子常用的短剑，虽称不上法器，却也锋利。",
+      "price": 48,
+      "attack_bonus": 5,
+      "defense_bonus": 0,
+      "consumable": false,
+      "equipable": true
+    },
+    {
+      "item_id": "cloth_vest",
+      "name": "青衫布甲",
+      "item_type": "armor",
+      "description": "能挡下寻常野兽一两击的轻甲。",
+      "price": 42,
+      "attack_bonus": 0,
+      "defense_bonus": 4,
+      "consumable": false,
+      "equipable": true
+    },
+    {
+      "item_id": "small_recover_pill",
+      "name": "回气散",
+      "item_type": "consumable",
+      "description": "简陋但好用的疗伤药，能回补些许气血。",
+      "price": 18,
+      "hp_restore": 45,
+      "consumable": true,
+      "equipable": false
+    },
+    {
+      "item_id": "yellow_essence_grass",
+      "name": "黄精草",
+      "item_type": "material",
+      "description": "嘉元城一带常见的灵草，炼药和跑腿都用得上。",
+      "price": 16,
+      "consumable": false,
+      "equipable": false
+    },
+    {
+      "item_id": "qi_gathering_scroll",
+      "name": "聚气残卷",
+      "item_type": "consumable",
+      "description": "残缺的吐纳心得，能帮助凡人快速积累一段修为。",
+      "price": 70,
+      "exp_gain": 60,
+      "skill_level_gain": 1,
+      "consumable": true,
+      "equipable": false
+    },
+    {
+      "item_id": "ink_snake_gall",
+      "name": "墨鳞蛇胆",
+      "item_type": "material",
+      "description": "后山洞窟妖蛇体内所结之胆，辛如音愿出高价换取。",
+      "price": 45,
+      "consumable": false,
+      "equipable": false
+    }
+  ],
+  "sects": [
+    {
+      "sect_id": "qixuan_gate",
+      "name": "七玄门",
+      "rank_title": "外门弟子",
+      "join_scene_id": "qixuan_hall",
+      "join_npc_id": "han_zhanglao"
+    }
+  ],
+  "quests": [
+    {
+      "quest_id": "qixuan_herb",
+      "title": "墨府采药",
+      "description": "嘉元城集市总管托你去附近寻一株黄精草，带回后能换些灵石。",
+      "issuer_npc_id": "mofu_steward",
+      "submit_npc_id": "mofu_steward",
+      "required_item_id": "yellow_essence_grass",
+      "required_item_count": 1,
+      "reward_spirit_stone": 40,
+      "reward_exp": 60,
+      "reward_item_id": "small_recover_pill",
+      "reward_item_count": 1
+    },
+    {
+      "quest_id": "tainan_snake",
+      "title": "太南异胆",
+      "description": "辛如音需要后山妖蛇的蛇胆来试阵，取来后可得一卷聚气残卷。",
+      "issuer_npc_id": "xin_ruyin",
+      "submit_npc_id": "xin_ruyin",
+      "required_item_id": "ink_snake_gall",
+      "required_item_count": 1,
+      "reward_spirit_stone": 85,
+      "reward_exp": 140,
+      "reward_item_id": "qi_gathering_scroll",
+      "reward_item_count": 1
+    }
+  ],
+  "npcs": [
+    {
+      "npc_id": "li_feiyu",
+      "name": "厉飞雨",
+      "scene_id": "qixuan_square",
+      "hint": "指点你先去嘉元城集市接第一份差事。",
+      "dialogue": "厉飞雨双臂抱胸道：你若真想在这乱世里活出名堂，先去嘉元城集市跑腿、练胆，再谈修仙。",
+      "quest_ids": []
+    },
+    {
+      "npc_id": "han_zhanglao",
+      "name": "韩长老",
+      "scene_id": "qixuan_hall",
+      "hint": "若你做成几件差事，或许能拜入七玄门。",
+      "dialogue": "韩长老打量你片刻：凡俗弟子若能办成事情、守住心性，七玄门自会给你一条路。",
+      "quest_ids": [],
+      "sect_offer_id": "qixuan_gate"
+    },
+    {
+      "npc_id": "mofu_steward",
+      "name": "墨府总管",
+      "scene_id": "jiayuan_market",
+      "hint": "需要一株黄精草。",
+      "dialogue": "墨府总管压低声音：近来药材吃紧，你若替我找回黄精草，我自然不会亏待你。",
+      "quest_ids": ["qixuan_herb"]
+    },
+    {
+      "npc_id": "xin_ruyin",
+      "name": "辛如音",
+      "scene_id": "tainan_fair",
+      "hint": "在太南小会布阵试法，正缺后山妖蛇的蛇胆。",
+      "dialogue": "辛如音轻声道：我正要调试法阵，若你能取来一枚墨鳞蛇胆，我便送你一卷聚气残卷。",
+      "quest_ids": ["tainan_snake"]
+    }
+  ],
+  "monsters": [
+    {
+      "monster_id": "green_wolf",
+      "name": "青木狼",
+      "scene_id": "bamboo_forest",
+      "hp": 42,
+      "attack": 13,
+      "defense": 4,
+      "reward_spirit_stone": 14,
+      "reward_exp": 28,
+      "drop_item_id": "yellow_essence_grass",
+      "drop_item_count": 1
+    },
+    {
+      "monster_id": "ink_python",
+      "name": "墨鳞蛇",
+      "scene_id": "backhill_cave",
+      "hp": 78,
+      "attack": 21,
+      "defense": 8,
+      "reward_spirit_stone": 26,
+      "reward_exp": 52,
+      "drop_item_id": "ink_snake_gall",
+      "drop_item_count": 1
+    }
+  ],
+  "scenes": [
+    {
+      "scene_id": "qixuan_square",
+      "name": "七玄门外场",
+      "region_name": "七玄门",
+      "description": "山门外的石坪晨雾未散，练武弟子来来往往，远处可见通往嘉元城的小路。",
+      "exits": {
+        "north": "qixuan_hall",
+        "south": "jiayuan_market"
+      },
+      "npc_ids": ["li_feiyu"],
+      "monster_ids": [],
+      "shop_item_ids": []
+    },
+    {
+      "scene_id": "qixuan_hall",
+      "name": "七玄门议事堂",
+      "region_name": "七玄门",
+      "description": "堂内药香与檀香混杂，韩长老正翻看名册，外门弟子进进出出。",
+      "exits": {
+        "south": "qixuan_square"
+      },
+      "npc_ids": ["han_zhanglao"],
+      "monster_ids": [],
+      "shop_item_ids": []
+    },
+    {
+      "scene_id": "jiayuan_market",
+      "name": "嘉元城集市",
+      "region_name": "嘉元城",
+      "description": "叫卖声此起彼伏，药草、布甲和小玩意挤满了摊位，是凡人修士最熟悉的补给地。",
+      "exits": {
+        "north": "qixuan_square",
+        "east": "bamboo_forest",
+        "west": "tainan_fair"
+      },
+      "npc_ids": ["mofu_steward"],
+      "monster_ids": [],
+      "shop_item_ids": ["small_recover_pill", "cloth_vest", "yellow_essence_grass", "qi_gathering_scroll"]
+    },
+    {
+      "scene_id": "bamboo_forest",
+      "name": "青竹林",
+      "region_name": "嘉元城郊",
+      "description": "竹影交错，山风穿林而过，偶尔传来野兽低吼，是新人磨炼胆气的好地方。",
+      "exits": {
+        "west": "jiayuan_market",
+        "east": "backhill_cave"
+      },
+      "npc_ids": [],
+      "monster_ids": ["green_wolf"],
+      "shop_item_ids": []
+    },
+    {
+      "scene_id": "backhill_cave",
+      "name": "后山洞窟",
+      "region_name": "后山",
+      "description": "潮湿洞壁泛着冷光，碎石与蜕皮散落一地，深处有妖蛇盘踞。",
+      "exits": {
+        "west": "bamboo_forest"
+      },
+      "npc_ids": [],
+      "monster_ids": ["ink_python"],
+      "shop_item_ids": []
+    },
+    {
+      "scene_id": "tainan_fair",
+      "name": "太南小会",
+      "region_name": "太南谷",
+      "description": "修士来往隐秘，摊位上摆着残卷、阵旗和各种不知真假的材料，辛如音正在角落里布阵。",
+      "exits": {
+        "east": "jiayuan_market"
+      },
+      "npc_ids": ["xin_ruyin"],
+      "monster_ids": [],
+      "shop_item_ids": ["qi_gathering_scroll"]
+    }
+  ]
+}

@@ -131,9 +131,14 @@ bool Application::start(const ApplicationOptions& options)
             options.mode == AppMode::all || options.mode == AppMode::manager;
         const bool require_login_repository =
             options.mode == AppMode::all || options.mode == AppMode::login;
+        const bool require_game_repository =
+            options.mode == AppMode::all || options.mode == AppMode::game;
         m_server_context =
             std::make_shared<ServerContext>(
-                create_server_context(m_runtime_config, require_manager_discovery, require_login_repository));
+                create_server_context(m_runtime_config,
+                                      require_manager_discovery,
+                                      require_login_repository,
+                                      require_game_repository));
         if(!m_server_context->ready)
         {
             spdlog::error("server context create failed: {}", m_server_context->error);
@@ -177,7 +182,8 @@ bool Application::start_services_by_mode()
         return register_service(std::make_unique<GameService>(m_runtime_config,
                                                               m_server_context ? m_server_context->game_discovery : nullptr,
                                                               m_server_context ? m_server_context->game_token_provider : nullptr,
-                                                              m_server_context ? m_server_context->game_session_store : nullptr));
+                                                              m_server_context ? m_server_context->game_session_store : nullptr,
+                                                              m_server_context ? m_server_context->game_mud_player_repository : nullptr));
     case AppMode::client:
         return start_client_service();
     }
@@ -195,6 +201,7 @@ bool Application::start_non_client_services()
     auto game_token_provider = m_server_context ? m_server_context->game_token_provider : nullptr;
     auto login_session_store = m_server_context ? m_server_context->login_session_store : nullptr;
     auto game_session_store = m_server_context ? m_server_context->game_session_store : nullptr;
+    auto game_mud_player_repository = m_server_context ? m_server_context->game_mud_player_repository : nullptr;
 
     if(!register_service(std::make_unique<ManagerService>(m_runtime_config, manager_discovery)))
     {
@@ -212,7 +219,8 @@ bool Application::start_non_client_services()
     if(!register_service(std::make_unique<GameService>(m_runtime_config,
                                                        game_discovery,
                                                        game_token_provider,
-                                                       game_session_store)))
+                                                       game_session_store,
+                                                       game_mud_player_repository)))
     {
         return false;
     }

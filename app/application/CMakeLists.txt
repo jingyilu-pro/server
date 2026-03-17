@@ -16,6 +16,8 @@ target_link_libraries(application PRIVATE
         ${SERVICE_LIB}
         # servicebase
         ${SERVICE_BASE_DIR}
+        # server_service is referenced from servicebase after the MUD repository wiring
+        server_service
         # last
         ${COMMON_LIB}
         ${PROTOCOL_LIB}

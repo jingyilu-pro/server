@@ -5,12 +5,12 @@
     port: 18080
   login:
     host: 127.0.0.1
-    # login 由系统自动分配端口（启动后注册到 redis）
-    port: 0
+    # H5 直连反向代理时建议固定端口
+    port: 18081
   game:
     host: 127.0.0.1
-    # game 由系统自动分配端口（启动后注册到 redis）
-    port: 0
+    # H5 直连反向代理时建议固定端口
+    port: 18082
 
 redis:
   host: 127.0.0.1

@@ -1,0 +1,146 @@
+//
+// Copyright (c) 2024-2025 JingyiLu jingyilupro@gmail.com
+//
+// This software is provided 'as-is', without any express or implied
+// warranty.  In no event will the authors be held liable for any damages
+// arising from the use of this software.
+// Permission is granted to anyone to use this software for any purpose,
+// including commercial applications, and to alter it and redistribute it
+// freely, subject to the following restrictions:
+// 1. The origin of this software must not be misrepresented; you must not
+//    claim that you wrote the original software. If you use this software
+//    in a product, an acknowledgment in the product documentation would be
+//    appreciated but is not required.
+// 2. Altered source versions must be plainly marked as such, and must not be
+//    misrepresented as being the original software.
+// 3. This notice may not be removed or altered from any source distribution.
+//
+
+#pragma once
+
+#include "mud_player_repository.h"
+#include "mud_world.h"
+
+#include "protocol/mud.pb.h"
+
+#include <cstdint>
+#include <memory>
+#include <string>
+#include <vector>
+
+class MudGameRuntime
+{
+public:
+    MudGameRuntime(std::shared_ptr<MudWorld> world,
+                   std::shared_ptr<IMudPlayerRepository> repository);
+
+public:
+    bool ready() const;
+    std::string ready_error() const;
+    void poll();
+    bool verify_account_match(const std::string& jwt_account,
+                              const std::string& requested_account,
+                              std::string* resolved_account) const;
+    MudPlayerState build_default_player(const std::string& account,
+                                        const std::string& character_name) const;
+    void build_bootstrap_response(const std::string& account,
+                                  const std::optional<MudPlayerState>& player,
+                                  mud::BootstrapResponse* response);
+    void build_create_character_response(const MudPlayerState& player,
+                                         mud::CharacterCreateResponse* response);
+    void build_command_response(const MudPlayerState& player,
+                                const std::string& command,
+                                const MudCommandExecution& execution,
+                                mud::CommandExecuteResponse* response);
+    void build_feed_response(const std::string& account,
+                             uint64_t after_event_id,
+                             int limit,
+                             mud::FeedPullResponse* response);
+    MudCommandExecution run_command(MudPlayerState* player,
+                                    const std::string& command);
+
+    coro_task_t bootstrap_async(const std::string& account,
+                                mud::BootstrapResponse* response);
+    coro_task_t create_character_async(const std::string& account,
+                                       const std::string& character_name,
+                                       mud::CharacterCreateResponse* response);
+    coro_task_t execute_command_async(const std::string& account,
+                                      const std::string& command,
+                                      mud::CommandExecuteResponse* response);
+    coro_task_t pull_feed_async(const std::string& account,
+                                uint64_t after_event_id,
+                                int limit,
+                                mud::FeedPullResponse* response);
+
+private:
+    MudPlayerState make_default_player(const std::string& account,
+                                       const std::string& character_name) const;
+    void fill_player_snapshot(const MudPlayerState& player,
+                              mud::PlayerSnapshot* snapshot) const;
+    void fill_scene_snapshot(const MudPlayerState& player,
+                             mud::SceneSnapshot* snapshot) const;
+    void append_event(const std::string& target_account,
+                      const std::string& type,
+                      const std::string& title,
+                      const std::string& content,
+                      std::vector<MudEventEnvelope>* out_batch);
+    void add_events_to_response(const std::vector<MudEventEnvelope>& events,
+                                google::protobuf::RepeatedPtrField<mud::GameEvent>* out_events) const;
+    void trim_events();
+    MudCommandExecution execute_command(MudPlayerState* player,
+                                        const std::string& command_text);
+    MudCommandExecution execute_look(MudPlayerState* player) const;
+    MudCommandExecution execute_map(MudPlayerState* player) const;
+    MudCommandExecution execute_go(MudPlayerState* player,
+                                   const std::vector<std::string>& args);
+    MudCommandExecution execute_talk(MudPlayerState* player,
+                                     const std::vector<std::string>& args) const;
+    MudCommandExecution execute_accept(MudPlayerState* player,
+                                       const std::vector<std::string>& args);
+    MudCommandExecution execute_submit(MudPlayerState* player,
+                                       const std::vector<std::string>& args);
+    MudCommandExecution execute_fight(MudPlayerState* player,
+                                      const std::vector<std::string>& args);
+    MudCommandExecution execute_use(MudPlayerState* player,
+                                    const std::vector<std::string>& args);
+    MudCommandExecution execute_flee() const;
+    MudCommandExecution execute_practice(MudPlayerState* player,
+                                         const std::vector<std::string>& args);
+    MudCommandExecution execute_breakthrough(MudPlayerState* player);
+    MudCommandExecution execute_buy(MudPlayerState* player,
+                                    const std::vector<std::string>& args);
+    MudCommandExecution execute_sell(MudPlayerState* player,
+                                     const std::vector<std::string>& args);
+    MudCommandExecution execute_join(MudPlayerState* player,
+                                     const std::vector<std::string>& args);
+    MudCommandExecution execute_chat(const MudPlayerState& player,
+                                     const std::string& raw_args);
+
+    const MudSceneConfig* current_scene(const MudPlayerState& player) const;
+    const MudQuestConfig* match_scene_quest(const MudPlayerState& player,
+                                            const std::string& key) const;
+    const MudNpcConfig* match_scene_npc(const MudPlayerState& player,
+                                        const std::string& key) const;
+    const MudMonsterConfig* match_scene_monster(const MudPlayerState& player,
+                                                const std::string& key) const;
+    int find_inventory_index(const MudPlayerState& player, const std::string& key) const;
+    int inventory_count(const MudPlayerState& player, const std::string& item_id) const;
+    MudQuestState* find_quest_state(MudPlayerState* player, const std::string& quest_id) const;
+    const MudQuestState* find_quest_state(const MudPlayerState& player, const std::string& quest_id) const;
+    void add_inventory_item(MudPlayerState* player,
+                            const std::string& item_id,
+                            int quantity,
+                            bool equipped = false) const;
+    bool remove_inventory_item(MudPlayerState* player,
+                               const std::string& item_id,
+                               int quantity) const;
+    void refresh_quest_progress(MudPlayerState* player) const;
+    std::string realm_name_for_stage(int stage) const;
+
+private:
+    std::shared_ptr<MudWorld> m_world;
+    std::shared_ptr<IMudPlayerRepository> m_repository;
+    std::vector<MudEventEnvelope> m_events;
+    uint64_t m_next_event_id = 1;
+    std::string m_ready_error;
+};

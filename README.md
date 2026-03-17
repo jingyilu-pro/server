@@ -9,6 +9,10 @@
 - `game`
 - `client_pressure`
 
+新增目录：
+
+- `client`：Vue3 + TypeScript + Vite 的 H5 MUD 客户端
+
 ## 快速开始
 
 ### 1) 克隆仓库（含子模块）
@@ -58,6 +62,13 @@ cmake --build . -j
 - HTTP 方法：`POST`
 - 负载格式：protobuf 二进制
 - `Content-Type`：`application/x-protobuf`
+
+MUD 新接口：
+
+- `POST /v1/game/bootstrap`
+- `POST /v1/game/character/create`
+- `POST /v1/game/command/execute`
+- `POST /v1/game/feed/pull`
 
 传输错误语义：
 
@@ -168,6 +179,7 @@ export $(grep -v '^#' .env | xargs)
 - 安装与运行：`INSTALL.md`
 - 架构说明：`ARCHITECTURE.md`
 - 代码风格：`CODE_STYLE.md`
+- H5 客户端说明：`client/README.md`
 
 ## 仓库内技能
 

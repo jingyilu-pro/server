@@ -123,7 +123,8 @@ bool BasicHttpService::start()
 
     if(m_auto_assign_port)
     {
-        auto* bound_socket = evhttp_bind_socket_with_handle(m_evhttp, m_endpoint.host.c_str(), 0);
+        const auto bind_port = static_cast<ev_uint16_t>(m_endpoint.port);
+        auto* bound_socket = evhttp_bind_socket_with_handle(m_evhttp, m_endpoint.host.c_str(), bind_port);
         if(bound_socket == nullptr)
         {
             spdlog::error("{} failed to bind endpoint {}", m_service_name, make_endpoint_text(m_endpoint));
