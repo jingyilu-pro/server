@@ -123,12 +123,24 @@ struct ClientPressureConfig
     ClientPressureHttpConfig http;
 };
 
+struct MudConfig
+{
+    int event_ttl_sec = 86400;
+    int event_index_max = 2000;
+    int bootstrap_recent_event_limit = 50;
+    int world_event_interval_sec = 45;
+    int chat_rate_limit_count = 8;
+    int chat_rate_limit_window_sec = 10;
+    std::vector<std::string> gm_accounts;
+};
+
 struct RuntimeConfig
 {
     ServerConfig server;
     RedisConfig redis;
     MySqlConfig mysql;
     JwtConfig jwt;
+    MudConfig mud;
     ClientPressureConfig client_pressure;
 };
 

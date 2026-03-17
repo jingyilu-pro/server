@@ -21,6 +21,7 @@
 #include "application_config.h"
 #include "account_cache_store.h"
 #include "account_repository.h"
+#include "mud_event_store.h"
 #include "mud_player_repository.h"
 #include "session_store.h"
 #include "service_discovery.h"
@@ -43,6 +44,7 @@ struct ServerContext
 
     std::shared_ptr<IAccountRepository> login_account_repository;
     std::shared_ptr<IMudPlayerRepository> game_mud_player_repository;
+    std::shared_ptr<IMudEventStore> game_mud_event_store;
 
     std::shared_ptr<ITokenProvider> login_token_provider;
     std::shared_ptr<ITokenProvider> game_token_provider;

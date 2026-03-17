@@ -29,6 +29,7 @@
 #include <array>
 #include <cctype>
 #include <chrono>
+#include <unordered_set>
 
 namespace
 {
@@ -78,6 +79,49 @@ std::string sha256_hex_string(const std::string& input)
         out[2 * i + 1] = kHexTable[digest[i] & 0x0F];
     }
     return out;
+}
+
+template <typename TResponse>
+void attach_mud_events_to_response(const std::vector<MudEventEnvelope>& events,
+                                   uint64_t latest_event_id,
+                                   TResponse* response)
+{
+    if(response == nullptr)
+    {
+        return;
+    }
+
+    auto* output_events = response->mutable_events();
+    output_events->Clear();
+    for(const auto& event : events)
+    {
+        auto* output = output_events->Add();
+        output->set_event_id(event.event_id);
+        output->set_type(event.type);
+        output->set_title(event.title);
+        output->set_content(event.content);
+        output->set_server_time_ms(event.server_time_ms);
+        output->set_unread(true);
+    }
+    response->set_next_event_id(latest_event_id);
+}
+
+std::pair<std::string, std::string> next_world_event_text(int64_t now_ms, int interval_sec)
+{
+    static const std::vector<std::pair<std::string, std::string>> kWorldEvents = {
+        {"黄枫谷收徒", "黄枫谷外门今日开山，越国散修纷纷前往试灵根。"},
+        {"血色禁地异动", "血色禁地外围灵气暴涨，有修士称见到异草出世。"},
+        {"乱星海风暴", "乱星海近海突起风暴，数支采药小队请求同道支援。"},
+        {"虚天殿传闻", "天南坊间再起虚天殿消息，诸多宗门已派人暗中探查。"}
+    };
+
+    if(kWorldEvents.empty())
+    {
+        return {};
+    }
+
+    const auto bucket = std::max<int64_t>(0, now_ms / (std::max(1, interval_sec) * 1000LL));
+    return kWorldEvents[static_cast<size_t>(bucket % static_cast<int64_t>(kWorldEvents.size()))];
 }
 
 std::string extract_request_token(evhttp_request* request)
@@ -209,19 +253,77 @@ bool begin_authorize_mud_request(evhttp_request* request,
     return true;
 }
 
+bool validate_mud_session(ISessionStore* session_store,
+                          const std::string& account,
+                          const std::string& token,
+                          int timeout_ms)
+{
+    if(session_store == nullptr || account.empty())
+    {
+        return true;
+    }
+
+    SessionStoreOpResult session_result;
+    const bool session_ok = wait_session_store_result(session_store,
+                                                      session_store->get_session(account),
+                                                      &session_result,
+                                                      timeout_ms);
+    if(!session_ok)
+    {
+        spdlog::warn("game mud session wait timeout account={}", account);
+        return true;
+    }
+    if(!session_result.success)
+    {
+        spdlog::warn("game mud session query failed: {}", session_result.error);
+        return true;
+    }
+    if(!session_result.hit || !session_result.session.has_value())
+    {
+        return true;
+    }
+
+    const auto token_digest = sha256_hex_string(token);
+    if(!token_digest.empty() && session_result.session->token_digest != token_digest)
+    {
+        return false;
+    }
+
+    if(session_result.session->expire_at > 0)
+    {
+        const int64_t now_sec = now_ms() / 1000;
+        int ttl_sec = static_cast<int>(session_result.session->expire_at - now_sec);
+        ttl_sec = std::max(1, ttl_sec);
+        SessionStoreOpResult touch_result;
+        const bool touch_ok = wait_session_store_result(session_store,
+                                                        session_store->touch_session(account, ttl_sec),
+                                                        &touch_result,
+                                                        timeout_ms);
+        if(!touch_ok || !touch_result.success)
+        {
+            spdlog::warn("game mud session touch failed: {}",
+                         touch_ok ? touch_result.error : "touch_wait_timeout");
+        }
+    }
+
+    return true;
+}
+
 } // namespace
 
 GameService::GameService(const RuntimeConfig& config,
                          std::shared_ptr<IServiceDiscovery> discovery,
                          std::shared_ptr<ITokenProvider> token_provider,
                          std::shared_ptr<ISessionStore> session_store,
-                         std::shared_ptr<IMudPlayerRepository> mud_player_repository)
+                         std::shared_ptr<IMudPlayerRepository> mud_player_repository,
+                         std::shared_ptr<IMudEventStore> mud_event_store)
     : BasicHttpService("game", config.server.game, true),
       m_config(config),
       m_discovery(std::move(discovery)),
       m_token_provider(std::move(token_provider)),
       m_session_store(std::move(session_store)),
-      m_mud_player_repository(std::move(mud_player_repository))
+      m_mud_player_repository(std::move(mud_player_repository)),
+      m_mud_event_store(std::move(mud_event_store))
 {
     m_local_instance.role = "game";
     m_local_instance.weight = 1;
@@ -279,6 +381,11 @@ bool GameService::start()
     {
         spdlog::error("game mud runtime unavailable: {}",
                       m_mud_runtime == nullptr ? "null runtime" : m_mud_runtime->ready_error());
+        return false;
+    }
+    if(m_mud_event_store == nullptr || !m_mud_event_store->ready())
+    {
+        spdlog::error("game mud event store unavailable");
         return false;
     }
 
@@ -394,6 +501,10 @@ void GameService::on_event_loop_tick()
     {
         m_mud_runtime->poll();
     }
+    if(m_mud_event_store)
+    {
+        m_mud_event_store->poll();
+    }
 
         bool should_unregister = false;
         {
@@ -429,6 +540,10 @@ void GameService::on_event_loop_tick()
     {
         m_mud_runtime->poll();
     }
+    if(m_mud_event_store)
+    {
+        m_mud_event_store->poll();
+    }
 
     auto now = std::chrono::steady_clock::now();
     if(m_discovery && m_registered.load() && !m_heartbeat_inflight &&
@@ -436,6 +551,18 @@ void GameService::on_event_loop_tick()
     {
         heartbeat_async();
         m_last_heartbeat = now;
+    }
+
+    if(m_mud_event_store && !m_world_event_inflight &&
+       now.time_since_epoch() != std::chrono::steady_clock::duration::zero())
+    {
+        static auto last_world_event = std::chrono::steady_clock::time_point{};
+        if(last_world_event.time_since_epoch() == std::chrono::steady_clock::duration::zero() ||
+           now - last_world_event >= std::chrono::seconds(std::max(1, m_config.mud.world_event_interval_sec)))
+        {
+            emit_world_event();
+            last_world_event = now;
+        }
     }
 }
 
@@ -518,6 +645,55 @@ coro_task_t GameService::heartbeat_async()
                      result == nullptr ? "null result" : result->error);
     }
     m_heartbeat_inflight = false;
+}
+
+void GameService::emit_world_event()
+{
+    if(m_mud_event_store == nullptr)
+    {
+        return;
+    }
+
+    m_world_event_inflight = true;
+    const auto rate_bucket = "world_event";
+    MudEventStoreOpResult rate_result;
+    const bool rate_ok = wait_mud_event_store_result(m_mud_event_store.get(),
+                                                     m_mud_event_store->check_rate_limit(rate_bucket,
+                                                                                        1,
+                                                                                        std::max(1, m_config.mud.world_event_interval_sec)),
+                                                     &rate_result,
+                                                     m_config.redis.op_timeout_ms);
+    if(rate_ok && rate_result.success && rate_result.allowed)
+    {
+        const auto current_now_ms = now_ms();
+        auto world_event = next_world_event_text(current_now_ms, m_config.mud.world_event_interval_sec);
+        if(!world_event.first.empty() && !world_event.second.empty())
+        {
+            MudEventEnvelope event;
+            event.target_account.clear();
+            event.type = "world";
+            event.title = world_event.first;
+            event.content = world_event.second;
+            event.server_time_ms = current_now_ms;
+            std::vector<MudEventEnvelope> events_to_append;
+            events_to_append.push_back(event);
+            MudEventStoreOpResult append_result;
+            const bool append_ok = wait_mud_event_store_result(m_mud_event_store.get(),
+                                                               m_mud_event_store->append_events(events_to_append),
+                                                               &append_result,
+                                                               m_config.redis.op_timeout_ms);
+            if(!append_ok || !append_result.success)
+            {
+                spdlog::warn("game append world event failed: {}",
+                             append_ok ? append_result.error : "append_wait_timeout");
+            }
+        }
+    }
+    else if(rate_ok && !rate_result.success)
+    {
+        spdlog::warn("game world event limiter failed: {}", rate_result.error);
+    }
+    m_world_event_inflight = false;
 }
 
 coro_task_t GameService::enter_game_async(evhttp_request* request)
@@ -668,38 +844,7 @@ coro_task_t GameService::bootstrap_async(evhttp_request* request)
                                    &error_code,
                                    &error_message))
     {
-        bool session_mismatch = false;
-        if(m_session_store && !account.empty())
-        {
-            auto* session_result = dynamic_cast<SessionStoreOpResult*>(co_await m_session_store->get_session(account));
-            if(session_result != nullptr && session_result->success && session_result->hit &&
-               session_result->session.has_value())
-            {
-                const auto token_digest = sha256_hex_string(request_token);
-                if(!token_digest.empty() && session_result->session->token_digest != token_digest)
-                {
-                    session_mismatch = true;
-                }
-                else if(session_result->session->expire_at > 0)
-                {
-                    const int64_t now_sec = now_ms() / 1000;
-                    int ttl_sec = static_cast<int>(session_result->session->expire_at - now_sec);
-                    ttl_sec = std::max(1, ttl_sec);
-                    auto* touch_result = dynamic_cast<SessionStoreOpResult*>(co_await m_session_store->touch_session(account, ttl_sec));
-                    if(touch_result == nullptr || !touch_result->success)
-                    {
-                        spdlog::warn("game mud session touch failed: {}",
-                                     touch_result == nullptr ? "null result" : touch_result->error);
-                    }
-                }
-            }
-            else if(session_result != nullptr && !session_result->success)
-            {
-                spdlog::warn("game mud session query failed: {}", session_result->error);
-            }
-        }
-
-        if(session_mismatch)
+        if(!validate_mud_session(m_session_store.get(), account, request_token, m_config.redis.op_timeout_ms))
         {
             http_code_message::gateway::set_code_message(&response,
                                                          http_code_message::gateway::code::kInvalidOrExpiredJwt,
@@ -718,7 +863,38 @@ coro_task_t GameService::bootstrap_async(evhttp_request* request)
         }
         else
         {
+            if(load_result->player.has_value())
+            {
+                if(load_result->player->team_id.empty())
+                {
+                    m_mud_runtime->forget_team_state(load_result->player->account);
+                }
+                else
+                {
+                    auto* team_result = dynamic_cast<MudPlayerRepositoryOpResult*>(
+                        co_await m_mud_player_repository->list_team_members(load_result->player->team_id));
+                    if(team_result != nullptr && team_result->success)
+                    {
+                        std::vector<MudPlayerState> team_members;
+                        team_members.reserve(team_result->players.size());
+                        for(const auto& entry : team_result->players)
+                        {
+                            team_members.push_back(entry.player);
+                        }
+                        m_mud_runtime->restore_team_state(team_members);
+                    }
+                }
+            }
             m_mud_runtime->build_bootstrap_response(account, load_result->player, &response);
+            MudEventStoreOpResult event_result;
+            if(wait_mud_event_store_result(m_mud_event_store.get(),
+                                           m_mud_event_store->list_recent(account, m_config.mud.bootstrap_recent_event_limit),
+                                           &event_result,
+                                           m_config.redis.op_timeout_ms) &&
+               event_result.success)
+            {
+                attach_mud_events_to_response(event_result.events, event_result.latest_event_id, &response);
+            }
         }
     }
     else
@@ -770,38 +946,7 @@ coro_task_t GameService::create_character_async(evhttp_request* request)
                                    &error_code,
                                    &error_message))
     {
-        bool session_mismatch = false;
-        if(m_session_store && !account.empty())
-        {
-            auto* session_result = dynamic_cast<SessionStoreOpResult*>(co_await m_session_store->get_session(account));
-            if(session_result != nullptr && session_result->success && session_result->hit &&
-               session_result->session.has_value())
-            {
-                const auto token_digest = sha256_hex_string(request_token);
-                if(!token_digest.empty() && session_result->session->token_digest != token_digest)
-                {
-                    session_mismatch = true;
-                }
-                else if(session_result->session->expire_at > 0)
-                {
-                    const int64_t now_sec = now_ms() / 1000;
-                    int ttl_sec = static_cast<int>(session_result->session->expire_at - now_sec);
-                    ttl_sec = std::max(1, ttl_sec);
-                    auto* touch_result = dynamic_cast<SessionStoreOpResult*>(co_await m_session_store->touch_session(account, ttl_sec));
-                    if(touch_result == nullptr || !touch_result->success)
-                    {
-                        spdlog::warn("game mud session touch failed: {}",
-                                     touch_result == nullptr ? "null result" : touch_result->error);
-                    }
-                }
-            }
-            else if(session_result != nullptr && !session_result->success)
-            {
-                spdlog::warn("game mud session query failed: {}", session_result->error);
-            }
-        }
-
-        if(session_mismatch)
+        if(!validate_mud_session(m_session_store.get(), account, request_token, m_config.redis.op_timeout_ms))
         {
             http_code_message::gateway::set_code_message(&response,
                                                          http_code_message::gateway::code::kInvalidOrExpiredJwt,
@@ -845,7 +990,25 @@ coro_task_t GameService::create_character_async(evhttp_request* request)
                 }
                 else
                 {
+                    MudEventEnvelope created_event;
+                    created_event.target_account = account;
+                    created_event.type = "system";
+                    created_event.title = "踏入修仙路";
+                    created_event.content = normalized_name + "自七玄门山脚启程，正式踏上凡人修仙之路。";
+                    created_event.server_time_ms = now_ms();
+                    std::vector<MudEventEnvelope> created_events{created_event};
+                    MudEventStoreOpResult append_result;
                     m_mud_runtime->build_create_character_response(player, &response);
+                    if(wait_mud_event_store_result(m_mud_event_store.get(),
+                                                   m_mud_event_store->append_events(created_events),
+                                                   &append_result,
+                                                   m_config.redis.op_timeout_ms) &&
+                       append_result.success)
+                    {
+                        attach_mud_events_to_response(append_result.events,
+                                                      append_result.latest_event_id,
+                                                      &response);
+                    }
                 }
             }
         }
@@ -899,38 +1062,7 @@ coro_task_t GameService::execute_command_async(evhttp_request* request)
                                    &error_code,
                                    &error_message))
     {
-        bool session_mismatch = false;
-        if(m_session_store && !account.empty())
-        {
-            auto* session_result = dynamic_cast<SessionStoreOpResult*>(co_await m_session_store->get_session(account));
-            if(session_result != nullptr && session_result->success && session_result->hit &&
-               session_result->session.has_value())
-            {
-                const auto token_digest = sha256_hex_string(request_token);
-                if(!token_digest.empty() && session_result->session->token_digest != token_digest)
-                {
-                    session_mismatch = true;
-                }
-                else if(session_result->session->expire_at > 0)
-                {
-                    const int64_t now_sec = now_ms() / 1000;
-                    int ttl_sec = static_cast<int>(session_result->session->expire_at - now_sec);
-                    ttl_sec = std::max(1, ttl_sec);
-                    auto* touch_result = dynamic_cast<SessionStoreOpResult*>(co_await m_session_store->touch_session(account, ttl_sec));
-                    if(touch_result == nullptr || !touch_result->success)
-                    {
-                        spdlog::warn("game mud session touch failed: {}",
-                                     touch_result == nullptr ? "null result" : touch_result->error);
-                    }
-                }
-            }
-            else if(session_result != nullptr && !session_result->success)
-            {
-                spdlog::warn("game mud session query failed: {}", session_result->error);
-            }
-        }
-
-        if(session_mismatch)
+        if(!validate_mud_session(m_session_store.get(), account, request_token, m_config.redis.op_timeout_ms))
         {
             http_code_message::gateway::set_code_message(&response,
                                                          http_code_message::gateway::code::kInvalidOrExpiredJwt,
@@ -955,7 +1087,61 @@ coro_task_t GameService::execute_command_async(evhttp_request* request)
         }
         else
         {
+            if(load_result->player->team_id.empty())
+            {
+                m_mud_runtime->forget_team_state(load_result->player->account);
+            }
+            else
+            {
+                auto* team_result = dynamic_cast<MudPlayerRepositoryOpResult*>(
+                    co_await m_mud_player_repository->list_team_members(load_result->player->team_id));
+                if(team_result != nullptr && team_result->success)
+                {
+                    std::vector<MudPlayerState> team_members;
+                    team_members.reserve(team_result->players.size());
+                    for(const auto& entry : team_result->players)
+                    {
+                        team_members.push_back(entry.player);
+                    }
+                    m_mud_runtime->restore_team_state(team_members);
+                }
+            }
+
             auto player = *load_result->player;
+            const auto trimmed_command = mud_trim(mud_request.command());
+            if(trimmed_command.rfind("chat ", 0) == 0)
+            {
+                const auto raw_channel = mud_trim(trimmed_command.substr(5));
+                const auto split_pos = raw_channel.find(' ');
+                const auto channel = mud_to_lower_ascii(split_pos == std::string::npos
+                                                            ? raw_channel
+                                                            : raw_channel.substr(0, split_pos));
+                MudEventStoreOpResult rate_result;
+                if(!wait_mud_event_store_result(m_mud_event_store.get(),
+                                                m_mud_event_store->check_rate_limit("chat:" + account + ":" + channel,
+                                                                                   m_config.mud.chat_rate_limit_count,
+                                                                                   m_config.mud.chat_rate_limit_window_sec),
+                                                &rate_result,
+                                                m_config.redis.op_timeout_ms) ||
+                   !rate_result.success)
+                {
+                    http_code_message::gateway::set_code_message(&response,
+                                                                 http_code_message::gateway::code::kMudPlayerRepositoryUnavailable,
+                                                                 "chat rate limit unavailable");
+                    write_protobuf_response(request, response, 200);
+                    release_request(request);
+                    co_return;
+                }
+                if(!rate_result.allowed)
+                {
+                    http_code_message::gateway::set_code_message(&response,
+                                                                 http_code_message::gateway::code::kInvalidMudCommand,
+                                                                 "chat rate limited");
+                    write_protobuf_response(request, response, 200);
+                    release_request(request);
+                    co_return;
+                }
+            }
             auto execution = m_mud_runtime->run_command(&player, mud_request.command());
             if(execution.success)
             {
@@ -969,6 +1155,39 @@ coro_task_t GameService::execute_command_async(evhttp_request* request)
                     release_request(request);
                     co_return;
                 }
+
+                for(const auto& extra_player : execution.extra_players_to_save)
+                {
+                    auto* extra_save_result = dynamic_cast<MudPlayerRepositoryOpResult*>(
+                        co_await m_mud_player_repository->save_player(extra_player));
+                    if(extra_save_result == nullptr || !extra_save_result->success || !extra_save_result->save_ok)
+                    {
+                        http_code_message::gateway::set_code_message(&response,
+                                                                     http_code_message::gateway::code::kMudPlayerRepositoryUnavailable,
+                                                                     "save team player failed");
+                        write_protobuf_response(request, response, 200);
+                        release_request(request);
+                        co_return;
+                    }
+                }
+            }
+            if(!execution.events.empty())
+            {
+                MudEventStoreOpResult append_result;
+                if(!wait_mud_event_store_result(m_mud_event_store.get(),
+                                                m_mud_event_store->append_events(execution.events),
+                                                &append_result,
+                                                m_config.redis.op_timeout_ms) ||
+                   !append_result.success)
+                {
+                    http_code_message::gateway::set_code_message(&response,
+                                                                 http_code_message::gateway::code::kMudPlayerRepositoryUnavailable,
+                                                                 "append mud events failed");
+                    write_protobuf_response(request, response, 200);
+                    release_request(request);
+                    co_return;
+                }
+                execution.events = append_result.events;
             }
             m_mud_runtime->build_command_response(player, mud_request.command(), execution, &response);
         }
@@ -1022,38 +1241,7 @@ coro_task_t GameService::pull_feed_async(evhttp_request* request)
                                    &error_code,
                                    &error_message))
     {
-        bool session_mismatch = false;
-        if(m_session_store && !account.empty())
-        {
-            auto* session_result = dynamic_cast<SessionStoreOpResult*>(co_await m_session_store->get_session(account));
-            if(session_result != nullptr && session_result->success && session_result->hit &&
-               session_result->session.has_value())
-            {
-                const auto token_digest = sha256_hex_string(request_token);
-                if(!token_digest.empty() && session_result->session->token_digest != token_digest)
-                {
-                    session_mismatch = true;
-                }
-                else if(session_result->session->expire_at > 0)
-                {
-                    const int64_t now_sec = now_ms() / 1000;
-                    int ttl_sec = static_cast<int>(session_result->session->expire_at - now_sec);
-                    ttl_sec = std::max(1, ttl_sec);
-                    auto* touch_result = dynamic_cast<SessionStoreOpResult*>(co_await m_session_store->touch_session(account, ttl_sec));
-                    if(touch_result == nullptr || !touch_result->success)
-                    {
-                        spdlog::warn("game mud session touch failed: {}",
-                                     touch_result == nullptr ? "null result" : touch_result->error);
-                    }
-                }
-            }
-            else if(session_result != nullptr && !session_result->success)
-            {
-                spdlog::warn("game mud session query failed: {}", session_result->error);
-            }
-        }
-
-        if(session_mismatch)
+        if(!validate_mud_session(m_session_store.get(), account, request_token, m_config.redis.op_timeout_ms))
         {
             http_code_message::gateway::set_code_message(&response,
                                                          http_code_message::gateway::code::kInvalidOrExpiredJwt,
@@ -1063,7 +1251,25 @@ coro_task_t GameService::pull_feed_async(evhttp_request* request)
             co_return;
         }
 
-        m_mud_runtime->build_feed_response(account, mud_request.after_event_id(), mud_request.limit(), &response);
+        MudEventStoreOpResult event_result;
+        if(!wait_mud_event_store_result(m_mud_event_store.get(),
+                                        m_mud_event_store->list_after(account, mud_request.after_event_id(), mud_request.limit()),
+                                        &event_result,
+                                        m_config.redis.op_timeout_ms) ||
+           !event_result.success)
+        {
+            http_code_message::gateway::set_code_message(&response,
+                                                         http_code_message::gateway::code::kMudPlayerRepositoryUnavailable,
+                                                         "load mud events failed");
+        }
+        else
+        {
+            attach_mud_events_to_response(event_result.events, event_result.latest_event_id, &response);
+            response.set_recommended_poll_interval_ms(1500);
+            http_code_message::gateway::set_code_message(&response,
+                                                         http_code_message::gateway::code::kSuccess,
+                                                         http_code_message::gateway::message::kOk);
+        }
     }
     else
     {

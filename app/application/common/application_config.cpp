@@ -636,6 +636,31 @@ bool set_config_value(RuntimeConfig* config, const std::string& key, const std::
         return true;
     }
 
+    if(key == "mud.event_ttl_sec")
+    {
+        return parse_int_value(value, &config->mud.event_ttl_sec);
+    }
+    if(key == "mud.event_index_max")
+    {
+        return parse_int_value(value, &config->mud.event_index_max);
+    }
+    if(key == "mud.bootstrap_recent_event_limit")
+    {
+        return parse_int_value(value, &config->mud.bootstrap_recent_event_limit);
+    }
+    if(key == "mud.world_event_interval_sec")
+    {
+        return parse_int_value(value, &config->mud.world_event_interval_sec);
+    }
+    if(key == "mud.chat_rate_limit_count")
+    {
+        return parse_int_value(value, &config->mud.chat_rate_limit_count);
+    }
+    if(key == "mud.chat_rate_limit_window_sec")
+    {
+        return parse_int_value(value, &config->mud.chat_rate_limit_window_sec);
+    }
+
     if(error_message != nullptr)
     {
         *error_message = "unknown config key: " + key;
@@ -724,7 +749,8 @@ bool load_runtime_config(const std::string& config_path, RuntimeConfig* config, 
 
         if(stripped.rfind("- ", 0) == 0)
         {
-            if(parent_path != "client_pressure.scenario.login_account_pool")
+            if(parent_path != "client_pressure.scenario.login_account_pool" &&
+               parent_path != "mud.gm_accounts")
             {
                 if(error_message != nullptr)
                 {
@@ -735,7 +761,14 @@ bool load_runtime_config(const std::string& config_path, RuntimeConfig* config, 
             auto list_value = unquote(trim(stripped.substr(2)));
             if(!list_value.empty())
             {
-                config->client_pressure.scenario.login_account_pool.push_back(list_value);
+                if(parent_path == "client_pressure.scenario.login_account_pool")
+                {
+                    config->client_pressure.scenario.login_account_pool.push_back(list_value);
+                }
+                else if(parent_path == "mud.gm_accounts")
+                {
+                    config->mud.gm_accounts.push_back(list_value);
+                }
             }
             continue;
         }
@@ -852,6 +885,30 @@ bool load_runtime_config(const std::string& config_path, RuntimeConfig* config, 
     if(config->redis.account_cache_ttl_sec <= 0)
     {
         config->redis.account_cache_ttl_sec = 300;
+    }
+    if(config->mud.event_ttl_sec <= 0)
+    {
+        config->mud.event_ttl_sec = 86400;
+    }
+    if(config->mud.event_index_max <= 0)
+    {
+        config->mud.event_index_max = 2000;
+    }
+    if(config->mud.bootstrap_recent_event_limit <= 0)
+    {
+        config->mud.bootstrap_recent_event_limit = 50;
+    }
+    if(config->mud.world_event_interval_sec <= 0)
+    {
+        config->mud.world_event_interval_sec = 45;
+    }
+    if(config->mud.chat_rate_limit_count <= 0)
+    {
+        config->mud.chat_rate_limit_count = 8;
+    }
+    if(config->mud.chat_rate_limit_window_sec <= 0)
+    {
+        config->mud.chat_rate_limit_window_sec = 10;
     }
 
     if(config->client_pressure.scenario.login_account_pool.empty())

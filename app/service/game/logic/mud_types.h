@@ -167,6 +167,9 @@ struct MudPlayerState
     std::string sect_id;
     std::string sect_name;
     std::string sect_rank;
+    std::string team_id;
+    std::string team_name;
+    std::string team_leader_account;
     std::vector<MudInventoryItemState> inventory;
     std::vector<MudQuestState> quests;
 };
@@ -196,6 +199,7 @@ struct MudCommandExecution
     std::vector<std::string> hints;
     int recommended_poll_interval_ms = 1500;
     std::vector<MudEventEnvelope> events;
+    std::vector<MudPlayerState> extra_players_to_save;
 };
 
 struct MudLeaderboardEntry
@@ -209,6 +213,7 @@ struct MudTeamMemberState
     std::string account;
     std::string display_name;
     bool leader = false;
+    MudPlayerState player_state;
 };
 
 struct MudTeamState

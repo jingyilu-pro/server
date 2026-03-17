@@ -50,6 +50,9 @@ constexpr const char* kMudCharacterTableSql =
     "sect_id VARCHAR(64) NOT NULL DEFAULT '',"
     "sect_name VARCHAR(64) NOT NULL DEFAULT '',"
     "sect_rank VARCHAR(64) NOT NULL DEFAULT '',"
+    "team_id VARCHAR(128) NOT NULL DEFAULT '',"
+    "team_name VARCHAR(128) NOT NULL DEFAULT '',"
+    "team_leader_account VARCHAR(128) NOT NULL DEFAULT '',"
     "inventory_json LONGTEXT NOT NULL,"
     "quest_json LONGTEXT NOT NULL,"
     "created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,"
@@ -59,20 +62,20 @@ constexpr const char* kMudCharacterTableSql =
 constexpr const char* kLoadPlayerSql =
     "SELECT account,character_name,level,hp,max_hp,attack_power,defense_power,spirit_stone,"
     "title,location_scene_id,realm_name,realm_stage,exp,next_breakthrough_exp,primary_skill,"
-    "skill_level,sect_id,sect_name,sect_rank,inventory_json,quest_json "
+    "skill_level,sect_id,sect_name,sect_rank,team_id,team_name,team_leader_account,inventory_json,quest_json "
     "FROM mud_character WHERE account=? LIMIT 1";
 
 constexpr const char* kInsertPlayerSql =
     "INSERT INTO mud_character(account,character_name,level,hp,max_hp,attack_power,defense_power,"
     "spirit_stone,title,location_scene_id,realm_name,realm_stage,exp,next_breakthrough_exp,"
-    "primary_skill,skill_level,sect_id,sect_name,sect_rank,inventory_json,quest_json)"
-    " VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+    "primary_skill,skill_level,sect_id,sect_name,sect_rank,team_id,team_name,team_leader_account,inventory_json,quest_json)"
+    " VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 
 constexpr const char* kUpdatePlayerSql =
     "UPDATE mud_character SET character_name=?,level=?,hp=?,max_hp=?,attack_power=?,defense_power=?,"
     "spirit_stone=?,title=?,location_scene_id=?,realm_name=?,realm_stage=?,exp=?,"
     "next_breakthrough_exp=?,primary_skill=?,skill_level=?,sect_id=?,sect_name=?,sect_rank=?,"
-    "inventory_json=?,quest_json=? WHERE account=?";
+    "team_id=?,team_name=?,team_leader_account=?,inventory_json=?,quest_json=? WHERE account=?";
 
 std::string encode_inventory_json(const std::vector<MudInventoryItemState>& inventory)
 {
@@ -331,6 +334,7 @@ CoroAwaitable MySqlMudPlayerRepository::load_player(const std::string& account)
 
     result->init(MudPlayerRepositoryOpType::load_player,
                  account,
+                 "",
                  std::nullopt,
                  MudLeaderboardType::realm,
                  0,
@@ -350,6 +354,7 @@ CoroAwaitable MySqlMudPlayerRepository::create_player(const MudPlayerState& play
 
     result->init(MudPlayerRepositoryOpType::create_player,
                  player.account,
+                 "",
                  player,
                  MudLeaderboardType::realm,
                  0,
@@ -369,6 +374,7 @@ CoroAwaitable MySqlMudPlayerRepository::save_player(const MudPlayerState& player
 
     result->init(MudPlayerRepositoryOpType::save_player,
                  player.account,
+                 "",
                  player,
                  MudLeaderboardType::realm,
                  0,
@@ -388,9 +394,30 @@ CoroAwaitable MySqlMudPlayerRepository::list_top_players(MudLeaderboardType lead
 
     result->init(MudPlayerRepositoryOpType::list_top_players,
                  "",
+                 "",
                  std::nullopt,
                  leaderboard_type,
                  limit,
+                 [this](MudPlayerRepositoryOpResult* op) {
+                     execute_operation(op);
+                 });
+    return CoroAwaitable{m_manager.get(), result};
+}
+
+CoroAwaitable MySqlMudPlayerRepository::list_team_members(const std::string& team_id)
+{
+    auto* result = alloc_result();
+    if(result == nullptr)
+    {
+        return CoroAwaitable{m_manager.get(), nullptr};
+    }
+
+    result->init(MudPlayerRepositoryOpType::list_team_members,
+                 "",
+                 team_id,
+                 std::nullopt,
+                 MudLeaderboardType::realm,
+                 0,
                  [this](MudPlayerRepositoryOpResult* op) {
                      execute_operation(op);
                  });
@@ -488,6 +515,30 @@ void MySqlMudPlayerRepository::execute_operation(MudPlayerRepositoryOpResult* re
         if(!ok)
         {
             result->error = error.empty() ? "mysql_list_top_players_failed" : error;
+        }
+        break;
+    }
+    case MudPlayerRepositoryOpType::list_team_members:
+    {
+        std::vector<MudPlayerState> players;
+        const bool ok = query_team_members(worker_mysql,
+                                           result->request_group_id,
+                                           &players,
+                                           &error);
+        result->success = ok;
+        result->players.clear();
+        result->players.reserve(players.size());
+        int rank = 1;
+        for(auto& player : players)
+        {
+            MudLeaderboardEntry entry;
+            entry.rank = rank++;
+            entry.player = std::move(player);
+            result->players.push_back(std::move(entry));
+        }
+        if(!ok)
+        {
+            result->error = error.empty() ? "mysql_list_team_members_failed" : error;
         }
         break;
     }
@@ -662,6 +713,9 @@ bool MySqlMudPlayerRepository::query_player_record(MYSQL* mysql_handle,
         std::array<char, 65> sect_id_buf{};
         std::array<char, 65> sect_name_buf{};
         std::array<char, 65> sect_rank_buf{};
+        std::array<char, 129> team_id_buf{};
+        std::array<char, 129> team_name_buf{};
+        std::array<char, 129> team_leader_account_buf{};
         std::array<char, 32768> inventory_json_buf{};
         std::array<char, 32768> quest_json_buf{};
 
@@ -674,6 +728,9 @@ bool MySqlMudPlayerRepository::query_player_record(MYSQL* mysql_handle,
         unsigned long sect_id_out_len = 0;
         unsigned long sect_name_out_len = 0;
         unsigned long sect_rank_out_len = 0;
+        unsigned long team_id_out_len = 0;
+        unsigned long team_name_out_len = 0;
+        unsigned long team_leader_account_out_len = 0;
         unsigned long inventory_json_out_len = 0;
         unsigned long quest_json_out_len = 0;
 
@@ -688,7 +745,7 @@ bool MySqlMudPlayerRepository::query_player_record(MYSQL* mysql_handle,
         long long exp = 0;
         long long next_breakthrough_exp = 0;
 
-        MYSQL_BIND bind_result[21]{};
+        MYSQL_BIND bind_result[24]{};
         bind_result[0].buffer_type = MYSQL_TYPE_STRING;
         bind_result[0].buffer = account_buf.data();
         bind_result[0].buffer_length = static_cast<unsigned long>(account_buf.size());
@@ -758,14 +815,29 @@ bool MySqlMudPlayerRepository::query_player_record(MYSQL* mysql_handle,
         bind_result[18].length = &sect_rank_out_len;
 
         bind_result[19].buffer_type = MYSQL_TYPE_STRING;
-        bind_result[19].buffer = inventory_json_buf.data();
-        bind_result[19].buffer_length = static_cast<unsigned long>(inventory_json_buf.size());
-        bind_result[19].length = &inventory_json_out_len;
+        bind_result[19].buffer = team_id_buf.data();
+        bind_result[19].buffer_length = static_cast<unsigned long>(team_id_buf.size());
+        bind_result[19].length = &team_id_out_len;
 
         bind_result[20].buffer_type = MYSQL_TYPE_STRING;
-        bind_result[20].buffer = quest_json_buf.data();
-        bind_result[20].buffer_length = static_cast<unsigned long>(quest_json_buf.size());
-        bind_result[20].length = &quest_json_out_len;
+        bind_result[20].buffer = team_name_buf.data();
+        bind_result[20].buffer_length = static_cast<unsigned long>(team_name_buf.size());
+        bind_result[20].length = &team_name_out_len;
+
+        bind_result[21].buffer_type = MYSQL_TYPE_STRING;
+        bind_result[21].buffer = team_leader_account_buf.data();
+        bind_result[21].buffer_length = static_cast<unsigned long>(team_leader_account_buf.size());
+        bind_result[21].length = &team_leader_account_out_len;
+
+        bind_result[22].buffer_type = MYSQL_TYPE_STRING;
+        bind_result[22].buffer = inventory_json_buf.data();
+        bind_result[22].buffer_length = static_cast<unsigned long>(inventory_json_buf.size());
+        bind_result[22].length = &inventory_json_out_len;
+
+        bind_result[23].buffer_type = MYSQL_TYPE_STRING;
+        bind_result[23].buffer = quest_json_buf.data();
+        bind_result[23].buffer_length = static_cast<unsigned long>(quest_json_buf.size());
+        bind_result[23].length = &quest_json_out_len;
 
         if(mysql_stmt_bind_result(stmt, bind_result) != 0)
         {
@@ -811,6 +883,11 @@ bool MySqlMudPlayerRepository::query_player_record(MYSQL* mysql_handle,
         player.sect_id.assign(sect_id_buf.data(), std::min<unsigned long>(sect_id_out_len, static_cast<unsigned long>(sect_id_buf.size() - 1)));
         player.sect_name.assign(sect_name_buf.data(), std::min<unsigned long>(sect_name_out_len, static_cast<unsigned long>(sect_name_buf.size() - 1)));
         player.sect_rank.assign(sect_rank_buf.data(), std::min<unsigned long>(sect_rank_out_len, static_cast<unsigned long>(sect_rank_buf.size() - 1)));
+        player.team_id.assign(team_id_buf.data(), std::min<unsigned long>(team_id_out_len, static_cast<unsigned long>(team_id_buf.size() - 1)));
+        player.team_name.assign(team_name_buf.data(), std::min<unsigned long>(team_name_out_len, static_cast<unsigned long>(team_name_buf.size() - 1)));
+        player.team_leader_account.assign(team_leader_account_buf.data(),
+                                          std::min<unsigned long>(team_leader_account_out_len,
+                                                                  static_cast<unsigned long>(team_leader_account_buf.size() - 1)));
         decode_inventory_json(std::string(inventory_json_buf.data(), std::min<unsigned long>(inventory_json_out_len, static_cast<unsigned long>(inventory_json_buf.size() - 1))),
                               &player.inventory);
         decode_quest_json(std::string(quest_json_buf.data(), std::min<unsigned long>(quest_json_out_len, static_cast<unsigned long>(quest_json_buf.size() - 1))),
@@ -870,6 +947,9 @@ bool MySqlMudPlayerRepository::insert_player_record(MYSQL* mysql_handle,
         unsigned long sect_id_len = static_cast<unsigned long>(player.sect_id.size());
         unsigned long sect_name_len = static_cast<unsigned long>(player.sect_name.size());
         unsigned long sect_rank_len = static_cast<unsigned long>(player.sect_rank.size());
+        unsigned long team_id_len = static_cast<unsigned long>(player.team_id.size());
+        unsigned long team_name_len = static_cast<unsigned long>(player.team_name.size());
+        unsigned long team_leader_account_len = static_cast<unsigned long>(player.team_leader_account.size());
         unsigned long inventory_json_len = static_cast<unsigned long>(inventory_json.size());
         unsigned long quest_json_len = static_cast<unsigned long>(quest_json.size());
 
@@ -884,7 +964,7 @@ bool MySqlMudPlayerRepository::insert_player_record(MYSQL* mysql_handle,
         long long next_breakthrough_exp = static_cast<long long>(player.next_breakthrough_exp);
         int skill_level = player.skill_level;
 
-        MYSQL_BIND bind_param[21]{};
+        MYSQL_BIND bind_param[24]{};
         bind_param[0].buffer_type = MYSQL_TYPE_STRING;
         bind_param[0].buffer = const_cast<char*>(player.account.data());
         bind_param[0].buffer_length = account_len;
@@ -954,14 +1034,29 @@ bool MySqlMudPlayerRepository::insert_player_record(MYSQL* mysql_handle,
         bind_param[18].length = &sect_rank_len;
 
         bind_param[19].buffer_type = MYSQL_TYPE_STRING;
-        bind_param[19].buffer = const_cast<char*>(inventory_json.data());
-        bind_param[19].buffer_length = inventory_json_len;
-        bind_param[19].length = &inventory_json_len;
+        bind_param[19].buffer = const_cast<char*>(player.team_id.data());
+        bind_param[19].buffer_length = team_id_len;
+        bind_param[19].length = &team_id_len;
 
         bind_param[20].buffer_type = MYSQL_TYPE_STRING;
-        bind_param[20].buffer = const_cast<char*>(quest_json.data());
-        bind_param[20].buffer_length = quest_json_len;
-        bind_param[20].length = &quest_json_len;
+        bind_param[20].buffer = const_cast<char*>(player.team_name.data());
+        bind_param[20].buffer_length = team_name_len;
+        bind_param[20].length = &team_name_len;
+
+        bind_param[21].buffer_type = MYSQL_TYPE_STRING;
+        bind_param[21].buffer = const_cast<char*>(player.team_leader_account.data());
+        bind_param[21].buffer_length = team_leader_account_len;
+        bind_param[21].length = &team_leader_account_len;
+
+        bind_param[22].buffer_type = MYSQL_TYPE_STRING;
+        bind_param[22].buffer = const_cast<char*>(inventory_json.data());
+        bind_param[22].buffer_length = inventory_json_len;
+        bind_param[22].length = &inventory_json_len;
+
+        bind_param[23].buffer_type = MYSQL_TYPE_STRING;
+        bind_param[23].buffer = const_cast<char*>(quest_json.data());
+        bind_param[23].buffer_length = quest_json_len;
+        bind_param[23].length = &quest_json_len;
 
         if(mysql_stmt_bind_param(stmt, bind_param) != 0)
         {
@@ -1039,6 +1134,9 @@ bool MySqlMudPlayerRepository::update_player_record(MYSQL* mysql_handle,
         unsigned long sect_id_len = static_cast<unsigned long>(player.sect_id.size());
         unsigned long sect_name_len = static_cast<unsigned long>(player.sect_name.size());
         unsigned long sect_rank_len = static_cast<unsigned long>(player.sect_rank.size());
+        unsigned long team_id_len = static_cast<unsigned long>(player.team_id.size());
+        unsigned long team_name_len = static_cast<unsigned long>(player.team_name.size());
+        unsigned long team_leader_account_len = static_cast<unsigned long>(player.team_leader_account.size());
         unsigned long inventory_json_len = static_cast<unsigned long>(inventory_json.size());
         unsigned long quest_json_len = static_cast<unsigned long>(quest_json.size());
         unsigned long account_len = static_cast<unsigned long>(player.account.size());
@@ -1054,7 +1152,7 @@ bool MySqlMudPlayerRepository::update_player_record(MYSQL* mysql_handle,
         long long next_breakthrough_exp = static_cast<long long>(player.next_breakthrough_exp);
         int skill_level = player.skill_level;
 
-        MYSQL_BIND bind_param[21]{};
+        MYSQL_BIND bind_param[24]{};
         bind_param[0].buffer_type = MYSQL_TYPE_STRING;
         bind_param[0].buffer = const_cast<char*>(player.character_name.data());
         bind_param[0].buffer_length = character_name_len;
@@ -1119,19 +1217,34 @@ bool MySqlMudPlayerRepository::update_player_record(MYSQL* mysql_handle,
         bind_param[17].length = &sect_rank_len;
 
         bind_param[18].buffer_type = MYSQL_TYPE_STRING;
-        bind_param[18].buffer = const_cast<char*>(inventory_json.data());
-        bind_param[18].buffer_length = inventory_json_len;
-        bind_param[18].length = &inventory_json_len;
+        bind_param[18].buffer = const_cast<char*>(player.team_id.data());
+        bind_param[18].buffer_length = team_id_len;
+        bind_param[18].length = &team_id_len;
 
         bind_param[19].buffer_type = MYSQL_TYPE_STRING;
-        bind_param[19].buffer = const_cast<char*>(quest_json.data());
-        bind_param[19].buffer_length = quest_json_len;
-        bind_param[19].length = &quest_json_len;
+        bind_param[19].buffer = const_cast<char*>(player.team_name.data());
+        bind_param[19].buffer_length = team_name_len;
+        bind_param[19].length = &team_name_len;
 
         bind_param[20].buffer_type = MYSQL_TYPE_STRING;
-        bind_param[20].buffer = const_cast<char*>(player.account.data());
-        bind_param[20].buffer_length = account_len;
-        bind_param[20].length = &account_len;
+        bind_param[20].buffer = const_cast<char*>(player.team_leader_account.data());
+        bind_param[20].buffer_length = team_leader_account_len;
+        bind_param[20].length = &team_leader_account_len;
+
+        bind_param[21].buffer_type = MYSQL_TYPE_STRING;
+        bind_param[21].buffer = const_cast<char*>(inventory_json.data());
+        bind_param[21].buffer_length = inventory_json_len;
+        bind_param[21].length = &inventory_json_len;
+
+        bind_param[22].buffer_type = MYSQL_TYPE_STRING;
+        bind_param[22].buffer = const_cast<char*>(quest_json.data());
+        bind_param[22].buffer_length = quest_json_len;
+        bind_param[22].length = &quest_json_len;
+
+        bind_param[23].buffer_type = MYSQL_TYPE_STRING;
+        bind_param[23].buffer = const_cast<char*>(player.account.data());
+        bind_param[23].buffer_length = account_len;
+        bind_param[23].length = &account_len;
 
         if(mysql_stmt_bind_param(stmt, bind_param) != 0)
         {
@@ -1189,7 +1302,7 @@ bool MySqlMudPlayerRepository::query_top_players(MYSQL* mysql_handle,
     const std::string sql =
         "SELECT account,character_name,level,hp,max_hp,attack_power,defense_power,spirit_stone,"
         "title,location_scene_id,realm_name,realm_stage,exp,next_breakthrough_exp,primary_skill,"
-        "skill_level,sect_id,sect_name,sect_rank,inventory_json,quest_json "
+        "skill_level,sect_id,sect_name,sect_rank,team_id,team_name,team_leader_account,inventory_json,quest_json "
         "FROM mud_character ORDER BY " + order_by + " LIMIT " + std::to_string(normalized_limit);
 
     if(mysql_query(mysql_handle, sql.c_str()) != 0)
@@ -1258,13 +1371,126 @@ bool MySqlMudPlayerRepository::query_top_players(MYSQL* mysql_handle,
         player.sect_id = field_text(16);
         player.sect_name = field_text(17);
         player.sect_rank = field_text(18);
-        decode_inventory_json(field_text(19), &player.inventory);
-        decode_quest_json(field_text(20), &player.quests);
+        player.team_id = field_text(19);
+        player.team_name = field_text(20);
+        player.team_leader_account = field_text(21);
+        decode_inventory_json(field_text(22), &player.inventory);
+        decode_quest_json(field_text(23), &player.quests);
 
         MudLeaderboardEntry entry;
         entry.rank = rank++;
         entry.player = std::move(player);
         out_players->push_back(std::move(entry));
+    }
+
+    mysql_free_result(result);
+    return true;
+}
+
+bool MySqlMudPlayerRepository::query_team_members(MYSQL* mysql_handle,
+                                                  const std::string& team_id,
+                                                  std::vector<MudPlayerState>* out_players,
+                                                  std::string* error)
+{
+    if(mysql_handle == nullptr || out_players == nullptr)
+    {
+        if(error != nullptr)
+        {
+            *error = "mysql_invalid_query_team_members_args";
+        }
+        return false;
+    }
+
+    out_players->clear();
+    if(team_id.empty())
+    {
+        return true;
+    }
+
+    std::string escaped_team_id(team_id.size() * 2 + 1, '\0');
+    const auto escaped_len = mysql_real_escape_string(mysql_handle,
+                                                      escaped_team_id.data(),
+                                                      team_id.c_str(),
+                                                      static_cast<unsigned long>(team_id.size()));
+    escaped_team_id.resize(escaped_len);
+
+    const std::string sql =
+        "SELECT account,character_name,level,hp,max_hp,attack_power,defense_power,spirit_stone,"
+        "title,location_scene_id,realm_name,realm_stage,exp,next_breakthrough_exp,primary_skill,"
+        "skill_level,sect_id,sect_name,sect_rank,team_id,team_name,team_leader_account,inventory_json,quest_json "
+        "FROM mud_character WHERE team_id='" + escaped_team_id + "' ORDER BY (account = team_leader_account) DESC, account ASC";
+
+    if(mysql_query(mysql_handle, sql.c_str()) != 0)
+    {
+        if(error != nullptr)
+        {
+            *error = mysql_error(mysql_handle);
+        }
+        return false;
+    }
+
+    MYSQL_RES* result = mysql_store_result(mysql_handle);
+    if(result == nullptr)
+    {
+        if(error != nullptr)
+        {
+            *error = mysql_error(mysql_handle);
+        }
+        return false;
+    }
+
+    while(MYSQL_ROW row = mysql_fetch_row(result))
+    {
+        unsigned long* lengths = mysql_fetch_lengths(result);
+        if(lengths == nullptr)
+        {
+            continue;
+        }
+
+        auto field_text = [&](int index) -> std::string {
+            if(row[index] == nullptr)
+            {
+                return {};
+            }
+            return std::string(row[index], lengths[index]);
+        };
+
+        auto field_int = [&](int index) -> int {
+            auto text = field_text(index);
+            return text.empty() ? 0 : std::stoi(text);
+        };
+
+        auto field_int64 = [&](int index) -> int64_t {
+            auto text = field_text(index);
+            return text.empty() ? 0 : std::stoll(text);
+        };
+
+        MudPlayerState player;
+        player.account = field_text(0);
+        player.character_name = field_text(1);
+        player.level = field_int(2);
+        player.hp = field_int(3);
+        player.max_hp = field_int(4);
+        player.attack_power = field_int(5);
+        player.defense_power = field_int(6);
+        player.spirit_stone = field_int64(7);
+        player.title = field_text(8);
+        player.location_scene_id = field_text(9);
+        player.realm_name = field_text(10);
+        player.realm_stage = field_int(11);
+        player.exp = field_int64(12);
+        player.next_breakthrough_exp = field_int64(13);
+        player.primary_skill = field_text(14);
+        player.skill_level = field_int(15);
+        player.sect_id = field_text(16);
+        player.sect_name = field_text(17);
+        player.sect_rank = field_text(18);
+        player.team_id = field_text(19);
+        player.team_name = field_text(20);
+        player.team_leader_account = field_text(21);
+        decode_inventory_json(field_text(22), &player.inventory);
+        decode_quest_json(field_text(23), &player.quests);
+        out_players->push_back(std::move(player));
     }
 
     mysql_free_result(result);

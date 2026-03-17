@@ -367,6 +367,23 @@ void MudGameRuntime::trim_events()
     }
 }
 
+std::vector<MudEventEnvelope> MudGameRuntime::recent_events_for_account(const std::string& account, int limit) const
+{
+    const int normalized_limit = std::clamp(limit <= 0 ? 20 : limit, 1, 100);
+    std::vector<MudEventEnvelope> filtered;
+    filtered.reserve(static_cast<size_t>(normalized_limit));
+    for(auto iter = m_events.rbegin(); iter != m_events.rend() && static_cast<int>(filtered.size()) < normalized_limit; ++iter)
+    {
+        if(!iter->target_account.empty() && iter->target_account != account)
+        {
+            continue;
+        }
+        filtered.push_back(*iter);
+    }
+    std::reverse(filtered.begin(), filtered.end());
+    return filtered;
+}
+
 void MudGameRuntime::build_bootstrap_response(const std::string& account,
                                               const std::optional<MudPlayerState>& player,
                                               mud::BootstrapResponse* response)
@@ -391,12 +408,30 @@ void MudGameRuntime::build_bootstrap_response(const std::string& account,
     }
 
     m_character_names[player->account] = player->character_name;
+    if(auto team_iter = m_team_by_account.find(player->account); team_iter != m_team_by_account.end())
+    {
+        if(auto state_iter = m_teams.find(team_iter->second); state_iter != m_teams.end())
+        {
+            for(auto& member : state_iter->second.members)
+            {
+                if(member.account == player->account)
+                {
+                    member.display_name = player->character_name;
+                    member.player_state = *player;
+                    break;
+                }
+            }
+        }
+    }
     fill_player_snapshot(*player, response->mutable_player());
     fill_scene_snapshot(*player, response->mutable_scene());
+    auto recent_events = recent_events_for_account(account, 50);
+    add_events_to_response(recent_events, response->mutable_events());
     http_code_message::gateway::set_code_message(response,
                                                  http_code_message::gateway::code::kSuccess,
                                                  http_code_message::gateway::message::kOk);
-    response->set_next_event_id(m_next_event_id == 0 ? 0 : (m_next_event_id - 1));
+    response->set_next_event_id(recent_events.empty() ? (m_next_event_id == 0 ? 0 : (m_next_event_id - 1))
+                                                      : recent_events.back().event_id);
 }
 
 void MudGameRuntime::build_create_character_response(const MudPlayerState& player,
@@ -408,6 +443,21 @@ void MudGameRuntime::build_create_character_response(const MudPlayerState& playe
     }
 
     m_character_names[player.account] = player.character_name;
+    if(auto team_iter = m_team_by_account.find(player.account); team_iter != m_team_by_account.end())
+    {
+        if(auto state_iter = m_teams.find(team_iter->second); state_iter != m_teams.end())
+        {
+            for(auto& member : state_iter->second.members)
+            {
+                if(member.account == player.account)
+                {
+                    member.display_name = player.character_name;
+                    member.player_state = player;
+                    break;
+                }
+            }
+        }
+    }
     std::vector<MudEventEnvelope> events;
     append_event(player.account,
                  "system",
@@ -434,6 +484,21 @@ void MudGameRuntime::build_command_response(const MudPlayerState& player,
     }
 
     m_character_names[player.account] = player.character_name;
+    if(auto team_iter = m_team_by_account.find(player.account); team_iter != m_team_by_account.end())
+    {
+        if(auto state_iter = m_teams.find(team_iter->second); state_iter != m_teams.end())
+        {
+            for(auto& member : state_iter->second.members)
+            {
+                if(member.account == player.account)
+                {
+                    member.display_name = player.character_name;
+                    member.player_state = player;
+                    break;
+                }
+            }
+        }
+    }
     auto* result = response->mutable_result();
     result->set_command(command);
     result->set_success(execution.success);
@@ -448,8 +513,18 @@ void MudGameRuntime::build_command_response(const MudPlayerState& player,
 
     fill_player_snapshot(player, response->mutable_player());
     fill_scene_snapshot(player, response->mutable_scene());
-    add_events_to_response(execution.events, response->mutable_events());
-    response->set_next_event_id(execution.events.empty() ? (m_next_event_id == 0 ? 0 : (m_next_event_id - 1)) : execution.events.back().event_id);
+    std::vector<MudEventEnvelope> visible_events;
+    visible_events.reserve(execution.events.size());
+    for(const auto& event : execution.events)
+    {
+        if(event.target_account.empty() || event.target_account == player.account)
+        {
+            visible_events.push_back(event);
+        }
+    }
+    add_events_to_response(visible_events, response->mutable_events());
+    response->set_next_event_id(visible_events.empty() ? (m_next_event_id == 0 ? 0 : (m_next_event_id - 1))
+                                                       : visible_events.back().event_id);
     http_code_message::gateway::set_code_message(response,
                                                  execution.success ? http_code_message::gateway::code::kSuccess
                                                                    : http_code_message::gateway::code::kInvalidMudCommand,
@@ -520,6 +595,71 @@ void MudGameRuntime::build_rank_response(MudLeaderboardType leaderboard_type,
     http_code_message::gateway::set_code_message(response,
                                                  http_code_message::gateway::code::kSuccess,
                                                  http_code_message::gateway::message::kOk);
+}
+
+void MudGameRuntime::restore_team_state(const std::vector<MudPlayerState>& team_members)
+{
+    if(team_members.empty())
+    {
+        return;
+    }
+
+    const auto& leader = team_members.front();
+    if(leader.team_id.empty())
+    {
+        return;
+    }
+
+    MudTeamState team;
+    team.team_id = leader.team_id;
+    team.team_name = leader.team_name.empty() ? (leader.character_name + "的小队") : leader.team_name;
+    team.leader_account = leader.team_leader_account.empty() ? leader.account : leader.team_leader_account;
+    for(const auto& member_state : team_members)
+    {
+        MudTeamMemberState member;
+        member.account = member_state.account;
+        member.display_name = member_state.character_name;
+        member.leader = member_state.account == team.leader_account;
+        member.player_state = member_state;
+        team.members.push_back(member);
+        m_team_by_account[member.account] = team.team_id;
+        m_character_names[member.account] = member.display_name;
+    }
+
+    m_teams[team.team_id] = std::move(team);
+}
+
+void MudGameRuntime::forget_team_state(const std::string& account)
+{
+    if(account.empty())
+    {
+        return;
+    }
+
+    auto team_iter = m_team_by_account.find(account);
+    if(team_iter == m_team_by_account.end())
+    {
+        return;
+    }
+
+    const auto team_id = team_iter->second;
+    m_team_by_account.erase(team_iter);
+
+    auto state_iter = m_teams.find(team_id);
+    if(state_iter == m_teams.end())
+    {
+        return;
+    }
+
+    auto& members = state_iter->second.members;
+    members.erase(std::remove_if(members.begin(), members.end(), [&](const MudTeamMemberState& member) {
+                      return member.account == account;
+                  }),
+                  members.end());
+    if(members.empty())
+    {
+        m_teams.erase(state_iter);
+    }
 }
 
 void MudGameRuntime::fill_team_snapshot(const MudPlayerState& player,
@@ -1597,7 +1737,7 @@ MudCommandExecution MudGameRuntime::execute_sell(MudPlayerState* player,
         player->attack_power = std::max(1, player->attack_power - item_config->attack_bonus);
         player->defense_power = std::max(0, player->defense_power - item_config->defense_bonus);
     }
-    remove_inventory_item(player, item_state.item_id, 1);
+    player->inventory.erase(player->inventory.begin() + inventory_index);
     player->spirit_stone += std::max(1, item_config->price / 2);
     refresh_quest_progress(player);
 
@@ -1683,7 +1823,17 @@ MudCommandExecution MudGameRuntime::execute_join(MudPlayerState* player,
     bool has_completed_quest = false;
     for(const auto& quest : player->quests)
     {
-        if(quest.status == "completed")
+        if(quest.status != "completed")
+        {
+            continue;
+        }
+        if(matched_sect->sect_id == "qixuan_gate")
+        {
+            has_completed_quest = true;
+            break;
+        }
+        const auto* quest_config = m_world->find_quest(quest.quest_id);
+        if(quest_config != nullptr && quest_config->reward_sect_id == matched_sect->sect_id)
         {
             has_completed_quest = true;
             break;
@@ -1744,7 +1894,15 @@ MudCommandExecution MudGameRuntime::execute_team(MudPlayerState* player,
         team.team_id = player->account;
         team.team_name = player->character_name + "的小队";
         team.leader_account = player->account;
-        team.members.push_back(MudTeamMemberState{player->account, player->character_name, true});
+        player->team_id = team.team_id;
+        player->team_name = team.team_name;
+        player->team_leader_account = team.leader_account;
+        MudTeamMemberState leader_member;
+        leader_member.account = player->account;
+        leader_member.display_name = player->character_name;
+        leader_member.leader = true;
+        leader_member.player_state = *player;
+        team.members.push_back(std::move(leader_member));
         m_teams.insert_or_assign(team.team_id, team);
         m_team_by_account.insert_or_assign(player->account, team.team_id);
 
@@ -1785,7 +1943,15 @@ MudCommandExecution MudGameRuntime::execute_team(MudPlayerState* player,
             return execution;
         }
 
-        team_iter->second.members.push_back(MudTeamMemberState{player->account, player->character_name, false});
+        player->team_id = team_iter->second.team_id;
+        player->team_name = team_iter->second.team_name;
+        player->team_leader_account = team_iter->second.leader_account;
+        MudTeamMemberState member;
+        member.account = player->account;
+        member.display_name = player->character_name;
+        member.leader = false;
+        member.player_state = *player;
+        team_iter->second.members.push_back(std::move(member));
         m_team_by_account.insert_or_assign(player->account, leader_account);
         execution.success = true;
         execution.title = "加入队伍";
@@ -1853,6 +2019,9 @@ MudCommandExecution MudGameRuntime::execute_team(MudPlayerState* player,
                       }),
                       members.end());
         m_team_by_account.erase(player->account);
+        player->team_id.clear();
+        player->team_name.clear();
+        player->team_leader_account.clear();
 
         if(members.empty())
         {
@@ -1867,6 +2036,16 @@ MudCommandExecution MudGameRuntime::execute_team(MudPlayerState* player,
             {
                 member.leader = member.account == new_team.leader_account;
                 m_team_by_account[member.account] = new_team.team_id;
+                if(member.account == player->account)
+                {
+                    continue;
+                }
+                auto persisted_member = member.player_state;
+                persisted_member.team_id = new_team.team_id;
+                persisted_member.team_name = new_team.team_name;
+                persisted_member.team_leader_account = new_team.leader_account;
+                member.player_state = persisted_member;
+                execution.extra_players_to_save.push_back(std::move(persisted_member));
             }
             m_teams.erase(team_iter);
             m_teams.insert_or_assign(new_team.team_id, new_team);
@@ -1919,6 +2098,7 @@ MudCommandExecution MudGameRuntime::execute_chat(const MudPlayerState& player,
     }
 
     const auto channel = mud_trim(trimmed.substr(0, split_pos));
+    const auto normalized_channel = mud_to_lower_ascii(channel);
     const auto message = mud_trim(trimmed.substr(split_pos + 1));
     if(channel.empty() || message.empty())
     {
@@ -1930,11 +2110,53 @@ MudCommandExecution MudGameRuntime::execute_chat(const MudPlayerState& player,
     execution.success = true;
     execution.title = "频道发言";
     execution.summary = "你向[" + channel + "]频道发送了消息。";
-    append_event("",
-                 "chat",
-                 "[" + channel + "] " + player.character_name,
-                 message,
-                 &execution.events);
+    if(normalized_channel == "world" || normalized_channel == "public")
+    {
+        append_event("",
+                     "chat",
+                     "[" + channel + "] " + player.character_name,
+                     message,
+                     &execution.events);
+    }
+    else if(normalized_channel == "team")
+    {
+        auto team_iter = m_team_by_account.find(player.account);
+        if(team_iter == m_team_by_account.end())
+        {
+            execution.success = false;
+            execution.title = "发言失败";
+            execution.summary = "你当前没有队伍，无法使用 team 频道。";
+            execution.events.clear();
+            return execution;
+        }
+
+        auto state_iter = m_teams.find(team_iter->second);
+        if(state_iter == m_teams.end())
+        {
+            execution.success = false;
+            execution.title = "发言失败";
+            execution.summary = "队伍状态已失效，请重新组队。";
+            execution.events.clear();
+            return execution;
+        }
+
+        execution.events.clear();
+        for(const auto& member : state_iter->second.members)
+        {
+            append_event(member.account,
+                         "chat",
+                         "[team] " + player.character_name,
+                         message,
+                         &execution.events);
+        }
+    }
+    else
+    {
+        execution.success = false;
+        execution.title = "发言失败";
+        execution.summary = "当前仅支持 chat world <message> 与 chat team <message>。";
+        return execution;
+    }
     return execution;
 }
 
@@ -2093,6 +2315,15 @@ void MudGameRuntime::add_inventory_item(MudPlayerState* player,
     {
         return;
     }
+    const auto* config = m_world->find_item(item_id);
+    if(config != nullptr && config->equipable)
+    {
+        for(int index = 0; index < quantity; ++index)
+        {
+            player->inventory.push_back(MudInventoryItemState{item_id, 1, equipped && index == 0});
+        }
+        return;
+    }
     for(auto& item : player->inventory)
     {
         if(item.item_id == item_id)
@@ -2114,24 +2345,31 @@ bool MudGameRuntime::remove_inventory_item(MudPlayerState* player,
         return false;
     }
 
-    for(auto iter = player->inventory.begin(); iter != player->inventory.end(); ++iter)
+    if(inventory_count(*player, item_id) < quantity)
+    {
+        return false;
+    }
+
+    int remaining = quantity;
+    for(auto iter = player->inventory.begin(); iter != player->inventory.end() && remaining > 0;)
     {
         if(iter->item_id != item_id)
         {
+            ++iter;
             continue;
         }
-        if(iter->quantity < quantity)
+
+        const int deduct = std::min(iter->quantity, remaining);
+        iter->quantity -= deduct;
+        remaining -= deduct;
+        if(iter->quantity <= 0)
         {
-            return false;
+            iter = player->inventory.erase(iter);
+            continue;
         }
-        iter->quantity -= quantity;
-        if(iter->quantity == 0)
-        {
-            player->inventory.erase(iter);
-        }
-        return true;
+        ++iter;
     }
-    return false;
+    return remaining == 0;
 }
 
 void MudGameRuntime::refresh_quest_progress(MudPlayerState* player) const

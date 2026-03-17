@@ -21,6 +21,7 @@
 #include "application_config.h"
 #include "basic_http_service.h"
 #include "corocoroutine.h"
+#include "mud_event_store.h"
 #include "mud_game_runtime.h"
 
 #include "session_store.h"
@@ -40,7 +41,8 @@ public:
                 std::shared_ptr<IServiceDiscovery> discovery,
                 std::shared_ptr<ITokenProvider> token_provider,
                 std::shared_ptr<ISessionStore> session_store,
-                std::shared_ptr<IMudPlayerRepository> mud_player_repository);
+                std::shared_ptr<IMudPlayerRepository> mud_player_repository,
+                std::shared_ptr<IMudEventStore> mud_event_store);
     ~GameService() override;
 
 public:
@@ -55,6 +57,7 @@ private:
     coro_task_t register_instance_async();
     coro_task_t unregister_instance_async();
     coro_task_t heartbeat_async();
+    void emit_world_event();
     coro_task_t enter_game_async(evhttp_request* request);
     coro_task_t bootstrap_async(evhttp_request* request);
     coro_task_t create_character_async(evhttp_request* request);
@@ -68,11 +71,13 @@ private:
     std::shared_ptr<ITokenProvider> m_token_provider;
     std::shared_ptr<ISessionStore> m_session_store;
     std::shared_ptr<IMudPlayerRepository> m_mud_player_repository;
+    std::shared_ptr<IMudEventStore> m_mud_event_store;
     std::shared_ptr<MudWorld> m_mud_world;
     std::unique_ptr<MudGameRuntime> m_mud_runtime;
     ServiceInstance m_local_instance;
     std::chrono::steady_clock::time_point m_last_heartbeat;
     bool m_heartbeat_inflight = false;
+    bool m_world_event_inflight = false;
     std::atomic<bool> m_register_inflight{false};
     std::atomic<bool> m_registered{false};
     std::atomic<bool> m_stopping{false};

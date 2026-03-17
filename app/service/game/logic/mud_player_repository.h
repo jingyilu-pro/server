@@ -36,6 +36,7 @@ enum class MudPlayerRepositoryOpType
     create_player,
     save_player,
     list_top_players,
+    list_team_members,
 };
 
 class MudPlayerRepositoryOpResult : public CoroResult
@@ -46,6 +47,7 @@ public:
 
     void init(MudPlayerRepositoryOpType op,
               std::string account,
+              std::string group_id,
               std::optional<MudPlayerState> player_state,
               MudLeaderboardType leaderboard_type,
               int limit,
@@ -53,6 +55,7 @@ public:
     {
         op_type = op;
         request_account = std::move(account);
+        request_group_id = std::move(group_id);
         request_player = std::move(player_state);
         request_leaderboard_type = leaderboard_type;
         request_limit = limit;
@@ -81,6 +84,7 @@ public:
     void clear() override
     {
         request_account.clear();
+        request_group_id.clear();
         request_player.reset();
         success = false;
         found = false;
@@ -97,6 +101,7 @@ public:
 public:
     MudPlayerRepositoryOpType op_type = MudPlayerRepositoryOpType::load_player;
     std::string request_account;
+    std::string request_group_id;
     std::optional<MudPlayerState> request_player;
     MudLeaderboardType request_leaderboard_type = MudLeaderboardType::realm;
     int request_limit = 0;
@@ -124,6 +129,7 @@ public:
     virtual CoroAwaitable create_player(const MudPlayerState& player) = 0;
     virtual CoroAwaitable save_player(const MudPlayerState& player) = 0;
     virtual CoroAwaitable list_top_players(MudLeaderboardType leaderboard_type, int limit) = 0;
+    virtual CoroAwaitable list_team_members(const std::string& team_id) = 0;
 };
 
 class MySqlMudPlayerRepository : public IMudPlayerRepository
@@ -139,6 +145,7 @@ public:
     CoroAwaitable create_player(const MudPlayerState& player) override;
     CoroAwaitable save_player(const MudPlayerState& player) override;
     CoroAwaitable list_top_players(MudLeaderboardType leaderboard_type, int limit) override;
+    CoroAwaitable list_team_members(const std::string& team_id) override;
 
 private:
     class MySqlMudPlayerCoroManager;
@@ -165,6 +172,10 @@ private:
                            int limit,
                            std::vector<MudLeaderboardEntry>* out_players,
                            std::string* error);
+    bool query_team_members(MYSQL* mysql_handle,
+                            const std::string& team_id,
+                            std::vector<MudPlayerState>* out_players,
+                            std::string* error);
 
 private:
     MySqlConfig m_config;

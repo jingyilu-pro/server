@@ -183,7 +183,8 @@ bool Application::start_services_by_mode()
                                                               m_server_context ? m_server_context->game_discovery : nullptr,
                                                               m_server_context ? m_server_context->game_token_provider : nullptr,
                                                               m_server_context ? m_server_context->game_session_store : nullptr,
-                                                              m_server_context ? m_server_context->game_mud_player_repository : nullptr));
+                                                              m_server_context ? m_server_context->game_mud_player_repository : nullptr,
+                                                              m_server_context ? m_server_context->game_mud_event_store : nullptr));
     case AppMode::client:
         return start_client_service();
     }
@@ -202,6 +203,7 @@ bool Application::start_non_client_services()
     auto login_session_store = m_server_context ? m_server_context->login_session_store : nullptr;
     auto game_session_store = m_server_context ? m_server_context->game_session_store : nullptr;
     auto game_mud_player_repository = m_server_context ? m_server_context->game_mud_player_repository : nullptr;
+    auto game_mud_event_store = m_server_context ? m_server_context->game_mud_event_store : nullptr;
 
     if(!register_service(std::make_unique<ManagerService>(m_runtime_config, manager_discovery)))
     {
@@ -220,7 +222,8 @@ bool Application::start_non_client_services()
                                                        game_discovery,
                                                        game_token_provider,
                                                        game_session_store,
-                                                       game_mud_player_repository)))
+                                                       game_mud_player_repository,
+                                                       game_mud_event_store)))
     {
         return false;
     }

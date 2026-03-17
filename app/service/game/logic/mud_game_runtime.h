@@ -60,6 +60,8 @@ public:
     void build_rank_response(MudLeaderboardType leaderboard_type,
                              const std::vector<MudLeaderboardEntry>& entries,
                              mud::RankListResponse* response) const;
+    void restore_team_state(const std::vector<MudPlayerState>& team_members);
+    void forget_team_state(const std::string& account);
     MudCommandExecution run_command(MudPlayerState* player,
                                     const std::string& command);
 
@@ -91,6 +93,7 @@ private:
     void add_events_to_response(const std::vector<MudEventEnvelope>& events,
                                 google::protobuf::RepeatedPtrField<mud::GameEvent>* out_events) const;
     void trim_events();
+    std::vector<MudEventEnvelope> recent_events_for_account(const std::string& account, int limit) const;
     void fill_team_snapshot(const MudPlayerState& player,
                             mud::TeamState* snapshot) const;
     void maybe_emit_world_event();

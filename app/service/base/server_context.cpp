@@ -20,6 +20,7 @@
 
 #include "jwt_token_provider.h"
 #include "mysql_account_repository.h"
+#include "mud_event_store.h"
 #include "mud_player_repository.h"
 #include "noop_account_cache_store.h"
 #include "noop_session_store.h"
@@ -62,6 +63,7 @@ ServerContext create_server_context(const RuntimeConfig& config,
     if(require_game_repository)
     {
         context.game_mud_player_repository = std::make_shared<MySqlMudPlayerRepository>(config.mysql);
+        context.game_mud_event_store = std::make_shared<RedisMudEventStore>(config.redis, config.mud);
     }
 
     if(context.login_discovery == nullptr || !context.login_discovery->ready())
@@ -115,6 +117,13 @@ ServerContext create_server_context(const RuntimeConfig& config,
     {
         context.ready = false;
         context.error = "mysql mud player repository not ready";
+        return context;
+    }
+    if(require_game_repository &&
+       (context.game_mud_event_store == nullptr || !context.game_mud_event_store->ready()))
+    {
+        context.ready = false;
+        context.error = "redis mud event store not ready";
         return context;
     }
     if(context.login_token_provider == nullptr || context.game_token_provider == nullptr)
