@@ -77,6 +77,65 @@
       "price": 45,
       "consumable": false,
       "equipable": false
+    },
+    {
+      "item_id": "wind_crow_feather",
+      "name": "风鸦翎羽",
+      "item_type": "material",
+      "description": "黄枫谷外山风鸦所落翎羽，可入阵也可炼器。",
+      "price": 58,
+      "consumable": false,
+      "equipable": false
+    },
+    {
+      "item_id": "blood_orchid",
+      "name": "血兰",
+      "item_type": "material",
+      "description": "血色禁地深处才会生长的灵花，药性猛烈。",
+      "price": 95,
+      "consumable": false,
+      "equipable": false
+    },
+    {
+      "item_id": "spirit_scale",
+      "name": "灵鳞",
+      "item_type": "material",
+      "description": "乱星海灵鱼身上的莹蓝鳞片，是炼器铺最爱的材料。",
+      "price": 76,
+      "consumable": false,
+      "equipable": false
+    },
+    {
+      "item_id": "xutian_key_fragment",
+      "name": "虚天残钥",
+      "item_type": "material",
+      "description": "残破古钥上仍有禁制灵光流转。",
+      "price": 120,
+      "consumable": false,
+      "equipable": false
+    },
+    {
+      "item_id": "foundation_pill",
+      "name": "筑基散",
+      "item_type": "consumable",
+      "description": "并非真正筑基丹，但足以让炼气弟子气海再扩一线。",
+      "price": 160,
+      "hp_restore": 80,
+      "exp_gain": 120,
+      "skill_level_gain": 1,
+      "consumable": true,
+      "equipable": false
+    },
+    {
+      "item_id": "moon_shadow_talisman",
+      "name": "月影符",
+      "item_type": "armor",
+      "description": "掩月宗女修常用的护身符纸，能在危急时护体。",
+      "price": 135,
+      "attack_bonus": 0,
+      "defense_bonus": 8,
+      "consumable": false,
+      "equipable": true
     }
   ],
   "sects": [
@@ -86,6 +145,20 @@
       "rank_title": "外门弟子",
       "join_scene_id": "qixuan_hall",
       "join_npc_id": "han_zhanglao"
+    },
+    {
+      "sect_id": "huangfeng_valley",
+      "name": "黄枫谷",
+      "rank_title": "黄枫谷记名弟子",
+      "join_scene_id": "huangfeng_hall",
+      "join_npc_id": "elder_ma"
+    },
+    {
+      "sect_id": "yanyue_sect",
+      "name": "掩月宗",
+      "rank_title": "掩月宗外门弟子",
+      "join_scene_id": "yanyue_peak",
+      "join_npc_id": "fairy_chen"
     }
   ],
   "quests": [
@@ -113,6 +186,60 @@
       "reward_spirit_stone": 85,
       "reward_exp": 140,
       "reward_item_id": "qi_gathering_scroll",
+      "reward_item_count": 1
+    },
+    {
+      "quest_id": "huangfeng_letter",
+      "title": "黄枫谷羽信",
+      "description": "黄枫谷外事执事正在搜集风鸦翎羽，若能交齐，便可换取筑基散。",
+      "issuer_npc_id": "huangfeng_steward",
+      "submit_npc_id": "huangfeng_steward",
+      "required_item_id": "wind_crow_feather",
+      "required_item_count": 1,
+      "reward_spirit_stone": 110,
+      "reward_exp": 180,
+      "reward_item_id": "foundation_pill",
+      "reward_item_count": 1,
+      "reward_sect_id": "huangfeng_valley"
+    },
+    {
+      "quest_id": "blood_forbidden_token",
+      "title": "血禁采兰",
+      "description": "血色禁地开启前，血禁执事悬赏一株血兰，以供宗门验阵。",
+      "issuer_npc_id": "blood_warden",
+      "submit_npc_id": "blood_warden",
+      "required_item_id": "blood_orchid",
+      "required_item_count": 1,
+      "reward_spirit_stone": 160,
+      "reward_exp": 240,
+      "reward_item_id": "moon_shadow_talisman",
+      "reward_item_count": 1,
+      "reward_sect_id": "yanyue_sect"
+    },
+    {
+      "quest_id": "chaos_sea_chart",
+      "title": "乱星海海图",
+      "description": "天南港海商急需灵鳞修补海图禁制，若能交来一片，便愿赠你航线。",
+      "issuer_npc_id": "seaport_broker",
+      "submit_npc_id": "seaport_broker",
+      "required_item_id": "spirit_scale",
+      "required_item_count": 1,
+      "reward_spirit_stone": 210,
+      "reward_exp": 320,
+      "reward_item_id": "qi_gathering_scroll",
+      "reward_item_count": 1
+    },
+    {
+      "quest_id": "xutian_key",
+      "title": "虚天残钥",
+      "description": "古修遗府的守门老者正在收集残钥，若你肯带回一枚，他会透露虚天殿的入口。",
+      "issuer_npc_id": "old_shipwright",
+      "submit_npc_id": "old_shipwright",
+      "required_item_id": "xutian_key_fragment",
+      "required_item_count": 1,
+      "reward_spirit_stone": 280,
+      "reward_exp": 420,
+      "reward_item_id": "foundation_pill",
       "reward_item_count": 1
     }
   ],
@@ -149,6 +276,56 @@
       "hint": "在太南小会布阵试法，正缺后山妖蛇的蛇胆。",
       "dialogue": "辛如音轻声道：我正要调试法阵，若你能取来一枚墨鳞蛇胆，我便送你一卷聚气残卷。",
       "quest_ids": ["tainan_snake"]
+    },
+    {
+      "npc_id": "fairy_chen",
+      "name": "陈巧倩",
+      "scene_id": "yanyue_peak",
+      "hint": "掩月宗女修正在查验弟子根骨。",
+      "dialogue": "陈巧倩目光清冷：掩月宗并不只收女弟子，但入门者需有胆识与分寸。",
+      "quest_ids": [],
+      "sect_offer_id": "yanyue_sect"
+    },
+    {
+      "npc_id": "huangfeng_steward",
+      "name": "黄枫谷执事",
+      "scene_id": "huangfeng_outpost",
+      "hint": "最近正在收风鸦翎羽。",
+      "dialogue": "执事抚须道：想入黄枫谷？先替我办妥这桩小事，把风鸦翎羽带来。",
+      "quest_ids": ["huangfeng_letter"]
+    },
+    {
+      "npc_id": "elder_ma",
+      "name": "马师伯",
+      "scene_id": "huangfeng_hall",
+      "hint": "黄枫谷长老，愿收有资质的记名弟子。",
+      "dialogue": "马师伯淡淡道：门中最看重的不是嘴上恭敬，而是能否在机缘前守住本心。",
+      "quest_ids": [],
+      "sect_offer_id": "huangfeng_valley"
+    },
+    {
+      "npc_id": "blood_warden",
+      "name": "血禁执事",
+      "scene_id": "blood_gate",
+      "hint": "禁地将开，正在悬赏血兰。",
+      "dialogue": "执事神色肃然：血色禁地只认强者，若你能取回血兰，我自会记你一功。",
+      "quest_ids": ["blood_forbidden_token"]
+    },
+    {
+      "npc_id": "seaport_broker",
+      "name": "海商罗掌柜",
+      "scene_id": "tiannan_harbor",
+      "hint": "需要灵鳞修补海图。",
+      "dialogue": "罗掌柜压低声音：乱星海近来海况诡谲，没灵鳞修补阵图，谁也不敢出海。",
+      "quest_ids": ["chaos_sea_chart"]
+    },
+    {
+      "npc_id": "old_shipwright",
+      "name": "古舟匠",
+      "scene_id": "chaos_sea_isle",
+      "hint": "守着古修残图，正在寻找虚天残钥。",
+      "dialogue": "老人拍着破船桅杆：残钥若能凑齐，虚天殿的大门便会再度显现。",
+      "quest_ids": ["xutian_key"]
     }
   ],
   "monsters": [
@@ -174,6 +351,54 @@
       "reward_spirit_stone": 26,
       "reward_exp": 52,
       "drop_item_id": "ink_snake_gall",
+      "drop_item_count": 1
+    },
+    {
+      "monster_id": "wind_crow",
+      "name": "疾风鸦",
+      "scene_id": "huangfeng_foothill",
+      "hp": 92,
+      "attack": 24,
+      "defense": 9,
+      "reward_spirit_stone": 34,
+      "reward_exp": 84,
+      "drop_item_id": "wind_crow_feather",
+      "drop_item_count": 1
+    },
+    {
+      "monster_id": "blood_mantis",
+      "name": "血镰螳螂",
+      "scene_id": "blood_forbidden",
+      "hp": 136,
+      "attack": 33,
+      "defense": 12,
+      "reward_spirit_stone": 48,
+      "reward_exp": 126,
+      "drop_item_id": "blood_orchid",
+      "drop_item_count": 1
+    },
+    {
+      "monster_id": "jade_clam",
+      "name": "碧波灵贝",
+      "scene_id": "chaos_sea_port",
+      "hp": 154,
+      "attack": 36,
+      "defense": 16,
+      "reward_spirit_stone": 64,
+      "reward_exp": 160,
+      "drop_item_id": "spirit_scale",
+      "drop_item_count": 1
+    },
+    {
+      "monster_id": "palace_guardian",
+      "name": "残阵守卫",
+      "scene_id": "xutian_hall",
+      "hp": 188,
+      "attack": 42,
+      "defense": 20,
+      "reward_spirit_stone": 90,
+      "reward_exp": 220,
+      "drop_item_id": "xutian_key_fragment",
       "drop_item_count": 1
     }
   ],
@@ -248,11 +473,141 @@
       "region_name": "太南谷",
       "description": "修士来往隐秘，摊位上摆着残卷、阵旗和各种不知真假的材料，辛如音正在角落里布阵。",
       "exits": {
-        "east": "jiayuan_market"
+        "east": "jiayuan_market",
+        "west": "huangfeng_outpost",
+        "north": "yanyue_peak"
       },
       "npc_ids": ["xin_ruyin"],
       "monster_ids": [],
       "shop_item_ids": ["qi_gathering_scroll"]
+    },
+    {
+      "scene_id": "yanyue_peak",
+      "name": "掩月峰前坪",
+      "region_name": "掩月宗",
+      "description": "薄雾缭绕峰顶，阵纹隐现，掩月宗弟子步履轻灵，远非常人可及。",
+      "exits": {
+        "south": "tainan_fair"
+      },
+      "npc_ids": ["fairy_chen"],
+      "monster_ids": [],
+      "shop_item_ids": ["moon_shadow_talisman", "small_recover_pill"]
+    },
+    {
+      "scene_id": "huangfeng_outpost",
+      "name": "黄枫谷外营",
+      "region_name": "黄枫谷",
+      "description": "营地外遍植黄枫，山道通往谷内，执事正在清点外门采集所得。",
+      "exits": {
+        "east": "tainan_fair",
+        "north": "huangfeng_hall",
+        "west": "huangfeng_foothill"
+      },
+      "npc_ids": ["huangfeng_steward"],
+      "monster_ids": [],
+      "shop_item_ids": ["foundation_pill", "cloth_vest"]
+    },
+    {
+      "scene_id": "huangfeng_hall",
+      "name": "黄枫谷偏殿",
+      "region_name": "黄枫谷",
+      "description": "殿中风铃清响，木架上摆满法器半成品，马师伯正坐于上首闭目养神。",
+      "exits": {
+        "south": "huangfeng_outpost",
+        "north": "blood_gate"
+      },
+      "npc_ids": ["elder_ma"],
+      "monster_ids": [],
+      "shop_item_ids": []
+    },
+    {
+      "scene_id": "huangfeng_foothill",
+      "name": "枫岭山麓",
+      "region_name": "黄枫谷外山",
+      "description": "枫叶卷起金红旋涡，山间妖禽盘旋不散，是黄枫谷弟子试手的去处。",
+      "exits": {
+        "east": "huangfeng_outpost"
+      },
+      "npc_ids": [],
+      "monster_ids": ["wind_crow"],
+      "shop_item_ids": []
+    },
+    {
+      "scene_id": "blood_gate",
+      "name": "血禁石门",
+      "region_name": "血色禁地",
+      "description": "巨石门扉布满符痕，门前血雾缠绕，禁地执事在此记录入内弟子。",
+      "exits": {
+        "south": "huangfeng_hall",
+        "east": "blood_forbidden",
+        "west": "tiannan_harbor"
+      },
+      "npc_ids": ["blood_warden"],
+      "monster_ids": [],
+      "shop_item_ids": []
+    },
+    {
+      "scene_id": "blood_forbidden",
+      "name": "血色禁地外围",
+      "region_name": "血色禁地",
+      "description": "枯木如爪，土地泛红，诡异灵植与嗜血妖虫遍地游走。",
+      "exits": {
+        "west": "blood_gate"
+      },
+      "npc_ids": [],
+      "monster_ids": ["blood_mantis"],
+      "shop_item_ids": []
+    },
+    {
+      "scene_id": "tiannan_harbor",
+      "name": "天南港",
+      "region_name": "天南海岸",
+      "description": "码头上帆影重叠，海风裹着咸湿灵气，海商与散修都在此打探乱星海消息。",
+      "exits": {
+        "east": "blood_gate",
+        "west": "chaos_sea_port"
+      },
+      "npc_ids": ["seaport_broker"],
+      "monster_ids": [],
+      "shop_item_ids": ["small_recover_pill", "qi_gathering_scroll", "foundation_pill"]
+    },
+    {
+      "scene_id": "chaos_sea_port",
+      "name": "乱星海近港",
+      "region_name": "乱星海",
+      "description": "海面碎浪翻涌，简易阵台勉强稳住船只，灵贝与海妖时隐时现。",
+      "exits": {
+        "east": "tiannan_harbor",
+        "west": "chaos_sea_isle"
+      },
+      "npc_ids": [],
+      "monster_ids": ["jade_clam"],
+      "shop_item_ids": []
+    },
+    {
+      "scene_id": "chaos_sea_isle",
+      "name": "残碑孤岛",
+      "region_name": "乱星海",
+      "description": "孤岛中央竖着裂纹古碑，破船残骸间仍残留古修禁制，古舟匠便守在碑旁。",
+      "exits": {
+        "east": "chaos_sea_port",
+        "north": "xutian_hall"
+      },
+      "npc_ids": ["old_shipwright"],
+      "monster_ids": [],
+      "shop_item_ids": []
+    },
+    {
+      "scene_id": "xutian_hall",
+      "name": "虚天殿外殿",
+      "region_name": "虚天殿",
+      "description": "殿宇残破却仍威压沉沉，地面禁纹时明时灭，古修守卫在回廊中巡行。",
+      "exits": {
+        "south": "chaos_sea_isle"
+      },
+      "npc_ids": [],
+      "monster_ids": ["palace_guardian"],
+      "shop_item_ids": []
     }
   ]
 }

@@ -24,6 +24,13 @@
 #include <unordered_map>
 #include <vector>
 
+enum class MudLeaderboardType
+{
+    wealth,
+    realm,
+    combat,
+};
+
 struct MudStarterInventoryItem
 {
     std::string item_id;
@@ -191,7 +198,30 @@ struct MudCommandExecution
     std::vector<MudEventEnvelope> events;
 };
 
+struct MudLeaderboardEntry
+{
+    int rank = 0;
+    MudPlayerState player;
+};
+
+struct MudTeamMemberState
+{
+    std::string account;
+    std::string display_name;
+    bool leader = false;
+};
+
+struct MudTeamState
+{
+    std::string team_id;
+    std::string team_name;
+    std::string leader_account;
+    std::vector<MudTeamMemberState> members;
+};
+
 int64_t mud_now_ms();
 std::string mud_to_lower_ascii(std::string value);
 std::string mud_trim(const std::string& input);
 MudCommandParseResult parse_mud_command(const std::string& command);
+MudLeaderboardType mud_parse_leaderboard_type(const std::string& value);
+std::string mud_leaderboard_name(MudLeaderboardType type);

@@ -26,6 +26,7 @@
 #include <cstdint>
 #include <memory>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 class MudGameRuntime
@@ -56,6 +57,9 @@ public:
                              uint64_t after_event_id,
                              int limit,
                              mud::FeedPullResponse* response);
+    void build_rank_response(MudLeaderboardType leaderboard_type,
+                             const std::vector<MudLeaderboardEntry>& entries,
+                             mud::RankListResponse* response) const;
     MudCommandExecution run_command(MudPlayerState* player,
                                     const std::string& command);
 
@@ -87,6 +91,12 @@ private:
     void add_events_to_response(const std::vector<MudEventEnvelope>& events,
                                 google::protobuf::RepeatedPtrField<mud::GameEvent>* out_events) const;
     void trim_events();
+    void fill_team_snapshot(const MudPlayerState& player,
+                            mud::TeamState* snapshot) const;
+    void maybe_emit_world_event();
+    std::vector<std::string> unlocked_regions_for_player(const MudPlayerState& player) const;
+    std::string progression_chapter_for_player(const MudPlayerState& player) const;
+    int64_t sect_contribution_for_player(const MudPlayerState& player) const;
     MudCommandExecution execute_command(MudPlayerState* player,
                                         const std::string& command_text);
     MudCommandExecution execute_look(MudPlayerState* player) const;
@@ -113,6 +123,9 @@ private:
                                      const std::vector<std::string>& args);
     MudCommandExecution execute_join(MudPlayerState* player,
                                      const std::vector<std::string>& args);
+    MudCommandExecution execute_team(MudPlayerState* player,
+                                     const std::vector<std::string>& args);
+    MudCommandExecution execute_event() const;
     MudCommandExecution execute_chat(const MudPlayerState& player,
                                      const std::string& raw_args);
 
@@ -141,6 +154,11 @@ private:
     std::shared_ptr<MudWorld> m_world;
     std::shared_ptr<IMudPlayerRepository> m_repository;
     std::vector<MudEventEnvelope> m_events;
+    std::unordered_map<std::string, std::string> m_character_names;
+    std::unordered_map<std::string, MudTeamState> m_teams;
+    std::unordered_map<std::string, std::string> m_team_by_account;
     uint64_t m_next_event_id = 1;
+    int64_t m_last_world_event_ms = 0;
+    std::size_t m_world_event_cursor = 0;
     std::string m_ready_error;
 };

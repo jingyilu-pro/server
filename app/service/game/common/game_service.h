@@ -56,15 +56,11 @@ private:
     coro_task_t unregister_instance_async();
     coro_task_t heartbeat_async();
     coro_task_t enter_game_async(evhttp_request* request);
-    bool authorize_mud_account(evhttp_request* request,
-                               const std::string& request_account,
-                               std::string* resolved_account,
-                               int* error_code,
-                               std::string* error_message);
     coro_task_t bootstrap_async(evhttp_request* request);
     coro_task_t create_character_async(evhttp_request* request);
     coro_task_t execute_command_async(evhttp_request* request);
     coro_task_t pull_feed_async(evhttp_request* request);
+    coro_task_t rank_list_async(evhttp_request* request);
 
 private:
     RuntimeConfig m_config;

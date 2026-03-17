@@ -35,6 +35,7 @@ enum class MudPlayerRepositoryOpType
     load_player,
     create_player,
     save_player,
+    list_top_players,
 };
 
 class MudPlayerRepositoryOpResult : public CoroResult
@@ -46,17 +47,22 @@ public:
     void init(MudPlayerRepositoryOpType op,
               std::string account,
               std::optional<MudPlayerState> player_state,
+              MudLeaderboardType leaderboard_type,
+              int limit,
               std::function<void(MudPlayerRepositoryOpResult*)> worker_fn)
     {
         op_type = op;
         request_account = std::move(account);
         request_player = std::move(player_state);
+        request_leaderboard_type = leaderboard_type;
+        request_limit = limit;
         success = false;
         found = false;
         create_ok = false;
         save_ok = false;
         error.clear();
         player.reset();
+        players.clear();
         m_worker_fn = std::move(worker_fn);
     }
 
@@ -80,8 +86,11 @@ public:
         found = false;
         create_ok = false;
         save_ok = false;
+        request_leaderboard_type = MudLeaderboardType::realm;
+        request_limit = 0;
         error.clear();
         player.reset();
+        players.clear();
         m_worker_fn = nullptr;
     }
 
@@ -89,12 +98,15 @@ public:
     MudPlayerRepositoryOpType op_type = MudPlayerRepositoryOpType::load_player;
     std::string request_account;
     std::optional<MudPlayerState> request_player;
+    MudLeaderboardType request_leaderboard_type = MudLeaderboardType::realm;
+    int request_limit = 0;
     bool success = false;
     bool found = false;
     bool create_ok = false;
     bool save_ok = false;
     std::string error;
     std::optional<MudPlayerState> player;
+    std::vector<MudLeaderboardEntry> players;
 
 private:
     std::function<void(MudPlayerRepositoryOpResult*)> m_worker_fn;
@@ -111,6 +123,7 @@ public:
     virtual CoroAwaitable load_player(const std::string& account) = 0;
     virtual CoroAwaitable create_player(const MudPlayerState& player) = 0;
     virtual CoroAwaitable save_player(const MudPlayerState& player) = 0;
+    virtual CoroAwaitable list_top_players(MudLeaderboardType leaderboard_type, int limit) = 0;
 };
 
 class MySqlMudPlayerRepository : public IMudPlayerRepository
@@ -125,6 +138,7 @@ public:
     CoroAwaitable load_player(const std::string& account) override;
     CoroAwaitable create_player(const MudPlayerState& player) override;
     CoroAwaitable save_player(const MudPlayerState& player) override;
+    CoroAwaitable list_top_players(MudLeaderboardType leaderboard_type, int limit) override;
 
 private:
     class MySqlMudPlayerCoroManager;
@@ -146,6 +160,11 @@ private:
     bool update_player_record(MYSQL* mysql_handle,
                               const MudPlayerState& player,
                               std::string* error);
+    bool query_top_players(MYSQL* mysql_handle,
+                           MudLeaderboardType leaderboard_type,
+                           int limit,
+                           std::vector<MudLeaderboardEntry>* out_players,
+                           std::string* error);
 
 private:
     MySqlConfig m_config;

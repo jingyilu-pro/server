@@ -36,6 +36,18 @@ message SectState {
   bool joined = 4;
 }
 
+message TeamMember {
+  string account = 1;
+  string display_name = 2;
+  bool leader = 3;
+}
+
+message TeamState {
+  string team_id = 1;
+  string team_name = 2;
+  repeated TeamMember members = 3;
+}
+
 message SceneExit {
   string direction = 1;
   string target_scene_id = 2;
@@ -77,6 +89,10 @@ message PlayerSnapshot {
   SectState sect = 14;
   repeated string known_commands = 15;
   int32 recommended_poll_interval_ms = 16;
+  TeamState team = 17;
+  string progression_chapter = 18;
+  repeated string unlocked_regions = 19;
+  int64 sect_contribution = 20;
 }
 
 message GameEvent {
@@ -160,4 +176,30 @@ message FeedPullResponse {
   repeated GameEvent events = 5;
   uint64 next_event_id = 6;
   int32 recommended_poll_interval_ms = 7;
+}
+
+message RankEntry {
+  int32 rank = 1;
+  string account = 2;
+  string character_name = 3;
+  string realm_name = 4;
+  int32 level = 5;
+  int64 exp = 6;
+  int64 spirit_stone = 7;
+  string sect_name = 8;
+}
+
+message RankListRequest {
+  string account = 1;
+  string leaderboard = 2;
+  int32 limit = 3;
+}
+
+message RankListResponse {
+  int32 code = 1;
+  string message = 2;
+  string trace_id = 3;
+  int64 server_time_ms = 4;
+  string leaderboard = 5;
+  repeated RankEntry entries = 6;
 }

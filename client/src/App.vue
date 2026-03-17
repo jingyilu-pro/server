@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 
 import { useGameStore } from '@/stores/game'
 
@@ -9,18 +9,22 @@ const account = ref(store.account)
 const password = ref('')
 const characterName = ref('')
 const command = ref('')
-const activeTab = ref<'player' | 'quests' | 'inventory' | 'map'>('player')
+const activeTab = ref<'player' | 'quests' | 'inventory' | 'map' | 'team' | 'rank'>('player')
 
 const quickCommands = [
   'look',
   'map',
   'go north',
   'go south',
+  'go west',
   'talk 墨府总管',
   'accept qixuan_herb',
   'fight 青木狼',
   'practice 长春功',
   'breakthrough',
+  'team create',
+  'team info',
+  'event',
 ]
 
 const scene = computed(() => store.scene ?? {})
@@ -32,6 +36,7 @@ const quests = computed(() => (player.value.quests as Record<string, any>[] | un
 const npcs = computed(() => (scene.value.npcs as Record<string, any>[] | undefined) ?? [])
 const monsters = computed(() => (scene.value.monsters as string[] | undefined) ?? [])
 const shops = computed(() => (scene.value.shops as string[] | undefined) ?? [])
+const teamMembers = computed(() => (player.value.team?.members as Record<string, any>[] | undefined) ?? [])
 
 function setError(error: unknown) {
   store.error = error instanceof Error ? error.message : '发生未知错误'
@@ -68,6 +73,14 @@ async function submitCommand(value?: string) {
   }
 }
 
+async function loadRanking(kind: 'realm' | 'wealth' | 'combat') {
+  try {
+    await store.loadRankings(kind)
+  } catch (error) {
+    setError(error)
+  }
+}
+
 onMounted(async () => {
   if (!store.authenticated) {
     return
@@ -75,6 +88,18 @@ onMounted(async () => {
 
   try {
     await store.bootstrap()
+  } catch (error) {
+    setError(error)
+  }
+})
+
+watch(activeTab, async (value) => {
+  if (value !== 'rank' || !store.authenticated) {
+    return
+  }
+
+  try {
+    await store.loadRankings(store.rankingType)
   } catch (error) {
     setError(error)
   }
@@ -219,6 +244,8 @@ onMounted(async () => {
           <button class="tab-button" :class="{ active: activeTab === 'quests' }" @click="activeTab = 'quests'">任务</button>
           <button class="tab-button" :class="{ active: activeTab === 'inventory' }" @click="activeTab = 'inventory'">背包</button>
           <button class="tab-button" :class="{ active: activeTab === 'map' }" @click="activeTab = 'map'">地图</button>
+          <button class="tab-button" :class="{ active: activeTab === 'team' }" @click="activeTab = 'team'">队伍</button>
+          <button class="tab-button" :class="{ active: activeTab === 'rank' }" @click="activeTab = 'rank'">排行</button>
         </div>
 
         <div v-if="activeTab === 'player'" class="detail-stack">
@@ -252,6 +279,9 @@ onMounted(async () => {
             <p>本命功法：{{ player.cultivation?.primarySkill || '长春功' }}</p>
             <p>功法等级：{{ player.cultivation?.skillLevel || 1 }}</p>
             <p>突破需求：{{ player.cultivation?.exp || 0 }} / {{ player.cultivation?.nextBreakthroughExp || 0 }}</p>
+            <p>章节进度：{{ player.progressionChapter || '七玄门启程' }}</p>
+            <p>宗门贡献：{{ player.sectContribution || 0 }}</p>
+            <p>已解锁区域：{{ (player.unlockedRegions || []).join('、') || '七玄门' }}</p>
           </div>
         </div>
 
@@ -271,6 +301,32 @@ onMounted(async () => {
             <p>数量：{{ item.quantity }} <span v-if="item.equipped">· 已装备</span></p>
           </article>
           <p v-if="inventory.length === 0" class="empty-text">背包空空如也。</p>
+        </div>
+
+        <div v-else-if="activeTab === 'team'" class="detail-stack">
+          <article class="detail-card">
+            <p class="detail-title">{{ player.team?.teamName || '暂无队伍' }}</p>
+            <p v-if="teamMembers.length === 0">使用 `team create` 创建队伍，或 `team join &lt;leader_account&gt;` 加入同道。</p>
+            <p v-else>队伍编号：{{ player.team?.teamId }}</p>
+          </article>
+          <article v-for="member in teamMembers" :key="member.account" class="detail-card">
+            <p class="detail-title">{{ member.displayName }}</p>
+            <p>{{ member.account }} <span v-if="member.leader">· 队长</span></p>
+          </article>
+        </div>
+
+        <div v-else-if="activeTab === 'rank'" class="detail-stack">
+          <div class="action-row">
+            <button class="ghost-button small" @click="loadRanking('realm')">境界榜</button>
+            <button class="ghost-button small" @click="loadRanking('wealth')">财富榜</button>
+            <button class="ghost-button small" @click="loadRanking('combat')">战力榜</button>
+          </div>
+          <article v-for="entry in store.rankings" :key="`${store.rankingType}-${entry.rank}`" class="detail-card">
+            <p class="detail-title">#{{ entry.rank }} · {{ entry.characterName }}</p>
+            <p>{{ entry.account }} · {{ entry.realmName }} · {{ entry.sectName || '散修' }}</p>
+            <p>等级 {{ entry.level }} · 修为 {{ entry.exp }} · 灵石 {{ entry.spiritStone }}</p>
+          </article>
+          <p v-if="store.rankings.length === 0" class="empty-text">当前暂无排行数据。</p>
         </div>
 
         <div v-else class="detail-stack">

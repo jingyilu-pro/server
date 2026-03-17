@@ -22,6 +22,7 @@
 
 #include <jansson.h>
 
+#include <algorithm>
 #include <array>
 #include <cstring>
 
@@ -331,6 +332,8 @@ CoroAwaitable MySqlMudPlayerRepository::load_player(const std::string& account)
     result->init(MudPlayerRepositoryOpType::load_player,
                  account,
                  std::nullopt,
+                 MudLeaderboardType::realm,
+                 0,
                  [this](MudPlayerRepositoryOpResult* op) {
                      execute_operation(op);
                  });
@@ -348,6 +351,8 @@ CoroAwaitable MySqlMudPlayerRepository::create_player(const MudPlayerState& play
     result->init(MudPlayerRepositoryOpType::create_player,
                  player.account,
                  player,
+                 MudLeaderboardType::realm,
+                 0,
                  [this](MudPlayerRepositoryOpResult* op) {
                      execute_operation(op);
                  });
@@ -365,6 +370,27 @@ CoroAwaitable MySqlMudPlayerRepository::save_player(const MudPlayerState& player
     result->init(MudPlayerRepositoryOpType::save_player,
                  player.account,
                  player,
+                 MudLeaderboardType::realm,
+                 0,
+                 [this](MudPlayerRepositoryOpResult* op) {
+                     execute_operation(op);
+                 });
+    return CoroAwaitable{m_manager.get(), result};
+}
+
+CoroAwaitable MySqlMudPlayerRepository::list_top_players(MudLeaderboardType leaderboard_type, int limit)
+{
+    auto* result = alloc_result();
+    if(result == nullptr)
+    {
+        return CoroAwaitable{m_manager.get(), nullptr};
+    }
+
+    result->init(MudPlayerRepositoryOpType::list_top_players,
+                 "",
+                 std::nullopt,
+                 leaderboard_type,
+                 limit,
                  [this](MudPlayerRepositoryOpResult* op) {
                      execute_operation(op);
                  });
@@ -446,6 +472,22 @@ void MySqlMudPlayerRepository::execute_operation(MudPlayerRepositoryOpResult* re
         if(!error.empty())
         {
             result->error = error;
+        }
+        break;
+    }
+    case MudPlayerRepositoryOpType::list_top_players:
+    {
+        std::vector<MudLeaderboardEntry> players;
+        const bool ok = query_top_players(worker_mysql,
+                                          result->request_leaderboard_type,
+                                          result->request_limit,
+                                          &players,
+                                          &error);
+        result->success = ok;
+        result->players = std::move(players);
+        if(!ok)
+        {
+            result->error = error.empty() ? "mysql_list_top_players_failed" : error;
         }
         break;
     }
@@ -1114,4 +1156,117 @@ bool MySqlMudPlayerRepository::update_player_record(MYSQL* mysql_handle,
 
     mysql_stmt_close(stmt);
     return updated;
+}
+
+bool MySqlMudPlayerRepository::query_top_players(MYSQL* mysql_handle,
+                                                 MudLeaderboardType leaderboard_type,
+                                                 int limit,
+                                                 std::vector<MudLeaderboardEntry>* out_players,
+                                                 std::string* error)
+{
+    if(mysql_handle == nullptr || out_players == nullptr)
+    {
+        if(error != nullptr)
+        {
+            *error = "mysql_invalid_query_top_players_args";
+        }
+        return false;
+    }
+
+    out_players->clear();
+
+    std::string order_by = "realm_stage DESC, exp DESC, level DESC";
+    if(leaderboard_type == MudLeaderboardType::wealth)
+    {
+        order_by = "spirit_stone DESC, exp DESC";
+    }
+    else if(leaderboard_type == MudLeaderboardType::combat)
+    {
+        order_by = "(attack_power + defense_power + level * 10) DESC, exp DESC";
+    }
+
+    const int normalized_limit = std::clamp(limit <= 0 ? 10 : limit, 1, 50);
+    const std::string sql =
+        "SELECT account,character_name,level,hp,max_hp,attack_power,defense_power,spirit_stone,"
+        "title,location_scene_id,realm_name,realm_stage,exp,next_breakthrough_exp,primary_skill,"
+        "skill_level,sect_id,sect_name,sect_rank,inventory_json,quest_json "
+        "FROM mud_character ORDER BY " + order_by + " LIMIT " + std::to_string(normalized_limit);
+
+    if(mysql_query(mysql_handle, sql.c_str()) != 0)
+    {
+        if(error != nullptr)
+        {
+            *error = mysql_error(mysql_handle);
+        }
+        return false;
+    }
+
+    MYSQL_RES* result = mysql_store_result(mysql_handle);
+    if(result == nullptr)
+    {
+        if(error != nullptr)
+        {
+            *error = mysql_error(mysql_handle);
+        }
+        return false;
+    }
+
+    int rank = 1;
+    while(MYSQL_ROW row = mysql_fetch_row(result))
+    {
+        unsigned long* lengths = mysql_fetch_lengths(result);
+        if(lengths == nullptr)
+        {
+            continue;
+        }
+
+        auto field_text = [&](int index) -> std::string {
+            if(row[index] == nullptr)
+            {
+                return {};
+            }
+            return std::string(row[index], lengths[index]);
+        };
+
+        auto field_int = [&](int index) -> int {
+            auto text = field_text(index);
+            return text.empty() ? 0 : std::stoi(text);
+        };
+
+        auto field_int64 = [&](int index) -> int64_t {
+            auto text = field_text(index);
+            return text.empty() ? 0 : std::stoll(text);
+        };
+
+        MudPlayerState player;
+        player.account = field_text(0);
+        player.character_name = field_text(1);
+        player.level = field_int(2);
+        player.hp = field_int(3);
+        player.max_hp = field_int(4);
+        player.attack_power = field_int(5);
+        player.defense_power = field_int(6);
+        player.spirit_stone = field_int64(7);
+        player.title = field_text(8);
+        player.location_scene_id = field_text(9);
+        player.realm_name = field_text(10);
+        player.realm_stage = field_int(11);
+        player.exp = field_int64(12);
+        player.next_breakthrough_exp = field_int64(13);
+        player.primary_skill = field_text(14);
+        player.skill_level = field_int(15);
+        player.sect_id = field_text(16);
+        player.sect_name = field_text(17);
+        player.sect_rank = field_text(18);
+        decode_inventory_json(field_text(19), &player.inventory);
+        decode_quest_json(field_text(20), &player.quests);
+
+        MudLeaderboardEntry entry;
+        entry.rank = rank++;
+        entry.player = std::move(player);
+        out_players->push_back(std::move(entry));
+    }
+
+    mysql_free_result(result);
+    return true;
 }

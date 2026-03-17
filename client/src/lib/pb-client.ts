@@ -122,4 +122,18 @@ export const pbClient = {
       token,
     })
   },
+  loadRankings(account: string, leaderboard: string, limit: number, token: string) {
+    return protobufRequest({
+      kind: 'mud',
+      requestType: 'mud.RankListRequest',
+      responseType: 'mud.RankListResponse',
+      path: `${gameBase}/v1/game/rank/list`,
+      payload: {
+        account,
+        leaderboard,
+        limit,
+      },
+      token,
+    })
+  },
 }

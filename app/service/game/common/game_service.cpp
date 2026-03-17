@@ -132,6 +132,83 @@ std::string extract_request_token(evhttp_request* request)
     return token;
 }
 
+bool begin_authorize_mud_request(evhttp_request* request,
+                                 const std::string& request_account,
+                                 ITokenProvider* token_provider,
+                                 MudGameRuntime* mud_runtime,
+                                 std::string* resolved_account,
+                                 std::string* token_out,
+                                 int* error_code,
+                                 std::string* error_message)
+{
+    if(error_code != nullptr)
+    {
+        *error_code = http_code_message::gateway::code::kSuccess;
+    }
+    if(error_message != nullptr)
+    {
+        error_message->clear();
+    }
+
+    auto fail = [&](int code_value, const std::string& message_value) {
+        if(error_code != nullptr)
+        {
+            *error_code = code_value;
+        }
+        if(error_message != nullptr)
+        {
+            *error_message = message_value;
+        }
+    };
+
+    const auto token = extract_request_token(request);
+    if(token.empty())
+    {
+        fail(http_code_message::gateway::code::kMissingJwt,
+             http_code_message::gateway::message::kMissingJwt);
+        return false;
+    }
+    if(token_provider == nullptr)
+    {
+        fail(http_code_message::gateway::code::kTokenProviderUnavailable,
+             http_code_message::gateway::message::kTokenProviderUnavailable);
+        return false;
+    }
+    if(mud_runtime == nullptr || !mud_runtime->ready())
+    {
+        fail(http_code_message::gateway::code::kMudWorldUnavailable,
+             mud_runtime == nullptr ? http_code_message::gateway::message::kMudWorldUnavailable
+                                    : mud_runtime->ready_error());
+        return false;
+    }
+
+    auto verified = token_provider->verify(token);
+    if(!verified)
+    {
+        fail(http_code_message::gateway::code::kInvalidOrExpiredJwt,
+             http_code_message::gateway::message::kInvalidOrExpiredJwt);
+        return false;
+    }
+
+    std::string account;
+    if(!mud_runtime->verify_account_match(verified->subject, request_account, &account))
+    {
+        fail(http_code_message::gateway::code::kJwtSubjectMismatch,
+             http_code_message::gateway::message::kJwtSubjectMismatch);
+        return false;
+    }
+
+    if(resolved_account != nullptr)
+    {
+        *resolved_account = account;
+    }
+    if(token_out != nullptr)
+    {
+        *token_out = token;
+    }
+    return true;
+}
+
 } // namespace
 
 GameService::GameService(const RuntimeConfig& config,
@@ -183,6 +260,9 @@ GameService::GameService(const RuntimeConfig& config,
     });
     register_handler("/v1/game/feed/pull", [this](evhttp_request* request) {
         pull_feed_async(request);
+    });
+    register_handler("/v1/game/rank/list", [this](evhttp_request* request) {
+        rank_list_async(request);
     });
 }
 
@@ -440,123 +520,6 @@ coro_task_t GameService::heartbeat_async()
     m_heartbeat_inflight = false;
 }
 
-bool GameService::authorize_mud_account(evhttp_request* request,
-                                        const std::string& request_account,
-                                        std::string* resolved_account,
-                                        int* error_code,
-                                        std::string* error_message)
-{
-    if(error_code != nullptr)
-    {
-        *error_code = http_code_message::gateway::code::kSuccess;
-    }
-    if(error_message != nullptr)
-    {
-        error_message->clear();
-    }
-
-    auto fail = [&](int code_value, const std::string& message_value) {
-        if(error_code != nullptr)
-        {
-            *error_code = code_value;
-        }
-        if(error_message != nullptr)
-        {
-            *error_message = message_value;
-        }
-    };
-
-    auto token = extract_request_token(request);
-    if(token.empty())
-    {
-        fail(http_code_message::gateway::code::kMissingJwt,
-             http_code_message::gateway::message::kMissingJwt);
-        return false;
-    }
-    if(m_token_provider == nullptr)
-    {
-        fail(http_code_message::gateway::code::kTokenProviderUnavailable,
-             http_code_message::gateway::message::kTokenProviderUnavailable);
-        return false;
-    }
-    if(m_mud_runtime == nullptr || !m_mud_runtime->ready())
-    {
-        fail(http_code_message::gateway::code::kMudWorldUnavailable,
-             m_mud_runtime == nullptr ? http_code_message::gateway::message::kMudWorldUnavailable
-                                      : m_mud_runtime->ready_error());
-        return false;
-    }
-
-    auto verified = m_token_provider->verify(token);
-    if(!verified)
-    {
-        fail(http_code_message::gateway::code::kInvalidOrExpiredJwt,
-             http_code_message::gateway::message::kInvalidOrExpiredJwt);
-        return false;
-    }
-
-    std::string account;
-    if(!m_mud_runtime->verify_account_match(verified->subject, request_account, &account))
-    {
-        fail(http_code_message::gateway::code::kJwtSubjectMismatch,
-             http_code_message::gateway::message::kJwtSubjectMismatch);
-        return false;
-    }
-
-    bool session_mismatch = false;
-    if(m_session_store && !verified->subject.empty())
-    {
-        SessionStoreOpResult session_result;
-        const bool session_ok = wait_session_store_result(m_session_store.get(),
-                                                          m_session_store->get_session(verified->subject),
-                                                          &session_result,
-                                                          m_config.redis.op_timeout_ms);
-        if(session_ok && session_result.success && session_result.hit &&
-           session_result.session.has_value())
-        {
-            const auto token_digest = sha256_hex_string(token);
-            if(!token_digest.empty() && session_result.session->token_digest != token_digest)
-            {
-                session_mismatch = true;
-            }
-            else if(session_result.session->expire_at > 0)
-            {
-                const int64_t now_sec = now_ms() / 1000;
-                int ttl_sec = static_cast<int>(session_result.session->expire_at - now_sec);
-                ttl_sec = std::max(1, ttl_sec);
-                SessionStoreOpResult touch_result;
-                const bool touch_ok = wait_session_store_result(m_session_store.get(),
-                                                                m_session_store->touch_session(verified->subject, ttl_sec),
-                                                                &touch_result,
-                                                                m_config.redis.op_timeout_ms);
-                if(!touch_ok || !touch_result.success)
-                {
-                    spdlog::warn("game mud session touch failed: {}",
-                                 touch_ok ? touch_result.error : "touch_wait_timeout");
-                }
-            }
-        }
-        else if(session_ok && !session_result.success)
-        {
-            spdlog::warn("game mud session query failed: {}", session_result.error);
-        }
-    }
-
-    if(session_mismatch)
-    {
-        fail(http_code_message::gateway::code::kInvalidOrExpiredJwt,
-             http_code_message::gateway::message::kInvalidOrExpiredJwt);
-        return false;
-    }
-
-    if(resolved_account != nullptr)
-    {
-        *resolved_account = account;
-    }
-
-    return true;
-}
-
 coro_task_t GameService::enter_game_async(evhttp_request* request)
 {
     retain_request(request);
@@ -693,14 +656,59 @@ coro_task_t GameService::bootstrap_async(evhttp_request* request)
     response.set_server_time_ms(now_ms());
 
     std::string account;
+    std::string request_token;
     int error_code = http_code_message::gateway::code::kSuccess;
     std::string error_message;
-    if(authorize_mud_account(request,
-                             mud_request.account(),
-                             &account,
-                             &error_code,
-                             &error_message))
+    if(begin_authorize_mud_request(request,
+                                   mud_request.account(),
+                                   m_token_provider.get(),
+                                   m_mud_runtime.get(),
+                                   &account,
+                                   &request_token,
+                                   &error_code,
+                                   &error_message))
     {
+        bool session_mismatch = false;
+        if(m_session_store && !account.empty())
+        {
+            auto* session_result = dynamic_cast<SessionStoreOpResult*>(co_await m_session_store->get_session(account));
+            if(session_result != nullptr && session_result->success && session_result->hit &&
+               session_result->session.has_value())
+            {
+                const auto token_digest = sha256_hex_string(request_token);
+                if(!token_digest.empty() && session_result->session->token_digest != token_digest)
+                {
+                    session_mismatch = true;
+                }
+                else if(session_result->session->expire_at > 0)
+                {
+                    const int64_t now_sec = now_ms() / 1000;
+                    int ttl_sec = static_cast<int>(session_result->session->expire_at - now_sec);
+                    ttl_sec = std::max(1, ttl_sec);
+                    auto* touch_result = dynamic_cast<SessionStoreOpResult*>(co_await m_session_store->touch_session(account, ttl_sec));
+                    if(touch_result == nullptr || !touch_result->success)
+                    {
+                        spdlog::warn("game mud session touch failed: {}",
+                                     touch_result == nullptr ? "null result" : touch_result->error);
+                    }
+                }
+            }
+            else if(session_result != nullptr && !session_result->success)
+            {
+                spdlog::warn("game mud session query failed: {}", session_result->error);
+            }
+        }
+
+        if(session_mismatch)
+        {
+            http_code_message::gateway::set_code_message(&response,
+                                                         http_code_message::gateway::code::kInvalidOrExpiredJwt,
+                                                         http_code_message::gateway::message::kInvalidOrExpiredJwt);
+            write_protobuf_response(request, response, 200);
+            release_request(request);
+            co_return;
+        }
+
         auto* load_result = dynamic_cast<MudPlayerRepositoryOpResult*>(co_await m_mud_player_repository->load_player(account));
         if(load_result == nullptr || !load_result->success)
         {
@@ -750,14 +758,59 @@ coro_task_t GameService::create_character_async(evhttp_request* request)
     response.set_server_time_ms(now_ms());
 
     std::string account;
+    std::string request_token;
     int error_code = http_code_message::gateway::code::kSuccess;
     std::string error_message;
-    if(authorize_mud_account(request,
-                             mud_request.account(),
-                             &account,
-                             &error_code,
-                             &error_message))
+    if(begin_authorize_mud_request(request,
+                                   mud_request.account(),
+                                   m_token_provider.get(),
+                                   m_mud_runtime.get(),
+                                   &account,
+                                   &request_token,
+                                   &error_code,
+                                   &error_message))
     {
+        bool session_mismatch = false;
+        if(m_session_store && !account.empty())
+        {
+            auto* session_result = dynamic_cast<SessionStoreOpResult*>(co_await m_session_store->get_session(account));
+            if(session_result != nullptr && session_result->success && session_result->hit &&
+               session_result->session.has_value())
+            {
+                const auto token_digest = sha256_hex_string(request_token);
+                if(!token_digest.empty() && session_result->session->token_digest != token_digest)
+                {
+                    session_mismatch = true;
+                }
+                else if(session_result->session->expire_at > 0)
+                {
+                    const int64_t now_sec = now_ms() / 1000;
+                    int ttl_sec = static_cast<int>(session_result->session->expire_at - now_sec);
+                    ttl_sec = std::max(1, ttl_sec);
+                    auto* touch_result = dynamic_cast<SessionStoreOpResult*>(co_await m_session_store->touch_session(account, ttl_sec));
+                    if(touch_result == nullptr || !touch_result->success)
+                    {
+                        spdlog::warn("game mud session touch failed: {}",
+                                     touch_result == nullptr ? "null result" : touch_result->error);
+                    }
+                }
+            }
+            else if(session_result != nullptr && !session_result->success)
+            {
+                spdlog::warn("game mud session query failed: {}", session_result->error);
+            }
+        }
+
+        if(session_mismatch)
+        {
+            http_code_message::gateway::set_code_message(&response,
+                                                         http_code_message::gateway::code::kInvalidOrExpiredJwt,
+                                                         http_code_message::gateway::message::kInvalidOrExpiredJwt);
+            write_protobuf_response(request, response, 200);
+            release_request(request);
+            co_return;
+        }
+
         auto normalized_name = mud_trim(mud_request.character_name());
         if(normalized_name.empty() || normalized_name.size() > 24)
         {
@@ -834,14 +887,59 @@ coro_task_t GameService::execute_command_async(evhttp_request* request)
     response.set_server_time_ms(now_ms());
 
     std::string account;
+    std::string request_token;
     int error_code = http_code_message::gateway::code::kSuccess;
     std::string error_message;
-    if(authorize_mud_account(request,
-                             mud_request.account(),
-                             &account,
-                             &error_code,
-                             &error_message))
+    if(begin_authorize_mud_request(request,
+                                   mud_request.account(),
+                                   m_token_provider.get(),
+                                   m_mud_runtime.get(),
+                                   &account,
+                                   &request_token,
+                                   &error_code,
+                                   &error_message))
     {
+        bool session_mismatch = false;
+        if(m_session_store && !account.empty())
+        {
+            auto* session_result = dynamic_cast<SessionStoreOpResult*>(co_await m_session_store->get_session(account));
+            if(session_result != nullptr && session_result->success && session_result->hit &&
+               session_result->session.has_value())
+            {
+                const auto token_digest = sha256_hex_string(request_token);
+                if(!token_digest.empty() && session_result->session->token_digest != token_digest)
+                {
+                    session_mismatch = true;
+                }
+                else if(session_result->session->expire_at > 0)
+                {
+                    const int64_t now_sec = now_ms() / 1000;
+                    int ttl_sec = static_cast<int>(session_result->session->expire_at - now_sec);
+                    ttl_sec = std::max(1, ttl_sec);
+                    auto* touch_result = dynamic_cast<SessionStoreOpResult*>(co_await m_session_store->touch_session(account, ttl_sec));
+                    if(touch_result == nullptr || !touch_result->success)
+                    {
+                        spdlog::warn("game mud session touch failed: {}",
+                                     touch_result == nullptr ? "null result" : touch_result->error);
+                    }
+                }
+            }
+            else if(session_result != nullptr && !session_result->success)
+            {
+                spdlog::warn("game mud session query failed: {}", session_result->error);
+            }
+        }
+
+        if(session_mismatch)
+        {
+            http_code_message::gateway::set_code_message(&response,
+                                                         http_code_message::gateway::code::kInvalidOrExpiredJwt,
+                                                         http_code_message::gateway::message::kInvalidOrExpiredJwt);
+            write_protobuf_response(request, response, 200);
+            release_request(request);
+            co_return;
+        }
+
         auto* load_result = dynamic_cast<MudPlayerRepositoryOpResult*>(co_await m_mud_player_repository->load_player(account));
         if(load_result == nullptr || !load_result->success)
         {
@@ -912,15 +1010,164 @@ coro_task_t GameService::pull_feed_async(evhttp_request* request)
     response.set_server_time_ms(now_ms());
 
     std::string account;
+    std::string request_token;
     int error_code = http_code_message::gateway::code::kSuccess;
     std::string error_message;
-    if(authorize_mud_account(request,
-                             mud_request.account(),
-                             &account,
-                             &error_code,
-                             &error_message))
+    if(begin_authorize_mud_request(request,
+                                   mud_request.account(),
+                                   m_token_provider.get(),
+                                   m_mud_runtime.get(),
+                                   &account,
+                                   &request_token,
+                                   &error_code,
+                                   &error_message))
     {
+        bool session_mismatch = false;
+        if(m_session_store && !account.empty())
+        {
+            auto* session_result = dynamic_cast<SessionStoreOpResult*>(co_await m_session_store->get_session(account));
+            if(session_result != nullptr && session_result->success && session_result->hit &&
+               session_result->session.has_value())
+            {
+                const auto token_digest = sha256_hex_string(request_token);
+                if(!token_digest.empty() && session_result->session->token_digest != token_digest)
+                {
+                    session_mismatch = true;
+                }
+                else if(session_result->session->expire_at > 0)
+                {
+                    const int64_t now_sec = now_ms() / 1000;
+                    int ttl_sec = static_cast<int>(session_result->session->expire_at - now_sec);
+                    ttl_sec = std::max(1, ttl_sec);
+                    auto* touch_result = dynamic_cast<SessionStoreOpResult*>(co_await m_session_store->touch_session(account, ttl_sec));
+                    if(touch_result == nullptr || !touch_result->success)
+                    {
+                        spdlog::warn("game mud session touch failed: {}",
+                                     touch_result == nullptr ? "null result" : touch_result->error);
+                    }
+                }
+            }
+            else if(session_result != nullptr && !session_result->success)
+            {
+                spdlog::warn("game mud session query failed: {}", session_result->error);
+            }
+        }
+
+        if(session_mismatch)
+        {
+            http_code_message::gateway::set_code_message(&response,
+                                                         http_code_message::gateway::code::kInvalidOrExpiredJwt,
+                                                         http_code_message::gateway::message::kInvalidOrExpiredJwt);
+            write_protobuf_response(request, response, 200);
+            release_request(request);
+            co_return;
+        }
+
         m_mud_runtime->build_feed_response(account, mud_request.after_event_id(), mud_request.limit(), &response);
+    }
+    else
+    {
+        http_code_message::gateway::set_code_message(&response, error_code, error_message);
+    }
+
+    write_protobuf_response(request, response, 200);
+    release_request(request);
+}
+
+coro_task_t GameService::rank_list_async(evhttp_request* request)
+{
+    retain_request(request);
+
+    mud::RankListRequest mud_request;
+    auto body = read_request_body(request);
+    if(body.empty())
+    {
+        evhttp_send_error(request,
+                          http_code_message::transport::status::kBadRequest,
+                          http_code_message::transport::message::kEmptyProtobufBody);
+        release_request(request);
+        co_return;
+    }
+    if(!mud_request.ParseFromString(body))
+    {
+        evhttp_send_error(request,
+                          http_code_message::transport::status::kBadRequest,
+                          http_code_message::transport::message::kInvalidProtobuf);
+        release_request(request);
+        co_return;
+    }
+
+    mud::RankListResponse response;
+    response.set_trace_id(make_trace_id());
+    response.set_server_time_ms(now_ms());
+
+    std::string account;
+    std::string request_token;
+    int error_code = http_code_message::gateway::code::kSuccess;
+    std::string error_message;
+    if(begin_authorize_mud_request(request,
+                                   mud_request.account(),
+                                   m_token_provider.get(),
+                                   m_mud_runtime.get(),
+                                   &account,
+                                   &request_token,
+                                   &error_code,
+                                   &error_message))
+    {
+        bool session_mismatch = false;
+        if(m_session_store && !account.empty())
+        {
+            auto* session_result = dynamic_cast<SessionStoreOpResult*>(co_await m_session_store->get_session(account));
+            if(session_result != nullptr && session_result->success && session_result->hit &&
+               session_result->session.has_value())
+            {
+                const auto token_digest = sha256_hex_string(request_token);
+                if(!token_digest.empty() && session_result->session->token_digest != token_digest)
+                {
+                    session_mismatch = true;
+                }
+                else if(session_result->session->expire_at > 0)
+                {
+                    const int64_t now_sec = now_ms() / 1000;
+                    int ttl_sec = static_cast<int>(session_result->session->expire_at - now_sec);
+                    ttl_sec = std::max(1, ttl_sec);
+                    auto* touch_result = dynamic_cast<SessionStoreOpResult*>(co_await m_session_store->touch_session(account, ttl_sec));
+                    if(touch_result == nullptr || !touch_result->success)
+                    {
+                        spdlog::warn("game mud session touch failed: {}",
+                                     touch_result == nullptr ? "null result" : touch_result->error);
+                    }
+                }
+            }
+            else if(session_result != nullptr && !session_result->success)
+            {
+                spdlog::warn("game mud session query failed: {}", session_result->error);
+            }
+        }
+
+        if(session_mismatch)
+        {
+            http_code_message::gateway::set_code_message(&response,
+                                                         http_code_message::gateway::code::kInvalidOrExpiredJwt,
+                                                         http_code_message::gateway::message::kInvalidOrExpiredJwt);
+            write_protobuf_response(request, response, 200);
+            release_request(request);
+            co_return;
+        }
+
+        const auto leaderboard_type = mud_parse_leaderboard_type(mud_request.leaderboard());
+        auto* rank_result = dynamic_cast<MudPlayerRepositoryOpResult*>(
+            co_await m_mud_player_repository->list_top_players(leaderboard_type, mud_request.limit()));
+        if(rank_result == nullptr || !rank_result->success)
+        {
+            http_code_message::gateway::set_code_message(&response,
+                                                         http_code_message::gateway::code::kMudPlayerRepositoryUnavailable,
+                                                         "load leaderboard failed");
+        }
+        else
+        {
+            m_mud_runtime->build_rank_response(leaderboard_type, rank_result->players, &response);
+        }
     }
     else
     {

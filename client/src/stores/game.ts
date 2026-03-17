@@ -46,6 +46,8 @@ export const useGameStore = defineStore('game', {
     error: '',
     pollIntervalMs: 1500,
     pollTimer: 0 as number | ReturnType<typeof setTimeout>,
+    rankings: [] as Record<string, any>[],
+    rankingType: 'realm' as 'realm' | 'wealth' | 'combat',
   }),
   getters: {
     authenticated: (state) => Boolean(state.account && state.token),
@@ -211,6 +213,18 @@ export const useGameStore = defineStore('game', {
       this.nextEventId = Number(response.nextEventId ?? this.nextEventId)
       this.pollIntervalMs = Number(response.recommendedPollIntervalMs ?? this.pollIntervalMs)
     },
+    async loadRankings(leaderboard: 'realm' | 'wealth' | 'combat' = 'realm') {
+      if (!this.authenticated) {
+        return
+      }
+
+      const response = await pbClient.loadRankings(this.account, leaderboard, 10, this.token)
+      if ((response.code ?? -1) !== 0) {
+        throw new Error(response.message ?? '加载排行失败')
+      }
+      this.rankingType = leaderboard
+      this.rankings = (response.entries as Record<string, any>[]) ?? []
+    },
     logout() {
       this.stopPolling()
       this.account = ''
@@ -223,6 +237,7 @@ export const useGameStore = defineStore('game', {
       this.needCreateCharacter = false
       this.lastResult = null
       this.error = ''
+      this.rankings = []
       this.clearAuth()
     },
   },

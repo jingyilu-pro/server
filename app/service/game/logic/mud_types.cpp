@@ -85,3 +85,31 @@ MudCommandParseResult parse_mud_command(const std::string& command)
 
     return parsed;
 }
+
+MudLeaderboardType mud_parse_leaderboard_type(const std::string& value)
+{
+    const auto normalized = mud_to_lower_ascii(mud_trim(value));
+    if(normalized == "wealth" || normalized == "money" || normalized == "stone")
+    {
+        return MudLeaderboardType::wealth;
+    }
+    if(normalized == "combat" || normalized == "power")
+    {
+        return MudLeaderboardType::combat;
+    }
+    return MudLeaderboardType::realm;
+}
+
+std::string mud_leaderboard_name(MudLeaderboardType type)
+{
+    switch(type)
+    {
+    case MudLeaderboardType::wealth:
+        return "wealth";
+    case MudLeaderboardType::combat:
+        return "combat";
+    case MudLeaderboardType::realm:
+    default:
+        return "realm";
+    }
+}

@@ -105,6 +105,7 @@ void MudGameRuntime::poll()
     {
         m_repository->poll();
     }
+    maybe_emit_world_event();
 }
 
 bool MudGameRuntime::verify_account_match(const std::string& jwt_account,
@@ -235,8 +236,18 @@ void MudGameRuntime::fill_player_snapshot(const MudPlayerState& player,
     snapshot->add_known_commands("buy <item>");
     snapshot->add_known_commands("sell <item>");
     snapshot->add_known_commands("join <sect>");
+    snapshot->add_known_commands("team create|join|info|leave");
+    snapshot->add_known_commands("event");
     snapshot->add_known_commands("chat <channel> <message>");
     snapshot->set_recommended_poll_interval_ms(1500);
+    fill_team_snapshot(player, snapshot->mutable_team());
+    snapshot->set_progression_chapter(progression_chapter_for_player(player));
+    snapshot->clear_unlocked_regions();
+    for(const auto& region : unlocked_regions_for_player(player))
+    {
+        snapshot->add_unlocked_regions(region);
+    }
+    snapshot->set_sect_contribution(sect_contribution_for_player(player));
 }
 
 void MudGameRuntime::fill_scene_snapshot(const MudPlayerState& player,
@@ -379,6 +390,7 @@ void MudGameRuntime::build_bootstrap_response(const std::string& account,
         return;
     }
 
+    m_character_names[player->account] = player->character_name;
     fill_player_snapshot(*player, response->mutable_player());
     fill_scene_snapshot(*player, response->mutable_scene());
     http_code_message::gateway::set_code_message(response,
@@ -395,6 +407,7 @@ void MudGameRuntime::build_create_character_response(const MudPlayerState& playe
         return;
     }
 
+    m_character_names[player.account] = player.character_name;
     std::vector<MudEventEnvelope> events;
     append_event(player.account,
                  "system",
@@ -420,6 +433,7 @@ void MudGameRuntime::build_command_response(const MudPlayerState& player,
         return;
     }
 
+    m_character_names[player.account] = player.character_name;
     auto* result = response->mutable_result();
     result->set_command(command);
     result->set_success(execution.success);
@@ -478,6 +492,216 @@ void MudGameRuntime::build_feed_response(const std::string& account,
     http_code_message::gateway::set_code_message(response,
                                                  http_code_message::gateway::code::kSuccess,
                                                  http_code_message::gateway::message::kOk);
+}
+
+void MudGameRuntime::build_rank_response(MudLeaderboardType leaderboard_type,
+                                         const std::vector<MudLeaderboardEntry>& entries,
+                                         mud::RankListResponse* response) const
+{
+    if(response == nullptr)
+    {
+        return;
+    }
+
+    response->set_leaderboard(mud_leaderboard_name(leaderboard_type));
+    response->clear_entries();
+    for(const auto& entry : entries)
+    {
+        auto* output = response->add_entries();
+        output->set_rank(entry.rank);
+        output->set_account(entry.player.account);
+        output->set_character_name(entry.player.character_name);
+        output->set_realm_name(entry.player.realm_name);
+        output->set_level(entry.player.level);
+        output->set_exp(entry.player.exp);
+        output->set_spirit_stone(entry.player.spirit_stone);
+        output->set_sect_name(entry.player.sect_name);
+    }
+    http_code_message::gateway::set_code_message(response,
+                                                 http_code_message::gateway::code::kSuccess,
+                                                 http_code_message::gateway::message::kOk);
+}
+
+void MudGameRuntime::fill_team_snapshot(const MudPlayerState& player,
+                                        mud::TeamState* snapshot) const
+{
+    if(snapshot == nullptr)
+    {
+        return;
+    }
+
+    snapshot->Clear();
+    auto team_iter = m_team_by_account.find(player.account);
+    if(team_iter == m_team_by_account.end())
+    {
+        return;
+    }
+
+    auto state_iter = m_teams.find(team_iter->second);
+    if(state_iter == m_teams.end())
+    {
+        return;
+    }
+
+    const auto& state = state_iter->second;
+    snapshot->set_team_id(state.team_id);
+    snapshot->set_team_name(state.team_name);
+    for(const auto& member : state.members)
+    {
+        auto* output = snapshot->add_members();
+        output->set_account(member.account);
+        output->set_display_name(member.display_name);
+        output->set_leader(member.leader);
+    }
+}
+
+void MudGameRuntime::maybe_emit_world_event()
+{
+    const int64_t now = mud_now_ms();
+    if(m_last_world_event_ms != 0 && now - m_last_world_event_ms < 45000)
+    {
+        return;
+    }
+
+    static const std::vector<std::pair<std::string, std::string>> kWorldEvents = {
+        {"黄枫谷收徒", "黄枫谷外门今日开山，越国散修纷纷前往试灵根。"},
+        {"血色禁地异动", "血色禁地外围灵气暴涨，有修士称见到异草出世。"},
+        {"乱星海风暴", "乱星海近海突起风暴，数支采药小队请求同道支援。"},
+        {"虚天殿传闻", "天南坊间再起虚天殿消息，诸多宗门已派人暗中探查。"}
+    };
+
+    if(kWorldEvents.empty())
+    {
+        return;
+    }
+
+    const auto& event = kWorldEvents[m_world_event_cursor % kWorldEvents.size()];
+    ++m_world_event_cursor;
+    m_last_world_event_ms = now;
+    append_event("",
+                 "world",
+                 event.first,
+                 event.second,
+                 nullptr);
+}
+
+std::vector<std::string> MudGameRuntime::unlocked_regions_for_player(const MudPlayerState& player) const
+{
+    std::vector<std::string> regions;
+    const auto add_region = [&](const std::string& value) {
+        if(value.empty())
+        {
+            return;
+        }
+        if(std::find(regions.begin(), regions.end(), value) == regions.end())
+        {
+            regions.push_back(value);
+        }
+    };
+
+    add_region("七玄门");
+    if(const auto* scene = current_scene(player); scene != nullptr)
+    {
+        add_region(scene->region_name);
+    }
+    for(const auto& quest : player.quests)
+    {
+        if(quest.status != "completed")
+        {
+            continue;
+        }
+        if(quest.quest_id == "qixuan_herb")
+        {
+            add_region("嘉元城");
+        }
+        if(quest.quest_id == "tainan_snake")
+        {
+            add_region("太南谷");
+        }
+        if(quest.quest_id == "huangfeng_letter")
+        {
+            add_region("黄枫谷");
+        }
+        if(quest.quest_id == "blood_forbidden_token")
+        {
+            add_region("血色禁地");
+        }
+        if(quest.quest_id == "chaos_sea_chart")
+        {
+            add_region("乱星海");
+        }
+        if(quest.quest_id == "xutian_key")
+        {
+            add_region("虚天殿");
+        }
+    }
+    return regions;
+}
+
+std::string MudGameRuntime::progression_chapter_for_player(const MudPlayerState& player) const
+{
+    bool has_xutian = false;
+    bool has_chaos_sea = false;
+    bool has_blood = false;
+    bool has_huangfeng = false;
+    bool has_tainan = false;
+    for(const auto& quest : player.quests)
+    {
+        if(quest.status != "completed")
+        {
+            continue;
+        }
+        has_tainan = has_tainan || quest.quest_id == "tainan_snake";
+        has_huangfeng = has_huangfeng || quest.quest_id == "huangfeng_letter";
+        has_blood = has_blood || quest.quest_id == "blood_forbidden_token";
+        has_chaos_sea = has_chaos_sea || quest.quest_id == "chaos_sea_chart";
+        has_xutian = has_xutian || quest.quest_id == "xutian_key";
+    }
+
+    if(has_xutian)
+    {
+        return "虚天殿风云";
+    }
+    if(has_chaos_sea)
+    {
+        return "乱星海启程";
+    }
+    if(has_blood)
+    {
+        return "血色禁地试炼";
+    }
+    if(has_huangfeng)
+    {
+        return "黄枫谷内门试炼";
+    }
+    if(has_tainan)
+    {
+        return "太南小会";
+    }
+    return "七玄门启程";
+}
+
+int64_t MudGameRuntime::sect_contribution_for_player(const MudPlayerState& player) const
+{
+    int64_t contribution = 0;
+    for(const auto& quest_state : player.quests)
+    {
+        if(quest_state.status != "completed")
+        {
+            continue;
+        }
+        const auto* quest = m_world->find_quest(quest_state.quest_id);
+        if(quest == nullptr)
+        {
+            continue;
+        }
+        if(!player.sect_id.empty() && (!quest->reward_sect_id.empty() && quest->reward_sect_id != player.sect_id))
+        {
+            continue;
+        }
+        contribution += std::max<int64_t>(20, quest->reward_exp / 2 + quest->reward_spirit_stone);
+    }
+    return contribution;
 }
 
 MudCommandExecution MudGameRuntime::run_command(MudPlayerState* player,
@@ -766,6 +990,14 @@ MudCommandExecution MudGameRuntime::execute_command(MudPlayerState* player,
     if(parsed.verb == "join")
     {
         return execute_join(player, parsed.args);
+    }
+    if(parsed.verb == "team")
+    {
+        return execute_team(player, parsed.args);
+    }
+    if(parsed.verb == "event")
+    {
+        return execute_event();
     }
     if(parsed.verb == "chat")
     {
@@ -1475,6 +1707,201 @@ MudCommandExecution MudGameRuntime::execute_join(MudPlayerState* player,
                  execution.title,
                  player->character_name + "加入了" + matched_sect->name + "。",
                  &execution.events);
+    return execution;
+}
+
+MudCommandExecution MudGameRuntime::execute_team(MudPlayerState* player,
+                                                 const std::vector<std::string>& args)
+{
+    MudCommandExecution execution;
+    if(player == nullptr)
+    {
+        execution.title = "组队失败";
+        execution.summary = "玩家状态为空。";
+        return execution;
+    }
+    if(args.empty())
+    {
+        execution.title = "组队指令";
+        execution.summary = "可用子命令：team create / team join <leader_account> / team info / team leave";
+        return execution;
+    }
+
+    const auto sub = mud_to_lower_ascii(args.front());
+    auto team_owner_iter = m_team_by_account.find(player->account);
+    const bool in_team = team_owner_iter != m_team_by_account.end();
+
+    if(sub == "create")
+    {
+        if(in_team)
+        {
+            execution.title = "已有队伍";
+            execution.summary = "你已经在队伍中，先用 team info 查看。";
+            return execution;
+        }
+
+        MudTeamState team;
+        team.team_id = player->account;
+        team.team_name = player->character_name + "的小队";
+        team.leader_account = player->account;
+        team.members.push_back(MudTeamMemberState{player->account, player->character_name, true});
+        m_teams.insert_or_assign(team.team_id, team);
+        m_team_by_account.insert_or_assign(player->account, team.team_id);
+
+        execution.success = true;
+        execution.title = "组队成功";
+        execution.summary = "你创建了队伍「" + team.team_name + "」。";
+        append_event(player->account, "team", execution.title, execution.summary, &execution.events);
+        return execution;
+    }
+
+    if(sub == "join")
+    {
+        if(args.size() < 2)
+        {
+            execution.title = "缺少队长";
+            execution.summary = "请使用 team join <leader_account>。";
+            return execution;
+        }
+        if(in_team)
+        {
+            execution.title = "已在队伍";
+            execution.summary = "请先 team leave 再加入其他队伍。";
+            return execution;
+        }
+
+        const auto leader_account = args[1];
+        auto team_iter = m_teams.find(leader_account);
+        if(team_iter == m_teams.end())
+        {
+            execution.title = "队伍不存在";
+            execution.summary = "当前没有这个队长创建的队伍。";
+            return execution;
+        }
+        if(team_iter->second.members.size() >= 4)
+        {
+            execution.title = "队伍已满";
+            execution.summary = "当前队伍已达到 4 人上限。";
+            return execution;
+        }
+
+        team_iter->second.members.push_back(MudTeamMemberState{player->account, player->character_name, false});
+        m_team_by_account.insert_or_assign(player->account, leader_account);
+        execution.success = true;
+        execution.title = "加入队伍";
+        execution.summary = "你加入了「" + team_iter->second.team_name + "」。";
+        for(const auto& member : team_iter->second.members)
+        {
+            append_event(member.account,
+                         "team",
+                         execution.title,
+                         player->character_name + "加入了队伍。",
+                         &execution.events);
+        }
+        return execution;
+    }
+
+    if(sub == "info")
+    {
+        if(!in_team)
+        {
+            execution.title = "暂无队伍";
+            execution.summary = "你当前还没有加入任何队伍。";
+            return execution;
+        }
+
+        auto team_iter = m_teams.find(team_owner_iter->second);
+        if(team_iter == m_teams.end())
+        {
+            m_team_by_account.erase(player->account);
+            execution.title = "队伍失效";
+            execution.summary = "队伍已解散，请重新创建。";
+            return execution;
+        }
+
+        execution.success = true;
+        execution.title = team_iter->second.team_name;
+        execution.summary = "当前成员：" + std::to_string(team_iter->second.members.size()) + "/4";
+        for(const auto& member : team_iter->second.members)
+        {
+            execution.hints.push_back((member.leader ? "队长 · " : "成员 · ") + member.display_name + " (" + member.account + ")");
+        }
+        return execution;
+    }
+
+    if(sub == "leave")
+    {
+        if(!in_team)
+        {
+            execution.title = "暂无队伍";
+            execution.summary = "你当前还没有加入任何队伍。";
+            return execution;
+        }
+
+        auto team_iter = m_teams.find(team_owner_iter->second);
+        if(team_iter == m_teams.end())
+        {
+            m_team_by_account.erase(player->account);
+            execution.title = "队伍失效";
+            execution.summary = "队伍已解散。";
+            return execution;
+        }
+
+        auto& members = team_iter->second.members;
+        members.erase(std::remove_if(members.begin(), members.end(), [&](const MudTeamMemberState& member) {
+                          return member.account == player->account;
+                      }),
+                      members.end());
+        m_team_by_account.erase(player->account);
+
+        if(members.empty())
+        {
+            m_teams.erase(team_iter);
+        }
+        else if(team_iter->second.leader_account == player->account)
+        {
+            auto new_team = team_iter->second;
+            new_team.leader_account = members.front().account;
+            new_team.team_id = new_team.leader_account;
+            for(auto& member : new_team.members)
+            {
+                member.leader = member.account == new_team.leader_account;
+                m_team_by_account[member.account] = new_team.team_id;
+            }
+            m_teams.erase(team_iter);
+            m_teams.insert_or_assign(new_team.team_id, new_team);
+        }
+
+        execution.success = true;
+        execution.title = "离开队伍";
+        execution.summary = "你离开了当前队伍。";
+        append_event(player->account, "team", execution.title, execution.summary, &execution.events);
+        return execution;
+    }
+
+    execution.title = "未知组队指令";
+    execution.summary = "仅支持 team create / join / info / leave。";
+    return execution;
+}
+
+MudCommandExecution MudGameRuntime::execute_event() const
+{
+    MudCommandExecution execution;
+    execution.success = true;
+    execution.title = "近期天地异象";
+
+    int count = 0;
+    for(auto iter = m_events.rbegin(); iter != m_events.rend() && count < 4; ++iter)
+    {
+        if(iter->type != "world")
+        {
+            continue;
+        }
+        execution.hints.push_back(iter->title + "： " + iter->content);
+        ++count;
+    }
+
+    execution.summary = count == 0 ? "近期尚无新的天地异象。" : "近期天地异象如下。";
     return execution;
 }
 
