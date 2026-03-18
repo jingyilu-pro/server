@@ -26,6 +26,8 @@
 namespace
 {
 
+constexpr int64_t kScenePresenceTtlMs = 5 * 60 * 1000;
+
 std::string join_strings(const std::vector<std::string>& values, const char* separator = "、")
 {
     std::ostringstream output;
@@ -105,6 +107,7 @@ void MudGameRuntime::poll()
     {
         m_repository->poll();
     }
+    prune_scene_presence();
     maybe_emit_world_event();
 }
 
@@ -157,6 +160,14 @@ MudPlayerState MudGameRuntime::make_default_player(const std::string& account,
     for(const auto& starter_item : m_world->defaults().starter_inventory)
     {
         add_inventory_item(&player, starter_item.item_id, starter_item.quantity, starter_item.equipped);
+    }
+    if(const auto* starter_quest = m_world->find_quest("qixuan_herb"); starter_quest != nullptr)
+    {
+        MudQuestState quest_state;
+        quest_state.quest_id = starter_quest->quest_id;
+        quest_state.status = "active";
+        quest_state.progress = 0;
+        player.quests.push_back(std::move(quest_state));
     }
     refresh_quest_progress(&player);
     return player;
@@ -272,6 +283,8 @@ void MudGameRuntime::fill_scene_snapshot(const MudPlayerState& player,
     snapshot->clear_npcs();
     snapshot->clear_monsters();
     snapshot->clear_shops();
+    snapshot->clear_players();
+    snapshot->clear_items();
 
     for(const auto& entry : scene->exits)
     {
@@ -311,7 +324,87 @@ void MudGameRuntime::fill_scene_snapshot(const MudPlayerState& player,
         if(const auto* item = m_world->find_item(item_id); item != nullptr)
         {
             snapshot->add_shops(item->name);
+            auto* visible_item = snapshot->add_items();
+            visible_item->set_item_id(item->item_id);
+            visible_item->set_name(item->name);
+            visible_item->set_item_type(item->item_type);
+            visible_item->set_description(item->description);
+            visible_item->set_source("shop");
+            visible_item->set_price(item->price);
         }
+    }
+
+    std::vector<const OnlinePresenceState*> visible_players;
+    visible_players.reserve(m_online_presence.size());
+    const auto now = mud_now_ms();
+    for(const auto& [account, presence] : m_online_presence)
+    {
+        if(account.empty() || account == player.account)
+        {
+            continue;
+        }
+        if(presence.last_seen_ms <= 0 || now - presence.last_seen_ms > kScenePresenceTtlMs)
+        {
+            continue;
+        }
+        if(presence.player.location_scene_id != scene->scene_id)
+        {
+            continue;
+        }
+        visible_players.push_back(&presence);
+    }
+
+    std::sort(visible_players.begin(), visible_players.end(), [](const OnlinePresenceState* lhs,
+                                                                 const OnlinePresenceState* rhs) {
+        if(lhs == nullptr || rhs == nullptr)
+        {
+            return lhs != nullptr;
+        }
+        if(lhs->player.character_name == rhs->player.character_name)
+        {
+            return lhs->player.account < rhs->player.account;
+        }
+        return lhs->player.character_name < rhs->player.character_name;
+    });
+
+    for(const auto* presence : visible_players)
+    {
+        if(presence == nullptr)
+        {
+            continue;
+        }
+        auto* scene_player = snapshot->add_players();
+        scene_player->set_account(presence->player.account);
+        scene_player->set_character_name(presence->player.character_name);
+        scene_player->set_title(presence->player.title);
+        scene_player->set_realm_name(presence->player.realm_name);
+        scene_player->set_sect_name(presence->player.sect_name);
+    }
+}
+
+void MudGameRuntime::remember_scene_presence(const MudPlayerState& player)
+{
+    if(player.account.empty())
+    {
+        return;
+    }
+
+    auto& presence = m_online_presence[player.account];
+    presence.player = player;
+    presence.last_seen_ms = mud_now_ms();
+}
+
+void MudGameRuntime::prune_scene_presence()
+{
+    const auto now = mud_now_ms();
+    for(auto iter = m_online_presence.begin(); iter != m_online_presence.end();)
+    {
+        if(iter->second.last_seen_ms <= 0 || now - iter->second.last_seen_ms > kScenePresenceTtlMs)
+        {
+            iter = m_online_presence.erase(iter);
+            continue;
+        }
+        ++iter;
     }
 }
 
@@ -408,6 +501,7 @@ void MudGameRuntime::build_bootstrap_response(const std::string& account,
     }
 
     m_character_names[player->account] = player->character_name;
+    remember_scene_presence(*player);
     if(auto team_iter = m_team_by_account.find(player->account); team_iter != m_team_by_account.end())
     {
         if(auto state_iter = m_teams.find(team_iter->second); state_iter != m_teams.end())
@@ -443,6 +537,7 @@ void MudGameRuntime::build_create_character_response(const MudPlayerState& playe
     }
 
     m_character_names[player.account] = player.character_name;
+    remember_scene_presence(player);
     if(auto team_iter = m_team_by_account.find(player.account); team_iter != m_team_by_account.end())
     {
         if(auto state_iter = m_teams.find(team_iter->second); state_iter != m_teams.end())
@@ -484,6 +579,7 @@ void MudGameRuntime::build_command_response(const MudPlayerState& player,
     }
 
     m_character_names[player.account] = player.character_name;
+    remember_scene_presence(player);
     if(auto team_iter = m_team_by_account.find(player.account); team_iter != m_team_by_account.end())
     {
         if(auto state_iter = m_teams.find(team_iter->second); state_iter != m_teams.end())
@@ -532,6 +628,7 @@ void MudGameRuntime::build_command_response(const MudPlayerState& player,
 }
 
 void MudGameRuntime::build_feed_response(const std::string& account,
+                                         const std::optional<MudPlayerState>& player,
                                          uint64_t after_event_id,
                                          int limit,
                                          mud::FeedPullResponse* response)
@@ -564,6 +661,12 @@ void MudGameRuntime::build_feed_response(const std::string& account,
     add_events_to_response(events, response->mutable_events());
     response->set_next_event_id(events.empty() ? (m_next_event_id == 0 ? 0 : (m_next_event_id - 1)) : events.back().event_id);
     response->set_recommended_poll_interval_ms(1500);
+    if(player.has_value())
+    {
+        m_character_names[player->account] = player->character_name;
+        remember_scene_presence(*player);
+        fill_scene_snapshot(*player, response->mutable_scene());
+    }
     http_code_message::gateway::set_code_message(response,
                                                  http_code_message::gateway::code::kSuccess,
                                                  http_code_message::gateway::message::kOk);

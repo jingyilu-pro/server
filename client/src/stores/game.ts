@@ -210,6 +210,7 @@ export const useGameStore = defineStore('game', {
         throw new Error(response.message ?? '拉取事件失败')
       }
       this.appendEvents((response.events as Record<string, any>[]) ?? [])
+      this.scene = response.scene ?? this.scene
       this.nextEventId = Number(response.nextEventId ?? this.nextEventId)
       this.pollIntervalMs = Number(response.recommendedPollIntervalMs ?? this.pollIntervalMs)
     },

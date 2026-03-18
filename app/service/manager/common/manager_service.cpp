@@ -371,8 +371,12 @@ coro_task_t ManagerService::route_login_async(evhttp_request* request)
     response.set_trace_id(make_trace_id());
     response.set_server_time_ms(now_ms());
 
-    const bool login_available = !login_instances.empty();
-    const bool game_available = !game_instances.empty();
+    const auto endpoint_configured = [](const EndpointConfig& endpoint) {
+        return !endpoint.host.empty() && endpoint.port > 0;
+    };
+
+    const bool login_available = !login_instances.empty() || endpoint_configured(m_config.server.login);
+    const bool game_available = !game_instances.empty() || endpoint_configured(m_config.server.game);
     if(!login_available || !game_available)
     {
         if(!login_available && !game_available)

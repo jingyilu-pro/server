@@ -11,3 +11,7 @@ bin/apptool
 reports/
 client/node_modules/
 client/dist/
+.playwright-cli/
+output/
+doc/参考图/
+.runtime/

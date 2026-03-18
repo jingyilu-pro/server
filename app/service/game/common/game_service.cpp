@@ -865,6 +865,21 @@ coro_task_t GameService::bootstrap_async(evhttp_request* request)
         {
             if(load_result->player.has_value())
             {
+                if(load_result->player->quests.empty())
+                {
+                    MudPlayerState seeded_player = *load_result->player;
+                    MudQuestState starter_quest;
+                    starter_quest.quest_id = "qixuan_herb";
+                    starter_quest.status = "active";
+                    starter_quest.progress = 0;
+                    seeded_player.quests.push_back(std::move(starter_quest));
+                    auto* save_result = dynamic_cast<MudPlayerRepositoryOpResult*>(
+                        co_await m_mud_player_repository->save_player(seeded_player));
+                    if(save_result != nullptr && save_result->success && save_result->save_ok)
+                    {
+                        load_result->player = seeded_player;
+                    }
+                }
                 if(load_result->player->team_id.empty())
                 {
                     m_mud_runtime->forget_team_state(load_result->player->account);
@@ -1264,6 +1279,31 @@ coro_task_t GameService::pull_feed_async(evhttp_request* request)
         }
         else
         {
+            auto* load_result = dynamic_cast<MudPlayerRepositoryOpResult*>(co_await m_mud_player_repository->load_player(account));
+            if(load_result == nullptr || !load_result->success)
+            {
+                http_code_message::gateway::set_code_message(&response,
+                                                             http_code_message::gateway::code::kMudPlayerRepositoryUnavailable,
+                                                             "load mud player failed");
+                write_protobuf_response(request, response, 200);
+                release_request(request);
+                co_return;
+            }
+            if(!load_result->found || !load_result->player.has_value())
+            {
+                http_code_message::gateway::set_code_message(&response,
+                                                             http_code_message::gateway::code::kCharacterNotFound,
+                                                             http_code_message::gateway::message::kCharacterNotFound);
+                write_protobuf_response(request, response, 200);
+                release_request(request);
+                co_return;
+            }
+
+            m_mud_runtime->build_feed_response(account,
+                                              load_result->player,
+                                              mud_request.after_event_id(),
+                                              mud_request.limit(),
+                                              &response);
             attach_mud_events_to_response(event_result.events, event_result.latest_event_id, &response);
             response.set_recommended_poll_interval_ms(1500);
             http_code_message::gateway::set_code_message(&response,

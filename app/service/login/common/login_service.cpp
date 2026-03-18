@@ -731,6 +731,20 @@ coro_task_t LoginService::login_async(evhttp_request* request)
     }
     if(game_instances.empty())
     {
+        if(!m_config.server.game.host.empty() && m_config.server.game.port > 0)
+        {
+            http_code_message::gateway::set_code_message(&response,
+                                                         http_code_message::gateway::code::kSuccess,
+                                                         http_code_message::gateway::message::kOk);
+            response.set_jwt(token);
+            response.mutable_game_endpoint()->set_host(m_config.server.game.host);
+            response.mutable_game_endpoint()->set_port(static_cast<uint32_t>(m_config.server.game.port));
+
+            write_protobuf_response(request, response, 200);
+            release_request(request);
+            co_return;
+        }
+
         http_code_message::gateway::set_code_message(&response,
                                                      http_code_message::gateway::code::kGameServiceUnavailable,
                                                      http_code_message::gateway::message::kGameServiceUnavailable);

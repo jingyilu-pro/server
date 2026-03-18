@@ -54,6 +54,7 @@ public:
                                 const MudCommandExecution& execution,
                                 mud::CommandExecuteResponse* response);
     void build_feed_response(const std::string& account,
+                             const std::optional<MudPlayerState>& player,
                              uint64_t after_event_id,
                              int limit,
                              mud::FeedPullResponse* response);
@@ -79,12 +80,21 @@ public:
                                 mud::FeedPullResponse* response);
 
 private:
+    struct OnlinePresenceState
+    {
+        MudPlayerState player;
+        int64_t last_seen_ms = 0;
+    };
+
+private:
     MudPlayerState make_default_player(const std::string& account,
                                        const std::string& character_name) const;
     void fill_player_snapshot(const MudPlayerState& player,
                               mud::PlayerSnapshot* snapshot) const;
     void fill_scene_snapshot(const MudPlayerState& player,
                              mud::SceneSnapshot* snapshot) const;
+    void remember_scene_presence(const MudPlayerState& player);
+    void prune_scene_presence();
     void append_event(const std::string& target_account,
                       const std::string& type,
                       const std::string& title,
@@ -158,6 +168,7 @@ private:
     std::shared_ptr<IMudPlayerRepository> m_repository;
     std::vector<MudEventEnvelope> m_events;
     std::unordered_map<std::string, std::string> m_character_names;
+    std::unordered_map<std::string, OnlinePresenceState> m_online_presence;
     std::unordered_map<std::string, MudTeamState> m_teams;
     std::unordered_map<std::string, std::string> m_team_by_account;
     uint64_t m_next_event_id = 1;

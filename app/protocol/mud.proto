@@ -61,6 +61,23 @@ message SceneNpc {
   string hint = 4;
 }
 
+message ScenePlayer {
+  string account = 1;
+  string character_name = 2;
+  string title = 3;
+  string realm_name = 4;
+  string sect_name = 5;
+}
+
+message SceneItem {
+  string item_id = 1;
+  string name = 2;
+  string item_type = 3;
+  string description = 4;
+  string source = 5;
+  int32 price = 6;
+}
+
 message SceneSnapshot {
   string scene_id = 1;
   string scene_name = 2;
@@ -70,6 +87,8 @@ message SceneSnapshot {
   repeated SceneNpc npcs = 6;
   repeated string monsters = 7;
   repeated string shops = 8;
+  repeated ScenePlayer players = 9;
+  repeated SceneItem items = 10;
 }
 
 message PlayerSnapshot {
@@ -176,6 +195,7 @@ message FeedPullResponse {
   repeated GameEvent events = 5;
   uint64 next_event_id = 6;
   int32 recommended_poll_interval_ms = 7;
+  SceneSnapshot scene = 8;
 }
 
 message RankEntry {
