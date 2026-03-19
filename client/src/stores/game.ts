@@ -31,6 +31,10 @@ function loadAuthState(): AuthState {
   }
 }
 
+function isInvalidTokenHeaderError(error: unknown) {
+  return error instanceof Error && /登录态包含非法字符/.test(error.message)
+}
+
 export const useGameStore = defineStore('game', {
   state: () => ({
     account: loadAuthState().account,
@@ -125,14 +129,16 @@ export const useGameStore = defineStore('game', {
           throw new Error(loginResponse.message ?? '登录失败')
         }
 
-        this.account = account
-        this.token = String(loginResponse.jwt)
-        this.persistAuth()
+        const issuedToken = String(loginResponse.jwt)
 
-        const enterResponse = await pbClient.enterGame(account, this.token)
+        const enterResponse = await pbClient.enterGame(account, issuedToken)
         if ((enterResponse.code ?? -1) !== 0) {
           throw new Error(enterResponse.message ?? '进入游戏失败')
         }
+
+        this.account = account
+        this.token = issuedToken
+        this.persistAuth()
 
         await this.bootstrap()
       } finally {
@@ -144,24 +150,31 @@ export const useGameStore = defineStore('game', {
         return
       }
 
-      const response = await pbClient.bootstrap(this.account, this.token)
-      if ((response.code ?? -1) !== 0) {
-        throw new Error(response.message ?? '初始化失败')
-      }
+      try {
+        const response = await pbClient.bootstrap(this.account, this.token)
+        if ((response.code ?? -1) !== 0) {
+          throw new Error(response.message ?? '初始化失败')
+        }
 
-      this.error = ''
-      this.needCreateCharacter = Boolean(response.needCreateCharacter)
-      this.player = response.player ?? null
-      this.scene = response.scene ?? null
-      this.availableOrigins = (response.availableOrigins as Record<string, any>[]) ?? []
-      this.lastResult = null
-      this.pollError = ''
-      this.pollFailureCount = 0
-      this.appendEvents((response.events as Record<string, any>[]) ?? [])
-      this.nextEventId = Number(response.nextEventId ?? 0)
-      this.pollIntervalMs = Number((response.player as any)?.recommendedPollIntervalMs ?? 1500)
-      if (!this.needCreateCharacter && this.player) {
-        this.schedulePolling()
+        this.error = ''
+        this.needCreateCharacter = Boolean(response.needCreateCharacter)
+        this.player = response.player ?? null
+        this.scene = response.scene ?? null
+        this.availableOrigins = (response.availableOrigins as Record<string, any>[]) ?? []
+        this.lastResult = null
+        this.pollError = ''
+        this.pollFailureCount = 0
+        this.appendEvents((response.events as Record<string, any>[]) ?? [])
+        this.nextEventId = Number(response.nextEventId ?? 0)
+        this.pollIntervalMs = Number((response.player as any)?.recommendedPollIntervalMs ?? 1500)
+        if (!this.needCreateCharacter && this.player) {
+          this.schedulePolling()
+        }
+      } catch (error) {
+        if (isInvalidTokenHeaderError(error)) {
+          this.logout()
+        }
+        throw error
       }
     },
     async createCharacter(characterName: string, originId: string) {

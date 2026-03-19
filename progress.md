@@ -82,3 +82,21 @@ TODO
 - 2026-03-19: `mud.proto` / `mud_game_runtime` / H5 一起补充了 `PlayerSnapshot.current_status_attributes`，服务端会把 `current_mana/current_sen/current_sta` 一并下发。刷新恢复后，主 HUD 与人物弹窗都能看到当前值 / 上限；本轮真实回归中，`风暴航道` 刷新后顶部已正确显示 `法力 7/97`，人物弹窗显示 `法力 7 / 97 · 神念 82 / 82 · 气力 109 / 109`。
 - 2026-03-19: 本轮后端编译前还补了一步 protobuf 生成链路修正。这个仓库不是在 CMake 里动态生成 `pb.cc/pb.h`，而是直接把 `app/protocol/protocol/*.pb.*` 当源码编译；修改 `.proto` 后必须先用 `build-wsl-main/libs/protobuf/bin/protoc` 重新生成，再编译应用，否则会出现 `mutable_current_status_attributes` 缺失或 protobuf 版本不匹配。
 - 2026-03-19: 本轮收尾验证已通过 `npm run build`、`npm test`、`wsl bash -lc "cd /mnt/c/Work/Projects/server && cmake --build build-wsl-main --target application -j2"`，并通过 Playwright 复用了会话 `mud-regression-20260319` 完成 `虚天殿外殿 -> 风暴航道 -> 礁影浅滩 -> 残碑孤岛 -> 灵帆海船` 的真实回归。
+- 2026-03-19: 修复中文账号在“注册并登录”后触发的浏览器异常 `Failed to read the 'headers' property from 'RequestInit': String contains non ISO-8859-1 code point`。根因是 `jwt.secret` 为空时，后端 mock token 直接返回 `mock.jwt.token.<原始账号>`，中文账号会把非 ASCII 字符带进 `Authorization` 请求头。
+- 2026-03-19: `app/service/base/jwt_token_provider.cpp` 现已把 mock token 改成 `mock.jwt.token.<base64url(subject)>`，并在校验时兼容解码；这样即使 `jwt.secret` 为空，中文账号得到的 token 也只包含 ASCII。`client/src/lib/pb-client.ts` 同时新增请求头安全检查，会把这类浏览器原生异常提前转成“登录态包含非法字符，请重新登录”；`client/src/stores/game.ts` 则把 token 持久化时机后移到 `enterGame` 成功之后，避免坏 token 被写进本地。
+- 2026-03-19: 真实验证使用新 Playwright 会话 `chinese-account-20260319`，在 `http://127.0.0.1:5174/` 用中文账号 `中文号0319甲` + 密码 `test123456` 点击“注册并登录”后，页面已正常进入“塑造新角色”，不再出现 `fetch headers` 的编码异常。
+- 2026-03-19: 主界面消息系统重构完成。顶部消息框现只显示聊天；主界面消息框改为持续累积的非聊天日志；点击顶部消息框会弹出独立聊天界面，界面下方可直接输入并发送聊天内容。
+- 2026-03-19: `client/src/App.vue` 与 `client/src/style.css` 新增了三套独立滚动状态（顶部聊天、主界面日志、聊天弹层），规则统一为“距离底部超过视口高度 1/3 时停止自动跟随；回到底部 1/3 内后恢复自动跟随”；同时移除了旧的 `justify-content: flex-end` 文本布局，修复了主消息框滚动到一半就像“没了”的问题。
+- 2026-03-19: `app/service/game/logic/mud_game_runtime.cpp` 已把 `inspect / loot / harvest`、任务材料/奖励、队伍/频道提示等玩家可见文案改成中文可读形式，不再直接把 `drop_item_id`、`small_recover_pill`、`join <sect>` 这类内部标识暴露到消息框。
+
+本轮验证
+- `client`: `npm test` 通过。
+- `client`: `npm run build` 通过。
+- `server`: `wsl bash -lc "cd /mnt/c/Work/Projects/server && cmake --build build-wsl-main --target application -j2"` 通过，并已重启后端进程。
+- Playwright + 本机 Chrome 会话 `mud-msg-review` 已完成真实回归：
+- 新账号 `msgui_0319_1745` / 角色 `消息回归甲` 注册、建角成功。
+- 顶部频道框点击后能打开独立聊天弹层，世界聊天消息会在顶部框与弹层内同步显示为中文格式 `世界 · 角色名：消息`。
+- 主界面消息框已验证“拉离底部超过 1/3 后，新消息不再自动跟随；回到底部 1/3 内后，新消息恢复自动跟随”。
+- 顶部聊天框已验证同样的阈值停跟随 / 恢复跟随逻辑。
+- 聊天弹层在自动化里通过临时缩小消息区高度制造真实溢出后，已验证同样的阈值停跟随 / 恢复跟随逻辑。
+- 后山缓坡的采点 `松脂草丛` 现已实测显示为中文提示：`可采集：松脂草 x1`，不再泄露内部 id。

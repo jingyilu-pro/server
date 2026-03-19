@@ -10,6 +10,14 @@ export interface ProtoResponse {
   [key: string]: unknown
 }
 
+function ensureHeaderSafeToken(token: string) {
+  for (const char of token) {
+    if ((char.codePointAt(0) ?? 0) > 0xff) {
+      throw new Error('登录态包含非法字符，请重新登录')
+    }
+  }
+}
+
 async function protobufRequest<T extends ProtoResponse>(options: {
   kind: 'gateway' | 'mud'
   requestType: string
@@ -19,13 +27,18 @@ async function protobufRequest<T extends ProtoResponse>(options: {
   token?: string
 }) {
   const body = encodeMessage(options.kind, options.requestType, options.payload)
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/x-protobuf',
+  }
+
+  if (options.token) {
+    ensureHeaderSafeToken(options.token)
+    headers.Authorization = `Bearer ${options.token}`
+  }
 
   const response = await fetch(options.path, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-protobuf',
-      ...(options.token ? { Authorization: `Bearer ${options.token}` } : {}),
-    },
+    headers,
     body: body as unknown as BodyInit,
   })
 

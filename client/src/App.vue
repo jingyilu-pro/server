@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue'
 
 import { useGameStore } from '@/stores/game'
 import { directionLabelMap, worldMapEdges, worldMapNodes } from '@/lib/world-map'
@@ -18,8 +18,9 @@ type CommandCategoryId =
   | 'trade'
   | 'group'
   | 'manual'
-type OverlayPanel = 'none' | 'commands' | 'scene' | SideTab
+type OverlayPanel = 'none' | 'commands' | 'scene' | 'messages' | SideTab
 type SceneInteractableKind = 'player' | 'npc' | 'shop' | 'monster' | 'resource' | 'loot' | 'hazard'
+type ScrollPanelKey = 'topChat' | 'mainStory' | 'chatOverlay'
 
 interface CommandAction {
   key: string
@@ -39,6 +40,10 @@ interface DenseLine {
   tag: string
   text: string
   tone: 'system' | 'chat' | 'quest' | 'combat' | 'hint'
+}
+
+interface TimelineLine extends DenseLine {
+  sequence: number
 }
 
 interface DockEntry {
@@ -85,6 +90,17 @@ const selectedCodexCategory = ref('人物志')
 const selectedCodexEntryId = ref('')
 const eventViewport = ref<HTMLElement | null>(null)
 const storyViewport = ref<HTMLElement | null>(null)
+const chatOverlayViewport = ref<HTMLElement | null>(null)
+const overlayChatText = ref('')
+const mainTimeline = ref<TimelineLine[]>([])
+const scrollPanels = reactive<Record<ScrollPanelKey, { autoFollow: boolean }>>({
+  topChat: { autoFollow: true },
+  mainStory: { autoFollow: true },
+  chatOverlay: { autoFollow: true },
+})
+let mainTimelineSequence = 0
+let trackedTimelineAccount = ''
+const processedMainEventIds = new Set<number>()
 
 const codexCategories = ['人物志', '宗门志', '妖兽志', '奇虫志', '地理志', '灵草丹药志', '功法技能志', '法术志', '宝物阵法志', '韩立年历'] as const
 
@@ -204,8 +220,8 @@ const scene = computed(() => store.scene ?? {})
 const player = computed(() => store.player ?? {})
 const availableOrigins = computed(() => (store.availableOrigins as Record<string, any>[] | undefined) ?? [])
 const currentSceneId = computed(() => String(scene.value.sceneId ?? ''))
-const channelEvents = computed(() => store.events.slice(-4))
-const latestEventId = computed(() => store.events[store.events.length - 1]?.eventId)
+const chatEvents = computed(() => store.events.filter((event) => isChatEvent(event)))
+const latestChatEventId = computed(() => chatEvents.value[chatEvents.value.length - 1]?.eventId)
 const exits = computed(() => (scene.value.exits as Record<string, any>[] | undefined) ?? [])
 const inventory = computed(() => (player.value.inventory as Record<string, any>[] | undefined) ?? [])
 const quests = computed(() => (player.value.quests as Record<string, any>[] | undefined) ?? [])
@@ -221,6 +237,9 @@ const codexEntries = computed(() => (store.codexEntries as Record<string, any>[]
 const codexDetail = computed(() => store.codexDetail as Record<string, any> | null)
 const displayError = computed(() => store.error || store.pollError)
 const currentQuestIds = computed(() => new Set(quests.value.map((quest) => String(quest.questId ?? ''))))
+const latestNonChatEvent = computed(
+  () => [...store.events].reverse().find((event) => !isChatEvent(event)) ?? null,
+)
 const currentStatusAttributes = computed(
   () => (player.value.currentStatusAttributes as Record<string, any> | undefined) ?? player.value.statusAttributes ?? {},
 )
@@ -509,7 +528,10 @@ const activeCommandCategoryLabel = computed(
 )
 
 const activeInfoTab = computed<SideTab>(() =>
-  activeOverlay.value !== 'none' && activeOverlay.value !== 'commands' && activeOverlay.value !== 'scene'
+  activeOverlay.value !== 'none' &&
+  activeOverlay.value !== 'commands' &&
+  activeOverlay.value !== 'scene' &&
+  activeOverlay.value !== 'messages'
     ? activeOverlay.value
     : activeTab.value,
 )
@@ -706,7 +728,7 @@ const sceneInteractables = computed<SceneInteractable[]>(() => {
       description:
         String(sceneItem.description ?? '') || `这件物品正处在你的视野范围内，可以先查看，再决定是否出手。`,
       meta: [
-        `类别：${itemType}`,
+        `类别：${itemTypeLabel(itemType)}`,
         `来源：${sceneItemSourceLabel(itemSource)}`,
         Number(sceneItem.price ?? 0) > 0 ? `价格：${Number(sceneItem.price)} 灵石` : '',
       ].filter(Boolean) as string[],
@@ -882,6 +904,9 @@ const activeOverlayTitle = computed(() => {
   if (activeOverlay.value === 'commands') {
     return activeCommandCategoryLabel.value
   }
+  if (activeOverlay.value === 'messages') {
+    return '聊天消息'
+  }
   if (activeOverlay.value === 'scene') {
     return selectedSceneInteractable.value?.title ?? '场景交互'
   }
@@ -894,6 +919,9 @@ const activeOverlayTitle = computed(() => {
 const activeOverlayCorner = computed(() => {
   if (activeOverlay.value === 'commands') {
     return '功能盘'
+  }
+  if (activeOverlay.value === 'messages') {
+    return chatChannel.value === 'team' ? '队伍频道' : '世界频道'
   }
   if (activeOverlay.value === 'scene') {
     return sceneInteractableKindLabel(selectedSceneInteractable.value?.kind ?? 'npc')
@@ -1059,163 +1087,6 @@ function splitDenseText(text: string, limit = 4) {
   return (parts.length > 0 ? parts : [normalized]).slice(0, limit)
 }
 
-const sceneTranscript = computed<DenseLine[]>(() => {
-  const lines: DenseLine[] = []
-  const regionName = String(scene.value.regionName ?? '')
-  const sceneName = String(scene.value.sceneName ?? '')
-  const sceneDescription = String(scene.value.description ?? '')
-
-  if (regionName || sceneName) {
-    lines.push({
-      key: `scene-place-${currentSceneId.value}`,
-      tag: '场景',
-      text: [regionName, sceneName].filter(Boolean).join(' · '),
-      tone: 'system',
-    })
-  }
-
-  splitDenseText(sceneDescription).forEach((text, index) => {
-    lines.push({
-      key: `scene-description-${currentSceneId.value}-${index}`,
-      tag: '场景',
-      text,
-      tone: 'system',
-    })
-  })
-
-  lines.push({
-    key: `scene-mission-${currentSceneId.value}`,
-    tag: '任务',
-    text: sceneMissionText.value,
-    tone: 'quest',
-  })
-
-  if (npcs.value.length > 0) {
-    lines.push({
-      key: `scene-npcs-${currentSceneId.value}`,
-      tag: '人物',
-      text: `你看见 ${npcs.value.map((npc) => String(npc.name)).join('、')}。`,
-      tone: 'hint',
-    })
-  }
-
-  if (scenePlayers.value.length > 0) {
-    lines.push({
-      key: `scene-players-${currentSceneId.value}`,
-      tag: '玩家',
-      text: `同场景还有 ${scenePlayers.value.map((entry) => String(entry.characterName ?? entry.account)).join('、')}。`,
-      tone: 'chat',
-    })
-  }
-
-  if (monsters.value.length > 0) {
-    lines.push({
-      key: `scene-monsters-${currentSceneId.value}`,
-      tag: '战报',
-      text: `附近徘徊着 ${monsters.value.join('、')}。`,
-      tone: 'combat',
-    })
-  }
-
-  if (sceneItems.value.length > 0) {
-    lines.push({
-      key: `scene-items-${currentSceneId.value}`,
-      tag: '系统',
-      text: `视野里可见 ${sceneItems.value.map((entry) => String(entry.name ?? entry.itemId)).join('、')}。`,
-      tone: 'system',
-    })
-  }
-
-  if (sceneResourceNodes.value.length > 0) {
-    lines.push({
-      key: `scene-resource-${currentSceneId.value}`,
-      tag: '采集',
-      text: `附近可采集 ${sceneResourceNodes.value.map((entry) => String(entry.name ?? entry.nodeId)).join('、')}。`,
-      tone: 'hint',
-    })
-  }
-
-  if (sceneGroundLoots.value.length > 0) {
-    lines.push({
-      key: `scene-ground-loot-${currentSceneId.value}`,
-      tag: '遗落',
-      text: `地面遗落着 ${sceneGroundLoots.value.map((entry) => String(entry.itemName ?? entry.itemId)).join('、')}。`,
-      tone: 'system',
-    })
-  }
-
-  if (sceneHazards.value.length > 0) {
-    lines.push({
-      key: `scene-hazard-${currentSceneId.value}`,
-      tag: '禁制',
-      text: `此地存在 ${sceneHazards.value.map((entry) => String(entry.name ?? entry.hazardId)).join('、')}。`,
-      tone: 'quest',
-    })
-  }
-
-  if (store.lastResult?.title || store.lastResult?.summary) {
-    const resultText = [String(store.lastResult?.title ?? ''), String(store.lastResult?.summary ?? '')]
-      .filter(Boolean)
-      .join('：')
-    lines.push({
-      key: `result-${String(store.nextEventId)}`,
-      tag: '结果',
-      text: resultText,
-      tone: 'hint',
-    })
-  }
-
-  ;((store.lastResult?.hints as string[] | undefined) ?? [])
-    .filter((hint) => shouldDisplayResultHint(hint))
-    .slice(0, 2)
-    .forEach((hint, index) => {
-      lines.push({
-        key: `result-hint-${String(store.nextEventId)}-${index}`,
-        tag: '提示',
-        text: hint,
-        tone: 'hint',
-      })
-    })
-
-  if (String(store.lastResult?.spellSummary ?? '')) {
-    lines.push({
-      key: `result-spell-${String(store.nextEventId)}`,
-      tag: '法术',
-      text: String(store.lastResult?.spellSummary),
-      tone: 'combat',
-    })
-  }
-
-  if (String(store.lastResult?.brewSummary ?? '')) {
-    lines.push({
-      key: `result-brew-${String(store.nextEventId)}`,
-      tag: '炼制',
-      text: String(store.lastResult?.brewSummary),
-      tone: 'system',
-    })
-  }
-
-  if (String(store.lastResult?.hazardFeedback ?? '')) {
-    lines.push({
-      key: `result-hazard-${String(store.nextEventId)}`,
-      tag: '禁制',
-      text: String(store.lastResult?.hazardFeedback),
-      tone: 'hint',
-    })
-  }
-
-  ;((store.lastResult?.unlockedCodexEntries as Record<string, any>[] | undefined) ?? []).slice(0, 2).forEach((entry, index) => {
-    lines.push({
-      key: `result-codex-${String(store.nextEventId)}-${index}`,
-      tag: '手册',
-      text: `解锁资料：${String(entry.title ?? entry.entryId ?? '未知条目')}。`,
-      tone: 'hint',
-    })
-  })
-
-  return lines.slice(-30)
-})
-
 const quickStats = computed(() => [
   {
     key: 'hp',
@@ -1322,7 +1193,88 @@ function directionLabel(value: string) {
   return directionLabelMap[value] ?? value
 }
 
+function itemTypeLabel(value: string) {
+  const normalized = value.trim()
+  if (!normalized) {
+    return '杂物'
+  }
+  if (/[\u4e00-\u9fff]/u.test(normalized)) {
+    return normalized
+  }
+
+  const labels: Record<string, string> = {
+    consumable: '丹药',
+    weapon: '兵刃',
+    armor: '护具',
+    accessory: '饰物',
+    material: '材料',
+    treasure: '宝物',
+    book: '典籍',
+    recipe: '配方',
+    quest: '任务物',
+    tool: '器具',
+  }
+
+  return labels[normalized.toLowerCase()] ?? '杂物'
+}
+
+function normalizeEventType(value: string) {
+  return value.trim().toLowerCase()
+}
+
+function isChatEvent(event: Record<string, any>) {
+  const type = normalizeEventType(String(event.type ?? ''))
+  if (type === 'chat') {
+    return true
+  }
+  return /^\[(world|public|team)\]\s*/iu.test(String(event.title ?? ''))
+}
+
+function chatChannelLabelFromEvent(event: Record<string, any>) {
+  const title = String(event.title ?? '')
+  if (/^\[team\]\s*/iu.test(title)) {
+    return '队伍'
+  }
+  if (/^\[(world|public)\]\s*/iu.test(title)) {
+    return '世界'
+  }
+  return '聊天'
+}
+
+function formatChatSpeaker(title: string) {
+  const normalized = title.trim()
+  if (!normalized) {
+    return '无名修士'
+  }
+  return normalized
+    .replace(/^\[(world|public)\]\s*/iu, '世界 · ')
+    .replace(/^\[team\]\s*/iu, '队伍 · ')
+}
+
+function formatEventText(event: Record<string, any>) {
+  const title = String(event.title ?? '').trim()
+  const content = String(event.content ?? '').trim()
+  if (isChatEvent(event)) {
+    return [formatChatSpeaker(title), content].filter(Boolean).join('：')
+  }
+  return [title, content].filter(Boolean).join('：')
+}
+
 function eventTone(event: Record<string, any>) {
+  const type = normalizeEventType(String(event.type ?? ''))
+  if (type === 'chat') {
+    return 'chat'
+  }
+  if (['fight', 'spell'].includes(type)) {
+    return 'combat'
+  }
+  if (['quest', 'join'].includes(type)) {
+    return 'quest'
+  }
+  if (['harvest', 'loot'].includes(type)) {
+    return 'hint'
+  }
+
   const text = `${String(event.title ?? '')} ${String(event.content ?? '')}`
   if (/战|斗|妖兽|击|伤|胜|败/.test(text)) {
     return 'combat'
@@ -1340,11 +1292,33 @@ function denseToneClass(tone: DenseLine['tone']) {
   return `tone-${tone}`
 }
 
-function eventToneClass(event: Record<string, any>) {
-  return denseToneClass(eventTone(event) as DenseLine['tone'])
-}
-
 function eventChannelLabel(event: Record<string, any>) {
+  const type = normalizeEventType(String(event.type ?? ''))
+  if (isChatEvent(event)) {
+    return chatChannelLabelFromEvent(event)
+  }
+  if (type === 'fight' || type === 'spell') {
+    return '战报'
+  }
+  if (type === 'quest' || type === 'join') {
+    return '任务'
+  }
+  if (type === 'loot') {
+    return '拾取'
+  }
+  if (type === 'harvest') {
+    return '采集'
+  }
+  if (type === 'cultivation') {
+    return '修炼'
+  }
+  if (type === 'brew') {
+    return '炼制'
+  }
+  if (type === 'team') {
+    return '队伍'
+  }
+
   const tone = eventTone(event)
   if (tone === 'combat') {
     return '战报'
@@ -1414,6 +1388,290 @@ function shouldDisplayResultHint(value: string) {
   }
 
   return isQuestReadyToSubmit(questState)
+}
+
+function displayResultHint(value: string) {
+  const questHint = parseQuestHint(value)
+  if (questHint) {
+    return `${questHint.type === 'accept' ? '可接任务' : '可提交任务'}：${questHint.title}`
+  }
+
+  const joinMatch = value.match(/^若想拜入(.+)，可使用：join\s+.+$/u)
+  if (joinMatch) {
+    return `若想拜入${joinMatch[1]}，可在下方功能盘中选择“加入·${joinMatch[1]}”。`
+  }
+
+  const replacements: Array<[RegExp, string]> = [
+    [/^先用 look 查看场景人物$/u, '可先点击“重看”查看当前场景人物。'],
+    [/^先用 look 查看场景妖兽$/u, '可先点击“重看”查看当前场景妖兽。'],
+    [/^先用 map 查看当前出口$/u, '可先打开地图或点击方位盘查看去路。'],
+    [/^继续 practice .+ 或 fight <target>$/u, '继续修炼本命功法，或挑战附近妖兽积累突破火候。'],
+    [/^可使用 use .+ 恢复气血$/u, '可在背包或战斗功能里使用回气药物恢复气血。'],
+  ]
+
+  for (const [pattern, replacement] of replacements) {
+    if (pattern.test(value)) {
+      return replacement
+    }
+  }
+
+  return value
+}
+
+function formatResultSummary(result: Record<string, any>) {
+  return [String(result.title ?? '').trim(), String(result.summary ?? '').trim()].filter(Boolean).join('：')
+}
+
+function latestNonChatEventMatches(text: string) {
+  const normalized = text.trim()
+  if (!normalized) {
+    return false
+  }
+
+  const event = latestNonChatEvent.value
+  if (!event) {
+    return false
+  }
+
+  return [formatEventText(event), String(event.content ?? '').trim(), String(event.title ?? '').trim()].includes(normalized)
+}
+
+function appendMainTimeline(lines: DenseLine[]) {
+  const normalizedLines = lines.filter((line) => line.text.trim())
+  if (!normalizedLines.length) {
+    return
+  }
+
+  normalizedLines.forEach((line) => {
+    mainTimelineSequence += 1
+    mainTimeline.value.push({
+      ...line,
+      sequence: mainTimelineSequence,
+    })
+  })
+
+  if (mainTimeline.value.length > 400) {
+    mainTimeline.value.splice(0, mainTimeline.value.length - 400)
+  }
+}
+
+function resetMessageTimelines() {
+  mainTimeline.value = []
+  mainTimelineSequence = 0
+  processedMainEventIds.clear()
+  scrollPanels.topChat.autoFollow = true
+  scrollPanels.mainStory.autoFollow = true
+  scrollPanels.chatOverlay.autoFollow = true
+}
+
+function buildSceneSnapshotLines() {
+  const lines: DenseLine[] = []
+  const regionName = String(scene.value.regionName ?? '').trim()
+  const sceneName = String(scene.value.sceneName ?? '').trim()
+  const sceneDescription = String(scene.value.description ?? '').trim()
+
+  if (regionName || sceneName) {
+    lines.push({
+      key: `scene-place-${currentSceneId.value}-${mainTimelineSequence + 1}`,
+      tag: '场景',
+      text: [regionName, sceneName].filter(Boolean).join(' · '),
+      tone: 'system',
+    })
+  }
+
+  splitDenseText(sceneDescription, 6).forEach((text, index) => {
+    lines.push({
+      key: `scene-description-${currentSceneId.value}-${mainTimelineSequence + index + 1}`,
+      tag: '场景',
+      text,
+      tone: 'system',
+    })
+  })
+
+  if (sceneMissionText.value) {
+    lines.push({
+      key: `scene-mission-${currentSceneId.value}-${mainTimelineSequence + 1}`,
+      tag: '任务',
+      text: sceneMissionText.value,
+      tone: 'quest',
+    })
+  }
+
+  if (npcs.value.length > 0) {
+    lines.push({
+      key: `scene-npcs-${currentSceneId.value}-${mainTimelineSequence + 1}`,
+      tag: '人物',
+      text: `你看见 ${npcs.value.map((npc) => String(npc.name ?? '无名人物')).join('、')}。`,
+      tone: 'hint',
+    })
+  }
+
+  if (scenePlayers.value.length > 0) {
+    lines.push({
+      key: `scene-players-${currentSceneId.value}-${mainTimelineSequence + 1}`,
+      tag: '玩家',
+      text: `同场景还有 ${scenePlayers.value.map((entry) => String(entry.characterName ?? entry.account ?? '无名修士')).join('、')}。`,
+      tone: 'hint',
+    })
+  }
+
+  if (monsters.value.length > 0) {
+    lines.push({
+      key: `scene-monsters-${currentSceneId.value}-${mainTimelineSequence + 1}`,
+      tag: '战报',
+      text: `附近徘徊着 ${monsters.value.join('、')}。`,
+      tone: 'combat',
+    })
+  }
+
+  if (sceneItems.value.length > 0) {
+    lines.push({
+      key: `scene-items-${currentSceneId.value}-${mainTimelineSequence + 1}`,
+      tag: '物件',
+      text: `视野里可见 ${sceneItems.value.map((entry) => String(entry.name ?? '无名物件')).join('、')}。`,
+      tone: 'system',
+    })
+  }
+
+  if (sceneResourceNodes.value.length > 0) {
+    lines.push({
+      key: `scene-resource-${currentSceneId.value}-${mainTimelineSequence + 1}`,
+      tag: '采集',
+      text: `附近可采集 ${sceneResourceNodes.value.map((entry) => String(entry.name ?? '资源点')).join('、')}。`,
+      tone: 'hint',
+    })
+  }
+
+  if (sceneGroundLoots.value.length > 0) {
+    lines.push({
+      key: `scene-ground-loot-${currentSceneId.value}-${mainTimelineSequence + 1}`,
+      tag: '遗落',
+      text: `地面遗落着 ${sceneGroundLoots.value.map((entry) => String(entry.itemName ?? '遗落物')).join('、')}。`,
+      tone: 'system',
+    })
+  }
+
+  if (sceneHazards.value.length > 0) {
+    lines.push({
+      key: `scene-hazard-${currentSceneId.value}-${mainTimelineSequence + 1}`,
+      tag: '禁制',
+      text: `此地存在 ${sceneHazards.value.map((entry) => String(entry.name ?? '未知禁制')).join('、')}。`,
+      tone: 'quest',
+    })
+  }
+
+  return lines
+}
+
+function buildResultTimelineLines(result: Record<string, any>) {
+  const lines: DenseLine[] = []
+  const resultSummary = formatResultSummary(result)
+  if (resultSummary && !latestNonChatEventMatches(resultSummary)) {
+    lines.push({
+      key: `result-summary-${mainTimelineSequence + 1}`,
+      tag: '结果',
+      text: resultSummary,
+      tone: result.success === false ? 'quest' : 'hint',
+    })
+  }
+
+  ;((result.hints as string[] | undefined) ?? [])
+    .filter((hint) => shouldDisplayResultHint(hint))
+    .slice(0, 4)
+    .forEach((hint, index) => {
+      const text = displayResultHint(hint)
+      if (!text || latestNonChatEventMatches(text)) {
+        return
+      }
+      lines.push({
+        key: `result-hint-${mainTimelineSequence + index + 1}`,
+        tag: '提示',
+        text,
+        tone: 'hint',
+      })
+    })
+
+  const spellSummary = String(result.spellSummary ?? '').trim()
+  if (spellSummary && !latestNonChatEventMatches(spellSummary)) {
+    lines.push({
+      key: `result-spell-${mainTimelineSequence + 1}`,
+      tag: '法术',
+      text: spellSummary,
+      tone: 'combat',
+    })
+  }
+
+  const brewSummary = String(result.brewSummary ?? '').trim()
+  if (brewSummary && !latestNonChatEventMatches(brewSummary)) {
+    lines.push({
+      key: `result-brew-${mainTimelineSequence + 1}`,
+      tag: '炼制',
+      text: brewSummary,
+      tone: 'system',
+    })
+  }
+
+  const hazardFeedback = String(result.hazardFeedback ?? '').trim()
+  if (hazardFeedback) {
+    lines.push({
+      key: `result-hazard-${mainTimelineSequence + 1}`,
+      tag: '禁制',
+      text: hazardFeedback,
+      tone: 'hint',
+    })
+  }
+
+  ;((result.unlockedCodexEntries as Record<string, any>[] | undefined) ?? []).slice(0, 4).forEach((entry, index) => {
+    lines.push({
+      key: `result-codex-${mainTimelineSequence + index + 1}`,
+      tag: '手册',
+      text: `解锁资料：${String(entry.title ?? entry.entryId ?? '未知条目')}。`,
+      tone: 'hint',
+    })
+  })
+
+  return lines
+}
+
+function viewportFor(panel: ScrollPanelKey) {
+  if (panel === 'topChat') {
+    return eventViewport.value
+  }
+  if (panel === 'mainStory') {
+    return storyViewport.value
+  }
+  return chatOverlayViewport.value
+}
+
+function distanceFromViewportBottom(viewport: HTMLElement) {
+  return Math.max(0, viewport.scrollHeight - viewport.clientHeight - viewport.scrollTop)
+}
+
+function refreshPanelAutoFollow(panel: ScrollPanelKey) {
+  const viewport = viewportFor(panel)
+  if (!viewport) {
+    return
+  }
+  scrollPanels[panel].autoFollow = distanceFromViewportBottom(viewport) <= viewport.clientHeight / 3
+}
+
+function handleViewportScroll(panel: ScrollPanelKey) {
+  refreshPanelAutoFollow(panel)
+}
+
+async function maybeFollowPanel(panel: ScrollPanelKey) {
+  await nextTick()
+  const viewport = viewportFor(panel)
+  if (!viewport) {
+    return
+  }
+
+  if (!scrollPanels[panel].autoFollow && distanceFromViewportBottom(viewport) > viewport.clientHeight / 3) {
+    return
+  }
+
+  viewport.scrollTop = viewport.scrollHeight
+  refreshPanelAutoFollow(panel)
 }
 
 function sceneInteractableKindLabel(kind: SceneInteractableKind) {
@@ -1526,7 +1784,7 @@ function sceneInteractableToneClass(kind: SceneInteractableKind) {
 }
 
 function openOverlay(overlay: Exclude<OverlayPanel, 'none'>) {
-  if (overlay !== 'commands' && overlay !== 'scene') {
+  if (overlay !== 'commands' && overlay !== 'scene' && overlay !== 'messages') {
     activeTab.value = overlay
   }
   activeOverlay.value = overlay
@@ -1577,6 +1835,20 @@ async function submitComposer(commandOverride?: string) {
   }
 }
 
+async function submitOverlayChat() {
+  const raw = overlayChatText.value.trim()
+  if (!raw) {
+    return
+  }
+
+  try {
+    await store.executeCommand(`chat ${chatChannel.value} ${raw}`)
+    overlayChatText.value = ''
+  } catch (error) {
+    setError(error)
+  }
+}
+
 function applyAction(action: CommandAction) {
   if (action.codexEntryId) {
     void openCodexEntry(action.codexEntryId, action.codexCategory ?? '')
@@ -1619,16 +1891,6 @@ async function loadRanking(kind: 'realm' | 'wealth' | 'combat') {
   }
 }
 
-async function scrollTextPanelsToBottom() {
-  await nextTick()
-  for (const viewport of [eventViewport.value, storyViewport.value]) {
-    if (!viewport) {
-      continue
-    }
-    viewport.scrollTop = viewport.scrollHeight
-  }
-}
-
 onMounted(async () => {
   if (!store.authenticated) {
     return
@@ -1636,7 +1898,8 @@ onMounted(async () => {
 
   try {
     await store.bootstrap()
-    await scrollTextPanelsToBottom()
+    await maybeFollowPanel('topChat')
+    await maybeFollowPanel('mainStory')
   } catch (error) {
     setError(error)
   }
@@ -1673,13 +1936,98 @@ watch(
 )
 
 watch(
-  [
-    () => currentSceneId.value,
-    () => latestEventId.value,
-    () => store.lastResult?.summary,
-  ],
+  [() => store.account, () => store.authenticated],
+  ([account, authenticated]) => {
+    if (account !== trackedTimelineAccount) {
+      trackedTimelineAccount = account
+      resetMessageTimelines()
+      return
+    }
+
+    if (!authenticated) {
+      trackedTimelineAccount = ''
+      resetMessageTimelines()
+    }
+  },
+  { immediate: true },
+)
+
+watch(
+  () => store.events.map((event) => String(event.eventId ?? '')).join('|'),
   () => {
-    void scrollTextPanelsToBottom()
+    const lines: DenseLine[] = []
+    store.events.forEach((event) => {
+      const eventId = Number(event.eventId ?? 0)
+      if (eventId > 0 && processedMainEventIds.has(eventId)) {
+        return
+      }
+      if (eventId > 0) {
+        processedMainEventIds.add(eventId)
+      }
+      if (isChatEvent(event)) {
+        return
+      }
+
+      lines.push({
+        key: `event-line-${eventId || mainTimelineSequence + lines.length + 1}`,
+        tag: eventChannelLabel(event),
+        text: formatEventText(event),
+        tone: eventTone(event) as DenseLine['tone'],
+      })
+    })
+
+    appendMainTimeline(lines)
+  },
+  { immediate: true },
+)
+
+watch(
+  () => currentSceneId.value,
+  (sceneId, previousSceneId) => {
+    if (!sceneId || sceneId === previousSceneId) {
+      return
+    }
+    appendMainTimeline(buildSceneSnapshotLines())
+  },
+  { immediate: true, flush: 'post' },
+)
+
+watch(
+  () => store.lastResult,
+  (result) => {
+    if (!result) {
+      return
+    }
+    appendMainTimeline(buildResultTimelineLines(result))
+  },
+  { flush: 'post' },
+)
+
+watch(
+  () => latestChatEventId.value,
+  () => {
+    void maybeFollowPanel('topChat')
+    if (activeOverlay.value === 'messages') {
+      void maybeFollowPanel('chatOverlay')
+    }
+  },
+  { flush: 'post' },
+)
+
+watch(
+  () => mainTimeline.value.length,
+  () => {
+    void maybeFollowPanel('mainStory')
+  },
+  { flush: 'post' },
+)
+
+watch(
+  () => activeOverlay.value,
+  (value) => {
+    if (value === 'messages') {
+      void maybeFollowPanel('chatOverlay')
+    }
   },
   { flush: 'post' },
 )
@@ -1784,23 +2132,29 @@ watch(
     </section>
 
     <main v-else class="mobile-layout">
-      <section class="surface-panel event-panel">
+      <section
+        class="surface-panel event-panel event-panel--clickable"
+        role="button"
+        tabindex="0"
+        @click="openOverlay('messages')"
+        @keydown.enter.prevent="openOverlay('messages')"
+        @keydown.space.prevent="openOverlay('messages')"
+      >
         <div class="channel-header">
           <span class="channel-badge">频道</span>
           <div class="channel-meta">
             <span class="channel-chip">{{ scene.regionName || '未知地域' }}</span>
             <span class="channel-chip">{{ scene.sceneName || '未知场景' }}</span>
             <span class="channel-chip">{{ player.cultivation?.realmName || '凡躯' }}</span>
+            <span class="channel-chip">点此展开聊天</span>
           </div>
         </div>
-        <div ref="eventViewport" class="event-stream dense-log">
-          <article v-for="event in channelEvents" :key="event.eventId" class="event-item dense-item">
-            <span class="event-tag" :class="eventToneClass(event)">{{ eventChannelLabel(event) }}</span>
-            <p class="event-line">
-              {{ [event.title, event.content].filter(Boolean).join('：') }}
-            </p>
+        <div ref="eventViewport" class="event-stream dense-log" @scroll.stop="handleViewportScroll('topChat')">
+          <article v-for="event in chatEvents" :key="event.eventId" class="event-item dense-item">
+            <span class="event-tag tone-chat">{{ eventChannelLabel(event) }}</span>
+            <p class="event-line">{{ formatEventText(event) }}</p>
           </article>
-          <p v-if="channelEvents.length === 0" class="empty-text">暂时没有新的消息，先去和周围人物说说话吧。</p>
+          <p v-if="chatEvents.length === 0" class="empty-text">当前还没有聊天消息，点这里展开后就能直接发言。</p>
         </div>
       </section>
 
@@ -1847,9 +2201,9 @@ watch(
             </div>
 
             <div class="story-console">
-              <div ref="storyViewport" class="story-log">
+              <div ref="storyViewport" class="story-log" @scroll="handleViewportScroll('mainStory')">
                 <article
-                  v-for="line in sceneTranscript"
+                  v-for="line in mainTimeline"
                   :key="line.key"
                   class="story-line"
                   :class="denseToneClass(line.tone)"
@@ -1857,6 +2211,7 @@ watch(
                   <span class="story-tag">[{{ line.tag }}]</span>
                   <p class="story-text">{{ line.text }}</p>
                 </article>
+                <p v-if="mainTimeline.length === 0" class="empty-text">当前还没有新的场景记录，先试着观察、交谈或移动吧。</p>
               </div>
             </div>
 
@@ -2006,6 +2361,46 @@ watch(
               <span class="command-card-detail">{{ action.detail }}</span>
             </button>
             <p v-if="activeCommandActions.length === 0" class="empty-text">这一栏暂时没有可用动作。</p>
+          </div>
+        </div>
+
+        <div v-else-if="activeOverlay === 'messages'" class="overlay-body overlay-body--messages">
+          <div ref="chatOverlayViewport" class="messages-overlay-log" @scroll="handleViewportScroll('chatOverlay')">
+            <article v-for="event in chatEvents" :key="`overlay-${event.eventId}`" class="event-item dense-item">
+              <span class="event-tag tone-chat">{{ eventChannelLabel(event) }}</span>
+              <p class="event-line">{{ formatEventText(event) }}</p>
+            </article>
+            <p v-if="chatEvents.length === 0" class="empty-text">当前还没有聊天消息，发一句话试试看吧。</p>
+          </div>
+
+          <div class="messages-overlay-composer">
+            <div class="mode-row messages-mode-row">
+              <button
+                type="button"
+                class="mode-button"
+                :class="{ active: chatChannel === 'world' }"
+                @click="chatChannel = 'world'"
+              >
+                世界聊天
+              </button>
+              <button
+                type="button"
+                class="mode-button"
+                :class="{ active: chatChannel === 'team' }"
+                @click="chatChannel = 'team'"
+              >
+                队伍聊天
+              </button>
+              <button type="button" class="mode-button" @click="overlayChatText = ''">清空输入</button>
+            </div>
+            <form class="command-form messages-command-form" @submit.prevent="submitOverlayChat()">
+              <input
+                v-model="overlayChatText"
+                :placeholder="chatChannel === 'world' ? '输入要发送到世界频道的话' : '输入要发送给队伍成员的话'"
+                :disabled="store.loading"
+              />
+              <button class="primary-button" :disabled="store.loading">发送</button>
+            </form>
           </div>
         </div>
 

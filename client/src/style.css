@@ -448,6 +448,10 @@ input::placeholder {
   overflow: hidden;
 }
 
+.event-panel--clickable {
+  cursor: pointer;
+}
+
 .scene-panel {
   padding: 12px;
   flex: 1;
@@ -467,7 +471,8 @@ input::placeholder {
 
 .channel-header {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
+  flex-wrap: wrap;
   gap: 8px;
   margin-bottom: 8px;
   min-width: 0;
@@ -514,15 +519,17 @@ input::placeholder {
   margin-top: 4px;
   display: flex;
   flex-direction: column;
-  justify-content: flex-end;
   gap: 4px;
   flex: 1;
   min-height: 0;
   height: auto;
   max-height: none;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
   padding-right: 2px;
+  overscroll-behavior: contain;
   scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
 }
 
 .event-item {
@@ -582,10 +589,9 @@ input::placeholder {
   min-width: 0;
   color: var(--muted);
   font-size: 0.78rem;
-  line-height: 1.3;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  line-height: 1.35;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
 .story-console {
@@ -762,16 +768,23 @@ input::placeholder {
 .story-log {
   display: flex;
   flex-direction: column;
-  justify-content: flex-end;
   gap: 4px;
   min-height: 0;
   height: 100%;
   max-height: none;
   overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 2px;
+  overscroll-behavior: contain;
   scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
 }
 
 .story-log::-webkit-scrollbar {
+  display: none;
+}
+
+.messages-overlay-log::-webkit-scrollbar {
   display: none;
 }
 
@@ -1507,6 +1520,37 @@ input::placeholder {
 .overlay-body--scene {
   display: flex;
   flex-direction: column;
+}
+
+.overlay-body--messages {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+}
+
+.messages-overlay-log {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-height: min(40vh, 320px);
+  max-height: min(56vh, 620px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 4px;
+  overscroll-behavior: contain;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+.messages-overlay-composer {
+  padding-top: 12px;
+  border-top: 1px solid rgba(232, 191, 133, 0.12);
+}
+
+.messages-mode-row,
+.messages-command-form {
+  margin-top: 0;
 }
 
 .overlay-summary-row {

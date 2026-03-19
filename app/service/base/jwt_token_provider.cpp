@@ -20,6 +20,7 @@
 
 #include "log/glogger.h"
 
+#include <array>
 #include <algorithm>
 #include <chrono>
 #include <cstdlib>
@@ -76,6 +77,78 @@ std::string base64url_encode(const std::string& input)
     }
 
     return base64;
+}
+
+std::optional<std::string> base64url_decode(const std::string& input)
+{
+    static constexpr std::array<int, 256> kDecodeTable = []() {
+        std::array<int, 256> table{};
+        table.fill(-1);
+        for(int index = 0; index < 26; ++index)
+        {
+            table[static_cast<std::size_t>('A' + index)] = index;
+            table[static_cast<std::size_t>('a' + index)] = 26 + index;
+        }
+        for(int index = 0; index < 10; ++index)
+        {
+            table[static_cast<std::size_t>('0' + index)] = 52 + index;
+        }
+        table[static_cast<std::size_t>('+')] = 62;
+        table[static_cast<std::size_t>('/')] = 63;
+        table[static_cast<std::size_t>('-')] = 62;
+        table[static_cast<std::size_t>('_')] = 63;
+        table[static_cast<std::size_t>('=')] = 0;
+        return table;
+    }();
+
+    std::string normalized = input;
+    for(char& ch : normalized)
+    {
+        if(ch == '-')
+        {
+            ch = '+';
+        }
+        else if(ch == '_')
+        {
+            ch = '/';
+        }
+        else if(kDecodeTable[static_cast<unsigned char>(ch)] < 0)
+        {
+            return std::nullopt;
+        }
+    }
+
+    while(normalized.size() % 4 != 0)
+    {
+        normalized.push_back('=');
+    }
+
+    std::string output;
+    output.reserve((normalized.size() / 4) * 3);
+
+    int value = 0;
+    int value_bits = -8;
+    for(unsigned char ch : normalized)
+    {
+        if(ch == '=')
+        {
+            break;
+        }
+        const int decoded = kDecodeTable[ch];
+        if(decoded < 0)
+        {
+            return std::nullopt;
+        }
+        value = (value << 6) + decoded;
+        value_bits += 6;
+        if(value_bits >= 0)
+        {
+            output.push_back(static_cast<char>((value >> value_bits) & 0xFF));
+            value_bits -= 8;
+        }
+    }
+
+    return output;
 }
 
 int jwt_build_claim_callback(jwt_t* jwt, jwt_config_t* config)
@@ -155,7 +228,7 @@ std::string JwtTokenProvider::issue(const std::string& subject, int expire_sec)
     std::lock_guard lock(m_mutex);
     if(!ensure_signing_key_loaded())
     {
-        return std::string(kMockTokenPrefix) + subject;
+        return std::string(kMockTokenPrefix) + base64url_encode(subject);
     }
 
     jwt_builder_t* builder = jwt_builder_new();
@@ -250,7 +323,16 @@ std::optional<VerifiedToken> JwtTokenProvider::verify(const std::string& token)
         if(token.rfind(kMockTokenPrefix, 0) == 0)
         {
             VerifiedToken verified;
-            verified.subject = token.substr(std::string(kMockTokenPrefix).size());
+            const std::string encoded_subject = token.substr(std::string(kMockTokenPrefix).size());
+            if(auto decoded_subject = base64url_decode(encoded_subject); decoded_subject.has_value())
+            {
+                verified.subject = *decoded_subject;
+            }
+            else
+            {
+                // Backward-compatible fallback for older dev mock tokens that appended raw subject text.
+                verified.subject = encoded_subject;
+            }
             verified.issuer = m_config.issuer;
             return verified;
         }

@@ -72,6 +72,58 @@ std::string normalize_direction(std::string value)
     return value;
 }
 
+std::string direction_display_name(const std::string& value)
+{
+    const auto normalized = normalize_direction(value);
+    if(normalized == "north")
+    {
+        return "北方";
+    }
+    if(normalized == "south")
+    {
+        return "南方";
+    }
+    if(normalized == "east")
+    {
+        return "东方";
+    }
+    if(normalized == "west")
+    {
+        return "西方";
+    }
+    if(normalized == "up")
+    {
+        return "上方";
+    }
+    if(normalized == "down")
+    {
+        return "下方";
+    }
+    return value.empty() ? std::string("未知方位") : value;
+}
+
+std::string item_display_name(const MudWorld* world,
+                              const std::string& item_id,
+                              const char* fallback = "未知物品")
+{
+    if(world != nullptr)
+    {
+        if(const auto* item = world->find_item(item_id); item != nullptr && !item->name.empty())
+        {
+            return item->name;
+        }
+    }
+    return fallback == nullptr ? std::string() : std::string(fallback);
+}
+
+std::string item_with_count_label(const MudWorld* world,
+                                  const std::string& item_id,
+                                  int count,
+                                  const char* fallback = "未知物品")
+{
+    return item_display_name(world, item_id, fallback) + " x" + std::to_string(count);
+}
+
 int flag_int_value(const MudPlayerState& player, const std::string& key, int default_value)
 {
     if(auto iter = player.flags.find(key); iter != player.flags.end())
@@ -1925,8 +1977,8 @@ MudCommandExecution MudGameRuntime::execute_command(MudPlayerState* player,
     }
 
     execution.title = "未知指令";
-    execution.summary = "未识别的指令：" + parsed.verb;
-    execution.hints = {"可用指令：look / map / inspect / go / talk / accept / submit / fight / cast / loot / harvest / use / meditate / practice / breakthrough / brew / codex"};
+    execution.summary = "这道指令暂时无法识别，请优先使用界面里的功能按钮或中文提示操作。";
+    execution.hints = {"可通过下方功能盘执行观察、地图、查看、移动、交谈、任务、战斗、施法、拾取、采集、使用、调息、修炼、突破、炼制与手册等操作。"};
     return execution;
 }
 
@@ -1982,7 +2034,8 @@ MudCommandExecution MudGameRuntime::execute_map(MudPlayerState* player) const
     for(const auto& entry : scene->exits)
     {
         const auto* target = m_world->find_scene(entry.second);
-        execution.hints.push_back(entry.first + " -> " + (target == nullptr ? entry.second : target->name));
+        execution.hints.push_back(direction_display_name(entry.first) + "通往「" +
+                                  (target == nullptr ? std::string("未知去处") : target->name) + "」。");
     }
     return execution;
 }
@@ -2001,7 +2054,7 @@ MudCommandExecution MudGameRuntime::execute_go(MudPlayerState* player,
     if(args.empty())
     {
         execution.title = "缺少方向";
-        execution.summary = "请使用 go <direction>。";
+        execution.summary = "请选择一个方向后再移动，或直接点击下方方位盘。";
         execution.hints = {"例如：go north", "例如：go east"};
         return execution;
     }
@@ -2026,7 +2079,7 @@ MudCommandExecution MudGameRuntime::execute_go(MudPlayerState* player,
 
     execution.title = "路途不通";
     execution.summary = "当前方位没有道路可走。";
-    execution.hints.push_back("先用 map 查看当前出口");
+    execution.hints.push_back("可先打开地图或点击下方方位盘查看出口。");
     return execution;
 }
 
@@ -2046,7 +2099,7 @@ MudCommandExecution MudGameRuntime::execute_talk(MudPlayerState* player,
     {
         execution.title = "无人应答";
         execution.summary = "当前场景找不到这个人物。";
-        execution.hints.push_back("先用 look 查看场景人物");
+        execution.hints.push_back("可先点击“重看”查看当前场景人物。");
         return execution;
     }
 
@@ -2138,7 +2191,7 @@ MudCommandExecution MudGameRuntime::execute_talk(MudPlayerState* player,
     {
         if(const auto* sect = m_world->find_sect(npc->sect_offer_id); sect != nullptr)
         {
-            execution.hints.push_back("若想拜入" + sect->name + "，可使用：join " + sect->sect_id);
+            execution.hints.push_back("若想拜入" + sect->name + "，可在下方功能盘中选择“加入·" + sect->name + "”。");
         }
     }
     return execution;
@@ -2252,7 +2305,9 @@ MudCommandExecution MudGameRuntime::execute_submit(MudPlayerState* player,
     {
         execution.title = "材料未齐";
         execution.summary = "任务还未达到提交条件。";
-        execution.hints.push_back("需要：" + quest->required_item_id + " x" + std::to_string(quest->required_item_count));
+        execution.hints.push_back("需要：" + item_with_count_label(m_world.get(),
+                                                                 quest->required_item_id,
+                                                                 quest->required_item_count));
         return execution;
     }
 
@@ -2280,7 +2335,9 @@ MudCommandExecution MudGameRuntime::execute_submit(MudPlayerState* player,
     unlock_codex_by_trigger(player, "submit_quest", quest->quest_id, &execution);
     if(!quest->reward_item_id.empty() && quest->reward_item_count > 0)
     {
-        execution.hints.push_back("奖励物品：" + quest->reward_item_id + " x" + std::to_string(quest->reward_item_count));
+        execution.hints.push_back("奖励物品：" + item_with_count_label(m_world.get(),
+                                                                   quest->reward_item_id,
+                                                                   quest->reward_item_count));
     }
     append_event(player->account,
                  "quest",
@@ -2306,7 +2363,7 @@ MudCommandExecution MudGameRuntime::execute_fight(MudPlayerState* player,
     {
         execution.title = "目标不存在";
         execution.summary = "当前场景找不到这个对手。";
-        execution.hints.push_back("先用 look 查看场景妖兽");
+        execution.hints.push_back("可先点击“重看”查看当前场景妖兽。");
         return execution;
     }
 
@@ -2356,11 +2413,11 @@ MudCommandExecution MudGameRuntime::execute_fight(MudPlayerState* player,
     if(const auto* recover_item = m_world == nullptr ? nullptr : m_world->find_item("small_recover_pill");
        recover_item != nullptr)
     {
-        execution.hints.push_back("可使用 use " + recover_item->name + "（small_recover_pill）恢复气血");
+        execution.hints.push_back("可在背包中使用「" + recover_item->name + "」恢复气血。");
     }
     else
     {
-        execution.hints.push_back("可使用 use small_recover_pill 恢复气血");
+        execution.hints.push_back("可在背包中使用回气药物恢复气血。");
     }
     return execution;
 }
@@ -2378,7 +2435,7 @@ MudCommandExecution MudGameRuntime::execute_use(MudPlayerState* player,
     if(args.empty())
     {
         execution.title = "缺少物品";
-        execution.summary = "请使用 use <item>。";
+        execution.summary = "请选择一件背包中的物品后再使用。";
         return execution;
     }
 
@@ -2511,7 +2568,7 @@ MudCommandExecution MudGameRuntime::execute_breakthrough(MudPlayerState* player)
     {
         execution.title = "火候未到";
         execution.summary = "当前修为不足，尚不能突破。";
-        execution.hints.push_back("继续 practice " + player->primary_skill + " 或 fight <target>");
+        execution.hints.push_back("继续修炼「" + player->primary_skill + "」，或挑战附近妖兽积累突破火候。");
         return execution;
     }
 
@@ -2551,7 +2608,7 @@ MudCommandExecution MudGameRuntime::execute_buy(MudPlayerState* player,
     if(args.empty())
     {
         execution.title = "缺少物品";
-        execution.summary = "请使用 buy <item>。";
+        execution.summary = "请选择一件坊市物品后再购买。";
         return execution;
     }
 
@@ -2612,7 +2669,7 @@ MudCommandExecution MudGameRuntime::execute_sell(MudPlayerState* player,
     if(args.empty())
     {
         execution.title = "缺少物品";
-        execution.summary = "请使用 sell <item>。";
+        execution.summary = "请选择一件背包物品后再出售。";
         return execution;
     }
 
@@ -2775,7 +2832,7 @@ MudCommandExecution MudGameRuntime::execute_team(MudPlayerState* player,
     if(args.empty())
     {
         execution.title = "组队指令";
-        execution.summary = "可用子命令：team create / team join <leader_account> / team info / team leave";
+        execution.summary = "可用队伍操作：创建队伍、加入队伍、查看队伍、离开队伍。";
         return execution;
     }
 
@@ -2788,7 +2845,7 @@ MudCommandExecution MudGameRuntime::execute_team(MudPlayerState* player,
         if(in_team)
         {
             execution.title = "已有队伍";
-            execution.summary = "你已经在队伍中，先用 team info 查看。";
+            execution.summary = "你已经在队伍中了，可直接查看当前队伍信息。";
             return execution;
         }
 
@@ -2820,13 +2877,13 @@ MudCommandExecution MudGameRuntime::execute_team(MudPlayerState* player,
         if(args.size() < 2)
         {
             execution.title = "缺少队长";
-            execution.summary = "请使用 team join <leader_account>。";
+            execution.summary = "请选择一位队长后再加入队伍。";
             return execution;
         }
         if(in_team)
         {
             execution.title = "已在队伍";
-            execution.summary = "请先 team leave 再加入其他队伍。";
+            execution.summary = "请先离开当前队伍，再加入其他队伍。";
             return execution;
         }
 
@@ -2961,7 +3018,7 @@ MudCommandExecution MudGameRuntime::execute_team(MudPlayerState* player,
     }
 
     execution.title = "未知组队指令";
-    execution.summary = "仅支持 team create / join / info / leave。";
+    execution.summary = "当前仅支持创建队伍、加入队伍、查看队伍与离开队伍。";
     return execution;
 }
 
@@ -2995,7 +3052,7 @@ MudCommandExecution MudGameRuntime::execute_chat(const MudPlayerState& player,
     if(trimmed.empty() || split_pos == std::string::npos)
     {
         execution.title = "发言失败";
-        execution.summary = "请使用 chat <channel> <message>。";
+        execution.summary = "请先选择频道，再输入要发送的消息。";
         return execution;
     }
 
@@ -3011,7 +3068,8 @@ MudCommandExecution MudGameRuntime::execute_chat(const MudPlayerState& player,
 
     execution.success = true;
     execution.title = "频道发言";
-    execution.summary = "你向[" + channel + "]频道发送了消息。";
+    const auto channel_name = normalized_channel == "team" ? std::string("队伍") : std::string("世界");
+    execution.summary = "你向" + channel_name + "频道发送了消息。";
     if(normalized_channel == "world" || normalized_channel == "public")
     {
         append_event("",
@@ -3027,7 +3085,7 @@ MudCommandExecution MudGameRuntime::execute_chat(const MudPlayerState& player,
         {
             execution.success = false;
             execution.title = "发言失败";
-            execution.summary = "你当前没有队伍，无法使用 team 频道。";
+            execution.summary = "你当前没有队伍，无法使用队伍频道。";
             execution.events.clear();
             return execution;
         }
@@ -3056,7 +3114,7 @@ MudCommandExecution MudGameRuntime::execute_chat(const MudPlayerState& player,
     {
         execution.success = false;
         execution.title = "发言失败";
-        execution.summary = "当前仅支持 chat world <message> 与 chat team <message>。";
+        execution.summary = "当前只支持世界频道与队伍频道发言，请先选择频道后再发送。";
         return execution;
     }
     return execution;
@@ -3075,7 +3133,7 @@ MudCommandExecution MudGameRuntime::execute_inspect(MudPlayerState* player,
     if(args.empty())
     {
         execution.title = "查看目标";
-        execution.summary = "请使用 inspect <target> 查看人物、妖兽、资源点或物件。";
+        execution.summary = "请选择一个人物、妖兽、资源点或物件后再查看。";
         return execution;
     }
 
@@ -3097,7 +3155,9 @@ MudCommandExecution MudGameRuntime::execute_inspect(MudPlayerState* player,
         execution.success = true;
         execution.title = monster->name;
         execution.summary = monster->description;
-        execution.hints.push_back("掉落：" + monster->drop_item_id);
+        execution.hints.push_back("掉落：" + item_with_count_label(m_world.get(),
+                                                                 monster->drop_item_id,
+                                                                 monster->drop_item_count));
         if(!monster->codex_entry_id.empty())
         {
             unlock_codex_entry(player, monster->codex_entry_id, &execution);
@@ -3109,14 +3169,16 @@ MudCommandExecution MudGameRuntime::execute_inspect(MudPlayerState* player,
         execution.success = true;
         execution.title = node->name;
         execution.summary = node->description;
-        execution.hints.push_back("可采集：" + node->drop_item_id + " x" + std::to_string(node->drop_item_count));
+        execution.hints.push_back("可采集：" + item_with_count_label(m_world.get(),
+                                                                   node->drop_item_id,
+                                                                   node->drop_item_count));
         return execution;
     }
     if(const auto* loot = match_scene_ground_loot(*player, key); loot != nullptr)
     {
         const auto* item = m_world->find_item(loot->item_id);
         execution.success = true;
-        execution.title = item == nullptr ? loot->item_id : item->name;
+        execution.title = item == nullptr ? std::string("遗落物") : item->name;
         execution.summary = loot->description;
         execution.hints.push_back("可拾取数量：" + std::to_string(loot->quantity));
         if(item != nullptr && !item->codex_entry_id.empty())
@@ -3132,7 +3194,7 @@ MudCommandExecution MudGameRuntime::execute_inspect(MudPlayerState* player,
         const auto& item_state = player->inventory[static_cast<size_t>(inventory_index)];
         const auto* item = m_world->find_item(item_state.item_id);
         execution.success = true;
-        execution.title = item == nullptr ? item_state.item_id : item->name;
+        execution.title = item == nullptr ? std::string("随身物件") : item->name;
         execution.summary = item == nullptr ? "背包中的一件物品。" : item->description;
         execution.hints.push_back("数量：" + std::to_string(item_state.quantity));
         if(item != nullptr && !item->codex_entry_id.empty())
@@ -3154,7 +3216,7 @@ MudCommandExecution MudGameRuntime::execute_loot(MudPlayerState* player,
     if(player == nullptr || args.empty())
     {
         execution.title = "拾取失败";
-        execution.summary = "请使用 loot <item>。";
+        execution.summary = "请选择一件地面物件后再拾取。";
         return execution;
     }
 
@@ -3180,7 +3242,7 @@ MudCommandExecution MudGameRuntime::execute_loot(MudPlayerState* player,
     unlock_codex_by_trigger(player, "obtain_item", loot->item_id, &execution);
     execution.success = true;
     execution.title = "拾取成功";
-    execution.summary = "你拾起了地上的物件。";
+    execution.summary = "你拾起了「" + item_display_name(m_world.get(), loot->item_id, "遗落物") + "」。";
     append_event(player->account, "loot", execution.title, execution.summary, &execution.events);
     return execution;
 }
@@ -3192,7 +3254,7 @@ MudCommandExecution MudGameRuntime::execute_harvest(MudPlayerState* player,
     if(player == nullptr || args.empty())
     {
         execution.title = "采集失败";
-        execution.summary = "请使用 harvest <node>。";
+        execution.summary = "请选择一个资源点后再采集。";
         return execution;
     }
 
@@ -3221,7 +3283,8 @@ MudCommandExecution MudGameRuntime::execute_harvest(MudPlayerState* player,
     unlock_codex_by_trigger(player, "obtain_item", node->drop_item_id, &execution);
     execution.success = true;
     execution.title = "采集完成";
-    execution.summary = "你从资源点中收获了材料。";
+    execution.summary = "你从「" + node->name + "」中收获了" +
+                        item_with_count_label(m_world.get(), node->drop_item_id, node->drop_item_count) + "。";
     append_event(player->account, "harvest", execution.title, execution.summary, &execution.events);
     return execution;
 }
@@ -3233,7 +3296,7 @@ MudCommandExecution MudGameRuntime::execute_cast(MudPlayerState* player,
     if(player == nullptr || args.size() < 2)
     {
         execution.title = "施法失败";
-        execution.summary = "请使用 cast <spell> <target>。";
+        execution.summary = "请先选定法术和目标，再进行施法。";
         return execution;
     }
 
@@ -3343,7 +3406,7 @@ MudCommandExecution MudGameRuntime::execute_brew(MudPlayerState* player,
     if(player == nullptr || args.empty())
     {
         execution.title = "炼制失败";
-        execution.summary = "请使用 brew <recipe>。";
+        execution.summary = "请选择一张已掌握的配方后再炼制。";
         return execution;
     }
 
@@ -3376,7 +3439,7 @@ MudCommandExecution MudGameRuntime::execute_brew(MudPlayerState* player,
         {
             execution.title = "材料不足";
             execution.summary = "炼制所需材料不足。";
-            execution.hints.push_back("缺少：" + ingredient.item_id);
+            execution.hints.push_back("缺少：" + item_with_count_label(m_world.get(), ingredient.item_id, ingredient.quantity));
             return execution;
         }
     }
@@ -3397,8 +3460,10 @@ MudCommandExecution MudGameRuntime::execute_brew(MudPlayerState* player,
     execution.success = true;
     execution.title = "炼制完成";
     execution.summary = "你顺利完成了一次炼制。";
-    execution.brew_summary = recipe_config->name + " -> " + recipe_config->result_item_id + " x" +
-                             std::to_string(recipe_config->result_quantity);
+    execution.brew_summary = recipe_config->name + "，获得 " +
+                             item_with_count_label(m_world.get(),
+                                                   recipe_config->result_item_id,
+                                                   recipe_config->result_quantity);
     append_event(player->account, "brew", execution.title, execution.brew_summary, &execution.events);
     return execution;
 }
