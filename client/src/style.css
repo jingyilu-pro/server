@@ -514,32 +514,6 @@ input::placeholder {
   padding: 12px 6px 10px;
 }
 
-.scene-section-header {
-  align-items: flex-end;
-  margin-bottom: 10px;
-  padding: 0 2px;
-}
-
-.scene-heading {
-  display: flex;
-  min-width: 0;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.scene-section-header h2 {
-  font-size: clamp(1.42rem, 5.4vw, 1.88rem);
-  line-height: 1.02;
-  text-shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
-}
-
-.scene-header-summary {
-  margin: 0;
-  color: rgba(230, 198, 159, 0.74);
-  font-size: 0.75rem;
-  line-height: 1.4;
-}
-
 .channel-header {
   display: flex;
   align-items: flex-start;

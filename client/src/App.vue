@@ -1061,10 +1061,21 @@ const sceneMissionText = computed(() => {
   }
 
   if (currentNarrativeArc.value > 1) {
-    return `当前章节：${displayProgressionChapter.value}。先在此地观察局势，再与场景人物交谈梳理后续线索。`
+    return '先在此地观察局势，再与场景人物交谈梳理后续线索。'
   }
 
   return '多与场景人物交谈，寻找下一段机缘。'
+})
+
+const sceneDisplayTitle = computed(() => {
+  const regionName = String(scene.value.regionName ?? '').trim()
+  const sceneName = String(scene.value.sceneName ?? '').trim()
+
+  if (regionName && sceneName) {
+    return `${regionName}-${sceneName}`
+  }
+
+  return sceneName || regionName || '修行界-无名之地'
 })
 
 function shortenText(value: string, limit = 4) {
@@ -2171,15 +2182,6 @@ watch(
       </section>
 
       <section class="surface-panel scene-panel">
-        <div class="section-row scene-section-header">
-          <div class="scene-heading">
-            <p class="section-kicker">主界面</p>
-            <h2>{{ scene.sceneName || '修行记录' }}</h2>
-            <p class="scene-header-summary">
-              章节：{{ displayProgressionChapter }} · 当前可见 {{ sceneInteractables.length }} 项 · 去路 {{ exits.length }} 条
-            </p>
-          </div>
-        </div>
         <div class="scene-frame">
           <aside class="scene-side-rail">
             <p v-if="sceneInteractables.length === 0" class="scene-side-empty">当前视野里暂无明显目标</p>
@@ -2199,7 +2201,7 @@ watch(
           <div class="scene-main-board">
             <div class="scene-board-header">
               <div class="scene-board-copy">
-                <p class="scene-board-title">{{ scene.regionName || '修行界' }}</p>
+                <p class="scene-board-title">{{ sceneDisplayTitle }}</p>
                 <p class="scene-board-subtitle">{{ sceneMissionText }}</p>
               </div>
               <div class="scene-board-badges">
