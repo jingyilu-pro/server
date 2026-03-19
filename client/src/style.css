@@ -1405,6 +1405,10 @@ input::placeholder {
   border-color: rgba(240, 189, 124, 0.22);
 }
 
+.vital-card.mana {
+  border-color: rgba(110, 176, 255, 0.26);
+}
+
 .vital-card.stone {
   border-color: rgba(95, 209, 160, 0.24);
 }

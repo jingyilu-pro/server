@@ -123,6 +123,44 @@ const sceneSectOffers: Record<string, Array<{ command: string; name: string; sum
   yanyue_peak: [{ command: 'join yanyue_sect', name: '掩月宗', summary: '掩月宗重视身法与法门，入门后更适合往灵动轻灵路线修行。' }],
 }
 
+const narrativeArcLabels: Record<number, string> = {
+  1: '七玄门启程',
+  2: '太南小会',
+  3: '黄枫谷试炼',
+  4: '血色禁地试炼',
+  5: '乱星海漂流',
+  6: '虚天殿初启',
+}
+
+const narrativeQuestOrder: Record<string, number> = {
+  backslope_wolf_skin: 1,
+  qixuan_stream_note: 1,
+  qixuan_herb: 1,
+  mofu_guest_token: 1,
+  ruins_old_map: 2,
+  fair_rumor_packet: 2,
+  tainan_snake: 2,
+  tainan_array_flag: 2,
+  huangfeng_letter: 3,
+  medicine_moss: 3,
+  huangfeng_manual: 3,
+  blood_forbidden_token: 4,
+  blood_swamp_rescue: 4,
+  harbor_signal: 5,
+  chaos_sea_chart: 5,
+  captain_supply: 5,
+  demon_fish_core: 5,
+  chaos_relic: 5,
+  xutian_key: 6,
+  xutian_star_map: 6,
+}
+
+const sceneFollowupHints: Record<string, string> = {
+  chaos_sea_ship: '当前章节：乱星海漂流。甲板术士更像是在替你梳理后续海路与虚天线索，可继续交谈后再向深海推进。',
+  chaos_sea_isle: '残碑孤岛的碑文与钥片都和虚天殿有关，别忘了查看遗迹、人物与地面线索。',
+  storm_route: '当前章节：乱星海漂流。先稳住法力与气力，再沿风暴航道继续向东探路。',
+}
+
 const categoryLabels: Record<CommandCategoryId, string> = {
   social: '交流',
   explore: '探索',
@@ -183,6 +221,9 @@ const codexEntries = computed(() => (store.codexEntries as Record<string, any>[]
 const codexDetail = computed(() => store.codexDetail as Record<string, any> | null)
 const displayError = computed(() => store.error || store.pollError)
 const currentQuestIds = computed(() => new Set(quests.value.map((quest) => String(quest.questId ?? ''))))
+const currentStatusAttributes = computed(
+  () => (player.value.currentStatusAttributes as Record<string, any> | undefined) ?? player.value.statusAttributes ?? {},
+)
 const sceneItems = computed(() => {
   const items = (scene.value.items as Record<string, any>[] | undefined) ?? []
   if (items.length > 0) {
@@ -486,6 +527,8 @@ const sceneInteractables = computed<SceneInteractable[]>(() => {
   const trackingSceneQuest = activeQuestList.find((quest) =>
     sceneQuestEntries.some((offer) => offer.id === String(quest.questId ?? '')),
   )
+  const completedSceneQuest = sceneQuestEntries.some((offer) => currentQuestIds.value.has(offer.id))
+  const sceneFollowupHint = sceneFollowupHints[currentSceneId.value]
   const teamAccountSet = new Set(teamMembers.value.map((member) => String(member.account ?? '')))
 
   scenePlayers.value.forEach((scenePlayer) => {
@@ -611,8 +654,10 @@ const sceneInteractables = computed<SceneInteractable[]>(() => {
             ? `可提交任务：${npcReadyQuests.map((quest) => String(quest.title ?? '当前任务')).join('、')}`
             : Boolean(npc.hasQuest) && trackingSceneQuest
               ? `相关任务进行中：${String(trackingSceneQuest.title ?? '当前任务')} ${String(trackingSceneQuest.progress ?? 0)} / ${String(trackingSceneQuest.target ?? 0)}`
-              : Boolean(npc.hasQuest) && sceneQuestEntries.length > 0
-                ? '身上似有任务线索'
+              : Boolean(npc.hasQuest) && completedSceneQuest && sceneFollowupHint
+                ? '可继续交谈梳理后续线索'
+                : Boolean(npc.hasQuest) && sceneQuestEntries.length > 0
+                  ? '似有新委托可谈'
                 : '可继续交谈打探消息',
         `所在场景：${String(scene.value.sceneName ?? '此地')}`,
       ],
@@ -871,6 +916,67 @@ const composerPlaceholder = computed(() => {
   return '这里输入具体指令，或点击上方页签按钮自动填入'
 })
 
+function narrativeArcOrderForChapter(value: string) {
+  const normalized = value.trim()
+  if (!normalized) {
+    return 0
+  }
+
+  const entry = Object.entries(narrativeArcLabels).find(([, label]) => label === normalized)
+  return entry ? Number(entry[0]) : 0
+}
+
+function narrativeArcOrderForScene(sceneId: string) {
+  const normalized = sceneId.trim()
+  if (!normalized) {
+    return 0
+  }
+  if (normalized.startsWith('xutian_')) {
+    return 6
+  }
+  if (
+    normalized.startsWith('chaos_sea_') ||
+    normalized.startsWith('tiannan_') ||
+    normalized === 'reef_shore' ||
+    normalized === 'demon_fish_nest' ||
+    normalized === 'storm_route' ||
+    normalized === 'sea_wind_tower'
+  ) {
+    return 5
+  }
+  if (normalized.startsWith('blood_')) {
+    return 4
+  }
+  if (normalized.startsWith('huangfeng_')) {
+    return 3
+  }
+  if (normalized.startsWith('tainan_') || normalized === 'xin_house' || normalized === 'array_lane') {
+    return 2
+  }
+  return 1
+}
+
+function narrativeArcOrderForQuest(questId: string) {
+  return narrativeQuestOrder[questId] ?? 0
+}
+
+const displayProgressionChapter = computed(() => {
+  const playerChapter = String(player.value.progressionChapter ?? '')
+  const playerArc = narrativeArcOrderForChapter(playerChapter)
+  const sceneArc = narrativeArcOrderForScene(currentSceneId.value)
+  if (sceneArc > playerArc) {
+    return narrativeArcLabels[sceneArc] || playerChapter || '七玄门启程'
+  }
+  return playerChapter || narrativeArcLabels[sceneArc] || '七玄门启程'
+})
+
+const currentNarrativeArc = computed(() =>
+  Math.max(
+    narrativeArcOrderForScene(currentSceneId.value),
+    narrativeArcOrderForChapter(String(player.value.progressionChapter ?? '')),
+  ),
+)
+
 const trackedQuest = computed(() => {
   const activeQuestList = quests.value.filter((quest) => String(quest.status ?? '') === 'active')
   if (activeQuestList.length === 0) {
@@ -885,7 +991,25 @@ const trackedQuest = computed(() => {
     }
   }
 
-  return activeQuestList[activeQuestList.length - 1] ?? null
+  const narrativeFloor = Math.max(1, currentNarrativeArc.value - 1)
+  const chapterQuest = activeQuestList
+    .map((quest, index) => ({
+      quest,
+      index,
+      order: narrativeArcOrderForQuest(String(quest.questId ?? '')),
+    }))
+    .filter((entry) => entry.order >= narrativeFloor)
+    .sort((left, right) => right.order - left.order || right.index - left.index)[0]
+
+  if (chapterQuest) {
+    return chapterQuest.quest
+  }
+
+  if (currentNarrativeArc.value <= 1) {
+    return activeQuestList[activeQuestList.length - 1] ?? null
+  }
+
+  return null
 })
 
 const sceneMissionText = computed(() => {
@@ -899,6 +1023,15 @@ const sceneMissionText = computed(() => {
   )
   if (questOffer) {
     return `此地有新线索可接：${questOffer.title}。`
+  }
+
+  const followupHint = sceneFollowupHints[currentSceneId.value]
+  if (followupHint) {
+    return followupHint
+  }
+
+  if (currentNarrativeArc.value > 1) {
+    return `当前章节：${displayProgressionChapter.value}。先在此地观察局势，再与场景人物交谈梳理后续线索。`
   }
 
   return '多与场景人物交谈，寻找下一段机缘。'
@@ -1090,9 +1223,9 @@ const quickStats = computed(() => [
     value: `${String(player.value.hp ?? 0)}/${String(player.value.maxHp ?? 0)}`,
   },
   {
-    key: 'attack',
-    label: '攻击',
-    value: String(player.value.attackPower ?? 0),
+    key: 'mana',
+    label: '法力',
+    value: `${String(currentStatusAttributes.value.mana ?? player.value.statusAttributes?.mana ?? 0)}/${String(player.value.statusAttributes?.mana ?? 0)}`,
   },
   {
     key: 'stone',
@@ -1972,7 +2105,7 @@ watch(
               <p>本命功法：{{ player.cultivation?.primarySkill || '长春功' }}</p>
               <p>功法等级：{{ player.cultivation?.skillLevel || 1 }}</p>
               <p>突破需求：{{ player.cultivation?.exp || 0 }} / {{ player.cultivation?.nextBreakthroughExp || 0 }}</p>
-              <p>章节进度：{{ player.progressionChapter || '七玄门启程' }}</p>
+              <p>章节进度：{{ displayProgressionChapter }}</p>
               <p>宗门贡献：{{ player.sectContribution || 0 }}</p>
               <p>已解锁区域：{{ (player.unlockedRegions || []).join('、') || '七玄门' }}</p>
             </div>
@@ -1980,7 +2113,7 @@ watch(
               <p class="detail-title">基础属性</p>
               <p>神识 {{ player.baseAttributes?.spi || 0 }} · 经脉 {{ player.baseAttributes?.gin || 0 }} · 炼体 {{ player.baseAttributes?.str || 0 }}</p>
               <p>灵觉 {{ player.baseAttributes?.per || 0 }} · 悟性 {{ player.baseAttributes?.int || 0 }} · 魅力 {{ player.baseAttributes?.cha || 0 }} · 机缘 {{ player.baseAttributes?.luc || 0 }}</p>
-              <p>法力 {{ player.statusAttributes?.mana || 0 }} · 神念 {{ player.statusAttributes?.sen || 0 }} · 气力 {{ player.statusAttributes?.sta || 0 }}</p>
+              <p>法力 {{ currentStatusAttributes.mana || 0 }} / {{ player.statusAttributes?.mana || 0 }} · 神念 {{ currentStatusAttributes.sen || 0 }} / {{ player.statusAttributes?.sen || 0 }} · 气力 {{ currentStatusAttributes.sta || 0 }} / {{ player.statusAttributes?.sta || 0 }}</p>
             </article>
             <article class="detail-card">
               <p class="detail-title">技艺概览</p>

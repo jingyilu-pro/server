@@ -10501,6 +10501,7 @@ class PlayerSnapshot final : public ::google::protobuf::Message
     kStatusAttributesFieldNumber = 23,
     kCombatAttributesFieldNumber = 24,
     kProfessionFieldNumber = 28,
+    kCurrentStatusAttributesFieldNumber = 30,
     kLevelFieldNumber = 3,
     kHpFieldNumber = 4,
     kMaxHpFieldNumber = 5,
@@ -10873,6 +10874,22 @@ class PlayerSnapshot final : public ::google::protobuf::Message
   ::mud::ProfessionState* PROTOBUF_NONNULL _internal_mutable_profession();
 
   public:
+  // .mud.StatusAttributeState current_status_attributes = 30;
+  [[nodiscard]] bool has_current_status_attributes()
+      const;
+  void clear_current_status_attributes() ;
+  [[nodiscard]] const ::mud::StatusAttributeState& current_status_attributes() const;
+  [[nodiscard]] ::mud::StatusAttributeState* PROTOBUF_NULLABLE release_current_status_attributes();
+  ::mud::StatusAttributeState* PROTOBUF_NONNULL mutable_current_status_attributes();
+  void set_allocated_current_status_attributes(::mud::StatusAttributeState* PROTOBUF_NULLABLE value);
+  void unsafe_arena_set_allocated_current_status_attributes(::mud::StatusAttributeState* PROTOBUF_NULLABLE value);
+  ::mud::StatusAttributeState* PROTOBUF_NULLABLE unsafe_arena_release_current_status_attributes();
+
+  private:
+  const ::mud::StatusAttributeState& _internal_current_status_attributes() const;
+  ::mud::StatusAttributeState* PROTOBUF_NONNULL _internal_mutable_current_status_attributes();
+
+  public:
   // int32 level = 3;
   void clear_level() ;
   ::int32_t level() const;
@@ -10957,8 +10974,8 @@ class PlayerSnapshot final : public ::google::protobuf::Message
  private:
   class _Internal;
   friend class ::google::protobuf::internal::TcParser;
-  static const ::google::protobuf::internal::TcParseTable<5, 29,
-                                   14, 143,
+  static const ::google::protobuf::internal::TcParseTable<5, 30,
+                                   15, 143,
                                    2>
       _table_;
 
@@ -11002,6 +11019,7 @@ class PlayerSnapshot final : public ::google::protobuf::Message
     ::mud::StatusAttributeState* PROTOBUF_NULLABLE status_attributes_;
     ::mud::CombatAttributeState* PROTOBUF_NULLABLE combat_attributes_;
     ::mud::ProfessionState* PROTOBUF_NULLABLE profession_;
+    ::mud::StatusAttributeState* PROTOBUF_NULLABLE current_status_attributes_;
     ::int32_t level_;
     ::int32_t hp_;
     ::int32_t max_hp_;
@@ -20527,7 +20545,7 @@ inline void PlayerSnapshot::clear_level() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   _impl_.level_ = 0;
   ClearHasBit(_impl_._has_bits_[0],
-                  0x00200000U);
+                  0x00400000U);
 }
 inline ::int32_t PlayerSnapshot::level() const {
   // @@protoc_insertion_point(field_get:mud.PlayerSnapshot.level)
@@ -20535,7 +20553,7 @@ inline ::int32_t PlayerSnapshot::level() const {
 }
 inline void PlayerSnapshot::set_level(::int32_t value) {
   _internal_set_level(value);
-  SetHasBit(_impl_._has_bits_[0], 0x00200000U);
+  SetHasBit(_impl_._has_bits_[0], 0x00400000U);
   // @@protoc_insertion_point(field_set:mud.PlayerSnapshot.level)
 }
 inline ::int32_t PlayerSnapshot::_internal_level() const {
@@ -20552,7 +20570,7 @@ inline void PlayerSnapshot::clear_hp() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   _impl_.hp_ = 0;
   ClearHasBit(_impl_._has_bits_[0],
-                  0x00400000U);
+                  0x00800000U);
 }
 inline ::int32_t PlayerSnapshot::hp() const {
   // @@protoc_insertion_point(field_get:mud.PlayerSnapshot.hp)
@@ -20560,7 +20578,7 @@ inline ::int32_t PlayerSnapshot::hp() const {
 }
 inline void PlayerSnapshot::set_hp(::int32_t value) {
   _internal_set_hp(value);
-  SetHasBit(_impl_._has_bits_[0], 0x00400000U);
+  SetHasBit(_impl_._has_bits_[0], 0x00800000U);
   // @@protoc_insertion_point(field_set:mud.PlayerSnapshot.hp)
 }
 inline ::int32_t PlayerSnapshot::_internal_hp() const {
@@ -20577,7 +20595,7 @@ inline void PlayerSnapshot::clear_max_hp() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   _impl_.max_hp_ = 0;
   ClearHasBit(_impl_._has_bits_[0],
-                  0x00800000U);
+                  0x01000000U);
 }
 inline ::int32_t PlayerSnapshot::max_hp() const {
   // @@protoc_insertion_point(field_get:mud.PlayerSnapshot.max_hp)
@@ -20585,7 +20603,7 @@ inline ::int32_t PlayerSnapshot::max_hp() const {
 }
 inline void PlayerSnapshot::set_max_hp(::int32_t value) {
   _internal_set_max_hp(value);
-  SetHasBit(_impl_._has_bits_[0], 0x00800000U);
+  SetHasBit(_impl_._has_bits_[0], 0x01000000U);
   // @@protoc_insertion_point(field_set:mud.PlayerSnapshot.max_hp)
 }
 inline ::int32_t PlayerSnapshot::_internal_max_hp() const {
@@ -20602,7 +20620,7 @@ inline void PlayerSnapshot::clear_attack_power() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   _impl_.attack_power_ = 0;
   ClearHasBit(_impl_._has_bits_[0],
-                  0x01000000U);
+                  0x02000000U);
 }
 inline ::int32_t PlayerSnapshot::attack_power() const {
   // @@protoc_insertion_point(field_get:mud.PlayerSnapshot.attack_power)
@@ -20610,7 +20628,7 @@ inline ::int32_t PlayerSnapshot::attack_power() const {
 }
 inline void PlayerSnapshot::set_attack_power(::int32_t value) {
   _internal_set_attack_power(value);
-  SetHasBit(_impl_._has_bits_[0], 0x01000000U);
+  SetHasBit(_impl_._has_bits_[0], 0x02000000U);
   // @@protoc_insertion_point(field_set:mud.PlayerSnapshot.attack_power)
 }
 inline ::int32_t PlayerSnapshot::_internal_attack_power() const {
@@ -20627,7 +20645,7 @@ inline void PlayerSnapshot::clear_defense_power() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   _impl_.defense_power_ = 0;
   ClearHasBit(_impl_._has_bits_[0],
-                  0x04000000U);
+                  0x08000000U);
 }
 inline ::int32_t PlayerSnapshot::defense_power() const {
   // @@protoc_insertion_point(field_get:mud.PlayerSnapshot.defense_power)
@@ -20635,7 +20653,7 @@ inline ::int32_t PlayerSnapshot::defense_power() const {
 }
 inline void PlayerSnapshot::set_defense_power(::int32_t value) {
   _internal_set_defense_power(value);
-  SetHasBit(_impl_._has_bits_[0], 0x04000000U);
+  SetHasBit(_impl_._has_bits_[0], 0x08000000U);
   // @@protoc_insertion_point(field_set:mud.PlayerSnapshot.defense_power)
 }
 inline ::int32_t PlayerSnapshot::_internal_defense_power() const {
@@ -20652,7 +20670,7 @@ inline void PlayerSnapshot::clear_spirit_stone() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   _impl_.spirit_stone_ = ::int64_t{0};
   ClearHasBit(_impl_._has_bits_[0],
-                  0x02000000U);
+                  0x04000000U);
 }
 inline ::int64_t PlayerSnapshot::spirit_stone() const {
   // @@protoc_insertion_point(field_get:mud.PlayerSnapshot.spirit_stone)
@@ -20660,7 +20678,7 @@ inline ::int64_t PlayerSnapshot::spirit_stone() const {
 }
 inline void PlayerSnapshot::set_spirit_stone(::int64_t value) {
   _internal_set_spirit_stone(value);
-  SetHasBit(_impl_._has_bits_[0], 0x02000000U);
+  SetHasBit(_impl_._has_bits_[0], 0x04000000U);
   // @@protoc_insertion_point(field_set:mud.PlayerSnapshot.spirit_stone)
 }
 inline ::int64_t PlayerSnapshot::_internal_spirit_stone() const {
@@ -21189,7 +21207,7 @@ inline void PlayerSnapshot::clear_recommended_poll_interval_ms() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   _impl_.recommended_poll_interval_ms_ = 0;
   ClearHasBit(_impl_._has_bits_[0],
-                  0x08000000U);
+                  0x10000000U);
 }
 inline ::int32_t PlayerSnapshot::recommended_poll_interval_ms() const {
   // @@protoc_insertion_point(field_get:mud.PlayerSnapshot.recommended_poll_interval_ms)
@@ -21197,7 +21215,7 @@ inline ::int32_t PlayerSnapshot::recommended_poll_interval_ms() const {
 }
 inline void PlayerSnapshot::set_recommended_poll_interval_ms(::int32_t value) {
   _internal_set_recommended_poll_interval_ms(value);
-  SetHasBit(_impl_._has_bits_[0], 0x08000000U);
+  SetHasBit(_impl_._has_bits_[0], 0x10000000U);
   // @@protoc_insertion_point(field_set:mud.PlayerSnapshot.recommended_poll_interval_ms)
 }
 inline ::int32_t PlayerSnapshot::_internal_recommended_poll_interval_ms() const {
@@ -21450,7 +21468,7 @@ inline void PlayerSnapshot::clear_sect_contribution() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   _impl_.sect_contribution_ = ::int64_t{0};
   ClearHasBit(_impl_._has_bits_[0],
-                  0x10000000U);
+                  0x20000000U);
 }
 inline ::int64_t PlayerSnapshot::sect_contribution() const {
   // @@protoc_insertion_point(field_get:mud.PlayerSnapshot.sect_contribution)
@@ -21458,7 +21476,7 @@ inline ::int64_t PlayerSnapshot::sect_contribution() const {
 }
 inline void PlayerSnapshot::set_sect_contribution(::int64_t value) {
   _internal_set_sect_contribution(value);
-  SetHasBit(_impl_._has_bits_[0], 0x10000000U);
+  SetHasBit(_impl_._has_bits_[0], 0x20000000U);
   // @@protoc_insertion_point(field_set:mud.PlayerSnapshot.sect_contribution)
 }
 inline ::int64_t PlayerSnapshot::_internal_sect_contribution() const {
@@ -22187,6 +22205,105 @@ inline ::google::protobuf::RepeatedPtrField<::mud::CodexSummary>* PROTOBUF_NONNU
 PlayerSnapshot::_internal_mutable_codex_summaries() {
   ::google::protobuf::internal::TSanRead(&_impl_);
   return &_impl_.codex_summaries_;
+}
+
+// .mud.StatusAttributeState current_status_attributes = 30;
+inline bool PlayerSnapshot::has_current_status_attributes() const {
+  bool value = CheckHasBit(_impl_._has_bits_[0], 0x00200000U);
+  PROTOBUF_ASSUME(!value || _impl_.current_status_attributes_ != nullptr);
+  return value;
+}
+inline void PlayerSnapshot::clear_current_status_attributes() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (_impl_.current_status_attributes_ != nullptr) _impl_.current_status_attributes_->Clear();
+  ClearHasBit(_impl_._has_bits_[0],
+                  0x00200000U);
+}
+inline const ::mud::StatusAttributeState& PlayerSnapshot::_internal_current_status_attributes() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  const ::mud::StatusAttributeState* p = _impl_.current_status_attributes_;
+  return p != nullptr ? *p : reinterpret_cast<const ::mud::StatusAttributeState&>(::mud::_StatusAttributeState_default_instance_);
+}
+inline const ::mud::StatusAttributeState& PlayerSnapshot::current_status_attributes() const ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_get:mud.PlayerSnapshot.current_status_attributes)
+  return _internal_current_status_attributes();
+}
+inline void PlayerSnapshot::unsafe_arena_set_allocated_current_status_attributes(
+    ::mud::StatusAttributeState* PROTOBUF_NULLABLE value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (GetArena() == nullptr) {
+    delete reinterpret_cast<::google::protobuf::MessageLite*>(_impl_.current_status_attributes_);
+  }
+  _impl_.current_status_attributes_ = reinterpret_cast<::mud::StatusAttributeState*>(value);
+  if (value != nullptr) {
+    SetHasBit(_impl_._has_bits_[0], 0x00200000U);
+  } else {
+    ClearHasBit(_impl_._has_bits_[0], 0x00200000U);
+  }
+  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:mud.PlayerSnapshot.current_status_attributes)
+}
+inline ::mud::StatusAttributeState* PROTOBUF_NULLABLE PlayerSnapshot::release_current_status_attributes() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+
+  ClearHasBit(_impl_._has_bits_[0], 0x00200000U);
+  ::mud::StatusAttributeState* released = _impl_.current_status_attributes_;
+  _impl_.current_status_attributes_ = nullptr;
+  if (::google::protobuf::internal::DebugHardenForceCopyInRelease()) {
+    auto* old = reinterpret_cast<::google::protobuf::MessageLite*>(released);
+    released = ::google::protobuf::internal::DuplicateIfNonNull(released);
+    if (GetArena() == nullptr) {
+      delete old;
+    }
+  } else {
+    if (GetArena() != nullptr) {
+      released = ::google::protobuf::internal::DuplicateIfNonNull(released);
+    }
+  }
+  return released;
+}
+inline ::mud::StatusAttributeState* PROTOBUF_NULLABLE PlayerSnapshot::unsafe_arena_release_current_status_attributes() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  // @@protoc_insertion_point(field_release:mud.PlayerSnapshot.current_status_attributes)
+
+  ClearHasBit(_impl_._has_bits_[0], 0x00200000U);
+  ::mud::StatusAttributeState* temp = _impl_.current_status_attributes_;
+  _impl_.current_status_attributes_ = nullptr;
+  return temp;
+}
+inline ::mud::StatusAttributeState* PROTOBUF_NONNULL PlayerSnapshot::_internal_mutable_current_status_attributes() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (_impl_.current_status_attributes_ == nullptr) {
+    auto* p = ::google::protobuf::Message::DefaultConstruct<::mud::StatusAttributeState>(GetArena());
+    _impl_.current_status_attributes_ = reinterpret_cast<::mud::StatusAttributeState*>(p);
+  }
+  return _impl_.current_status_attributes_;
+}
+inline ::mud::StatusAttributeState* PROTOBUF_NONNULL PlayerSnapshot::mutable_current_status_attributes()
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  SetHasBit(_impl_._has_bits_[0], 0x00200000U);
+  ::mud::StatusAttributeState* _msg = _internal_mutable_current_status_attributes();
+  // @@protoc_insertion_point(field_mutable:mud.PlayerSnapshot.current_status_attributes)
+  return _msg;
+}
+inline void PlayerSnapshot::set_allocated_current_status_attributes(::mud::StatusAttributeState* PROTOBUF_NULLABLE value) {
+  ::google::protobuf::Arena* message_arena = GetArena();
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (message_arena == nullptr) {
+    delete reinterpret_cast<::google::protobuf::MessageLite*>(_impl_.current_status_attributes_);
+  }
+
+  if (value != nullptr) {
+    ::google::protobuf::Arena* submessage_arena = value->GetArena();
+    if (message_arena != submessage_arena) {
+      value = ::google::protobuf::internal::GetOwnedMessage(message_arena, value, submessage_arena);
+    }
+    SetHasBit(_impl_._has_bits_[0], 0x00200000U);
+  } else {
+    ClearHasBit(_impl_._has_bits_[0], 0x00200000U);
+  }
+
+  _impl_.current_status_attributes_ = reinterpret_cast<::mud::StatusAttributeState*>(value);
+  // @@protoc_insertion_point(field_set_allocated:mud.PlayerSnapshot.current_status_attributes)
 }
 
 // -------------------------------------------------------------------

@@ -269,6 +269,7 @@ message PlayerSnapshot {
   repeated RecipeSummary recipes = 27;
   ProfessionState profession = 28;
   repeated CodexSummary codex_summaries = 29;
+  StatusAttributeState current_status_attributes = 30;
 }
 
 message GameEvent {

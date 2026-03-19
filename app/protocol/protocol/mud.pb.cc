@@ -1660,6 +1660,7 @@ inline constexpr PlayerSnapshot::Impl_::Impl_(
         status_attributes_{nullptr},
         combat_attributes_{nullptr},
         profession_{nullptr},
+        current_status_attributes_{nullptr},
         level_{0},
         hp_{0},
         max_hp_{0},
@@ -2291,7 +2292,7 @@ const ::uint32_t
         9,
         0x081, // bitmap
         PROTOBUF_FIELD_OFFSET(::mud::PlayerSnapshot, _impl_._has_bits_),
-        32, // hasbit index offset
+        33, // hasbit index offset
         PROTOBUF_FIELD_OFFSET(::mud::PlayerSnapshot, _impl_.account_),
         PROTOBUF_FIELD_OFFSET(::mud::PlayerSnapshot, _impl_.character_name_),
         PROTOBUF_FIELD_OFFSET(::mud::PlayerSnapshot, _impl_.level_),
@@ -2321,14 +2322,15 @@ const ::uint32_t
         PROTOBUF_FIELD_OFFSET(::mud::PlayerSnapshot, _impl_.recipes_),
         PROTOBUF_FIELD_OFFSET(::mud::PlayerSnapshot, _impl_.profession_),
         PROTOBUF_FIELD_OFFSET(::mud::PlayerSnapshot, _impl_.codex_summaries_),
+        PROTOBUF_FIELD_OFFSET(::mud::PlayerSnapshot, _impl_.current_status_attributes_),
         8,
         9,
-        21,
         22,
         23,
         24,
-        26,
         25,
+        27,
+        26,
         10,
         11,
         0,
@@ -2336,11 +2338,11 @@ const ::uint32_t
         13,
         14,
         2,
-        27,
+        28,
         15,
         12,
         3,
-        28,
+        29,
         16,
         17,
         18,
@@ -2350,6 +2352,7 @@ const ::uint32_t
         6,
         20,
         7,
+        21,
         0x081, // bitmap
         PROTOBUF_FIELD_OFFSET(::mud::GameEvent, _impl_._has_bits_),
         9, // hasbit index offset
@@ -2612,23 +2615,23 @@ static const ::_pbi::MigrationSchema
         {354, sizeof(::mud::SceneHazard)},
         {371, sizeof(::mud::SceneSnapshot)},
         {402, sizeof(::mud::PlayerSnapshot)},
-        {463, sizeof(::mud::GameEvent)},
-        {478, sizeof(::mud::CommandResult)},
-        {501, sizeof(::mud::BootstrapRequest)},
-        {506, sizeof(::mud::BootstrapResponse)},
-        {529, sizeof(::mud::CharacterCreateRequest)},
-        {538, sizeof(::mud::CharacterCreateResponse)},
-        {557, sizeof(::mud::CommandExecuteRequest)},
-        {564, sizeof(::mud::CommandExecuteResponse)},
-        {585, sizeof(::mud::FeedPullRequest)},
-        {594, sizeof(::mud::FeedPullResponse)},
-        {613, sizeof(::mud::CodexListRequest)},
-        {620, sizeof(::mud::CodexListResponse)},
-        {633, sizeof(::mud::CodexDetailRequest)},
-        {640, sizeof(::mud::CodexDetailResponse)},
-        {653, sizeof(::mud::RankEntry)},
-        {672, sizeof(::mud::RankListRequest)},
-        {681, sizeof(::mud::RankListResponse)},
+        {465, sizeof(::mud::GameEvent)},
+        {480, sizeof(::mud::CommandResult)},
+        {503, sizeof(::mud::BootstrapRequest)},
+        {508, sizeof(::mud::BootstrapResponse)},
+        {531, sizeof(::mud::CharacterCreateRequest)},
+        {540, sizeof(::mud::CharacterCreateResponse)},
+        {559, sizeof(::mud::CommandExecuteRequest)},
+        {566, sizeof(::mud::CommandExecuteResponse)},
+        {587, sizeof(::mud::FeedPullRequest)},
+        {596, sizeof(::mud::FeedPullResponse)},
+        {615, sizeof(::mud::CodexListRequest)},
+        {622, sizeof(::mud::CodexListResponse)},
+        {635, sizeof(::mud::CodexDetailRequest)},
+        {642, sizeof(::mud::CodexDetailResponse)},
+        {655, sizeof(::mud::RankEntry)},
+        {674, sizeof(::mud::RankListRequest)},
+        {683, sizeof(::mud::RankListResponse)},
 };
 static const ::_pb::Message* PROTOBUF_NONNULL const file_default_instances[] = {
     &::mud::_InventoryItem_default_instance_._instance,
@@ -2768,7 +2771,7 @@ const char descriptor_table_protodef_mud_2eproto[] ABSL_ATTRIBUTE_SECTION_VARIAB
     "mud.SceneResourceNode\022*\n\014ground_loots\030\014 "
     "\003(\0132\024.mud.SceneGroundLoot\022!\n\007hazards\030\r \003"
     "(\0132\020.mud.SceneHazard\022\037\n\027related_codex_en"
-    "try_ids\030\016 \003(\t\"\220\007\n\016PlayerSnapshot\022\017\n\007acco"
+    "try_ids\030\016 \003(\t\"\316\007\n\016PlayerSnapshot\022\017\n\007acco"
     "unt\030\001 \001(\t\022\026\n\016character_name\030\002 \001(\t\022\r\n\005lev"
     "el\030\003 \001(\005\022\n\n\002hp\030\004 \001(\005\022\016\n\006max_hp\030\005 \001(\005\022\024\n\014"
     "attack_power\030\006 \001(\005\022\025\n\rdefense_power\030\007 \001("
@@ -2791,73 +2794,74 @@ const char descriptor_table_protodef_mud_2eproto[] ABSL_ATTRIBUTE_SECTION_VARIAB
     "mmary\022#\n\007recipes\030\033 \003(\0132\022.mud.RecipeSumma"
     "ry\022(\n\nprofession\030\034 \001(\0132\024.mud.ProfessionS"
     "tate\022*\n\017codex_summaries\030\035 \003(\0132\021.mud.Code"
-    "xSummary\"s\n\tGameEvent\022\020\n\010event_id\030\001 \001(\004\022"
-    "\014\n\004type\030\002 \001(\t\022\r\n\005title\030\003 \001(\t\022\017\n\007content\030"
-    "\004 \001(\t\022\026\n\016server_time_ms\030\005 \001(\003\022\016\n\006unread\030"
-    "\006 \001(\010\"\377\001\n\rCommandResult\022\017\n\007command\030\001 \001(\t"
-    "\022\017\n\007success\030\002 \001(\010\022\r\n\005title\030\003 \001(\t\022\017\n\007summ"
-    "ary\030\004 \001(\t\022\r\n\005hints\030\005 \003(\t\022$\n\034recommended_"
-    "poll_interval_ms\030\006 \001(\005\0221\n\026unlocked_codex"
-    "_entries\030\007 \003(\0132\021.mud.CodexSummary\022\025\n\rspe"
-    "ll_summary\030\010 \001(\t\022\024\n\014brew_summary\030\t \001(\t\022\027"
-    "\n\017hazard_feedback\030\n \001(\t\"#\n\020BootstrapRequ"
-    "est\022\017\n\007account\030\001 \001(\t\"\245\002\n\021BootstrapRespon"
-    "se\022\014\n\004code\030\001 \001(\005\022\017\n\007message\030\002 \001(\t\022\020\n\010tra"
-    "ce_id\030\003 \001(\t\022\026\n\016server_time_ms\030\004 \001(\003\022\035\n\025n"
-    "eed_create_character\030\005 \001(\010\022#\n\006player\030\006 \001"
-    "(\0132\023.mud.PlayerSnapshot\022!\n\005scene\030\007 \001(\0132\022"
-    ".mud.SceneSnapshot\022\036\n\006events\030\010 \003(\0132\016.mud"
-    ".GameEvent\022\025\n\rnext_event_id\030\t \001(\004\022)\n\021ava"
-    "ilable_origins\030\n \003(\0132\016.mud.RaceState\"T\n\026"
-    "CharacterCreateRequest\022\017\n\007account\030\001 \001(\t\022"
-    "\026\n\016character_name\030\002 \001(\t\022\021\n\torigin_id\030\003 \001"
-    "(\t\"\341\001\n\027CharacterCreateResponse\022\014\n\004code\030\001"
+    "xSummary\022<\n\031current_status_attributes\030\036 "
+    "\001(\0132\031.mud.StatusAttributeState\"s\n\tGameEv"
+    "ent\022\020\n\010event_id\030\001 \001(\004\022\014\n\004type\030\002 \001(\t\022\r\n\005t"
+    "itle\030\003 \001(\t\022\017\n\007content\030\004 \001(\t\022\026\n\016server_ti"
+    "me_ms\030\005 \001(\003\022\016\n\006unread\030\006 \001(\010\"\377\001\n\rCommandR"
+    "esult\022\017\n\007command\030\001 \001(\t\022\017\n\007success\030\002 \001(\010\022"
+    "\r\n\005title\030\003 \001(\t\022\017\n\007summary\030\004 \001(\t\022\r\n\005hints"
+    "\030\005 \003(\t\022$\n\034recommended_poll_interval_ms\030\006"
+    " \001(\005\0221\n\026unlocked_codex_entries\030\007 \003(\0132\021.m"
+    "ud.CodexSummary\022\025\n\rspell_summary\030\010 \001(\t\022\024"
+    "\n\014brew_summary\030\t \001(\t\022\027\n\017hazard_feedback\030"
+    "\n \001(\t\"#\n\020BootstrapRequest\022\017\n\007account\030\001 \001"
+    "(\t\"\245\002\n\021BootstrapResponse\022\014\n\004code\030\001 \001(\005\022\017"
+    "\n\007message\030\002 \001(\t\022\020\n\010trace_id\030\003 \001(\t\022\026\n\016ser"
+    "ver_time_ms\030\004 \001(\003\022\035\n\025need_create_charact"
+    "er\030\005 \001(\010\022#\n\006player\030\006 \001(\0132\023.mud.PlayerSna"
+    "pshot\022!\n\005scene\030\007 \001(\0132\022.mud.SceneSnapshot"
+    "\022\036\n\006events\030\010 \003(\0132\016.mud.GameEvent\022\025\n\rnext"
+    "_event_id\030\t \001(\004\022)\n\021available_origins\030\n \003"
+    "(\0132\016.mud.RaceState\"T\n\026CharacterCreateReq"
+    "uest\022\017\n\007account\030\001 \001(\t\022\026\n\016character_name\030"
+    "\002 \001(\t\022\021\n\torigin_id\030\003 \001(\t\"\341\001\n\027CharacterCr"
+    "eateResponse\022\014\n\004code\030\001 \001(\005\022\017\n\007message\030\002 "
+    "\001(\t\022\020\n\010trace_id\030\003 \001(\t\022\026\n\016server_time_ms\030"
+    "\004 \001(\003\022#\n\006player\030\005 \001(\0132\023.mud.PlayerSnapsh"
+    "ot\022!\n\005scene\030\006 \001(\0132\022.mud.SceneSnapshot\022\036\n"
+    "\006events\030\007 \003(\0132\016.mud.GameEvent\022\025\n\rnext_ev"
+    "ent_id\030\010 \001(\004\"9\n\025CommandExecuteRequest\022\017\n"
+    "\007account\030\001 \001(\t\022\017\n\007command\030\002 \001(\t\"\204\002\n\026Comm"
+    "andExecuteResponse\022\014\n\004code\030\001 \001(\005\022\017\n\007mess"
+    "age\030\002 \001(\t\022\020\n\010trace_id\030\003 \001(\t\022\026\n\016server_ti"
+    "me_ms\030\004 \001(\003\022\"\n\006result\030\005 \001(\0132\022.mud.Comman"
+    "dResult\022#\n\006player\030\006 \001(\0132\023.mud.PlayerSnap"
+    "shot\022!\n\005scene\030\007 \001(\0132\022.mud.SceneSnapshot\022"
+    "\036\n\006events\030\010 \003(\0132\016.mud.GameEvent\022\025\n\rnext_"
+    "event_id\030\t \001(\004\"I\n\017FeedPullRequest\022\017\n\007acc"
+    "ount\030\001 \001(\t\022\026\n\016after_event_id\030\002 \001(\004\022\r\n\005li"
+    "mit\030\003 \001(\005\"\333\001\n\020FeedPullResponse\022\014\n\004code\030\001"
     " \001(\005\022\017\n\007message\030\002 \001(\t\022\020\n\010trace_id\030\003 \001(\t\022"
-    "\026\n\016server_time_ms\030\004 \001(\003\022#\n\006player\030\005 \001(\0132"
-    "\023.mud.PlayerSnapshot\022!\n\005scene\030\006 \001(\0132\022.mu"
-    "d.SceneSnapshot\022\036\n\006events\030\007 \003(\0132\016.mud.Ga"
-    "meEvent\022\025\n\rnext_event_id\030\010 \001(\004\"9\n\025Comman"
-    "dExecuteRequest\022\017\n\007account\030\001 \001(\t\022\017\n\007comm"
-    "and\030\002 \001(\t\"\204\002\n\026CommandExecuteResponse\022\014\n\004"
-    "code\030\001 \001(\005\022\017\n\007message\030\002 \001(\t\022\020\n\010trace_id\030"
-    "\003 \001(\t\022\026\n\016server_time_ms\030\004 \001(\003\022\"\n\006result\030"
-    "\005 \001(\0132\022.mud.CommandResult\022#\n\006player\030\006 \001("
-    "\0132\023.mud.PlayerSnapshot\022!\n\005scene\030\007 \001(\0132\022."
-    "mud.SceneSnapshot\022\036\n\006events\030\010 \003(\0132\016.mud."
-    "GameEvent\022\025\n\rnext_event_id\030\t \001(\004\"I\n\017Feed"
-    "PullRequest\022\017\n\007account\030\001 \001(\t\022\026\n\016after_ev"
-    "ent_id\030\002 \001(\004\022\r\n\005limit\030\003 \001(\005\"\333\001\n\020FeedPull"
-    "Response\022\014\n\004code\030\001 \001(\005\022\017\n\007message\030\002 \001(\t\022"
-    "\020\n\010trace_id\030\003 \001(\t\022\026\n\016server_time_ms\030\004 \001("
-    "\003\022\036\n\006events\030\005 \003(\0132\016.mud.GameEvent\022\025\n\rnex"
-    "t_event_id\030\006 \001(\004\022$\n\034recommended_poll_int"
-    "erval_ms\030\007 \001(\005\022!\n\005scene\030\010 \001(\0132\022.mud.Scen"
-    "eSnapshot\"5\n\020CodexListRequest\022\017\n\007account"
-    "\030\001 \001(\t\022\020\n\010category\030\002 \001(\t\"\200\001\n\021CodexListRe"
-    "sponse\022\014\n\004code\030\001 \001(\005\022\017\n\007message\030\002 \001(\t\022\020\n"
-    "\010trace_id\030\003 \001(\t\022\026\n\016server_time_ms\030\004 \001(\003\022"
-    "\"\n\007entries\030\005 \003(\0132\021.mud.CodexSummary\"7\n\022C"
-    "odexDetailRequest\022\017\n\007account\030\001 \001(\t\022\020\n\010en"
-    "try_id\030\002 \001(\t\"~\n\023CodexDetailResponse\022\014\n\004c"
-    "ode\030\001 \001(\005\022\017\n\007message\030\002 \001(\t\022\020\n\010trace_id\030\003"
-    " \001(\t\022\026\n\016server_time_ms\030\004 \001(\003\022\036\n\005entry\030\005 "
-    "\001(\0132\017.mud.CodexEntry\"\233\001\n\tRankEntry\022\014\n\004ra"
-    "nk\030\001 \001(\005\022\017\n\007account\030\002 \001(\t\022\026\n\016character_n"
-    "ame\030\003 \001(\t\022\022\n\nrealm_name\030\004 \001(\t\022\r\n\005level\030\005"
-    " \001(\005\022\013\n\003exp\030\006 \001(\003\022\024\n\014spirit_stone\030\007 \001(\003\022"
-    "\021\n\tsect_name\030\010 \001(\t\"F\n\017RankListRequest\022\017\n"
-    "\007account\030\001 \001(\t\022\023\n\013leaderboard\030\002 \001(\t\022\r\n\005l"
-    "imit\030\003 \001(\005\"\221\001\n\020RankListResponse\022\014\n\004code\030"
-    "\001 \001(\005\022\017\n\007message\030\002 \001(\t\022\020\n\010trace_id\030\003 \001(\t"
-    "\022\026\n\016server_time_ms\030\004 \001(\003\022\023\n\013leaderboard\030"
-    "\005 \001(\t\022\037\n\007entries\030\006 \003(\0132\016.mud.RankEntryb\006"
-    "proto3"
+    "\026\n\016server_time_ms\030\004 \001(\003\022\036\n\006events\030\005 \003(\0132"
+    "\016.mud.GameEvent\022\025\n\rnext_event_id\030\006 \001(\004\022$"
+    "\n\034recommended_poll_interval_ms\030\007 \001(\005\022!\n\005"
+    "scene\030\010 \001(\0132\022.mud.SceneSnapshot\"5\n\020Codex"
+    "ListRequest\022\017\n\007account\030\001 \001(\t\022\020\n\010category"
+    "\030\002 \001(\t\"\200\001\n\021CodexListResponse\022\014\n\004code\030\001 \001"
+    "(\005\022\017\n\007message\030\002 \001(\t\022\020\n\010trace_id\030\003 \001(\t\022\026\n"
+    "\016server_time_ms\030\004 \001(\003\022\"\n\007entries\030\005 \003(\0132\021"
+    ".mud.CodexSummary\"7\n\022CodexDetailRequest\022"
+    "\017\n\007account\030\001 \001(\t\022\020\n\010entry_id\030\002 \001(\t\"~\n\023Co"
+    "dexDetailResponse\022\014\n\004code\030\001 \001(\005\022\017\n\007messa"
+    "ge\030\002 \001(\t\022\020\n\010trace_id\030\003 \001(\t\022\026\n\016server_tim"
+    "e_ms\030\004 \001(\003\022\036\n\005entry\030\005 \001(\0132\017.mud.CodexEnt"
+    "ry\"\233\001\n\tRankEntry\022\014\n\004rank\030\001 \001(\005\022\017\n\007accoun"
+    "t\030\002 \001(\t\022\026\n\016character_name\030\003 \001(\t\022\022\n\nrealm"
+    "_name\030\004 \001(\t\022\r\n\005level\030\005 \001(\005\022\013\n\003exp\030\006 \001(\003\022"
+    "\024\n\014spirit_stone\030\007 \001(\003\022\021\n\tsect_name\030\010 \001(\t"
+    "\"F\n\017RankListRequest\022\017\n\007account\030\001 \001(\t\022\023\n\013"
+    "leaderboard\030\002 \001(\t\022\r\n\005limit\030\003 \001(\005\"\221\001\n\020Ran"
+    "kListResponse\022\014\n\004code\030\001 \001(\005\022\017\n\007message\030\002"
+    " \001(\t\022\020\n\010trace_id\030\003 \001(\t\022\026\n\016server_time_ms"
+    "\030\004 \001(\003\022\023\n\013leaderboard\030\005 \001(\t\022\037\n\007entries\030\006"
+    " \003(\0132\016.mud.RankEntryb\006proto3"
 };
 static ::absl::once_flag descriptor_table_mud_2eproto_once;
 PROTOBUF_CONSTINIT const ::_pbi::DescriptorTable descriptor_table_mud_2eproto = {
     false,
     false,
-    7006,
+    7068,
     descriptor_table_protodef_mud_2eproto,
     "mud.proto",
     &descriptor_table_mud_2eproto_once,
@@ -15132,6 +15136,9 @@ PlayerSnapshot::PlayerSnapshot(
   _impl_.profession_ = (CheckHasBit(cached_has_bits, 0x00100000U))
                 ? ::google::protobuf::Message::CopyConstruct(arena, *from._impl_.profession_)
                 : nullptr;
+  _impl_.current_status_attributes_ = (CheckHasBit(cached_has_bits, 0x00200000U))
+                ? ::google::protobuf::Message::CopyConstruct(arena, *from._impl_.current_status_attributes_)
+                : nullptr;
   ::memcpy(reinterpret_cast<char*>(&_impl_) +
                offsetof(Impl_, level_),
            reinterpret_cast<const char*>(&from._impl_) +
@@ -15257,6 +15264,7 @@ inline void PlayerSnapshot::SharedDtor(MessageLite& self) {
   delete this_._impl_.status_attributes_;
   delete this_._impl_.combat_attributes_;
   delete this_._impl_.profession_;
+  delete this_._impl_.current_status_attributes_;
   this_._impl_.~Impl_();
 }
 
@@ -15350,17 +15358,17 @@ PlayerSnapshot::GetClassData() const {
   return PlayerSnapshot_class_data_.base();
 }
 PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1
-const ::_pbi::TcParseTable<5, 29, 14, 143, 2>
+const ::_pbi::TcParseTable<5, 30, 15, 143, 2>
 PlayerSnapshot::_table_ = {
   {
     PROTOBUF_FIELD_OFFSET(PlayerSnapshot, _impl_._has_bits_),
     0, // no _extensions_
-    29, 248,  // max_field_number, fast_idx_mask
+    30, 248,  // max_field_number, fast_idx_mask
     offsetof(decltype(_table_), field_lookup_table),
-    3758096384,  // skipmap
+    3221225472,  // skipmap
     offsetof(decltype(_table_), field_entries),
-    29,  // num_field_entries
-    14,  // num_aux_entries
+    30,  // num_field_entries
+    15,  // num_aux_entries
     offsetof(decltype(_table_), aux_entries),
     PlayerSnapshot_class_data_.base(),
     nullptr,  // post_loop_handler
@@ -15379,28 +15387,28 @@ PlayerSnapshot::_table_ = {
      {18, 9, 0,
       PROTOBUF_FIELD_OFFSET(PlayerSnapshot, _impl_.character_name_)}},
     // int32 level = 3;
-    {::_pbi::TcParser::SingularVarintNoZag1<::uint32_t, offsetof(PlayerSnapshot, _impl_.level_), 21>(),
-     {24, 21, 0,
+    {::_pbi::TcParser::SingularVarintNoZag1<::uint32_t, offsetof(PlayerSnapshot, _impl_.level_), 22>(),
+     {24, 22, 0,
       PROTOBUF_FIELD_OFFSET(PlayerSnapshot, _impl_.level_)}},
     // int32 hp = 4;
-    {::_pbi::TcParser::SingularVarintNoZag1<::uint32_t, offsetof(PlayerSnapshot, _impl_.hp_), 22>(),
-     {32, 22, 0,
+    {::_pbi::TcParser::SingularVarintNoZag1<::uint32_t, offsetof(PlayerSnapshot, _impl_.hp_), 23>(),
+     {32, 23, 0,
       PROTOBUF_FIELD_OFFSET(PlayerSnapshot, _impl_.hp_)}},
     // int32 max_hp = 5;
-    {::_pbi::TcParser::SingularVarintNoZag1<::uint32_t, offsetof(PlayerSnapshot, _impl_.max_hp_), 23>(),
-     {40, 23, 0,
+    {::_pbi::TcParser::SingularVarintNoZag1<::uint32_t, offsetof(PlayerSnapshot, _impl_.max_hp_), 24>(),
+     {40, 24, 0,
       PROTOBUF_FIELD_OFFSET(PlayerSnapshot, _impl_.max_hp_)}},
     // int32 attack_power = 6;
-    {::_pbi::TcParser::SingularVarintNoZag1<::uint32_t, offsetof(PlayerSnapshot, _impl_.attack_power_), 24>(),
-     {48, 24, 0,
+    {::_pbi::TcParser::SingularVarintNoZag1<::uint32_t, offsetof(PlayerSnapshot, _impl_.attack_power_), 25>(),
+     {48, 25, 0,
       PROTOBUF_FIELD_OFFSET(PlayerSnapshot, _impl_.attack_power_)}},
     // int32 defense_power = 7;
-    {::_pbi::TcParser::SingularVarintNoZag1<::uint32_t, offsetof(PlayerSnapshot, _impl_.defense_power_), 26>(),
-     {56, 26, 0,
+    {::_pbi::TcParser::SingularVarintNoZag1<::uint32_t, offsetof(PlayerSnapshot, _impl_.defense_power_), 27>(),
+     {56, 27, 0,
       PROTOBUF_FIELD_OFFSET(PlayerSnapshot, _impl_.defense_power_)}},
     // int64 spirit_stone = 8;
-    {::_pbi::TcParser::SingularVarintNoZag1<::uint64_t, offsetof(PlayerSnapshot, _impl_.spirit_stone_), 25>(),
-     {64, 25, 0,
+    {::_pbi::TcParser::SingularVarintNoZag1<::uint64_t, offsetof(PlayerSnapshot, _impl_.spirit_stone_), 26>(),
+     {64, 26, 0,
       PROTOBUF_FIELD_OFFSET(PlayerSnapshot, _impl_.spirit_stone_)}},
     // string title = 9;
     {::_pbi::TcParser::FastUS1,
@@ -15432,7 +15440,7 @@ PlayerSnapshot::_table_ = {
       PROTOBUF_FIELD_OFFSET(PlayerSnapshot, _impl_.known_commands_)}},
     // int32 recommended_poll_interval_ms = 16;
     {::_pbi::TcParser::FastV32S2,
-     {384, 27, 0,
+     {384, 28, 0,
       PROTOBUF_FIELD_OFFSET(PlayerSnapshot, _impl_.recommended_poll_interval_ms_)}},
     // .mud.TeamState team = 17;
     {::_pbi::TcParser::FastMtS2,
@@ -15448,7 +15456,7 @@ PlayerSnapshot::_table_ = {
       PROTOBUF_FIELD_OFFSET(PlayerSnapshot, _impl_.unlocked_regions_)}},
     // int64 sect_contribution = 20;
     {::_pbi::TcParser::FastV64S2,
-     {416, 28, 0,
+     {416, 29, 0,
       PROTOBUF_FIELD_OFFSET(PlayerSnapshot, _impl_.sect_contribution_)}},
     // .mud.RaceState race = 21;
     {::_pbi::TcParser::FastMtS2,
@@ -15486,7 +15494,10 @@ PlayerSnapshot::_table_ = {
     {::_pbi::TcParser::FastMtR2,
      {490, 7, 13,
       PROTOBUF_FIELD_OFFSET(PlayerSnapshot, _impl_.codex_summaries_)}},
-    {::_pbi::TcParser::MiniParse, {}},
+    // .mud.StatusAttributeState current_status_attributes = 30;
+    {::_pbi::TcParser::FastMtS2,
+     {498, 21, 14,
+      PROTOBUF_FIELD_OFFSET(PlayerSnapshot, _impl_.current_status_attributes_)}},
     {::_pbi::TcParser::MiniParse, {}},
   }}, {{
     65535, 65535
@@ -15496,17 +15507,17 @@ PlayerSnapshot::_table_ = {
     // string character_name = 2;
     {PROTOBUF_FIELD_OFFSET(PlayerSnapshot, _impl_.character_name_), _Internal::kHasBitsOffset + 9, 0, (0 | ::_fl::kFcOptional | ::_fl::kUtf8String | ::_fl::kRepAString)},
     // int32 level = 3;
-    {PROTOBUF_FIELD_OFFSET(PlayerSnapshot, _impl_.level_), _Internal::kHasBitsOffset + 21, 0, (0 | ::_fl::kFcOptional | ::_fl::kInt32)},
+    {PROTOBUF_FIELD_OFFSET(PlayerSnapshot, _impl_.level_), _Internal::kHasBitsOffset + 22, 0, (0 | ::_fl::kFcOptional | ::_fl::kInt32)},
     // int32 hp = 4;
-    {PROTOBUF_FIELD_OFFSET(PlayerSnapshot, _impl_.hp_), _Internal::kHasBitsOffset + 22, 0, (0 | ::_fl::kFcOptional | ::_fl::kInt32)},
+    {PROTOBUF_FIELD_OFFSET(PlayerSnapshot, _impl_.hp_), _Internal::kHasBitsOffset + 23, 0, (0 | ::_fl::kFcOptional | ::_fl::kInt32)},
     // int32 max_hp = 5;
-    {PROTOBUF_FIELD_OFFSET(PlayerSnapshot, _impl_.max_hp_), _Internal::kHasBitsOffset + 23, 0, (0 | ::_fl::kFcOptional | ::_fl::kInt32)},
+    {PROTOBUF_FIELD_OFFSET(PlayerSnapshot, _impl_.max_hp_), _Internal::kHasBitsOffset + 24, 0, (0 | ::_fl::kFcOptional | ::_fl::kInt32)},
     // int32 attack_power = 6;
-    {PROTOBUF_FIELD_OFFSET(PlayerSnapshot, _impl_.attack_power_), _Internal::kHasBitsOffset + 24, 0, (0 | ::_fl::kFcOptional | ::_fl::kInt32)},
+    {PROTOBUF_FIELD_OFFSET(PlayerSnapshot, _impl_.attack_power_), _Internal::kHasBitsOffset + 25, 0, (0 | ::_fl::kFcOptional | ::_fl::kInt32)},
     // int32 defense_power = 7;
-    {PROTOBUF_FIELD_OFFSET(PlayerSnapshot, _impl_.defense_power_), _Internal::kHasBitsOffset + 26, 0, (0 | ::_fl::kFcOptional | ::_fl::kInt32)},
+    {PROTOBUF_FIELD_OFFSET(PlayerSnapshot, _impl_.defense_power_), _Internal::kHasBitsOffset + 27, 0, (0 | ::_fl::kFcOptional | ::_fl::kInt32)},
     // int64 spirit_stone = 8;
-    {PROTOBUF_FIELD_OFFSET(PlayerSnapshot, _impl_.spirit_stone_), _Internal::kHasBitsOffset + 25, 0, (0 | ::_fl::kFcOptional | ::_fl::kInt64)},
+    {PROTOBUF_FIELD_OFFSET(PlayerSnapshot, _impl_.spirit_stone_), _Internal::kHasBitsOffset + 26, 0, (0 | ::_fl::kFcOptional | ::_fl::kInt64)},
     // string title = 9;
     {PROTOBUF_FIELD_OFFSET(PlayerSnapshot, _impl_.title_), _Internal::kHasBitsOffset + 10, 0, (0 | ::_fl::kFcOptional | ::_fl::kUtf8String | ::_fl::kRepAString)},
     // string location_scene_id = 10;
@@ -15522,7 +15533,7 @@ PlayerSnapshot::_table_ = {
     // repeated string known_commands = 15;
     {PROTOBUF_FIELD_OFFSET(PlayerSnapshot, _impl_.known_commands_), _Internal::kHasBitsOffset + 2, 0, (0 | ::_fl::kFcRepeated | ::_fl::kUtf8String | ::_fl::kRepSString)},
     // int32 recommended_poll_interval_ms = 16;
-    {PROTOBUF_FIELD_OFFSET(PlayerSnapshot, _impl_.recommended_poll_interval_ms_), _Internal::kHasBitsOffset + 27, 0, (0 | ::_fl::kFcOptional | ::_fl::kInt32)},
+    {PROTOBUF_FIELD_OFFSET(PlayerSnapshot, _impl_.recommended_poll_interval_ms_), _Internal::kHasBitsOffset + 28, 0, (0 | ::_fl::kFcOptional | ::_fl::kInt32)},
     // .mud.TeamState team = 17;
     {PROTOBUF_FIELD_OFFSET(PlayerSnapshot, _impl_.team_), _Internal::kHasBitsOffset + 15, 4, (0 | ::_fl::kFcOptional | ::_fl::kMessage | ::_fl::kTvTable)},
     // string progression_chapter = 18;
@@ -15530,7 +15541,7 @@ PlayerSnapshot::_table_ = {
     // repeated string unlocked_regions = 19;
     {PROTOBUF_FIELD_OFFSET(PlayerSnapshot, _impl_.unlocked_regions_), _Internal::kHasBitsOffset + 3, 0, (0 | ::_fl::kFcRepeated | ::_fl::kUtf8String | ::_fl::kRepSString)},
     // int64 sect_contribution = 20;
-    {PROTOBUF_FIELD_OFFSET(PlayerSnapshot, _impl_.sect_contribution_), _Internal::kHasBitsOffset + 28, 0, (0 | ::_fl::kFcOptional | ::_fl::kInt64)},
+    {PROTOBUF_FIELD_OFFSET(PlayerSnapshot, _impl_.sect_contribution_), _Internal::kHasBitsOffset + 29, 0, (0 | ::_fl::kFcOptional | ::_fl::kInt64)},
     // .mud.RaceState race = 21;
     {PROTOBUF_FIELD_OFFSET(PlayerSnapshot, _impl_.race_), _Internal::kHasBitsOffset + 16, 5, (0 | ::_fl::kFcOptional | ::_fl::kMessage | ::_fl::kTvTable)},
     // .mud.BaseAttributeState base_attributes = 22;
@@ -15549,6 +15560,8 @@ PlayerSnapshot::_table_ = {
     {PROTOBUF_FIELD_OFFSET(PlayerSnapshot, _impl_.profession_), _Internal::kHasBitsOffset + 20, 12, (0 | ::_fl::kFcOptional | ::_fl::kMessage | ::_fl::kTvTable)},
     // repeated .mud.CodexSummary codex_summaries = 29;
     {PROTOBUF_FIELD_OFFSET(PlayerSnapshot, _impl_.codex_summaries_), _Internal::kHasBitsOffset + 7, 13, (0 | ::_fl::kFcRepeated | ::_fl::kMessage | ::_fl::kTvTable)},
+    // .mud.StatusAttributeState current_status_attributes = 30;
+    {PROTOBUF_FIELD_OFFSET(PlayerSnapshot, _impl_.current_status_attributes_), _Internal::kHasBitsOffset + 21, 14, (0 | ::_fl::kFcOptional | ::_fl::kMessage | ::_fl::kTvTable)},
   }},
   {{
       {::_pbi::TcParser::GetTable<::mud::InventoryItem>()},
@@ -15565,6 +15578,7 @@ PlayerSnapshot::_table_ = {
       {::_pbi::TcParser::GetTable<::mud::RecipeSummary>()},
       {::_pbi::TcParser::GetTable<::mud::ProfessionState>()},
       {::_pbi::TcParser::GetTable<::mud::CodexSummary>()},
+      {::_pbi::TcParser::GetTable<::mud::StatusAttributeState>()},
   }},
   {{
     "\22\7\16\0\0\0\0\0\0\5\21\0\0\0\0\16\0\0\23\20\0\0\0\0\0\0\0\0\0\0\0\0"
@@ -15641,7 +15655,7 @@ PROTOBUF_NOINLINE void PlayerSnapshot::Clear() {
       _impl_.team_->Clear();
     }
   }
-  if (BatchCheckHasBit(cached_has_bits, 0x001f0000U)) {
+  if (BatchCheckHasBit(cached_has_bits, 0x003f0000U)) {
     if (CheckHasBit(cached_has_bits, 0x00010000U)) {
       ABSL_DCHECK(_impl_.race_ != nullptr);
       _impl_.race_->Clear();
@@ -15662,16 +15676,20 @@ PROTOBUF_NOINLINE void PlayerSnapshot::Clear() {
       ABSL_DCHECK(_impl_.profession_ != nullptr);
       _impl_.profession_->Clear();
     }
+    if (CheckHasBit(cached_has_bits, 0x00200000U)) {
+      ABSL_DCHECK(_impl_.current_status_attributes_ != nullptr);
+      _impl_.current_status_attributes_->Clear();
+    }
   }
-  if (BatchCheckHasBit(cached_has_bits, 0x00e00000U)) {
+  if (BatchCheckHasBit(cached_has_bits, 0x00c00000U)) {
     ::memset(&_impl_.level_, 0, static_cast<::size_t>(
-        reinterpret_cast<char*>(&_impl_.max_hp_) -
-        reinterpret_cast<char*>(&_impl_.level_)) + sizeof(_impl_.max_hp_));
+        reinterpret_cast<char*>(&_impl_.hp_) -
+        reinterpret_cast<char*>(&_impl_.level_)) + sizeof(_impl_.hp_));
   }
-  if (BatchCheckHasBit(cached_has_bits, 0x1f000000U)) {
-    ::memset(&_impl_.attack_power_, 0, static_cast<::size_t>(
+  if (BatchCheckHasBit(cached_has_bits, 0x3f000000U)) {
+    ::memset(&_impl_.max_hp_, 0, static_cast<::size_t>(
         reinterpret_cast<char*>(&_impl_.sect_contribution_) -
-        reinterpret_cast<char*>(&_impl_.attack_power_)) + sizeof(_impl_.sect_contribution_));
+        reinterpret_cast<char*>(&_impl_.max_hp_)) + sizeof(_impl_.sect_contribution_));
   }
   _impl_._has_bits_.Clear();
   _internal_metadata_.Clear<::google::protobuf::UnknownFieldSet>();
@@ -15717,7 +15735,7 @@ PROTOBUF_NOINLINE void PlayerSnapshot::Clear() {
   }
 
   // int32 level = 3;
-  if (CheckHasBit(cached_has_bits, 0x00200000U)) {
+  if (CheckHasBit(cached_has_bits, 0x00400000U)) {
     if (this_._internal_level() != 0) {
       target =
           ::google::protobuf::internal::WireFormatLite::WriteInt32ToArrayWithField<3>(
@@ -15726,7 +15744,7 @@ PROTOBUF_NOINLINE void PlayerSnapshot::Clear() {
   }
 
   // int32 hp = 4;
-  if (CheckHasBit(cached_has_bits, 0x00400000U)) {
+  if (CheckHasBit(cached_has_bits, 0x00800000U)) {
     if (this_._internal_hp() != 0) {
       target =
           ::google::protobuf::internal::WireFormatLite::WriteInt32ToArrayWithField<4>(
@@ -15735,7 +15753,7 @@ PROTOBUF_NOINLINE void PlayerSnapshot::Clear() {
   }
 
   // int32 max_hp = 5;
-  if (CheckHasBit(cached_has_bits, 0x00800000U)) {
+  if (CheckHasBit(cached_has_bits, 0x01000000U)) {
     if (this_._internal_max_hp() != 0) {
       target =
           ::google::protobuf::internal::WireFormatLite::WriteInt32ToArrayWithField<5>(
@@ -15744,7 +15762,7 @@ PROTOBUF_NOINLINE void PlayerSnapshot::Clear() {
   }
 
   // int32 attack_power = 6;
-  if (CheckHasBit(cached_has_bits, 0x01000000U)) {
+  if (CheckHasBit(cached_has_bits, 0x02000000U)) {
     if (this_._internal_attack_power() != 0) {
       target =
           ::google::protobuf::internal::WireFormatLite::WriteInt32ToArrayWithField<6>(
@@ -15753,7 +15771,7 @@ PROTOBUF_NOINLINE void PlayerSnapshot::Clear() {
   }
 
   // int32 defense_power = 7;
-  if (CheckHasBit(cached_has_bits, 0x04000000U)) {
+  if (CheckHasBit(cached_has_bits, 0x08000000U)) {
     if (this_._internal_defense_power() != 0) {
       target =
           ::google::protobuf::internal::WireFormatLite::WriteInt32ToArrayWithField<7>(
@@ -15762,7 +15780,7 @@ PROTOBUF_NOINLINE void PlayerSnapshot::Clear() {
   }
 
   // int64 spirit_stone = 8;
-  if (CheckHasBit(cached_has_bits, 0x02000000U)) {
+  if (CheckHasBit(cached_has_bits, 0x04000000U)) {
     if (this_._internal_spirit_stone() != 0) {
       target =
           ::google::protobuf::internal::WireFormatLite::WriteInt64ToArrayWithField<8>(
@@ -15841,7 +15859,7 @@ PROTOBUF_NOINLINE void PlayerSnapshot::Clear() {
   }
 
   // int32 recommended_poll_interval_ms = 16;
-  if (CheckHasBit(cached_has_bits, 0x08000000U)) {
+  if (CheckHasBit(cached_has_bits, 0x10000000U)) {
     if (this_._internal_recommended_poll_interval_ms() != 0) {
       target = stream->EnsureSpace(target);
       target = ::_pbi::WireFormatLite::WriteInt32ToArray(
@@ -15877,7 +15895,7 @@ PROTOBUF_NOINLINE void PlayerSnapshot::Clear() {
   }
 
   // int64 sect_contribution = 20;
-  if (CheckHasBit(cached_has_bits, 0x10000000U)) {
+  if (CheckHasBit(cached_has_bits, 0x20000000U)) {
     if (this_._internal_sect_contribution() != 0) {
       target = stream->EnsureSpace(target);
       target = ::_pbi::WireFormatLite::WriteInt64ToArray(
@@ -15970,6 +15988,13 @@ PROTOBUF_NOINLINE void PlayerSnapshot::Clear() {
               29, repfield, repfield.GetCachedSize(),
               target, stream);
     }
+  }
+
+  // .mud.StatusAttributeState current_status_attributes = 30;
+  if (CheckHasBit(cached_has_bits, 0x00200000U)) {
+    target = ::google::protobuf::internal::WireFormatLite::InternalWriteMessage(
+        30, *this_._impl_.current_status_attributes_, this_._impl_.current_status_attributes_->GetCachedSize(), target,
+        stream);
   }
 
   if (ABSL_PREDICT_FALSE(this_._internal_metadata_.have_unknown_fields())) {
@@ -16137,59 +16162,64 @@ PROTOBUF_NOINLINE void PlayerSnapshot::Clear() {
       total_size += 2 +
                     ::google::protobuf::internal::WireFormatLite::MessageSize(*this_._impl_.profession_);
     }
-    // int32 level = 3;
+    // .mud.StatusAttributeState current_status_attributes = 30;
     if (CheckHasBit(cached_has_bits, 0x00200000U)) {
+      total_size += 2 +
+                    ::google::protobuf::internal::WireFormatLite::MessageSize(*this_._impl_.current_status_attributes_);
+    }
+    // int32 level = 3;
+    if (CheckHasBit(cached_has_bits, 0x00400000U)) {
       if (this_._internal_level() != 0) {
         total_size += ::_pbi::WireFormatLite::Int32SizePlusOne(
             this_._internal_level());
       }
     }
     // int32 hp = 4;
-    if (CheckHasBit(cached_has_bits, 0x00400000U)) {
+    if (CheckHasBit(cached_has_bits, 0x00800000U)) {
       if (this_._internal_hp() != 0) {
         total_size += ::_pbi::WireFormatLite::Int32SizePlusOne(
             this_._internal_hp());
       }
     }
+  }
+  if (BatchCheckHasBit(cached_has_bits, 0x3f000000U)) {
     // int32 max_hp = 5;
-    if (CheckHasBit(cached_has_bits, 0x00800000U)) {
+    if (CheckHasBit(cached_has_bits, 0x01000000U)) {
       if (this_._internal_max_hp() != 0) {
         total_size += ::_pbi::WireFormatLite::Int32SizePlusOne(
             this_._internal_max_hp());
       }
     }
-  }
-  if (BatchCheckHasBit(cached_has_bits, 0x1f000000U)) {
     // int32 attack_power = 6;
-    if (CheckHasBit(cached_has_bits, 0x01000000U)) {
+    if (CheckHasBit(cached_has_bits, 0x02000000U)) {
       if (this_._internal_attack_power() != 0) {
         total_size += ::_pbi::WireFormatLite::Int32SizePlusOne(
             this_._internal_attack_power());
       }
     }
     // int64 spirit_stone = 8;
-    if (CheckHasBit(cached_has_bits, 0x02000000U)) {
+    if (CheckHasBit(cached_has_bits, 0x04000000U)) {
       if (this_._internal_spirit_stone() != 0) {
         total_size += ::_pbi::WireFormatLite::Int64SizePlusOne(
             this_._internal_spirit_stone());
       }
     }
     // int32 defense_power = 7;
-    if (CheckHasBit(cached_has_bits, 0x04000000U)) {
+    if (CheckHasBit(cached_has_bits, 0x08000000U)) {
       if (this_._internal_defense_power() != 0) {
         total_size += ::_pbi::WireFormatLite::Int32SizePlusOne(
             this_._internal_defense_power());
       }
     }
     // int32 recommended_poll_interval_ms = 16;
-    if (CheckHasBit(cached_has_bits, 0x08000000U)) {
+    if (CheckHasBit(cached_has_bits, 0x10000000U)) {
       if (this_._internal_recommended_poll_interval_ms() != 0) {
         total_size += 2 + ::_pbi::WireFormatLite::Int32Size(
                                         this_._internal_recommended_poll_interval_ms());
       }
     }
     // int64 sect_contribution = 20;
-    if (CheckHasBit(cached_has_bits, 0x10000000U)) {
+    if (CheckHasBit(cached_has_bits, 0x20000000U)) {
       if (this_._internal_sect_contribution() != 0) {
         total_size += 2 + ::_pbi::WireFormatLite::Int64Size(
                                         this_._internal_sect_contribution());
@@ -16370,43 +16400,51 @@ void PlayerSnapshot::MergeImpl(::google::protobuf::MessageLite& to_msg,
       }
     }
     if (CheckHasBit(cached_has_bits, 0x00200000U)) {
+      ABSL_DCHECK(from._impl_.current_status_attributes_ != nullptr);
+      if (_this->_impl_.current_status_attributes_ == nullptr) {
+        _this->_impl_.current_status_attributes_ = ::google::protobuf::Message::CopyConstruct(arena, *from._impl_.current_status_attributes_);
+      } else {
+        _this->_impl_.current_status_attributes_->MergeFrom(*from._impl_.current_status_attributes_);
+      }
+    }
+    if (CheckHasBit(cached_has_bits, 0x00400000U)) {
       if (from._internal_level() != 0) {
         _this->_impl_.level_ = from._impl_.level_;
       }
     }
-    if (CheckHasBit(cached_has_bits, 0x00400000U)) {
+    if (CheckHasBit(cached_has_bits, 0x00800000U)) {
       if (from._internal_hp() != 0) {
         _this->_impl_.hp_ = from._impl_.hp_;
       }
     }
-    if (CheckHasBit(cached_has_bits, 0x00800000U)) {
+  }
+  if (BatchCheckHasBit(cached_has_bits, 0x3f000000U)) {
+    if (CheckHasBit(cached_has_bits, 0x01000000U)) {
       if (from._internal_max_hp() != 0) {
         _this->_impl_.max_hp_ = from._impl_.max_hp_;
       }
     }
-  }
-  if (BatchCheckHasBit(cached_has_bits, 0x1f000000U)) {
-    if (CheckHasBit(cached_has_bits, 0x01000000U)) {
+    if (CheckHasBit(cached_has_bits, 0x02000000U)) {
       if (from._internal_attack_power() != 0) {
         _this->_impl_.attack_power_ = from._impl_.attack_power_;
       }
     }
-    if (CheckHasBit(cached_has_bits, 0x02000000U)) {
+    if (CheckHasBit(cached_has_bits, 0x04000000U)) {
       if (from._internal_spirit_stone() != 0) {
         _this->_impl_.spirit_stone_ = from._impl_.spirit_stone_;
       }
     }
-    if (CheckHasBit(cached_has_bits, 0x04000000U)) {
+    if (CheckHasBit(cached_has_bits, 0x08000000U)) {
       if (from._internal_defense_power() != 0) {
         _this->_impl_.defense_power_ = from._impl_.defense_power_;
       }
     }
-    if (CheckHasBit(cached_has_bits, 0x08000000U)) {
+    if (CheckHasBit(cached_has_bits, 0x10000000U)) {
       if (from._internal_recommended_poll_interval_ms() != 0) {
         _this->_impl_.recommended_poll_interval_ms_ = from._impl_.recommended_poll_interval_ms_;
       }
     }
-    if (CheckHasBit(cached_has_bits, 0x10000000U)) {
+    if (CheckHasBit(cached_has_bits, 0x20000000U)) {
       if (from._internal_sect_contribution() != 0) {
         _this->_impl_.sect_contribution_ = from._impl_.sect_contribution_;
       }

@@ -97,6 +97,20 @@ void set_flag_int(MudPlayerState* player, const std::string& key, int value)
     player->flags[key] = std::to_string(value);
 }
 
+void clear_flag(MudPlayerState* player, const std::string& key)
+{
+    if(player == nullptr || key.empty())
+    {
+        return;
+    }
+    player->flags.erase(key);
+}
+
+std::string monster_damage_flag_key(const MudPlayerState& player, const MudMonsterConfig& monster)
+{
+    return "monster_damage:" + player.location_scene_id + ":" + monster.monster_id;
+}
+
 bool scene_has_npc(const MudSceneConfig* scene, const std::string& npc_id)
 {
     return scene != nullptr &&
@@ -561,6 +575,12 @@ void MudGameRuntime::fill_player_snapshot(const MudPlayerState& player,
     fill_origin_state(player, snapshot->mutable_race());
     fill_base_attributes(player.base_attributes, snapshot->mutable_base_attributes());
     fill_status_attributes(player.status_attributes, snapshot->mutable_status_attributes());
+    MudStatusAttributeState current_status = player.status_attributes;
+    current_status.kee = player.hp;
+    current_status.sen = flag_int_value(player, "current_sen", player.status_attributes.sen);
+    current_status.sta = flag_int_value(player, "current_sta", player.status_attributes.sta);
+    current_status.mana = flag_int_value(player, "current_mana", player.status_attributes.mana);
+    fill_status_attributes(current_status, snapshot->mutable_current_status_attributes());
     fill_combat_attributes(player.combat_attributes, snapshot->mutable_combat_attributes());
 
     snapshot->clear_inventory();
@@ -2290,13 +2310,18 @@ MudCommandExecution MudGameRuntime::execute_fight(MudPlayerState* player,
         return execution;
     }
 
+    const std::string damage_key = monster_damage_flag_key(*player, *monster);
+    const int accumulated_damage = std::max(0, flag_int_value(*player, damage_key, 0));
+    const int effective_hp = std::max(1, monster->hp - accumulated_damage);
     const int player_damage = std::max(1, player->attack_power + player->skill_level * 2 - monster->defense);
     const int monster_damage = std::max(1, monster->attack - std::max(1, player->defense_power / 2));
-    const bool player_wins = player_damage >= monster->hp || (player->hp + player->attack_power + player->defense_power) >=
-                                                          (monster->hp + monster->attack + monster->defense);
+    const bool player_wins = player_damage >= effective_hp ||
+                             (player->hp + player->attack_power + player->defense_power) >=
+                                 (effective_hp + monster->attack + monster->defense);
 
     if(player_wins)
     {
+        clear_flag(player, damage_key);
         player->hp = std::max(1, player->hp - std::max(1, monster_damage / 2));
         player->exp += monster->reward_exp;
         player->spirit_stone += monster->reward_spirit_stone;
@@ -2312,6 +2337,10 @@ MudCommandExecution MudGameRuntime::execute_fight(MudPlayerState* player,
         execution.summary = "你击败了「" + monster->name + "」，获得修为 " +
                             std::to_string(monster->reward_exp) + "、灵石 " +
                             std::to_string(monster->reward_spirit_stone) + "。";
+        if(accumulated_damage > 0)
+        {
+            execution.hints.push_back("此前的法术削弱了这头妖兽。");
+        }
         unlock_codex_by_trigger(player, "defeat_monster", monster->monster_id, &execution);
         append_event(player->account,
                      "combat",
@@ -2324,7 +2353,15 @@ MudCommandExecution MudGameRuntime::execute_fight(MudPlayerState* player,
     player->hp = std::max(1, player->hp - monster_damage);
     execution.title = "战斗失利";
     execution.summary = "你被「" + monster->name + "」逼退，气血降至 " + std::to_string(player->hp) + "。";
-    execution.hints.push_back("可使用 use small_recover_pill 恢复气血");
+    if(const auto* recover_item = m_world == nullptr ? nullptr : m_world->find_item("small_recover_pill");
+       recover_item != nullptr)
+    {
+        execution.hints.push_back("可使用 use " + recover_item->name + "（small_recover_pill）恢复气血");
+    }
+    else
+    {
+        execution.hints.push_back("可使用 use small_recover_pill 恢复气血");
+    }
     return execution;
 }
 
@@ -3239,24 +3276,39 @@ MudCommandExecution MudGameRuntime::execute_cast(MudPlayerState* player,
     const int damage = std::max(1,
                                 spell_config->power + spell_state->level * 4 + player->base_attributes.int_attr +
                                     player->combat_attributes.spell_damage - monster->defense / 2);
+    const std::string damage_key = monster_damage_flag_key(*player, *monster);
+    const int accumulated_damage = std::max(0, flag_int_value(*player, damage_key, 0));
+    const int total_damage = std::min(monster->hp, accumulated_damage + damage);
+    const int remaining_hp = std::max(0, monster->hp - total_damage);
     set_flag_int(player, "current_mana", std::max(0, current_mana - spell_config->mana_cost));
-    player->exp += monster->reward_exp / 2;
     spell_state->proficiency += damage;
     execution.success = true;
     execution.title = "法术命中";
     execution.summary = "你施展「" + spell_config->name + "」，命中「" + monster->name + "」。";
     execution.spell_summary = spell_config->name + " 对 " + monster->name + " 造成 " + std::to_string(damage) + " 点法术伤害";
     execution.hints.push_back("法力消耗：" + std::to_string(spell_config->mana_cost));
-    if(damage >= monster->hp)
+    if(remaining_hp == 0)
     {
+        clear_flag(player, damage_key);
+        player->exp += monster->reward_exp;
         player->spirit_stone += monster->reward_spirit_stone;
         if(!monster->drop_item_id.empty())
         {
             add_inventory_item(player, monster->drop_item_id, monster->drop_item_count, false);
             unlock_codex_by_trigger(player, "obtain_item", monster->drop_item_id, &execution);
         }
+        refresh_quest_progress(player);
+        execution.title = "法术得胜";
+        execution.summary = "你施展「" + spell_config->name + "」，击溃了「" + monster->name + "」。";
+        execution.hints.push_back("获得修为 " + std::to_string(monster->reward_exp) + "、灵石 " +
+                                  std::to_string(monster->reward_spirit_stone));
         unlock_codex_by_trigger(player, "defeat_monster", monster->monster_id, &execution);
         execution.hints.push_back("妖兽在法术下溃散。");
+    }
+    else
+    {
+        set_flag_int(player, damage_key, total_damage);
+        execution.hints.push_back("「" + monster->name + "」尚余约 " + std::to_string(remaining_hp) + " 点气血。");
     }
     unlock_codex_by_trigger(player, "cast_spell", spell_state->spell_id, &execution);
     append_event(player->account, "spell", execution.title, execution.spell_summary, &execution.events);
