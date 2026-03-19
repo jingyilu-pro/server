@@ -139,6 +139,20 @@ bool verify_password_by_record(const std::string& password,
     return record.salt.empty() && record.password_hash == password;
 }
 
+bool is_ascii_alnum_account(const std::string& account)
+{
+    if(account.empty())
+    {
+        return false;
+    }
+
+    return std::all_of(account.begin(), account.end(), [](unsigned char ch) {
+        return (ch >= '0' && ch <= '9') ||
+               (ch >= 'A' && ch <= 'Z') ||
+               (ch >= 'a' && ch <= 'z');
+    });
+}
+
 } // namespace
 
 LoginService::LoginService(const RuntimeConfig& config,
@@ -530,6 +544,16 @@ coro_task_t LoginService::register_async(evhttp_request* request)
         http_code_message::gateway::set_code_message(&response,
                                                      http_code_message::gateway::code::kAccountRepositoryUnavailable,
                                                      http_code_message::gateway::message::kAccountRepositoryUnavailable);
+        write_protobuf_response(request, response, 200);
+        release_request(request);
+        co_return;
+    }
+
+    if(!is_ascii_alnum_account(register_request.account()))
+    {
+        http_code_message::gateway::set_code_message(&response,
+                                                     http_code_message::gateway::code::kAccountAlreadyExistsOrInvalidInput,
+                                                     "account must contain only English letters and digits");
         write_protobuf_response(request, response, 200);
         release_request(request);
         co_return;

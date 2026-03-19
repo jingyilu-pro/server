@@ -890,6 +890,20 @@ std::string escape_mysql_string(MYSQL* mysql_handle, const std::string& value)
     return escaped;
 }
 
+std::string mysql_hex_literal(const std::string& value)
+{
+    static constexpr char kHexDigits[] = "0123456789ABCDEF";
+
+    std::string hex;
+    hex.reserve(value.size() * 2);
+    for(unsigned char ch : value)
+    {
+        hex.push_back(kHexDigits[(ch >> 4) & 0x0F]);
+        hex.push_back(kHexDigits[ch & 0x0F]);
+    }
+    return hex;
+}
+
 bool decode_player_row(MYSQL_ROW row, unsigned long* lengths, MudPlayerState* player)
 {
     if(row == nullptr || lengths == nullptr || player == nullptr)
@@ -1262,7 +1276,20 @@ bool MySqlMudPlayerRepository::ensure_connected(MYSQL** mysql_handle, std::strin
 
     if(*mysql_handle != nullptr)
     {
-        return true;
+        if(mysql_ping(*mysql_handle) == 0)
+        {
+            return true;
+        }
+
+        const char* mysql_error_text = mysql_error(*mysql_handle);
+        spdlog::warn("mysql mud connection lost host={} port={} user={} db={} err={}, reconnecting",
+                     m_config.host,
+                     m_config.port,
+                     m_config.user,
+                     m_config.database,
+                     mysql_error_text == nullptr ? "unknown" : mysql_error_text);
+        mysql_close(*mysql_handle);
+        *mysql_handle = nullptr;
     }
 
     *mysql_handle = mysql_init(nullptr);
@@ -1277,6 +1304,8 @@ bool MySqlMudPlayerRepository::ensure_connected(MYSQL** mysql_handle, std::strin
 
     const unsigned int timeout_sec = static_cast<unsigned int>(std::max(1, m_config.connect_timeout_ms / 1000));
     mysql_options(*mysql_handle, MYSQL_OPT_CONNECT_TIMEOUT, &timeout_sec);
+    const char* charset_name = "utf8mb4";
+    mysql_options(*mysql_handle, MYSQL_SET_CHARSET_NAME, charset_name);
 
     const my_bool ssl_verify_server_cert = 0;
     const my_bool ssl_enforce = 0;
@@ -1302,6 +1331,25 @@ bool MySqlMudPlayerRepository::ensure_connected(MYSQL** mysql_handle, std::strin
                       m_config.port,
                       m_config.user,
                       m_config.database,
+                      mysql_error_text == nullptr ? "unknown" : mysql_error_text);
+        mysql_close(*mysql_handle);
+        *mysql_handle = nullptr;
+        return false;
+    }
+
+    if(mysql_set_character_set(*mysql_handle, charset_name) != 0)
+    {
+        const char* mysql_error_text = mysql_error(*mysql_handle);
+        if(error != nullptr)
+        {
+            *error = mysql_error_text == nullptr ? "mysql_set_character_set_failed" : mysql_error_text;
+        }
+        spdlog::error("mysql mud set_character_set failed host={} port={} user={} db={} charset={} err={}",
+                      m_config.host,
+                      m_config.port,
+                      m_config.user,
+                      m_config.database,
+                      charset_name,
                       mysql_error_text == nullptr ? "unknown" : mysql_error_text);
         mysql_close(*mysql_handle);
         *mysql_handle = nullptr;
@@ -1369,8 +1417,9 @@ bool MySqlMudPlayerRepository::query_player_record(MYSQL* mysql_handle,
     }
 
     out_player->reset();
-    const std::string sql = "SELECT " + std::string(kPlayerSelectColumns) + " FROM mud_character WHERE account='" +
-                            escape_mysql_string(mysql_handle, account) + "' LIMIT 1";
+    const std::string sql =
+        "SELECT " + std::string(kPlayerSelectColumns) +
+        " FROM mud_character WHERE account=CONVERT(X'" + mysql_hex_literal(account) + "' USING utf8mb4) LIMIT 1";
 
     if(mysql_query(mysql_handle, sql.c_str()) != 0)
     {
@@ -1409,6 +1458,14 @@ bool MySqlMudPlayerRepository::query_player_record(MYSQL* mysql_handle,
             decode_player_row(row, lengths, &player);
             *out_player = std::move(player);
         }
+    }
+    else if(std::any_of(account.begin(), account.end(), [](unsigned char ch) {
+                return ch >= 0x80;
+            }))
+    {
+        spdlog::warn("mysql mud player not found account_hex={} sql={}",
+                     mysql_hex_literal(account),
+                     sql);
     }
 
     mysql_free_result(result);

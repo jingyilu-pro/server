@@ -933,7 +933,7 @@ bool load_runtime_config(const std::string& config_path, RuntimeConfig* config, 
         for(int index = 1; index <= account_pool_size; ++index)
         {
             char account_buffer[32] = {};
-            std::snprintf(account_buffer, sizeof(account_buffer), "user_%04d", index);
+            std::snprintf(account_buffer, sizeof(account_buffer), "user%04d", index);
             config->client_pressure.scenario.login_account_pool.emplace_back(account_buffer);
         }
     }
@@ -951,7 +951,7 @@ bool load_runtime_config(const std::string& config_path, RuntimeConfig* config, 
               config->client_pressure.scenario.account_pool_size)
         {
             char account_buffer[32] = {};
-            std::snprintf(account_buffer, sizeof(account_buffer), "user_%04d", index++);
+            std::snprintf(account_buffer, sizeof(account_buffer), "user%04d", index++);
             std::string candidate(account_buffer);
             if(accounts.insert(candidate).second)
             {

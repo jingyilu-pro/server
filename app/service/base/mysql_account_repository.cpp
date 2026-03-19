@@ -418,7 +418,20 @@ bool MySqlAccountRepository::ensure_connected(MYSQL** mysql_handle, std::string*
 
     if(*mysql_handle != nullptr)
     {
-        return true;
+        if(mysql_ping(*mysql_handle) == 0)
+        {
+            return true;
+        }
+
+        const char* mysql_error_text = mysql_error(*mysql_handle);
+        spdlog::warn("mysql connection lost host={} port={} user={} db={} err={}, reconnecting",
+                     m_config.host,
+                     m_config.port,
+                     m_config.user,
+                     m_config.database,
+                     mysql_error_text == nullptr ? "unknown" : mysql_error_text);
+        mysql_close(*mysql_handle);
+        *mysql_handle = nullptr;
     }
 
     *mysql_handle = mysql_init(nullptr);
@@ -434,6 +447,8 @@ bool MySqlAccountRepository::ensure_connected(MYSQL** mysql_handle, std::string*
 
     const unsigned int timeout_sec = static_cast<unsigned int>(std::max(1, m_config.connect_timeout_ms / 1000));
     mysql_options(*mysql_handle, MYSQL_OPT_CONNECT_TIMEOUT, &timeout_sec);
+    const char* charset_name = "utf8mb4";
+    mysql_options(*mysql_handle, MYSQL_SET_CHARSET_NAME, charset_name);
 
     const my_bool ssl_verify_server_cert = 0;
     const my_bool ssl_enforce = 0;
@@ -459,6 +474,25 @@ bool MySqlAccountRepository::ensure_connected(MYSQL** mysql_handle, std::string*
                       m_config.port,
                       m_config.user,
                       m_config.database,
+                      mysql_error_text == nullptr ? "unknown" : mysql_error_text);
+        mysql_close(*mysql_handle);
+        *mysql_handle = nullptr;
+        return false;
+    }
+
+    if(mysql_set_character_set(*mysql_handle, charset_name) != 0)
+    {
+        const char* mysql_error_text = mysql_error(*mysql_handle);
+        if(error != nullptr)
+        {
+            *error = mysql_error_text == nullptr ? "mysql_set_character_set_failed" : mysql_error_text;
+        }
+        spdlog::error("mysql_set_character_set failed host={} port={} user={} db={} charset={} err={}",
+                      m_config.host,
+                      m_config.port,
+                      m_config.user,
+                      m_config.database,
+                      charset_name,
                       mysql_error_text == nullptr ? "unknown" : mysql_error_text);
         mysql_close(*mysql_handle);
         *mysql_handle = nullptr;

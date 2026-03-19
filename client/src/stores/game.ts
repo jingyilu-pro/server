@@ -10,6 +10,11 @@ interface AuthState {
   token: string
 }
 
+const gatewayErrorCode = {
+  characterAlreadyExistsOrInvalidInput: 40002,
+  invalidOrExpiredJwt: 40102,
+} as const
+
 function loadAuthState(): AuthState {
   if (typeof localStorage === 'undefined') {
     return { account: '', token: '' }
@@ -33,6 +38,33 @@ function loadAuthState(): AuthState {
 
 function isInvalidTokenHeaderError(error: unknown) {
   return error instanceof Error && /登录态包含非法字符/.test(error.message)
+}
+
+function isRegisterableAccount(account: string) {
+  return account.length > 0 && /^[A-Za-z0-9]+$/.test(account)
+}
+
+function hasPlayableSnapshot(player: Record<string, any> | null | undefined, scene: Record<string, any> | null | undefined) {
+  const characterName = String(player?.characterName ?? '').trim()
+  const playerAccount = String(player?.account ?? '').trim()
+  const sceneId = String(scene?.sceneId ?? '').trim()
+  return Boolean(sceneId && (characterName || playerAccount))
+}
+
+function isCharacterAlreadyExistsResponse(response: Record<string, any> | null | undefined) {
+  const code = Number(response?.code ?? -1)
+  const message = String(response?.message ?? '')
+  return code === gatewayErrorCode.characterAlreadyExistsOrInvalidInput && /character already exists/i.test(message)
+}
+
+function isInvalidRegisterAccountResponse(response: Record<string, any> | null | undefined) {
+  const code = Number(response?.code ?? -1)
+  const message = String(response?.message ?? '')
+  return code === 40001 && /english letters and digits/i.test(message)
+}
+
+function isInvalidOrExpiredJwtResponse(response: Record<string, any> | null | undefined) {
+  return Number(response?.code ?? -1) === gatewayErrorCode.invalidOrExpiredJwt
 }
 
 export const useGameStore = defineStore('game', {
@@ -116,9 +148,16 @@ export const useGameStore = defineStore('game', {
       this.loading = true
       this.error = ''
       try {
+        if (autoRegister && !isRegisterableAccount(account)) {
+          throw new Error('新注册账号只支持英文和数字，请改成例如 hanli001 这样的账号名')
+        }
+
         await this.routeLogin()
         if (autoRegister) {
           const registerResponse = await pbClient.registerAccount(account, password)
+          if (isInvalidRegisterAccountResponse(registerResponse)) {
+            throw new Error('新注册账号只支持英文和数字，请改成例如 hanli001 这样的账号名')
+          }
           if ((registerResponse.code ?? -1) !== 0 && (registerResponse.code ?? -1) !== 40001) {
             throw new Error(registerResponse.message ?? '注册失败')
           }
@@ -153,22 +192,32 @@ export const useGameStore = defineStore('game', {
       try {
         const response = await pbClient.bootstrap(this.account, this.token)
         if ((response.code ?? -1) !== 0) {
+          if (isInvalidOrExpiredJwtResponse(response)) {
+            this.logout()
+            throw new Error('登录已失效，请重新登录')
+          }
           throw new Error(response.message ?? '初始化失败')
         }
 
+        const player = (response.player as Record<string, any> | undefined) ?? null
+        const scene = (response.scene as Record<string, any> | undefined) ?? null
+        const playable = hasPlayableSnapshot(player, scene)
+
         this.error = ''
-        this.needCreateCharacter = Boolean(response.needCreateCharacter)
-        this.player = response.player ?? null
-        this.scene = response.scene ?? null
+        this.needCreateCharacter = Boolean(response.needCreateCharacter) && !playable
+        this.player = player
+        this.scene = scene
         this.availableOrigins = (response.availableOrigins as Record<string, any>[]) ?? []
         this.lastResult = null
         this.pollError = ''
         this.pollFailureCount = 0
         this.appendEvents((response.events as Record<string, any>[]) ?? [])
         this.nextEventId = Number(response.nextEventId ?? 0)
-        this.pollIntervalMs = Number((response.player as any)?.recommendedPollIntervalMs ?? 1500)
-        if (!this.needCreateCharacter && this.player) {
+        this.pollIntervalMs = Number((player as any)?.recommendedPollIntervalMs ?? 1500)
+        if (playable) {
           this.schedulePolling()
+        } else {
+          this.stopPolling()
         }
       } catch (error) {
         if (isInvalidTokenHeaderError(error)) {
@@ -186,18 +235,46 @@ export const useGameStore = defineStore('game', {
       this.error = ''
       try {
         const response = await pbClient.createCharacter(this.account, characterName, originId, this.token)
+        if (isInvalidOrExpiredJwtResponse(response)) {
+          this.logout()
+          throw new Error('登录已失效，请重新登录')
+        }
+        if (isCharacterAlreadyExistsResponse(response)) {
+          try {
+            await this.bootstrap()
+          } catch {
+            // Keep the original recovery message below if bootstrap still cannot restore the role.
+          }
+
+          if (this.readyToPlay) {
+            this.error = ''
+            this.needCreateCharacter = false
+            return
+          }
+
+          throw new Error('这个账号已经有角色了，已尝试恢复存档。请点“重新检查角色”，或先退出后重新登录。')
+        }
         if ((response.code ?? -1) !== 0) {
           throw new Error(response.message ?? '创建角色失败')
         }
+
+        const player = (response.player as Record<string, any> | undefined) ?? null
+        const scene = (response.scene as Record<string, any> | undefined) ?? null
+        const playable = hasPlayableSnapshot(player, scene)
+
         this.error = ''
-        this.needCreateCharacter = false
-        this.player = response.player ?? null
-        this.scene = response.scene ?? null
+        this.needCreateCharacter = !playable
+        this.player = player
+        this.scene = scene
         this.pollError = ''
         this.pollFailureCount = 0
         this.appendEvents((response.events as Record<string, any>[]) ?? [])
         this.nextEventId = Number(response.nextEventId ?? 0)
-        this.schedulePolling()
+        if (playable) {
+          this.schedulePolling()
+        } else {
+          this.stopPolling()
+        }
       } finally {
         this.loading = false
       }

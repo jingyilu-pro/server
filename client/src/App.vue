@@ -240,6 +240,8 @@ const currentQuestIds = computed(() => new Set(quests.value.map((quest) => Strin
 const latestNonChatEvent = computed(
   () => [...store.events].reverse().find((event) => !isChatEvent(event)) ?? null,
 )
+const showGameView = computed(() => store.authenticated && store.readyToPlay)
+const showCreateCharacterView = computed(() => store.authenticated && store.needCreateCharacter && !store.readyToPlay)
 const currentStatusAttributes = computed(
   () => (player.value.currentStatusAttributes as Record<string, any> | undefined) ?? player.value.statusAttributes ?? {},
 )
@@ -1815,6 +1817,14 @@ async function createCharacter() {
   }
 }
 
+async function retryBootstrap() {
+  try {
+    await store.bootstrap()
+  } catch (error) {
+    setError(error)
+  }
+}
+
 async function submitComposer(commandOverride?: string) {
   const raw = commandOverride ?? composerText.value.trim()
   if (!raw) {
@@ -2045,8 +2055,8 @@ watch(
 </script>
 
 <template>
-  <div class="shell" :class="{ 'shell--game': store.authenticated && !store.needCreateCharacter }">
-    <header v-if="store.authenticated && !store.needCreateCharacter" class="top-banner">
+  <div class="shell" :class="{ 'shell--game': showGameView }">
+    <header v-if="showGameView" class="top-banner">
       <div class="brand-copy">
         <p class="eyebrow">人界修行中</p>
         <h1>凡人修仙录</h1>
@@ -2073,12 +2083,12 @@ watch(
     <section v-if="!store.authenticated" class="auth-card">
       <div class="card-heading">
         <h2>进入凡人世界</h2>
-        <p>沿用现有服务端协议，登录后直接进入移动端主界面。</p>
+        <p>沿用现有服务端协议，登录后直接进入移动端主界面。新注册账号仅支持英文字母和数字，老账号不受影响。</p>
       </div>
       <div class="form-grid">
         <label>
           <span>账号名</span>
-          <input v-model="account" autocomplete="username" placeholder="例如 韩立001" />
+          <input v-model="account" autocomplete="username" placeholder="例如 hanli001" />
         </label>
         <label>
           <span>登录密码</span>
@@ -2091,10 +2101,10 @@ watch(
       </div>
     </section>
 
-    <section v-else-if="store.needCreateCharacter" class="auth-card">
+    <section v-else-if="showCreateCharacterView" class="auth-card">
       <div class="card-heading">
         <h2>塑造新角色</h2>
-        <p>先定姓名，再选一处人界出身。不同出身会带来不同的初始属性与剧情气质。</p>
+        <p>当前账号：{{ store.account }}。先定姓名，再选一处人界出身；如果这个账号本来就有角色，也可以先重新检查存档。</p>
       </div>
       <div class="form-grid single-column">
         <label>
@@ -2128,10 +2138,12 @@ watch(
         <button type="button" class="primary-button" :disabled="store.loading || !selectedOriginId" @click="createCharacter()">
           踏入修仙路
         </button>
+        <button type="button" class="secondary-button" :disabled="store.loading" @click="retryBootstrap()">重新检查角色</button>
+        <button type="button" class="ghost-button" :disabled="store.loading" @click="store.logout()">返回登录</button>
       </div>
     </section>
 
-    <main v-else class="mobile-layout">
+    <main v-else-if="showGameView" class="mobile-layout">
       <section
         class="surface-panel event-panel event-panel--clickable"
         role="button"
@@ -2160,14 +2172,12 @@ watch(
 
       <section class="surface-panel scene-panel">
         <div class="section-row scene-section-header">
-          <div>
+          <div class="scene-heading">
             <p class="section-kicker">主界面</p>
             <h2>{{ scene.sceneName || '修行记录' }}</h2>
-          </div>
-          <div class="scene-header-actions">
-            <button type="button" class="ghost-button tiny-button" @click="openOverlay('player')">人物</button>
-            <button type="button" class="ghost-button tiny-button" @click="openOverlay('map')">地图</button>
-            <button type="button" class="ghost-button tiny-button" @click="submitComposer('look')">重看</button>
+            <p class="scene-header-summary">
+              章节：{{ displayProgressionChapter }} · 当前可见 {{ sceneInteractables.length }} 项 · 去路 {{ exits.length }} 条
+            </p>
           </div>
         </div>
         <div class="scene-frame">
@@ -2188,15 +2198,13 @@ watch(
 
           <div class="scene-main-board">
             <div class="scene-board-header">
-              <div>
+              <div class="scene-board-copy">
                 <p class="scene-board-title">{{ scene.regionName || '修行界' }}</p>
                 <p class="scene-board-subtitle">{{ sceneMissionText }}</p>
               </div>
-              <div class="scene-board-tools">
-                <button type="button" class="mini-tool-button" @click="activeCommandCategory = 'social'; openOverlay('commands')">闲聊</button>
-                <button type="button" class="mini-tool-button" @click="activeCommandCategory = 'tasks'; openOverlay('commands')">任务</button>
-                <button type="button" class="mini-tool-button" @click="activeCommandCategory = 'explore'; openOverlay('commands')">附近</button>
-                <button type="button" class="mini-tool-button" @click="void openCodexOverlay('地理志')">手册</button>
+              <div class="scene-board-badges">
+                <span class="scene-board-badge">可见 · {{ sceneInteractables.length }}</span>
+                <span class="scene-board-badge">去路 · {{ exits.length }}</span>
               </div>
             </div>
 
@@ -2314,6 +2322,17 @@ watch(
         </form>
       </footer>
     </main>
+
+    <section v-else-if="store.authenticated" class="auth-card">
+      <div class="card-heading">
+        <h2>正在恢复角色</h2>
+        <p>当前账号：{{ store.account }}。登录态还在，但角色数据还没有恢复成可玩的状态；可以重新检查存档，或者退出后重新登录。</p>
+      </div>
+      <div class="action-row">
+        <button type="button" class="primary-button" :disabled="store.loading" @click="retryBootstrap()">重新检查角色</button>
+        <button type="button" class="secondary-button" :disabled="store.loading" @click="store.logout()">返回登录</button>
+      </div>
+    </section>
 
     <div v-if="store.authenticated && activeOverlay !== 'none'" class="overlay-backdrop" @click.self="closeOverlay()">
       <section class="overlay-sheet" :class="{ 'overlay-sheet--wide': activeOverlay === 'map' || activeOverlay === 'commands' || activeOverlay === 'codex' }">

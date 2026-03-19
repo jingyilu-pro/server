@@ -65,10 +65,10 @@ client_pressure:
     account_pool_size: 20
     auto_relogin: true
     login_account_pool:
-      - user_0001
-      - user_0002
-      - user_0003
-      - user_0004
+      - user0001
+      - user0002
+      - user0003
+      - user0004
   guard:
     enabled: true
     min_samples: 100
