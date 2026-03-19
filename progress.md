@@ -49,3 +49,20 @@ TODO
 - 直接请求 `http://172.17.126.104:18080/v1/route/login` 成功返回 protobuf 路由结果，证明 Windows -> WSL 服务访问恢复。
 - 通过临时 Vite dev server `http://127.0.0.1:5174` 走 `/api/manager|login|game` 代理，成功完成 `route/login -> register -> auth/login -> game/enter -> bootstrap -> character/create`，建角后场景为“七玄门外场”，可见 NPC 为“厉飞雨 / 张铁”。
 - 2026-03-19: 用本机 Chrome headless 访问 `http://127.0.0.1:5174/`，DOM 正常加载到“进入凡人世界”登录页，并输出了登录页截图到临时目录，说明前端页面本身也可正常打开。
+- 2026-03-19: 按“真玩家回归”新建账号 `regplay_0319_1134`、角色 `回归0319乙`，从注册登录开始一路实玩到 `乱星海近港`。实际跑通路径为：
+- `七玄门外场 -> 嘉元城东门 -> 嘉元城集市 -> 买黄精草 -> 墨府总管提交墨府采药 -> 太南谷入口 -> 流动牙人接残垣旧图 -> 辛如音小筑接太南异胆 -> 黄枫谷外营 -> 黄枫谷偏殿 -> 血禁石门 -> 血色禁地外围 -> 血雾沼泽 -> 灵兽祭坛 -> 血禁残垣拾取残垣旧图 -> 海商坊市 -> 天南港提交残垣旧图 -> 接乱星海海图 -> 乱星海近港`。
+- 2026-03-19: 本轮真玩家回归中实际撞到并修复了 3 个会影响继续玩的阻塞/强干扰问题：
+- `残垣旧图` 在 `天南港 -> 海商牙人` 弹窗里会显示可提交，但服务端旧逻辑只按“当前场景 NPC 自带 quest_ids”匹配提交任务，导致跨 NPC 提交任务实际报错“当前场景没有这个任务可提交”。现已改为按“玩家已接活跃任务 + quest.submit_npc_id 是否在当前场景”判定提交，并补齐对话提示。
+- 命令执行成功后，前端不会清掉上一次失败留下的 `store.error`，顶部红色错误横幅会一直挂着。现已在 `bootstrap/createCharacter/executeCommand` 成功链路里主动清理错误状态；整页刷新恢复后也会清掉旧横幅。
+- 主界面“当前主线”此前总是取第一个活跃任务，导致 `残垣旧图` 完成后仍显示更早接的 `太南异胆`，把玩家视线从海港主线拉回旧支线。现改为“优先显示当前场景相关的活跃任务，否则显示最近接取的活跃任务”，在 `天南港` 已正确切到 `乱星海海图`。
+- 2026-03-19: 已确认 `血禁残垣` 旧问题彻底回归通过：拾取 `残垣旧图` 后，主线进度会立刻从 `0 / 1` 变成 `1 / 1`，场景左侧和正文里的地面遗落条目会同步消失，不再残留。
+- 2026-03-19: 这轮浏览器回归使用本机 Google Chrome + Playwright CLI，配置文件为 `output/playwright/gameplay/playwright-cli.json`；过程快照保存在仓库根目录 `.playwright-cli/`。
+
+可复用回归流程
+- 1. `wsl bash -lc "cd /mnt/c/Work/Projects/server && cmake --build build-wsl-main --target application -j2"` 编译后端。
+- 2. 杀掉旧后端并重新拉起：先 `wsl bash -lc "pgrep -af 'application --mode all --config all.yaml'"` 确认旧 PID，再用 Windows `Start-Process wsl.exe -ArgumentList @('bash','-lc','cd /mnt/c/Work/Projects/server && exec ./build-wsl-main/app/application/application --mode all --config all.yaml') -WindowStyle Hidden` 拉起新进程。
+- 3. 确认前端 dev server 在 `http://127.0.0.1:5174/` 可用，Playwright 使用本机 Chrome，不需要额外下载浏览器。
+- 4. 每次新回归都创建唯一账号和角色名，避免命中旧存档；推荐账号名带日期时间，例如 `gameplay_YYYYMMDD_HHMM`。
+- 5. 关键检查点依次为：注册登录成功、建角成功、`墨府采药` 可买可交、`残垣旧图` 可接可拾可交、提交后主界面任务追踪切到 `乱星海海图`、刷新页面后状态仍可恢复到当前场景。
+- 6. Playwright 操作里场景一变就必须重新 `snapshot`，不要复用旧 ref；从 `辛如音小筑` 返回 `太南谷入口` 后直接点旧 ref 会失败，这是自动化 ref 失效，不是游戏 bug。
+- 7. 若前端代码刚改完又碰到旧错误横幅，优先整页 `reload` 一次再看；HMR 可能保留旧 store 状态，但刷新恢复链路也必须保持正常，所以这一步本身也是有效回归项。

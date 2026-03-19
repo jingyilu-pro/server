@@ -97,6 +97,18 @@ void set_flag_int(MudPlayerState* player, const std::string& key, int value)
     player->flags[key] = std::to_string(value);
 }
 
+bool scene_has_npc(const MudSceneConfig* scene, const std::string& npc_id)
+{
+    return scene != nullptr &&
+           std::find(scene->npc_ids.begin(), scene->npc_ids.end(), npc_id) != scene->npc_ids.end();
+}
+
+bool quest_key_matches(const MudQuestConfig& quest, const std::string& normalized_key)
+{
+    return normalized_key.empty() || mud_to_lower_ascii(quest.quest_id) == normalized_key ||
+           mud_to_lower_ascii(quest.title) == normalized_key;
+}
+
 } // namespace
 
 MudGameRuntime::MudGameRuntime(std::shared_ptr<MudWorld> world,
@@ -423,6 +435,7 @@ bool MudGameRuntime::normalize_player_state(MudPlayerState* player) const
     }
 
     derive_player_combat_state(player);
+    refresh_quest_progress(player);
     if(player->flags.find("current_mana") == player->flags.end())
     {
         set_flag_int(player, "current_mana", player->status_attributes.mana);
@@ -801,6 +814,15 @@ void MudGameRuntime::fill_scene_snapshot(const MudPlayerState& player,
         if(loot == nullptr)
         {
             continue;
+        }
+        if(loot->one_time)
+        {
+            const auto one_time_key = "loot:" + loot->loot_id;
+            if(auto flag_iter = player.flags.find(one_time_key); flag_iter != player.flags.end() &&
+               flag_iter->second == "1")
+            {
+                continue;
+            }
         }
         const auto* item = m_world->find_item(loot->item_id);
         auto* output = snapshot->add_ground_loots();
@@ -2011,7 +2033,17 @@ MudCommandExecution MudGameRuntime::execute_talk(MudPlayerState* player,
     execution.success = true;
     execution.title = "与" + npc->name + "交谈";
     execution.summary = npc->dialogue.empty() ? (npc->name + "静静看着你。") : npc->dialogue;
+    refresh_quest_progress(player);
     unlock_codex_by_trigger(player, "talk_npc", npc->npc_id, &execution);
+    std::vector<std::string> hinted_quest_ids;
+    auto push_hint_once = [&](const std::string& quest_id, std::string hint) {
+        if(std::find(hinted_quest_ids.begin(), hinted_quest_ids.end(), quest_id) != hinted_quest_ids.end())
+        {
+            return;
+        }
+        hinted_quest_ids.push_back(quest_id);
+        execution.hints.push_back(std::move(hint));
+    };
     for(const auto& quest_id : npc->quest_ids)
     {
         const auto* quest = m_world->find_quest(quest_id);
@@ -2019,7 +2051,68 @@ MudCommandExecution MudGameRuntime::execute_talk(MudPlayerState* player,
         {
             continue;
         }
-        execution.hints.push_back("可接任务：accept " + quest->quest_id + "（" + quest->title + "）");
+
+        const auto* quest_state = find_quest_state(*player, quest->quest_id);
+        if(quest_state == nullptr)
+        {
+            push_hint_once(quest->quest_id, "可接任务：accept " + quest->quest_id + "（" + quest->title + "）");
+            continue;
+        }
+
+        if(quest_state->status == "completed" || quest_state->status == "submitted")
+        {
+            continue;
+        }
+
+        if(quest_state->status == "active")
+        {
+            if(npc->npc_id == quest->submit_npc_id && quest_state->progress >= quest->required_item_count)
+            {
+                push_hint_once(quest->quest_id, "可提交任务：submit " + quest->quest_id + "（" + quest->title + "）");
+                continue;
+            }
+
+            if(quest_state->progress < quest->required_item_count)
+            {
+                push_hint_once(quest->quest_id,
+                               "任务进行中：" + quest->title + "（" +
+                                   std::to_string(quest_state->progress) + " / " +
+                                   std::to_string(quest->required_item_count) + "）");
+                continue;
+            }
+
+            if(npc->npc_id != quest->submit_npc_id)
+            {
+                if(const auto* submit_npc = m_world->find_npc(quest->submit_npc_id); submit_npc != nullptr)
+                {
+                    push_hint_once(quest->quest_id, "任务已齐：把材料交给" + submit_npc->name + "。");
+                }
+            }
+        }
+    }
+    for(const auto& quest_state : player->quests)
+    {
+        if(quest_state.status != "active")
+        {
+            continue;
+        }
+        if(std::find(hinted_quest_ids.begin(), hinted_quest_ids.end(), quest_state.quest_id) != hinted_quest_ids.end())
+        {
+            continue;
+        }
+        const auto* quest = m_world->find_quest(quest_state.quest_id);
+        if(quest == nullptr || quest->submit_npc_id != npc->npc_id)
+        {
+            continue;
+        }
+        if(quest_state.progress >= quest->required_item_count)
+        {
+            push_hint_once(quest->quest_id, "可提交任务：submit " + quest->quest_id + "（" + quest->title + "）");
+            continue;
+        }
+        push_hint_once(quest->quest_id,
+                       "任务进行中：" + quest->title + "（" + std::to_string(quest_state.progress) + " / " +
+                           std::to_string(quest->required_item_count) + "）");
     }
     if(!npc->sect_offer_id.empty())
     {
@@ -2095,19 +2188,42 @@ MudCommandExecution MudGameRuntime::execute_submit(MudPlayerState* player,
         return execution;
     }
 
-    const auto* quest = args.empty() ? nullptr : match_scene_quest(*player, args.front());
-    if(quest == nullptr)
+    const auto* scene = current_scene(*player);
+    const auto normalized_key = args.empty() ? std::string() : mud_to_lower_ascii(args.front());
+    MudQuestState* quest_state = nullptr;
+    const auto* quest = static_cast<const MudQuestConfig*>(nullptr);
+    for(auto& candidate_state : player->quests)
+    {
+        if(candidate_state.status != "active")
+        {
+            continue;
+        }
+        const auto* candidate_quest = m_world->find_quest(candidate_state.quest_id);
+        if(candidate_quest == nullptr || !quest_key_matches(*candidate_quest, normalized_key))
+        {
+            continue;
+        }
+        quest = candidate_quest;
+        quest_state = &candidate_state;
+        break;
+    }
+    if(quest == nullptr || quest_state == nullptr)
     {
         execution.title = "未找到任务";
-        execution.summary = "当前场景没有这个任务可提交。";
+        execution.summary = "当前没有这个可提交的任务。";
         return execution;
     }
-
-    auto* quest_state = find_quest_state(player, quest->quest_id);
-    if(quest_state == nullptr || quest_state->status != "active")
+    if(!scene_has_npc(scene, quest->submit_npc_id))
     {
-        execution.title = "任务未开始";
-        execution.summary = "你尚未接取这个任务。";
+        execution.title = "无法提交";
+        if(const auto* submit_npc = m_world->find_npc(quest->submit_npc_id); submit_npc != nullptr)
+        {
+            execution.summary = "此任务需要交给" + submit_npc->name + "。";
+        }
+        else
+        {
+            execution.summary = "当前场景没有这个任务可提交。";
+        }
         return execution;
     }
 
@@ -3023,6 +3139,7 @@ MudCommandExecution MudGameRuntime::execute_loot(MudPlayerState* player,
 
     add_inventory_item(player, loot->item_id, loot->quantity, false);
     set_flag_int(player, one_time_key, 1);
+    refresh_quest_progress(player);
     unlock_codex_by_trigger(player, "obtain_item", loot->item_id, &execution);
     execution.success = true;
     execution.title = "拾取成功";
@@ -3063,6 +3180,7 @@ MudCommandExecution MudGameRuntime::execute_harvest(MudPlayerState* player,
     add_inventory_item(player, node->drop_item_id, node->drop_item_count, false);
     set_flag_int(player, cooldown_key, static_cast<int>(now));
     player->profession.exploration_level = std::max(1, player->profession.exploration_level) + 1;
+    refresh_quest_progress(player);
     unlock_codex_by_trigger(player, "obtain_item", node->drop_item_id, &execution);
     execution.success = true;
     execution.title = "采集完成";

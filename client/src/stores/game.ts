@@ -45,6 +45,8 @@ export const useGameStore = defineStore('game', {
     lastResult: null as Record<string, any> | null,
     loading: false,
     error: '',
+    pollError: '',
+    pollFailureCount: 0,
     pollIntervalMs: 1500,
     pollTimer: 0 as number | ReturnType<typeof setTimeout>,
     rankings: [] as Record<string, any>[],
@@ -94,7 +96,10 @@ export const useGameStore = defineStore('game', {
         try {
           await this.pullFeed()
         } catch (error) {
-          this.error = error instanceof Error ? error.message : '拉取事件失败'
+          this.pollFailureCount += 1
+          if (this.pollFailureCount >= 3) {
+            this.pollError = '与游戏世界暂时失去联系，正在重连…'
+          }
         } finally {
           this.schedulePolling()
         }
@@ -144,11 +149,14 @@ export const useGameStore = defineStore('game', {
         throw new Error(response.message ?? '初始化失败')
       }
 
+      this.error = ''
       this.needCreateCharacter = Boolean(response.needCreateCharacter)
       this.player = response.player ?? null
       this.scene = response.scene ?? null
       this.availableOrigins = (response.availableOrigins as Record<string, any>[]) ?? []
       this.lastResult = null
+      this.pollError = ''
+      this.pollFailureCount = 0
       this.appendEvents((response.events as Record<string, any>[]) ?? [])
       this.nextEventId = Number(response.nextEventId ?? 0)
       this.pollIntervalMs = Number((response.player as any)?.recommendedPollIntervalMs ?? 1500)
@@ -162,14 +170,18 @@ export const useGameStore = defineStore('game', {
       }
 
       this.loading = true
+      this.error = ''
       try {
         const response = await pbClient.createCharacter(this.account, characterName, originId, this.token)
         if ((response.code ?? -1) !== 0) {
           throw new Error(response.message ?? '创建角色失败')
         }
+        this.error = ''
         this.needCreateCharacter = false
         this.player = response.player ?? null
         this.scene = response.scene ?? null
+        this.pollError = ''
+        this.pollFailureCount = 0
         this.appendEvents((response.events as Record<string, any>[]) ?? [])
         this.nextEventId = Number(response.nextEventId ?? 0)
         this.schedulePolling()
@@ -187,6 +199,7 @@ export const useGameStore = defineStore('game', {
       }
 
       this.loading = true
+      this.error = ''
       try {
         const response = await pbClient.executeCommand(this.account, trimmed, this.token)
         this.commandHistory.unshift(trimmed)
@@ -200,6 +213,7 @@ export const useGameStore = defineStore('game', {
         if ((response.code ?? -1) !== 0) {
           throw new Error(response.message ?? '命令执行失败')
         }
+        this.error = ''
       } finally {
         this.loading = false
       }
@@ -213,6 +227,8 @@ export const useGameStore = defineStore('game', {
       if ((response.code ?? -1) !== 0) {
         throw new Error(response.message ?? '拉取事件失败')
       }
+      this.pollFailureCount = 0
+      this.pollError = ''
       this.appendEvents((response.events as Record<string, any>[]) ?? [])
       this.scene = response.scene ?? this.scene
       this.nextEventId = Number(response.nextEventId ?? this.nextEventId)
@@ -265,6 +281,8 @@ export const useGameStore = defineStore('game', {
       this.availableOrigins = []
       this.lastResult = null
       this.error = ''
+      this.pollError = ''
+      this.pollFailureCount = 0
       this.rankings = []
       this.codexEntries = []
       this.codexDetail = null

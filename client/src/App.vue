@@ -89,12 +89,32 @@ const storyViewport = ref<HTMLElement | null>(null)
 const codexCategories = ['人物志', '宗门志', '妖兽志', '奇虫志', '地理志', '灵草丹药志', '功法技能志', '法术志', '宝物阵法志', '韩立年历'] as const
 
 const sceneQuestOffers: Record<string, Array<{ id: string; title: string; summary: string }>> = {
+  qixuan_square: [{ id: 'backslope_wolf_skin', title: '后山狼皮', summary: '厉飞雨想先看看你敢不敢见血，这条支线会带你熟悉七玄门后山与基础战斗。' }],
+  qixuan_dormitory: [{ id: 'qixuan_stream_note', title: '溪边药方', summary: '孙二正急着找回被风吹走的药方纸，顺着这条线能把你带到洗剑溪与医师处。' }],
+  qixuan_stream: [{ id: 'qixuan_stream_note', title: '溪边药方', summary: '药方找到后，可在洗剑溪交回医师完成这段跑腿。' }],
   jiayuan_market: [{ id: 'qixuan_herb', title: '墨府采药', summary: '嘉元城总管正急需黄精草，你若接下此事，便能借此熟悉坊市与采集路线。' }],
-  tainan_fair: [{ id: 'tainan_snake', title: '太南异胆', summary: '太南小会有人高价收购异胆，这条线索会带你熟悉散修交易与小规模战斗。' }],
+  mofu_front_hall: [{ id: 'mofu_guest_token', title: '墨府来客令', summary: '墨府前厅散落着来客令牌，适合继续熟悉搜寻与拾取。' }],
+  tainan_gate: [{ id: 'ruins_old_map', title: '残垣旧图', summary: '流动牙人正在替海港一带打听旧图下落，这会把你一路引向血禁残垣与天南港。' }],
+  tainan_fair: [{ id: 'fair_rumor_packet', title: '小会密闻', summary: '旧书摊想买虚天传闻，适合把太南谷里的人物与摊位继续串起来。' }],
+  xin_house: [{ id: 'tainan_snake', title: '太南异胆', summary: '辛如音需要妖蛇异胆试阵，这条线会带你熟悉太南谷附近的战斗与材料循环。' }],
+  array_lane: [{ id: 'tainan_array_flag', title: '阵旗回收', summary: '阵旗巷学徒正收残片，这条线更偏向阵法与拾取。' }],
   huangfeng_outpost: [{ id: 'huangfeng_letter', title: '黄枫谷羽信', summary: '外营弟子正等人送一封羽信入谷，这是接触黄枫谷主线的入口。' }],
-  blood_gate: [{ id: 'blood_forbidden_token', title: '血禁采兰', summary: '血禁石门附近传出灵兰踪迹，接下任务后可进一步熟悉禁地探索规则。' }],
-  tiannan_harbor: [{ id: 'chaos_sea_chart', title: '乱星海海图', summary: '天南港口有人在找可托付的修士，拿到海图便能继续深入海域。' }],
-  chaos_sea_isle: [{ id: 'xutian_key', title: '虚天残钥', summary: '孤岛残碑下埋有虚天殿残钥的线索，适合作为后续秘境主线入口。' }],
+  huangfeng_medicine_terrace: [{ id: 'medicine_moss', title: '药台苔引', summary: '药梯台正在收灵苔药引，适合继续熟悉采药与炼制材料。' }],
+  huangfeng_scripture: [{ id: 'huangfeng_manual', title: '藏经抄卷', summary: '藏经石廊的执事在等一卷误落抄卷，这条线会把你带往黄枫谷典籍区。' }],
+  blood_gate: [
+    { id: 'blood_forbidden_token', title: '血禁采兰', summary: '血禁执事正在收血兰验阵，这是血色禁地的正式入口任务。' },
+    { id: 'blood_swamp_rescue', title: '沼泽驱邪', summary: '血雾沼泽的虫群样本也有人悬赏，适合继续深入禁地。' },
+  ],
+  tiannan_harbor: [
+    { id: 'ruins_old_map', title: '残垣旧图', summary: '旧图真正的买家在海港，交到海商牙人手里才能换到远航门路。' },
+    { id: 'chaos_sea_chart', title: '乱星海海图', summary: '海商牙人正在找修补海图禁制的材料，这会继续把你推向乱星海。' },
+  ],
+  smuggler_alley: [{ id: 'harbor_signal', title: '暗巷接头', summary: '暗潮小巷有人在收接头暗号，适合补足港口支线。' }],
+  chaos_sea_port: [{ id: 'captain_supply', title: '远航补给', summary: '曲船主还缺远航物资，这条线会把你送上真正的海路。' }],
+  chaos_sea_ship: [{ id: 'demon_fish_core', title: '妖鱼内丹', summary: '船上术士正在收妖鱼内丹，可顺手把海战与法术线串起来。' }],
+  chaos_sea_isle: [{ id: 'chaos_relic', title: '孤岛残碑', summary: '残碑孤岛的隐士需要残钥碎片，这会引出虚天殿前置线。' }],
+  xutian_hall: [{ id: 'xutian_key', title: '虚天残钥', summary: '守门残灵在等残钥，交齐后才能真正逼近虚天殿内层。' }],
+  xutian_star_platform: [{ id: 'xutian_star_map', title: '星纹演算', summary: '祭台残灵正在收星纹拓片，这是逼近内殿玄门的最后一步。' }],
 }
 
 const sceneSectOffers: Record<string, Array<{ command: string; name: string; summary: string }>> = {
@@ -161,6 +181,8 @@ const sceneHazards = computed(() => (scene.value.hazards as Record<string, any>[
 const codexSummaries = computed(() => (player.value.codexSummaries as Record<string, any>[] | undefined) ?? [])
 const codexEntries = computed(() => (store.codexEntries as Record<string, any>[] | undefined) ?? [])
 const codexDetail = computed(() => store.codexDetail as Record<string, any> | null)
+const displayError = computed(() => store.error || store.pollError)
+const currentQuestIds = computed(() => new Set(quests.value.map((quest) => String(quest.questId ?? ''))))
 const sceneItems = computed(() => {
   const items = (scene.value.items as Record<string, any>[] | undefined) ?? []
   if (items.length > 0) {
@@ -214,7 +236,14 @@ const mapEdges = computed(() =>
 )
 
 const commandCategories = computed(() => {
-  const currentQuestIds = new Set(quests.value.map((quest) => String(quest.questId ?? '')))
+  const availableSceneQuestOffers = (sceneQuestOffers[currentSceneId.value] ?? []).filter(
+    (quest) => !currentQuestIds.value.has(quest.id),
+  )
+  const readySceneQuests = quests.value.filter(
+    (quest) =>
+      isQuestReadyToSubmit(quest) &&
+      (sceneQuestOffers[currentSceneId.value] ?? []).some((offer) => offer.id === String(quest.questId ?? '')),
+  )
   const firstMonster = monsters.value[0]
 
   const social: CommandAction[] = [
@@ -260,20 +289,16 @@ const commandCategories = computed(() => {
       detail: String(npc.hint ?? '与人物对话，推进剧情或获取任务。'),
       command: `talk ${String(npc.name)}`,
     })),
-    ...(sceneQuestOffers[currentSceneId.value] ?? [])
-      .filter((quest) => !currentQuestIds.has(quest.id))
-      .map((quest) => ({
+    ...availableSceneQuestOffers.map((quest) => ({
         key: `accept-${quest.id}`,
         label: `接取·${quest.title}`,
         detail: '接下当前场景的线索任务。',
         command: `accept ${quest.id}`,
       })),
-    ...quests.value
-      .filter((quest) => String(quest.status ?? '') === 'active')
-      .map((quest) => ({
+    ...readySceneQuests.map((quest) => ({
         key: `submit-${String(quest.questId)}`,
         label: `提交·${String(quest.title)}`,
-        detail: '条件达成后可提交任务。',
+        detail: '材料已齐，可以当场提交。',
         command: `submit ${String(quest.questId)}`,
       })),
   ]
@@ -451,12 +476,15 @@ const activeInfoTab = computed<SideTab>(() =>
 const sceneInteractables = computed<SceneInteractable[]>(() => {
   const entries: SceneInteractable[] = []
   const activeQuestList = quests.value.filter((quest) => String(quest.status ?? '') === 'active')
-  const currentQuestIds = new Set(quests.value.map((quest) => String(quest.questId ?? '')))
-  const availableQuestOffers = (sceneQuestOffers[currentSceneId.value] ?? []).filter((quest) => !currentQuestIds.has(quest.id))
+  const sceneQuestEntries = sceneQuestOffers[currentSceneId.value] ?? []
+  const availableQuestOffers = sceneQuestEntries.filter((quest) => !currentQuestIds.value.has(quest.id))
   const sectOffers = (sceneSectOffers[currentSceneId.value] ?? []).filter(() => !player.value.sect?.joined)
   const primarySkill = String(player.value.cultivation?.primarySkill ?? '长春功')
-  const activeSceneQuest = activeQuestList.find((quest) =>
-    (sceneQuestOffers[currentSceneId.value] ?? []).some((offer) => offer.id === String(quest.questId ?? '')),
+  const readySceneQuests = activeQuestList.filter((quest) =>
+    sceneQuestEntries.some((offer) => offer.id === String(quest.questId ?? '')) && isQuestReadyToSubmit(quest),
+  )
+  const trackingSceneQuest = activeQuestList.find((quest) =>
+    sceneQuestEntries.some((offer) => offer.id === String(quest.questId ?? '')),
   )
   const teamAccountSet = new Set(teamMembers.value.map((member) => String(member.account ?? '')))
 
@@ -528,25 +556,26 @@ const sceneInteractables = computed<SceneInteractable[]>(() => {
         command: `talk ${npcName}`,
       },
     ]
-    const questOffer = Boolean(npc.hasQuest) ? availableQuestOffers[0] : undefined
+    const npcQuestOffers = Boolean(npc.hasQuest) ? availableQuestOffers : []
+    const npcReadyQuests = Boolean(npc.hasQuest) ? readySceneQuests : []
 
-    if (questOffer) {
+    npcQuestOffers.forEach((questOffer) => {
       npcActions.push({
         key: `interactable-npc-accept-${String(npc.npcId ?? npcName)}-${questOffer.id}`,
         label: `接取·${questOffer.title}`,
         detail: '顺着这位人物给出的线索继续推进。',
         command: `accept ${questOffer.id}`,
       })
-    }
+    })
 
-    if (Boolean(npc.hasQuest) && activeSceneQuest) {
+    npcReadyQuests.forEach((questState) => {
       npcActions.push({
-        key: `interactable-npc-submit-${String(npc.npcId ?? npcName)}-${String(activeSceneQuest.questId ?? '')}`,
-        label: `提交·${String(activeSceneQuest.title ?? '任务')}`,
-        detail: '若材料已齐，可直接向此人交付。',
-        command: `submit ${String(activeSceneQuest.questId ?? '')}`,
+        key: `interactable-npc-submit-${String(npc.npcId ?? npcName)}-${String(questState.questId ?? '')}`,
+        label: `提交·${String(questState.title ?? '任务')}`,
+        detail: '材料已经齐备，可直接向此人交付。',
+        command: `submit ${String(questState.questId ?? '')}`,
       })
-    }
+    })
 
     if (index === 0 && sectOffers.length > 0) {
       const sect = sectOffers[0]
@@ -576,13 +605,15 @@ const sceneInteractables = computed<SceneInteractable[]>(() => {
       subtitle: '视野可见人物',
       description: String(npc.hint ?? `${npcName}正驻留在这里，也许愿意和你多说几句。`),
       meta: [
-        questOffer
-          ? `可接任务：${questOffer.title}`
-          : activeSceneQuest && Boolean(npc.hasQuest)
-            ? `可提交任务：${String(activeSceneQuest.title ?? '当前任务')}`
-            : Boolean(npc.hasQuest)
-              ? '身上似有任务线索'
-              : '可继续交谈打探消息',
+        npcQuestOffers.length > 0
+          ? `可接任务：${npcQuestOffers.map((quest) => quest.title).join('、')}`
+          : npcReadyQuests.length > 0
+            ? `可提交任务：${npcReadyQuests.map((quest) => String(quest.title ?? '当前任务')).join('、')}`
+            : Boolean(npc.hasQuest) && trackingSceneQuest
+              ? `相关任务进行中：${String(trackingSceneQuest.title ?? '当前任务')} ${String(trackingSceneQuest.progress ?? 0)} / ${String(trackingSceneQuest.target ?? 0)}`
+              : Boolean(npc.hasQuest) && sceneQuestEntries.length > 0
+                ? '身上似有任务线索'
+                : '可继续交谈打探消息',
         `所在场景：${String(scene.value.sceneName ?? '此地')}`,
       ],
       actions: npcActions,
@@ -840,8 +871,25 @@ const composerPlaceholder = computed(() => {
   return '这里输入具体指令，或点击上方页签按钮自动填入'
 })
 
+const trackedQuest = computed(() => {
+  const activeQuestList = quests.value.filter((quest) => String(quest.status ?? '') === 'active')
+  if (activeQuestList.length === 0) {
+    return null
+  }
+
+  const sceneQuestIds = new Set((sceneQuestOffers[currentSceneId.value] ?? []).map((quest) => quest.id))
+  for (let index = activeQuestList.length - 1; index >= 0; index -= 1) {
+    const quest = activeQuestList[index]
+    if (sceneQuestIds.has(String(quest.questId ?? ''))) {
+      return quest
+    }
+  }
+
+  return activeQuestList[activeQuestList.length - 1] ?? null
+})
+
 const sceneMissionText = computed(() => {
-  const activeQuest = quests.value.find((quest) => String(quest.status ?? '') === 'active')
+  const activeQuest = trackedQuest.value
   if (activeQuest) {
     return `当前主线：${String(activeQuest.title)}，进度 ${String(activeQuest.progress ?? 0)} / ${String(activeQuest.target ?? 0)}。`
   }
@@ -984,14 +1032,17 @@ const sceneTranscript = computed<DenseLine[]>(() => {
     })
   }
 
-  ;((store.lastResult?.hints as string[] | undefined) ?? []).slice(0, 2).forEach((hint, index) => {
-    lines.push({
-      key: `result-hint-${String(store.nextEventId)}-${index}`,
-      tag: '提示',
-      text: hint,
-      tone: 'hint',
+  ;((store.lastResult?.hints as string[] | undefined) ?? [])
+    .filter((hint) => shouldDisplayResultHint(hint))
+    .slice(0, 2)
+    .forEach((hint, index) => {
+      lines.push({
+        key: `result-hint-${String(store.nextEventId)}-${index}`,
+        tag: '提示',
+        text: hint,
+        tone: 'hint',
+      })
     })
-  })
 
   if (String(store.lastResult?.spellSummary ?? '')) {
     lines.push({
@@ -1182,6 +1233,54 @@ function questStatusLabel(value: string) {
     failed: '已失败',
   }
   return labels[value] ?? value
+}
+
+function isQuestReadyToSubmit(quest: Record<string, any>) {
+  return (
+    String(quest.status ?? '') === 'active' &&
+    Number(quest.target ?? 0) > 0 &&
+    Number(quest.progress ?? 0) >= Number(quest.target ?? 0)
+  )
+}
+
+function parseQuestHint(value: string) {
+  const acceptMatch = value.match(/^可接任务：accept\s+([^\s（(]+)[（(](.+)[）)]$/u)
+  if (acceptMatch) {
+    return {
+      type: 'accept' as const,
+      questId: acceptMatch[1],
+      title: acceptMatch[2],
+    }
+  }
+
+  const submitMatch = value.match(/^可提交任务：submit\s+([^\s（(]+)[（(](.+)[）)]$/u)
+  if (submitMatch) {
+    return {
+      type: 'submit' as const,
+      questId: submitMatch[1],
+      title: submitMatch[2],
+    }
+  }
+
+  return null
+}
+
+function shouldDisplayResultHint(value: string) {
+  const questHint = parseQuestHint(value)
+  if (!questHint) {
+    return true
+  }
+
+  const questState = quests.value.find((quest) => String(quest.questId ?? '') === questHint.questId)
+  if (questHint.type === 'accept') {
+    return !questState
+  }
+
+  if (!questState) {
+    return false
+  }
+
+  return isQuestReadyToSubmit(questState)
 }
 
 function sceneInteractableKindLabel(kind: SceneInteractableKind) {
@@ -1488,7 +1587,7 @@ watch(
       </div>
     </header>
 
-    <p v-if="store.error" class="error-banner">{{ store.error }}</p>
+    <p v-if="displayError" class="error-banner">{{ displayError }}</p>
 
     <section v-if="!store.authenticated" class="auth-card">
       <div class="card-heading">
