@@ -53,29 +53,41 @@ constexpr const char* kMudCharacterTableSql =
     "team_id VARCHAR(128) NOT NULL DEFAULT '',"
     "team_name VARCHAR(128) NOT NULL DEFAULT '',"
     "team_leader_account VARCHAR(128) NOT NULL DEFAULT '',"
+    "origin_id VARCHAR(64) NOT NULL DEFAULT '',"
     "inventory_json LONGTEXT NOT NULL,"
     "quest_json LONGTEXT NOT NULL,"
+    "attributes_json LONGTEXT NULL,"
+    "status_json LONGTEXT NULL,"
+    "combat_json LONGTEXT NULL,"
+    "skills_json LONGTEXT NULL,"
+    "spells_json LONGTEXT NULL,"
+    "recipes_json LONGTEXT NULL,"
+    "codex_json LONGTEXT NULL,"
+    "profession_json LONGTEXT NULL,"
+    "flags_json LONGTEXT NULL,"
     "created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,"
     "updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"
     ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
 
-constexpr const char* kLoadPlayerSql =
-    "SELECT account,character_name,level,hp,max_hp,attack_power,defense_power,spirit_stone,"
+constexpr std::array<const char*, 10> kMudCharacterAlterSqls = {
+    "ALTER TABLE mud_character ADD COLUMN IF NOT EXISTS origin_id VARCHAR(64) NOT NULL DEFAULT ''",
+    "ALTER TABLE mud_character ADD COLUMN IF NOT EXISTS attributes_json LONGTEXT NULL",
+    "ALTER TABLE mud_character ADD COLUMN IF NOT EXISTS status_json LONGTEXT NULL",
+    "ALTER TABLE mud_character ADD COLUMN IF NOT EXISTS combat_json LONGTEXT NULL",
+    "ALTER TABLE mud_character ADD COLUMN IF NOT EXISTS skills_json LONGTEXT NULL",
+    "ALTER TABLE mud_character ADD COLUMN IF NOT EXISTS spells_json LONGTEXT NULL",
+    "ALTER TABLE mud_character ADD COLUMN IF NOT EXISTS recipes_json LONGTEXT NULL",
+    "ALTER TABLE mud_character ADD COLUMN IF NOT EXISTS codex_json LONGTEXT NULL",
+    "ALTER TABLE mud_character ADD COLUMN IF NOT EXISTS profession_json LONGTEXT NULL",
+    "ALTER TABLE mud_character ADD COLUMN IF NOT EXISTS flags_json LONGTEXT NULL",
+};
+
+constexpr const char* kPlayerSelectColumns =
+    "account,character_name,level,hp,max_hp,attack_power,defense_power,spirit_stone,"
     "title,location_scene_id,realm_name,realm_stage,exp,next_breakthrough_exp,primary_skill,"
-    "skill_level,sect_id,sect_name,sect_rank,team_id,team_name,team_leader_account,inventory_json,quest_json "
-    "FROM mud_character WHERE account=? LIMIT 1";
-
-constexpr const char* kInsertPlayerSql =
-    "INSERT INTO mud_character(account,character_name,level,hp,max_hp,attack_power,defense_power,"
-    "spirit_stone,title,location_scene_id,realm_name,realm_stage,exp,next_breakthrough_exp,"
-    "primary_skill,skill_level,sect_id,sect_name,sect_rank,team_id,team_name,team_leader_account,inventory_json,quest_json)"
-    " VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
-
-constexpr const char* kUpdatePlayerSql =
-    "UPDATE mud_character SET character_name=?,level=?,hp=?,max_hp=?,attack_power=?,defense_power=?,"
-    "spirit_stone=?,title=?,location_scene_id=?,realm_name=?,realm_stage=?,exp=?,"
-    "next_breakthrough_exp=?,primary_skill=?,skill_level=?,sect_id=?,sect_name=?,sect_rank=?,"
-    "team_id=?,team_name=?,team_leader_account=?,inventory_json=?,quest_json=? WHERE account=?";
+    "skill_level,sect_id,sect_name,sect_rank,team_id,team_name,team_leader_account,origin_id,"
+    "inventory_json,quest_json,attributes_json,status_json,combat_json,skills_json,spells_json,"
+    "recipes_json,codex_json,profession_json,flags_json";
 
 std::string encode_inventory_json(const std::vector<MudInventoryItemState>& inventory)
 {
@@ -250,6 +262,694 @@ void decode_quest_json(const std::string& json_text, std::vector<MudQuestState>*
     }
 
     json_decref(root);
+}
+
+std::string dump_json_or_fallback(json_t* root, const char* fallback)
+{
+    if(root == nullptr)
+    {
+        return fallback == nullptr ? "{}" : fallback;
+    }
+
+    char* dumped = json_dumps(root, JSON_COMPACT);
+    std::string output = dumped == nullptr ? (fallback == nullptr ? "{}" : fallback) : dumped;
+    if(dumped != nullptr)
+    {
+        free(dumped);
+    }
+    json_decref(root);
+    return output;
+}
+
+std::string encode_base_attributes_json(const MudBaseAttributeState& attributes)
+{
+    json_t* root = json_object();
+    if(root == nullptr)
+    {
+        return "{}";
+    }
+
+    json_object_set_new(root, "spi", json_integer(attributes.spi));
+    json_object_set_new(root, "gin", json_integer(attributes.gin));
+    json_object_set_new(root, "str", json_integer(attributes.str));
+    json_object_set_new(root, "per", json_integer(attributes.per));
+    json_object_set_new(root, "int_attr", json_integer(attributes.int_attr));
+    json_object_set_new(root, "cha", json_integer(attributes.cha));
+    json_object_set_new(root, "luc", json_integer(attributes.luc));
+    return dump_json_or_fallback(root, "{}");
+}
+
+std::string encode_status_attributes_json(const MudStatusAttributeState& attributes)
+{
+    json_t* root = json_object();
+    if(root == nullptr)
+    {
+        return "{}";
+    }
+
+    json_object_set_new(root, "kee", json_integer(attributes.kee));
+    json_object_set_new(root, "sen", json_integer(attributes.sen));
+    json_object_set_new(root, "sta", json_integer(attributes.sta));
+    json_object_set_new(root, "mana", json_integer(attributes.mana));
+    return dump_json_or_fallback(root, "{}");
+}
+
+std::string encode_combat_attributes_json(const MudCombatAttributeState& attributes)
+{
+    json_t* root = json_object();
+    if(root == nullptr)
+    {
+        return "{}";
+    }
+
+    json_object_set_new(root, "phys_hit", json_integer(attributes.phys_hit));
+    json_object_set_new(root, "phys_crit", json_integer(attributes.phys_crit));
+    json_object_set_new(root, "phys_damage", json_integer(attributes.phys_damage));
+    json_object_set_new(root, "phys_haste", json_integer(attributes.phys_haste));
+    json_object_set_new(root, "spell_hit", json_integer(attributes.spell_hit));
+    json_object_set_new(root, "spell_crit", json_integer(attributes.spell_crit));
+    json_object_set_new(root, "spell_damage", json_integer(attributes.spell_damage));
+    json_object_set_new(root, "spell_haste", json_integer(attributes.spell_haste));
+    json_object_set_new(root, "dodge", json_integer(attributes.dodge));
+    json_object_set_new(root, "block", json_integer(attributes.block));
+    json_object_set_new(root, "shield", json_integer(attributes.shield));
+    json_object_set_new(root, "parry", json_integer(attributes.parry));
+    json_object_set_new(root, "armor", json_integer(attributes.armor));
+    json_object_set_new(root, "resist_fire", json_integer(attributes.resist_fire));
+    json_object_set_new(root, "resist_ice", json_integer(attributes.resist_ice));
+    json_object_set_new(root, "resist_thunder", json_integer(attributes.resist_thunder));
+    json_object_set_new(root, "resist_wind", json_integer(attributes.resist_wind));
+    json_object_set_new(root, "resist_corrosion", json_integer(attributes.resist_corrosion));
+    json_object_set_new(root, "resist_poison", json_integer(attributes.resist_poison));
+    json_object_set_new(root, "resist_pierce", json_integer(attributes.resist_pierce));
+    json_object_set_new(root, "resist_slash", json_integer(attributes.resist_slash));
+    json_object_set_new(root, "resist_blunt", json_integer(attributes.resist_blunt));
+    return dump_json_or_fallback(root, "{}");
+}
+
+std::string encode_skills_json(const std::vector<MudSkillState>& skills)
+{
+    json_t* root = json_array();
+    if(root == nullptr)
+    {
+        return "[]";
+    }
+
+    for(const auto& skill : skills)
+    {
+        json_t* node = json_object();
+        if(node == nullptr)
+        {
+            continue;
+        }
+        json_object_set_new(node, "skill_id", json_string(skill.skill_id.c_str()));
+        json_object_set_new(node, "level", json_integer(skill.level));
+        json_object_set_new(node, "proficiency", json_integer(skill.proficiency));
+        json_array_append_new(root, node);
+    }
+    return dump_json_or_fallback(root, "[]");
+}
+
+std::string encode_spells_json(const std::vector<MudSpellState>& spells)
+{
+    json_t* root = json_array();
+    if(root == nullptr)
+    {
+        return "[]";
+    }
+
+    for(const auto& spell : spells)
+    {
+        json_t* node = json_object();
+        if(node == nullptr)
+        {
+            continue;
+        }
+        json_object_set_new(node, "spell_id", json_string(spell.spell_id.c_str()));
+        json_object_set_new(node, "level", json_integer(spell.level));
+        json_object_set_new(node, "proficiency", json_integer(spell.proficiency));
+        json_object_set_new(node, "unlocked", spell.unlocked ? json_true() : json_false());
+        json_array_append_new(root, node);
+    }
+    return dump_json_or_fallback(root, "[]");
+}
+
+std::string encode_recipes_json(const std::vector<MudRecipeState>& recipes)
+{
+    json_t* root = json_array();
+    if(root == nullptr)
+    {
+        return "[]";
+    }
+
+    for(const auto& recipe : recipes)
+    {
+        json_t* node = json_object();
+        if(node == nullptr)
+        {
+            continue;
+        }
+        json_object_set_new(node, "recipe_id", json_string(recipe.recipe_id.c_str()));
+        json_object_set_new(node, "level", json_integer(recipe.level));
+        json_object_set_new(node, "proficiency", json_integer(recipe.proficiency));
+        json_object_set_new(node, "unlocked", recipe.unlocked ? json_true() : json_false());
+        json_array_append_new(root, node);
+    }
+    return dump_json_or_fallback(root, "[]");
+}
+
+std::string encode_codex_json(const std::vector<MudCodexState>& codex_entries)
+{
+    json_t* root = json_array();
+    if(root == nullptr)
+    {
+        return "[]";
+    }
+
+    for(const auto& entry : codex_entries)
+    {
+        json_t* node = json_object();
+        if(node == nullptr)
+        {
+            continue;
+        }
+        json_object_set_new(node, "entry_id", json_string(entry.entry_id.c_str()));
+        json_object_set_new(node, "unread", entry.unread ? json_true() : json_false());
+        json_object_set_new(node, "unlocked_at_ms", json_integer(entry.unlocked_at_ms));
+        json_array_append_new(root, node);
+    }
+    return dump_json_or_fallback(root, "[]");
+}
+
+std::string encode_profession_json(const MudProfessionState& profession)
+{
+    json_t* root = json_object();
+    if(root == nullptr)
+    {
+        return "{}";
+    }
+
+    json_object_set_new(root, "alchemy_level", json_integer(profession.alchemy_level));
+    json_object_set_new(root, "exploration_level", json_integer(profession.exploration_level));
+    json_object_set_new(root, "formation_level", json_integer(profession.formation_level));
+    json_object_set_new(root, "forging_level", json_integer(profession.forging_level));
+    return dump_json_or_fallback(root, "{}");
+}
+
+std::string encode_flags_json(const std::unordered_map<std::string, std::string>& flags)
+{
+    json_t* root = json_object();
+    if(root == nullptr)
+    {
+        return "{}";
+    }
+
+    for(const auto& [key, value] : flags)
+    {
+        json_object_set_new(root, key.c_str(), json_string(value.c_str()));
+    }
+    return dump_json_or_fallback(root, "{}");
+}
+
+void decode_base_attributes_json(const std::string& json_text, MudBaseAttributeState* attributes)
+{
+    if(attributes == nullptr || json_text.empty())
+    {
+        return;
+    }
+
+    json_error_t error{};
+    json_t* root = json_loads(json_text.c_str(), 0, &error);
+    if(root == nullptr || !json_is_object(root))
+    {
+        if(root != nullptr)
+        {
+            json_decref(root);
+        }
+        return;
+    }
+
+    auto read_int = [&](const char* key) -> int {
+        auto* value = json_object_get(root, key);
+        return value != nullptr && json_is_integer(value) ? static_cast<int>(json_integer_value(value)) : 0;
+    };
+
+    attributes->spi = read_int("spi");
+    attributes->gin = read_int("gin");
+    attributes->str = read_int("str");
+    attributes->per = read_int("per");
+    attributes->int_attr = read_int("int_attr");
+    attributes->cha = read_int("cha");
+    attributes->luc = read_int("luc");
+    json_decref(root);
+}
+
+void decode_status_attributes_json(const std::string& json_text, MudStatusAttributeState* attributes)
+{
+    if(attributes == nullptr || json_text.empty())
+    {
+        return;
+    }
+
+    json_error_t error{};
+    json_t* root = json_loads(json_text.c_str(), 0, &error);
+    if(root == nullptr || !json_is_object(root))
+    {
+        if(root != nullptr)
+        {
+            json_decref(root);
+        }
+        return;
+    }
+
+    auto read_int = [&](const char* key) -> int {
+        auto* value = json_object_get(root, key);
+        return value != nullptr && json_is_integer(value) ? static_cast<int>(json_integer_value(value)) : 0;
+    };
+
+    attributes->kee = read_int("kee");
+    attributes->sen = read_int("sen");
+    attributes->sta = read_int("sta");
+    attributes->mana = read_int("mana");
+    json_decref(root);
+}
+
+void decode_combat_attributes_json(const std::string& json_text, MudCombatAttributeState* attributes)
+{
+    if(attributes == nullptr || json_text.empty())
+    {
+        return;
+    }
+
+    json_error_t error{};
+    json_t* root = json_loads(json_text.c_str(), 0, &error);
+    if(root == nullptr || !json_is_object(root))
+    {
+        if(root != nullptr)
+        {
+            json_decref(root);
+        }
+        return;
+    }
+
+    auto read_int = [&](const char* key) -> int {
+        auto* value = json_object_get(root, key);
+        return value != nullptr && json_is_integer(value) ? static_cast<int>(json_integer_value(value)) : 0;
+    };
+
+    attributes->phys_hit = read_int("phys_hit");
+    attributes->phys_crit = read_int("phys_crit");
+    attributes->phys_damage = read_int("phys_damage");
+    attributes->phys_haste = read_int("phys_haste");
+    attributes->spell_hit = read_int("spell_hit");
+    attributes->spell_crit = read_int("spell_crit");
+    attributes->spell_damage = read_int("spell_damage");
+    attributes->spell_haste = read_int("spell_haste");
+    attributes->dodge = read_int("dodge");
+    attributes->block = read_int("block");
+    attributes->shield = read_int("shield");
+    attributes->parry = read_int("parry");
+    attributes->armor = read_int("armor");
+    attributes->resist_fire = read_int("resist_fire");
+    attributes->resist_ice = read_int("resist_ice");
+    attributes->resist_thunder = read_int("resist_thunder");
+    attributes->resist_wind = read_int("resist_wind");
+    attributes->resist_corrosion = read_int("resist_corrosion");
+    attributes->resist_poison = read_int("resist_poison");
+    attributes->resist_pierce = read_int("resist_pierce");
+    attributes->resist_slash = read_int("resist_slash");
+    attributes->resist_blunt = read_int("resist_blunt");
+    json_decref(root);
+}
+
+void decode_skills_json(const std::string& json_text, std::vector<MudSkillState>* skills)
+{
+    if(skills == nullptr)
+    {
+        return;
+    }
+    skills->clear();
+    if(json_text.empty())
+    {
+        return;
+    }
+
+    json_error_t error{};
+    json_t* root = json_loads(json_text.c_str(), 0, &error);
+    if(root == nullptr || !json_is_array(root))
+    {
+        if(root != nullptr)
+        {
+            json_decref(root);
+        }
+        return;
+    }
+
+    const size_t count = json_array_size(root);
+    skills->reserve(count);
+    for(size_t index = 0; index < count; ++index)
+    {
+        auto* item = json_array_get(root, index);
+        if(item == nullptr || !json_is_object(item))
+        {
+            continue;
+        }
+
+        MudSkillState skill;
+        if(auto* value = json_object_get(item, "skill_id"); value != nullptr && json_is_string(value))
+        {
+            skill.skill_id = json_string_value(value);
+        }
+        if(auto* value = json_object_get(item, "level"); value != nullptr && json_is_integer(value))
+        {
+            skill.level = static_cast<int>(json_integer_value(value));
+        }
+        if(auto* value = json_object_get(item, "proficiency"); value != nullptr && json_is_integer(value))
+        {
+            skill.proficiency = static_cast<int64_t>(json_integer_value(value));
+        }
+        if(!skill.skill_id.empty())
+        {
+            skills->push_back(std::move(skill));
+        }
+    }
+    json_decref(root);
+}
+
+void decode_spells_json(const std::string& json_text, std::vector<MudSpellState>* spells)
+{
+    if(spells == nullptr)
+    {
+        return;
+    }
+    spells->clear();
+    if(json_text.empty())
+    {
+        return;
+    }
+
+    json_error_t error{};
+    json_t* root = json_loads(json_text.c_str(), 0, &error);
+    if(root == nullptr || !json_is_array(root))
+    {
+        if(root != nullptr)
+        {
+            json_decref(root);
+        }
+        return;
+    }
+
+    const size_t count = json_array_size(root);
+    spells->reserve(count);
+    for(size_t index = 0; index < count; ++index)
+    {
+        auto* item = json_array_get(root, index);
+        if(item == nullptr || !json_is_object(item))
+        {
+            continue;
+        }
+
+        MudSpellState spell;
+        if(auto* value = json_object_get(item, "spell_id"); value != nullptr && json_is_string(value))
+        {
+            spell.spell_id = json_string_value(value);
+        }
+        if(auto* value = json_object_get(item, "level"); value != nullptr && json_is_integer(value))
+        {
+            spell.level = static_cast<int>(json_integer_value(value));
+        }
+        if(auto* value = json_object_get(item, "proficiency"); value != nullptr && json_is_integer(value))
+        {
+            spell.proficiency = static_cast<int64_t>(json_integer_value(value));
+        }
+        if(auto* value = json_object_get(item, "unlocked"); value != nullptr && json_is_boolean(value))
+        {
+            spell.unlocked = json_is_true(value);
+        }
+        if(!spell.spell_id.empty())
+        {
+            spells->push_back(std::move(spell));
+        }
+    }
+    json_decref(root);
+}
+
+void decode_recipes_json(const std::string& json_text, std::vector<MudRecipeState>* recipes)
+{
+    if(recipes == nullptr)
+    {
+        return;
+    }
+    recipes->clear();
+    if(json_text.empty())
+    {
+        return;
+    }
+
+    json_error_t error{};
+    json_t* root = json_loads(json_text.c_str(), 0, &error);
+    if(root == nullptr || !json_is_array(root))
+    {
+        if(root != nullptr)
+        {
+            json_decref(root);
+        }
+        return;
+    }
+
+    const size_t count = json_array_size(root);
+    recipes->reserve(count);
+    for(size_t index = 0; index < count; ++index)
+    {
+        auto* item = json_array_get(root, index);
+        if(item == nullptr || !json_is_object(item))
+        {
+            continue;
+        }
+
+        MudRecipeState recipe;
+        if(auto* value = json_object_get(item, "recipe_id"); value != nullptr && json_is_string(value))
+        {
+            recipe.recipe_id = json_string_value(value);
+        }
+        if(auto* value = json_object_get(item, "level"); value != nullptr && json_is_integer(value))
+        {
+            recipe.level = static_cast<int>(json_integer_value(value));
+        }
+        if(auto* value = json_object_get(item, "proficiency"); value != nullptr && json_is_integer(value))
+        {
+            recipe.proficiency = static_cast<int64_t>(json_integer_value(value));
+        }
+        if(auto* value = json_object_get(item, "unlocked"); value != nullptr && json_is_boolean(value))
+        {
+            recipe.unlocked = json_is_true(value);
+        }
+        if(!recipe.recipe_id.empty())
+        {
+            recipes->push_back(std::move(recipe));
+        }
+    }
+    json_decref(root);
+}
+
+void decode_codex_json(const std::string& json_text, std::vector<MudCodexState>* codex_entries)
+{
+    if(codex_entries == nullptr)
+    {
+        return;
+    }
+    codex_entries->clear();
+    if(json_text.empty())
+    {
+        return;
+    }
+
+    json_error_t error{};
+    json_t* root = json_loads(json_text.c_str(), 0, &error);
+    if(root == nullptr || !json_is_array(root))
+    {
+        if(root != nullptr)
+        {
+            json_decref(root);
+        }
+        return;
+    }
+
+    const size_t count = json_array_size(root);
+    codex_entries->reserve(count);
+    for(size_t index = 0; index < count; ++index)
+    {
+        auto* item = json_array_get(root, index);
+        if(item == nullptr || !json_is_object(item))
+        {
+            continue;
+        }
+
+        MudCodexState state;
+        if(auto* value = json_object_get(item, "entry_id"); value != nullptr && json_is_string(value))
+        {
+            state.entry_id = json_string_value(value);
+        }
+        if(auto* value = json_object_get(item, "unread"); value != nullptr && json_is_boolean(value))
+        {
+            state.unread = json_is_true(value);
+        }
+        if(auto* value = json_object_get(item, "unlocked_at_ms"); value != nullptr && json_is_integer(value))
+        {
+            state.unlocked_at_ms = static_cast<int64_t>(json_integer_value(value));
+        }
+        if(!state.entry_id.empty())
+        {
+            codex_entries->push_back(std::move(state));
+        }
+    }
+    json_decref(root);
+}
+
+void decode_profession_json(const std::string& json_text, MudProfessionState* profession)
+{
+    if(profession == nullptr || json_text.empty())
+    {
+        return;
+    }
+
+    json_error_t error{};
+    json_t* root = json_loads(json_text.c_str(), 0, &error);
+    if(root == nullptr || !json_is_object(root))
+    {
+        if(root != nullptr)
+        {
+            json_decref(root);
+        }
+        return;
+    }
+
+    auto read_int = [&](const char* key) -> int {
+        auto* value = json_object_get(root, key);
+        return value != nullptr && json_is_integer(value) ? static_cast<int>(json_integer_value(value)) : 0;
+    };
+
+    profession->alchemy_level = read_int("alchemy_level");
+    profession->exploration_level = read_int("exploration_level");
+    profession->formation_level = read_int("formation_level");
+    profession->forging_level = read_int("forging_level");
+    json_decref(root);
+}
+
+void decode_flags_json(const std::string& json_text, std::unordered_map<std::string, std::string>* flags)
+{
+    if(flags == nullptr)
+    {
+        return;
+    }
+    flags->clear();
+    if(json_text.empty())
+    {
+        return;
+    }
+
+    json_error_t error{};
+    json_t* root = json_loads(json_text.c_str(), 0, &error);
+    if(root == nullptr || !json_is_object(root))
+    {
+        if(root != nullptr)
+        {
+            json_decref(root);
+        }
+        return;
+    }
+
+    const char* key = nullptr;
+    json_t* value = nullptr;
+    json_object_foreach(root, key, value)
+    {
+        if(key == nullptr || value == nullptr || !json_is_string(value))
+        {
+            continue;
+        }
+
+        const char* text = json_string_value(value);
+        flags->insert_or_assign(key, text == nullptr ? "" : text);
+    }
+    json_decref(root);
+}
+
+std::string escape_mysql_string(MYSQL* mysql_handle, const std::string& value)
+{
+    if(mysql_handle == nullptr)
+    {
+        return value;
+    }
+
+    std::string escaped(value.size() * 2 + 1, '\0');
+    const auto escaped_len = mysql_real_escape_string(mysql_handle,
+                                                      escaped.data(),
+                                                      value.c_str(),
+                                                      static_cast<unsigned long>(value.size()));
+    escaped.resize(escaped_len);
+    return escaped;
+}
+
+bool decode_player_row(MYSQL_ROW row, unsigned long* lengths, MudPlayerState* player)
+{
+    if(row == nullptr || lengths == nullptr || player == nullptr)
+    {
+        return false;
+    }
+
+    auto field_text = [&](int index) -> std::string {
+        if(row[index] == nullptr)
+        {
+            return {};
+        }
+        return std::string(row[index], lengths[index]);
+    };
+
+    auto field_int = [&](int index) -> int {
+        auto text = field_text(index);
+        return text.empty() ? 0 : std::stoi(text);
+    };
+
+    auto field_int64 = [&](int index) -> int64_t {
+        auto text = field_text(index);
+        return text.empty() ? 0 : std::stoll(text);
+    };
+
+    player->account = field_text(0);
+    player->character_name = field_text(1);
+    player->level = field_int(2);
+    player->hp = field_int(3);
+    player->max_hp = field_int(4);
+    player->attack_power = field_int(5);
+    player->defense_power = field_int(6);
+    player->spirit_stone = field_int64(7);
+    player->title = field_text(8);
+    player->location_scene_id = field_text(9);
+    player->realm_name = field_text(10);
+    player->realm_stage = field_int(11);
+    player->exp = field_int64(12);
+    player->next_breakthrough_exp = field_int64(13);
+    player->primary_skill = field_text(14);
+    player->skill_level = field_int(15);
+    player->sect_id = field_text(16);
+    player->sect_name = field_text(17);
+    player->sect_rank = field_text(18);
+    player->team_id = field_text(19);
+    player->team_name = field_text(20);
+    player->team_leader_account = field_text(21);
+    player->origin_id = field_text(22);
+    decode_inventory_json(field_text(23), &player->inventory);
+    decode_quest_json(field_text(24), &player->quests);
+    decode_base_attributes_json(field_text(25), &player->base_attributes);
+    decode_status_attributes_json(field_text(26), &player->status_attributes);
+    decode_combat_attributes_json(field_text(27), &player->combat_attributes);
+    decode_skills_json(field_text(28), &player->skills);
+    decode_spells_json(field_text(29), &player->spells);
+    decode_recipes_json(field_text(30), &player->recipes);
+    decode_codex_json(field_text(31), &player->codex_entries);
+    decode_profession_json(field_text(32), &player->profession);
+    decode_flags_json(field_text(33), &player->flags);
+    return true;
 }
 
 class MySqlMudPlayerCoroManager : public CoroManager
@@ -638,6 +1338,19 @@ bool MySqlMudPlayerRepository::ensure_table()
         spdlog::error("mysql create mud_character failed: {}", mysql_error(m_mysql));
         return false;
     }
+
+    for(const auto* sql : kMudCharacterAlterSqls)
+    {
+        if(sql == nullptr)
+        {
+            continue;
+        }
+        if(mysql_query(m_mysql, sql) != 0)
+        {
+            spdlog::error("mysql alter mud_character failed sql={} err={}", sql, mysql_error(m_mysql));
+            return false;
+        }
+    }
     return true;
 }
 
@@ -656,247 +1369,49 @@ bool MySqlMudPlayerRepository::query_player_record(MYSQL* mysql_handle,
     }
 
     out_player->reset();
+    const std::string sql = "SELECT " + std::string(kPlayerSelectColumns) + " FROM mud_character WHERE account='" +
+                            escape_mysql_string(mysql_handle, account) + "' LIMIT 1";
 
-    MYSQL_STMT* stmt = mysql_stmt_init(mysql_handle);
-    if(stmt == nullptr)
+    if(mysql_query(mysql_handle, sql.c_str()) != 0)
     {
         if(error != nullptr)
         {
-            *error = "mysql_stmt_init_failed";
+            *error = mysql_error(mysql_handle);
         }
         return false;
     }
 
-    bool ok = false;
-    do
+    MYSQL_RES* result = mysql_store_result(mysql_handle);
+    if(result == nullptr)
     {
-        if(mysql_stmt_prepare(stmt, kLoadPlayerSql, static_cast<unsigned long>(std::strlen(kLoadPlayerSql))) != 0)
+        if(error != nullptr)
         {
+            *error = mysql_error(mysql_handle);
+        }
+        return false;
+    }
+
+    bool ok = true;
+    if(MYSQL_ROW row = mysql_fetch_row(result))
+    {
+        unsigned long* lengths = mysql_fetch_lengths(result);
+        if(lengths == nullptr)
+        {
+            ok = false;
             if(error != nullptr)
             {
-                *error = mysql_stmt_error(stmt);
+                *error = "mysql_fetch_lengths_failed";
             }
-            break;
         }
-
-        unsigned long account_len = static_cast<unsigned long>(account.size());
-        MYSQL_BIND bind_param[1]{};
-        bind_param[0].buffer_type = MYSQL_TYPE_STRING;
-        bind_param[0].buffer = const_cast<char*>(account.data());
-        bind_param[0].buffer_length = account_len;
-        bind_param[0].length = &account_len;
-
-        if(mysql_stmt_bind_param(stmt, bind_param) != 0)
+        else
         {
-            if(error != nullptr)
-            {
-                *error = mysql_stmt_error(stmt);
-            }
-            break;
+            MudPlayerState player;
+            decode_player_row(row, lengths, &player);
+            *out_player = std::move(player);
         }
+    }
 
-        if(mysql_stmt_execute(stmt) != 0)
-        {
-            if(error != nullptr)
-            {
-                *error = mysql_stmt_error(stmt);
-            }
-            break;
-        }
-
-        std::array<char, 129> account_buf{};
-        std::array<char, 65> character_name_buf{};
-        std::array<char, 129> title_buf{};
-        std::array<char, 65> location_scene_id_buf{};
-        std::array<char, 65> realm_name_buf{};
-        std::array<char, 65> primary_skill_buf{};
-        std::array<char, 65> sect_id_buf{};
-        std::array<char, 65> sect_name_buf{};
-        std::array<char, 65> sect_rank_buf{};
-        std::array<char, 129> team_id_buf{};
-        std::array<char, 129> team_name_buf{};
-        std::array<char, 129> team_leader_account_buf{};
-        std::array<char, 32768> inventory_json_buf{};
-        std::array<char, 32768> quest_json_buf{};
-
-        unsigned long account_out_len = 0;
-        unsigned long character_name_out_len = 0;
-        unsigned long title_out_len = 0;
-        unsigned long location_scene_id_out_len = 0;
-        unsigned long realm_name_out_len = 0;
-        unsigned long primary_skill_out_len = 0;
-        unsigned long sect_id_out_len = 0;
-        unsigned long sect_name_out_len = 0;
-        unsigned long sect_rank_out_len = 0;
-        unsigned long team_id_out_len = 0;
-        unsigned long team_name_out_len = 0;
-        unsigned long team_leader_account_out_len = 0;
-        unsigned long inventory_json_out_len = 0;
-        unsigned long quest_json_out_len = 0;
-
-        int level = 0;
-        int hp = 0;
-        int max_hp = 0;
-        int attack_power = 0;
-        int defense_power = 0;
-        int realm_stage = 0;
-        int skill_level = 0;
-        long long spirit_stone = 0;
-        long long exp = 0;
-        long long next_breakthrough_exp = 0;
-
-        MYSQL_BIND bind_result[24]{};
-        bind_result[0].buffer_type = MYSQL_TYPE_STRING;
-        bind_result[0].buffer = account_buf.data();
-        bind_result[0].buffer_length = static_cast<unsigned long>(account_buf.size());
-        bind_result[0].length = &account_out_len;
-
-        bind_result[1].buffer_type = MYSQL_TYPE_STRING;
-        bind_result[1].buffer = character_name_buf.data();
-        bind_result[1].buffer_length = static_cast<unsigned long>(character_name_buf.size());
-        bind_result[1].length = &character_name_out_len;
-
-        bind_result[2].buffer_type = MYSQL_TYPE_LONG;
-        bind_result[2].buffer = &level;
-        bind_result[3].buffer_type = MYSQL_TYPE_LONG;
-        bind_result[3].buffer = &hp;
-        bind_result[4].buffer_type = MYSQL_TYPE_LONG;
-        bind_result[4].buffer = &max_hp;
-        bind_result[5].buffer_type = MYSQL_TYPE_LONG;
-        bind_result[5].buffer = &attack_power;
-        bind_result[6].buffer_type = MYSQL_TYPE_LONG;
-        bind_result[6].buffer = &defense_power;
-        bind_result[7].buffer_type = MYSQL_TYPE_LONGLONG;
-        bind_result[7].buffer = &spirit_stone;
-
-        bind_result[8].buffer_type = MYSQL_TYPE_STRING;
-        bind_result[8].buffer = title_buf.data();
-        bind_result[8].buffer_length = static_cast<unsigned long>(title_buf.size());
-        bind_result[8].length = &title_out_len;
-
-        bind_result[9].buffer_type = MYSQL_TYPE_STRING;
-        bind_result[9].buffer = location_scene_id_buf.data();
-        bind_result[9].buffer_length = static_cast<unsigned long>(location_scene_id_buf.size());
-        bind_result[9].length = &location_scene_id_out_len;
-
-        bind_result[10].buffer_type = MYSQL_TYPE_STRING;
-        bind_result[10].buffer = realm_name_buf.data();
-        bind_result[10].buffer_length = static_cast<unsigned long>(realm_name_buf.size());
-        bind_result[10].length = &realm_name_out_len;
-
-        bind_result[11].buffer_type = MYSQL_TYPE_LONG;
-        bind_result[11].buffer = &realm_stage;
-        bind_result[12].buffer_type = MYSQL_TYPE_LONGLONG;
-        bind_result[12].buffer = &exp;
-        bind_result[13].buffer_type = MYSQL_TYPE_LONGLONG;
-        bind_result[13].buffer = &next_breakthrough_exp;
-
-        bind_result[14].buffer_type = MYSQL_TYPE_STRING;
-        bind_result[14].buffer = primary_skill_buf.data();
-        bind_result[14].buffer_length = static_cast<unsigned long>(primary_skill_buf.size());
-        bind_result[14].length = &primary_skill_out_len;
-
-        bind_result[15].buffer_type = MYSQL_TYPE_LONG;
-        bind_result[15].buffer = &skill_level;
-
-        bind_result[16].buffer_type = MYSQL_TYPE_STRING;
-        bind_result[16].buffer = sect_id_buf.data();
-        bind_result[16].buffer_length = static_cast<unsigned long>(sect_id_buf.size());
-        bind_result[16].length = &sect_id_out_len;
-
-        bind_result[17].buffer_type = MYSQL_TYPE_STRING;
-        bind_result[17].buffer = sect_name_buf.data();
-        bind_result[17].buffer_length = static_cast<unsigned long>(sect_name_buf.size());
-        bind_result[17].length = &sect_name_out_len;
-
-        bind_result[18].buffer_type = MYSQL_TYPE_STRING;
-        bind_result[18].buffer = sect_rank_buf.data();
-        bind_result[18].buffer_length = static_cast<unsigned long>(sect_rank_buf.size());
-        bind_result[18].length = &sect_rank_out_len;
-
-        bind_result[19].buffer_type = MYSQL_TYPE_STRING;
-        bind_result[19].buffer = team_id_buf.data();
-        bind_result[19].buffer_length = static_cast<unsigned long>(team_id_buf.size());
-        bind_result[19].length = &team_id_out_len;
-
-        bind_result[20].buffer_type = MYSQL_TYPE_STRING;
-        bind_result[20].buffer = team_name_buf.data();
-        bind_result[20].buffer_length = static_cast<unsigned long>(team_name_buf.size());
-        bind_result[20].length = &team_name_out_len;
-
-        bind_result[21].buffer_type = MYSQL_TYPE_STRING;
-        bind_result[21].buffer = team_leader_account_buf.data();
-        bind_result[21].buffer_length = static_cast<unsigned long>(team_leader_account_buf.size());
-        bind_result[21].length = &team_leader_account_out_len;
-
-        bind_result[22].buffer_type = MYSQL_TYPE_STRING;
-        bind_result[22].buffer = inventory_json_buf.data();
-        bind_result[22].buffer_length = static_cast<unsigned long>(inventory_json_buf.size());
-        bind_result[22].length = &inventory_json_out_len;
-
-        bind_result[23].buffer_type = MYSQL_TYPE_STRING;
-        bind_result[23].buffer = quest_json_buf.data();
-        bind_result[23].buffer_length = static_cast<unsigned long>(quest_json_buf.size());
-        bind_result[23].length = &quest_json_out_len;
-
-        if(mysql_stmt_bind_result(stmt, bind_result) != 0)
-        {
-            if(error != nullptr)
-            {
-                *error = mysql_stmt_error(stmt);
-            }
-            break;
-        }
-
-        const int fetch_rc = mysql_stmt_fetch(stmt);
-        if(fetch_rc == MYSQL_NO_DATA)
-        {
-            ok = true;
-            break;
-        }
-        if(fetch_rc != 0 && fetch_rc != MYSQL_DATA_TRUNCATED)
-        {
-            if(error != nullptr)
-            {
-                *error = mysql_stmt_error(stmt);
-            }
-            break;
-        }
-
-        MudPlayerState player;
-        player.account.assign(account_buf.data(), std::min<unsigned long>(account_out_len, static_cast<unsigned long>(account_buf.size() - 1)));
-        player.character_name.assign(character_name_buf.data(), std::min<unsigned long>(character_name_out_len, static_cast<unsigned long>(character_name_buf.size() - 1)));
-        player.level = level;
-        player.hp = hp;
-        player.max_hp = max_hp;
-        player.attack_power = attack_power;
-        player.defense_power = defense_power;
-        player.spirit_stone = spirit_stone;
-        player.title.assign(title_buf.data(), std::min<unsigned long>(title_out_len, static_cast<unsigned long>(title_buf.size() - 1)));
-        player.location_scene_id.assign(location_scene_id_buf.data(), std::min<unsigned long>(location_scene_id_out_len, static_cast<unsigned long>(location_scene_id_buf.size() - 1)));
-        player.realm_name.assign(realm_name_buf.data(), std::min<unsigned long>(realm_name_out_len, static_cast<unsigned long>(realm_name_buf.size() - 1)));
-        player.realm_stage = realm_stage;
-        player.exp = exp;
-        player.next_breakthrough_exp = next_breakthrough_exp;
-        player.primary_skill.assign(primary_skill_buf.data(), std::min<unsigned long>(primary_skill_out_len, static_cast<unsigned long>(primary_skill_buf.size() - 1)));
-        player.skill_level = skill_level;
-        player.sect_id.assign(sect_id_buf.data(), std::min<unsigned long>(sect_id_out_len, static_cast<unsigned long>(sect_id_buf.size() - 1)));
-        player.sect_name.assign(sect_name_buf.data(), std::min<unsigned long>(sect_name_out_len, static_cast<unsigned long>(sect_name_buf.size() - 1)));
-        player.sect_rank.assign(sect_rank_buf.data(), std::min<unsigned long>(sect_rank_out_len, static_cast<unsigned long>(sect_rank_buf.size() - 1)));
-        player.team_id.assign(team_id_buf.data(), std::min<unsigned long>(team_id_out_len, static_cast<unsigned long>(team_id_buf.size() - 1)));
-        player.team_name.assign(team_name_buf.data(), std::min<unsigned long>(team_name_out_len, static_cast<unsigned long>(team_name_buf.size() - 1)));
-        player.team_leader_account.assign(team_leader_account_buf.data(),
-                                          std::min<unsigned long>(team_leader_account_out_len,
-                                                                  static_cast<unsigned long>(team_leader_account_buf.size() - 1)));
-        decode_inventory_json(std::string(inventory_json_buf.data(), std::min<unsigned long>(inventory_json_out_len, static_cast<unsigned long>(inventory_json_buf.size() - 1))),
-                              &player.inventory);
-        decode_quest_json(std::string(quest_json_buf.data(), std::min<unsigned long>(quest_json_out_len, static_cast<unsigned long>(quest_json_buf.size() - 1))),
-                          &player.quests);
-        *out_player = std::move(player);
-        ok = true;
-    } while(false);
-
-    mysql_stmt_close(stmt);
+    mysql_free_result(result);
     return ok;
 }
 
@@ -913,179 +1428,52 @@ bool MySqlMudPlayerRepository::insert_player_record(MYSQL* mysql_handle,
         return false;
     }
 
-    MYSQL_STMT* stmt = mysql_stmt_init(mysql_handle);
-    if(stmt == nullptr)
+    const std::string inventory_json = encode_inventory_json(player.inventory);
+    const std::string quest_json = encode_quest_json(player.quests);
+    const std::string attributes_json = encode_base_attributes_json(player.base_attributes);
+    const std::string status_json = encode_status_attributes_json(player.status_attributes);
+    const std::string combat_json = encode_combat_attributes_json(player.combat_attributes);
+    const std::string skills_json = encode_skills_json(player.skills);
+    const std::string spells_json = encode_spells_json(player.spells);
+    const std::string recipes_json = encode_recipes_json(player.recipes);
+    const std::string codex_json = encode_codex_json(player.codex_entries);
+    const std::string profession_json = encode_profession_json(player.profession);
+    const std::string flags_json = encode_flags_json(player.flags);
+
+    auto quoted = [&](const std::string& value) {
+        return "'" + escape_mysql_string(mysql_handle, value) + "'";
+    };
+
+    const std::string sql =
+        "INSERT INTO mud_character(account,character_name,level,hp,max_hp,attack_power,defense_power,"
+        "spirit_stone,title,location_scene_id,realm_name,realm_stage,exp,next_breakthrough_exp,"
+        "primary_skill,skill_level,sect_id,sect_name,sect_rank,team_id,team_name,team_leader_account,"
+        "origin_id,inventory_json,quest_json,attributes_json,status_json,combat_json,skills_json,"
+        "spells_json,recipes_json,codex_json,profession_json,flags_json) VALUES(" +
+        quoted(player.account) + "," + quoted(player.character_name) + "," + std::to_string(player.level) + "," +
+        std::to_string(player.hp) + "," + std::to_string(player.max_hp) + "," + std::to_string(player.attack_power) +
+        "," + std::to_string(player.defense_power) + "," + std::to_string(player.spirit_stone) + "," +
+        quoted(player.title) + "," + quoted(player.location_scene_id) + "," + quoted(player.realm_name) + "," +
+        std::to_string(player.realm_stage) + "," + std::to_string(player.exp) + "," +
+        std::to_string(player.next_breakthrough_exp) + "," + quoted(player.primary_skill) + "," +
+        std::to_string(player.skill_level) + "," + quoted(player.sect_id) + "," + quoted(player.sect_name) + "," +
+        quoted(player.sect_rank) + "," + quoted(player.team_id) + "," + quoted(player.team_name) + "," +
+        quoted(player.team_leader_account) + "," + quoted(player.origin_id) + "," + quoted(inventory_json) + "," +
+        quoted(quest_json) + "," + quoted(attributes_json) + "," + quoted(status_json) + "," +
+        quoted(combat_json) + "," + quoted(skills_json) + "," + quoted(spells_json) + "," +
+        quoted(recipes_json) + "," + quoted(codex_json) + "," + quoted(profession_json) + "," +
+        quoted(flags_json) + ")";
+
+    if(mysql_query(mysql_handle, sql.c_str()) != 0)
     {
         if(error != nullptr)
         {
-            *error = "mysql_stmt_init_failed";
+            *error = mysql_error(mysql_handle);
         }
         return false;
     }
 
-    const std::string inventory_json = encode_inventory_json(player.inventory);
-    const std::string quest_json = encode_quest_json(player.quests);
-
-    bool created = false;
-    do
-    {
-        if(mysql_stmt_prepare(stmt, kInsertPlayerSql, static_cast<unsigned long>(std::strlen(kInsertPlayerSql))) != 0)
-        {
-            if(error != nullptr)
-            {
-                *error = mysql_stmt_error(stmt);
-            }
-            break;
-        }
-
-        unsigned long account_len = static_cast<unsigned long>(player.account.size());
-        unsigned long character_name_len = static_cast<unsigned long>(player.character_name.size());
-        unsigned long title_len = static_cast<unsigned long>(player.title.size());
-        unsigned long location_scene_id_len = static_cast<unsigned long>(player.location_scene_id.size());
-        unsigned long realm_name_len = static_cast<unsigned long>(player.realm_name.size());
-        unsigned long primary_skill_len = static_cast<unsigned long>(player.primary_skill.size());
-        unsigned long sect_id_len = static_cast<unsigned long>(player.sect_id.size());
-        unsigned long sect_name_len = static_cast<unsigned long>(player.sect_name.size());
-        unsigned long sect_rank_len = static_cast<unsigned long>(player.sect_rank.size());
-        unsigned long team_id_len = static_cast<unsigned long>(player.team_id.size());
-        unsigned long team_name_len = static_cast<unsigned long>(player.team_name.size());
-        unsigned long team_leader_account_len = static_cast<unsigned long>(player.team_leader_account.size());
-        unsigned long inventory_json_len = static_cast<unsigned long>(inventory_json.size());
-        unsigned long quest_json_len = static_cast<unsigned long>(quest_json.size());
-
-        int level = player.level;
-        int hp = player.hp;
-        int max_hp = player.max_hp;
-        int attack_power = player.attack_power;
-        int defense_power = player.defense_power;
-        long long spirit_stone = static_cast<long long>(player.spirit_stone);
-        int realm_stage = player.realm_stage;
-        long long exp = static_cast<long long>(player.exp);
-        long long next_breakthrough_exp = static_cast<long long>(player.next_breakthrough_exp);
-        int skill_level = player.skill_level;
-
-        MYSQL_BIND bind_param[24]{};
-        bind_param[0].buffer_type = MYSQL_TYPE_STRING;
-        bind_param[0].buffer = const_cast<char*>(player.account.data());
-        bind_param[0].buffer_length = account_len;
-        bind_param[0].length = &account_len;
-
-        bind_param[1].buffer_type = MYSQL_TYPE_STRING;
-        bind_param[1].buffer = const_cast<char*>(player.character_name.data());
-        bind_param[1].buffer_length = character_name_len;
-        bind_param[1].length = &character_name_len;
-
-        bind_param[2].buffer_type = MYSQL_TYPE_LONG;
-        bind_param[2].buffer = &level;
-        bind_param[3].buffer_type = MYSQL_TYPE_LONG;
-        bind_param[3].buffer = &hp;
-        bind_param[4].buffer_type = MYSQL_TYPE_LONG;
-        bind_param[4].buffer = &max_hp;
-        bind_param[5].buffer_type = MYSQL_TYPE_LONG;
-        bind_param[5].buffer = &attack_power;
-        bind_param[6].buffer_type = MYSQL_TYPE_LONG;
-        bind_param[6].buffer = &defense_power;
-        bind_param[7].buffer_type = MYSQL_TYPE_LONGLONG;
-        bind_param[7].buffer = &spirit_stone;
-
-        bind_param[8].buffer_type = MYSQL_TYPE_STRING;
-        bind_param[8].buffer = const_cast<char*>(player.title.data());
-        bind_param[8].buffer_length = title_len;
-        bind_param[8].length = &title_len;
-
-        bind_param[9].buffer_type = MYSQL_TYPE_STRING;
-        bind_param[9].buffer = const_cast<char*>(player.location_scene_id.data());
-        bind_param[9].buffer_length = location_scene_id_len;
-        bind_param[9].length = &location_scene_id_len;
-
-        bind_param[10].buffer_type = MYSQL_TYPE_STRING;
-        bind_param[10].buffer = const_cast<char*>(player.realm_name.data());
-        bind_param[10].buffer_length = realm_name_len;
-        bind_param[10].length = &realm_name_len;
-
-        bind_param[11].buffer_type = MYSQL_TYPE_LONG;
-        bind_param[11].buffer = &realm_stage;
-        bind_param[12].buffer_type = MYSQL_TYPE_LONGLONG;
-        bind_param[12].buffer = &exp;
-        bind_param[13].buffer_type = MYSQL_TYPE_LONGLONG;
-        bind_param[13].buffer = &next_breakthrough_exp;
-
-        bind_param[14].buffer_type = MYSQL_TYPE_STRING;
-        bind_param[14].buffer = const_cast<char*>(player.primary_skill.data());
-        bind_param[14].buffer_length = primary_skill_len;
-        bind_param[14].length = &primary_skill_len;
-
-        bind_param[15].buffer_type = MYSQL_TYPE_LONG;
-        bind_param[15].buffer = &skill_level;
-
-        bind_param[16].buffer_type = MYSQL_TYPE_STRING;
-        bind_param[16].buffer = const_cast<char*>(player.sect_id.data());
-        bind_param[16].buffer_length = sect_id_len;
-        bind_param[16].length = &sect_id_len;
-
-        bind_param[17].buffer_type = MYSQL_TYPE_STRING;
-        bind_param[17].buffer = const_cast<char*>(player.sect_name.data());
-        bind_param[17].buffer_length = sect_name_len;
-        bind_param[17].length = &sect_name_len;
-
-        bind_param[18].buffer_type = MYSQL_TYPE_STRING;
-        bind_param[18].buffer = const_cast<char*>(player.sect_rank.data());
-        bind_param[18].buffer_length = sect_rank_len;
-        bind_param[18].length = &sect_rank_len;
-
-        bind_param[19].buffer_type = MYSQL_TYPE_STRING;
-        bind_param[19].buffer = const_cast<char*>(player.team_id.data());
-        bind_param[19].buffer_length = team_id_len;
-        bind_param[19].length = &team_id_len;
-
-        bind_param[20].buffer_type = MYSQL_TYPE_STRING;
-        bind_param[20].buffer = const_cast<char*>(player.team_name.data());
-        bind_param[20].buffer_length = team_name_len;
-        bind_param[20].length = &team_name_len;
-
-        bind_param[21].buffer_type = MYSQL_TYPE_STRING;
-        bind_param[21].buffer = const_cast<char*>(player.team_leader_account.data());
-        bind_param[21].buffer_length = team_leader_account_len;
-        bind_param[21].length = &team_leader_account_len;
-
-        bind_param[22].buffer_type = MYSQL_TYPE_STRING;
-        bind_param[22].buffer = const_cast<char*>(inventory_json.data());
-        bind_param[22].buffer_length = inventory_json_len;
-        bind_param[22].length = &inventory_json_len;
-
-        bind_param[23].buffer_type = MYSQL_TYPE_STRING;
-        bind_param[23].buffer = const_cast<char*>(quest_json.data());
-        bind_param[23].buffer_length = quest_json_len;
-        bind_param[23].length = &quest_json_len;
-
-        if(mysql_stmt_bind_param(stmt, bind_param) != 0)
-        {
-            if(error != nullptr)
-            {
-                *error = mysql_stmt_error(stmt);
-            }
-            break;
-        }
-
-        if(mysql_stmt_execute(stmt) != 0)
-        {
-            if(mysql_stmt_errno(stmt) == 1062)
-            {
-                created = false;
-                break;
-            }
-            if(error != nullptr)
-            {
-                *error = mysql_stmt_error(stmt);
-            }
-            break;
-        }
-
-        created = true;
-    } while(false);
-
-    mysql_stmt_close(stmt);
-    return created;
+    return true;
 }
 
 bool MySqlMudPlayerRepository::update_player_record(MYSQL* mysql_handle,
@@ -1101,174 +1489,52 @@ bool MySqlMudPlayerRepository::update_player_record(MYSQL* mysql_handle,
         return false;
     }
 
-    MYSQL_STMT* stmt = mysql_stmt_init(mysql_handle);
-    if(stmt == nullptr)
+    const std::string inventory_json = encode_inventory_json(player.inventory);
+    const std::string quest_json = encode_quest_json(player.quests);
+    const std::string attributes_json = encode_base_attributes_json(player.base_attributes);
+    const std::string status_json = encode_status_attributes_json(player.status_attributes);
+    const std::string combat_json = encode_combat_attributes_json(player.combat_attributes);
+    const std::string skills_json = encode_skills_json(player.skills);
+    const std::string spells_json = encode_spells_json(player.spells);
+    const std::string recipes_json = encode_recipes_json(player.recipes);
+    const std::string codex_json = encode_codex_json(player.codex_entries);
+    const std::string profession_json = encode_profession_json(player.profession);
+    const std::string flags_json = encode_flags_json(player.flags);
+
+    auto quoted = [&](const std::string& value) {
+        return "'" + escape_mysql_string(mysql_handle, value) + "'";
+    };
+
+    const std::string sql =
+        "UPDATE mud_character SET character_name=" + quoted(player.character_name) + ",level=" +
+        std::to_string(player.level) + ",hp=" + std::to_string(player.hp) + ",max_hp=" +
+        std::to_string(player.max_hp) + ",attack_power=" + std::to_string(player.attack_power) +
+        ",defense_power=" + std::to_string(player.defense_power) + ",spirit_stone=" +
+        std::to_string(player.spirit_stone) + ",title=" + quoted(player.title) + ",location_scene_id=" +
+        quoted(player.location_scene_id) + ",realm_name=" + quoted(player.realm_name) + ",realm_stage=" +
+        std::to_string(player.realm_stage) + ",exp=" + std::to_string(player.exp) +
+        ",next_breakthrough_exp=" + std::to_string(player.next_breakthrough_exp) + ",primary_skill=" +
+        quoted(player.primary_skill) + ",skill_level=" + std::to_string(player.skill_level) + ",sect_id=" +
+        quoted(player.sect_id) + ",sect_name=" + quoted(player.sect_name) + ",sect_rank=" +
+        quoted(player.sect_rank) + ",team_id=" + quoted(player.team_id) + ",team_name=" +
+        quoted(player.team_name) + ",team_leader_account=" + quoted(player.team_leader_account) + ",origin_id=" +
+        quoted(player.origin_id) + ",inventory_json=" + quoted(inventory_json) + ",quest_json=" +
+        quoted(quest_json) + ",attributes_json=" + quoted(attributes_json) + ",status_json=" +
+        quoted(status_json) + ",combat_json=" + quoted(combat_json) + ",skills_json=" + quoted(skills_json) +
+        ",spells_json=" + quoted(spells_json) + ",recipes_json=" + quoted(recipes_json) + ",codex_json=" +
+        quoted(codex_json) + ",profession_json=" + quoted(profession_json) + ",flags_json=" +
+        quoted(flags_json) + " WHERE account=" + quoted(player.account);
+
+    if(mysql_query(mysql_handle, sql.c_str()) != 0)
     {
         if(error != nullptr)
         {
-            *error = "mysql_stmt_init_failed";
+            *error = mysql_error(mysql_handle);
         }
         return false;
     }
 
-    const std::string inventory_json = encode_inventory_json(player.inventory);
-    const std::string quest_json = encode_quest_json(player.quests);
-
-    bool updated = false;
-    do
-    {
-        if(mysql_stmt_prepare(stmt, kUpdatePlayerSql, static_cast<unsigned long>(std::strlen(kUpdatePlayerSql))) != 0)
-        {
-            if(error != nullptr)
-            {
-                *error = mysql_stmt_error(stmt);
-            }
-            break;
-        }
-
-        unsigned long character_name_len = static_cast<unsigned long>(player.character_name.size());
-        unsigned long title_len = static_cast<unsigned long>(player.title.size());
-        unsigned long location_scene_id_len = static_cast<unsigned long>(player.location_scene_id.size());
-        unsigned long realm_name_len = static_cast<unsigned long>(player.realm_name.size());
-        unsigned long primary_skill_len = static_cast<unsigned long>(player.primary_skill.size());
-        unsigned long sect_id_len = static_cast<unsigned long>(player.sect_id.size());
-        unsigned long sect_name_len = static_cast<unsigned long>(player.sect_name.size());
-        unsigned long sect_rank_len = static_cast<unsigned long>(player.sect_rank.size());
-        unsigned long team_id_len = static_cast<unsigned long>(player.team_id.size());
-        unsigned long team_name_len = static_cast<unsigned long>(player.team_name.size());
-        unsigned long team_leader_account_len = static_cast<unsigned long>(player.team_leader_account.size());
-        unsigned long inventory_json_len = static_cast<unsigned long>(inventory_json.size());
-        unsigned long quest_json_len = static_cast<unsigned long>(quest_json.size());
-        unsigned long account_len = static_cast<unsigned long>(player.account.size());
-
-        int level = player.level;
-        int hp = player.hp;
-        int max_hp = player.max_hp;
-        int attack_power = player.attack_power;
-        int defense_power = player.defense_power;
-        long long spirit_stone = static_cast<long long>(player.spirit_stone);
-        int realm_stage = player.realm_stage;
-        long long exp = static_cast<long long>(player.exp);
-        long long next_breakthrough_exp = static_cast<long long>(player.next_breakthrough_exp);
-        int skill_level = player.skill_level;
-
-        MYSQL_BIND bind_param[24]{};
-        bind_param[0].buffer_type = MYSQL_TYPE_STRING;
-        bind_param[0].buffer = const_cast<char*>(player.character_name.data());
-        bind_param[0].buffer_length = character_name_len;
-        bind_param[0].length = &character_name_len;
-
-        bind_param[1].buffer_type = MYSQL_TYPE_LONG;
-        bind_param[1].buffer = &level;
-        bind_param[2].buffer_type = MYSQL_TYPE_LONG;
-        bind_param[2].buffer = &hp;
-        bind_param[3].buffer_type = MYSQL_TYPE_LONG;
-        bind_param[3].buffer = &max_hp;
-        bind_param[4].buffer_type = MYSQL_TYPE_LONG;
-        bind_param[4].buffer = &attack_power;
-        bind_param[5].buffer_type = MYSQL_TYPE_LONG;
-        bind_param[5].buffer = &defense_power;
-        bind_param[6].buffer_type = MYSQL_TYPE_LONGLONG;
-        bind_param[6].buffer = &spirit_stone;
-
-        bind_param[7].buffer_type = MYSQL_TYPE_STRING;
-        bind_param[7].buffer = const_cast<char*>(player.title.data());
-        bind_param[7].buffer_length = title_len;
-        bind_param[7].length = &title_len;
-
-        bind_param[8].buffer_type = MYSQL_TYPE_STRING;
-        bind_param[8].buffer = const_cast<char*>(player.location_scene_id.data());
-        bind_param[8].buffer_length = location_scene_id_len;
-        bind_param[8].length = &location_scene_id_len;
-
-        bind_param[9].buffer_type = MYSQL_TYPE_STRING;
-        bind_param[9].buffer = const_cast<char*>(player.realm_name.data());
-        bind_param[9].buffer_length = realm_name_len;
-        bind_param[9].length = &realm_name_len;
-
-        bind_param[10].buffer_type = MYSQL_TYPE_LONG;
-        bind_param[10].buffer = &realm_stage;
-        bind_param[11].buffer_type = MYSQL_TYPE_LONGLONG;
-        bind_param[11].buffer = &exp;
-        bind_param[12].buffer_type = MYSQL_TYPE_LONGLONG;
-        bind_param[12].buffer = &next_breakthrough_exp;
-
-        bind_param[13].buffer_type = MYSQL_TYPE_STRING;
-        bind_param[13].buffer = const_cast<char*>(player.primary_skill.data());
-        bind_param[13].buffer_length = primary_skill_len;
-        bind_param[13].length = &primary_skill_len;
-
-        bind_param[14].buffer_type = MYSQL_TYPE_LONG;
-        bind_param[14].buffer = &skill_level;
-
-        bind_param[15].buffer_type = MYSQL_TYPE_STRING;
-        bind_param[15].buffer = const_cast<char*>(player.sect_id.data());
-        bind_param[15].buffer_length = sect_id_len;
-        bind_param[15].length = &sect_id_len;
-
-        bind_param[16].buffer_type = MYSQL_TYPE_STRING;
-        bind_param[16].buffer = const_cast<char*>(player.sect_name.data());
-        bind_param[16].buffer_length = sect_name_len;
-        bind_param[16].length = &sect_name_len;
-
-        bind_param[17].buffer_type = MYSQL_TYPE_STRING;
-        bind_param[17].buffer = const_cast<char*>(player.sect_rank.data());
-        bind_param[17].buffer_length = sect_rank_len;
-        bind_param[17].length = &sect_rank_len;
-
-        bind_param[18].buffer_type = MYSQL_TYPE_STRING;
-        bind_param[18].buffer = const_cast<char*>(player.team_id.data());
-        bind_param[18].buffer_length = team_id_len;
-        bind_param[18].length = &team_id_len;
-
-        bind_param[19].buffer_type = MYSQL_TYPE_STRING;
-        bind_param[19].buffer = const_cast<char*>(player.team_name.data());
-        bind_param[19].buffer_length = team_name_len;
-        bind_param[19].length = &team_name_len;
-
-        bind_param[20].buffer_type = MYSQL_TYPE_STRING;
-        bind_param[20].buffer = const_cast<char*>(player.team_leader_account.data());
-        bind_param[20].buffer_length = team_leader_account_len;
-        bind_param[20].length = &team_leader_account_len;
-
-        bind_param[21].buffer_type = MYSQL_TYPE_STRING;
-        bind_param[21].buffer = const_cast<char*>(inventory_json.data());
-        bind_param[21].buffer_length = inventory_json_len;
-        bind_param[21].length = &inventory_json_len;
-
-        bind_param[22].buffer_type = MYSQL_TYPE_STRING;
-        bind_param[22].buffer = const_cast<char*>(quest_json.data());
-        bind_param[22].buffer_length = quest_json_len;
-        bind_param[22].length = &quest_json_len;
-
-        bind_param[23].buffer_type = MYSQL_TYPE_STRING;
-        bind_param[23].buffer = const_cast<char*>(player.account.data());
-        bind_param[23].buffer_length = account_len;
-        bind_param[23].length = &account_len;
-
-        if(mysql_stmt_bind_param(stmt, bind_param) != 0)
-        {
-            if(error != nullptr)
-            {
-                *error = mysql_stmt_error(stmt);
-            }
-            break;
-        }
-
-        if(mysql_stmt_execute(stmt) != 0)
-        {
-            if(error != nullptr)
-            {
-                *error = mysql_stmt_error(stmt);
-            }
-            break;
-        }
-
-        updated = mysql_stmt_affected_rows(stmt) >= 0;
-    } while(false);
-
-    mysql_stmt_close(stmt);
-    return updated;
+    return mysql_affected_rows(mysql_handle) >= 0;
 }
 
 bool MySqlMudPlayerRepository::query_top_players(MYSQL* mysql_handle,
@@ -1300,10 +1566,8 @@ bool MySqlMudPlayerRepository::query_top_players(MYSQL* mysql_handle,
 
     const int normalized_limit = std::clamp(limit <= 0 ? 10 : limit, 1, 50);
     const std::string sql =
-        "SELECT account,character_name,level,hp,max_hp,attack_power,defense_power,spirit_stone,"
-        "title,location_scene_id,realm_name,realm_stage,exp,next_breakthrough_exp,primary_skill,"
-        "skill_level,sect_id,sect_name,sect_rank,team_id,team_name,team_leader_account,inventory_json,quest_json "
-        "FROM mud_character ORDER BY " + order_by + " LIMIT " + std::to_string(normalized_limit);
+        "SELECT " + std::string(kPlayerSelectColumns) + " FROM mud_character ORDER BY " + order_by + " LIMIT " +
+        std::to_string(normalized_limit);
 
     if(mysql_query(mysql_handle, sql.c_str()) != 0)
     {
@@ -1333,49 +1597,8 @@ bool MySqlMudPlayerRepository::query_top_players(MYSQL* mysql_handle,
             continue;
         }
 
-        auto field_text = [&](int index) -> std::string {
-            if(row[index] == nullptr)
-            {
-                return {};
-            }
-            return std::string(row[index], lengths[index]);
-        };
-
-        auto field_int = [&](int index) -> int {
-            auto text = field_text(index);
-            return text.empty() ? 0 : std::stoi(text);
-        };
-
-        auto field_int64 = [&](int index) -> int64_t {
-            auto text = field_text(index);
-            return text.empty() ? 0 : std::stoll(text);
-        };
-
         MudPlayerState player;
-        player.account = field_text(0);
-        player.character_name = field_text(1);
-        player.level = field_int(2);
-        player.hp = field_int(3);
-        player.max_hp = field_int(4);
-        player.attack_power = field_int(5);
-        player.defense_power = field_int(6);
-        player.spirit_stone = field_int64(7);
-        player.title = field_text(8);
-        player.location_scene_id = field_text(9);
-        player.realm_name = field_text(10);
-        player.realm_stage = field_int(11);
-        player.exp = field_int64(12);
-        player.next_breakthrough_exp = field_int64(13);
-        player.primary_skill = field_text(14);
-        player.skill_level = field_int(15);
-        player.sect_id = field_text(16);
-        player.sect_name = field_text(17);
-        player.sect_rank = field_text(18);
-        player.team_id = field_text(19);
-        player.team_name = field_text(20);
-        player.team_leader_account = field_text(21);
-        decode_inventory_json(field_text(22), &player.inventory);
-        decode_quest_json(field_text(23), &player.quests);
+        decode_player_row(row, lengths, &player);
 
         MudLeaderboardEntry entry;
         entry.rank = rank++;
@@ -1415,10 +1638,8 @@ bool MySqlMudPlayerRepository::query_team_members(MYSQL* mysql_handle,
     escaped_team_id.resize(escaped_len);
 
     const std::string sql =
-        "SELECT account,character_name,level,hp,max_hp,attack_power,defense_power,spirit_stone,"
-        "title,location_scene_id,realm_name,realm_stage,exp,next_breakthrough_exp,primary_skill,"
-        "skill_level,sect_id,sect_name,sect_rank,team_id,team_name,team_leader_account,inventory_json,quest_json "
-        "FROM mud_character WHERE team_id='" + escaped_team_id + "' ORDER BY (account = team_leader_account) DESC, account ASC";
+        "SELECT " + std::string(kPlayerSelectColumns) + " FROM mud_character WHERE team_id='" + escaped_team_id +
+        "' ORDER BY (account = team_leader_account) DESC, account ASC";
 
     if(mysql_query(mysql_handle, sql.c_str()) != 0)
     {
@@ -1447,49 +1668,8 @@ bool MySqlMudPlayerRepository::query_team_members(MYSQL* mysql_handle,
             continue;
         }
 
-        auto field_text = [&](int index) -> std::string {
-            if(row[index] == nullptr)
-            {
-                return {};
-            }
-            return std::string(row[index], lengths[index]);
-        };
-
-        auto field_int = [&](int index) -> int {
-            auto text = field_text(index);
-            return text.empty() ? 0 : std::stoi(text);
-        };
-
-        auto field_int64 = [&](int index) -> int64_t {
-            auto text = field_text(index);
-            return text.empty() ? 0 : std::stoll(text);
-        };
-
         MudPlayerState player;
-        player.account = field_text(0);
-        player.character_name = field_text(1);
-        player.level = field_int(2);
-        player.hp = field_int(3);
-        player.max_hp = field_int(4);
-        player.attack_power = field_int(5);
-        player.defense_power = field_int(6);
-        player.spirit_stone = field_int64(7);
-        player.title = field_text(8);
-        player.location_scene_id = field_text(9);
-        player.realm_name = field_text(10);
-        player.realm_stage = field_int(11);
-        player.exp = field_int64(12);
-        player.next_breakthrough_exp = field_int64(13);
-        player.primary_skill = field_text(14);
-        player.skill_level = field_int(15);
-        player.sect_id = field_text(16);
-        player.sect_name = field_text(17);
-        player.sect_rank = field_text(18);
-        player.team_id = field_text(19);
-        player.team_name = field_text(20);
-        player.team_leader_account = field_text(21);
-        decode_inventory_json(field_text(22), &player.inventory);
-        decode_quest_json(field_text(23), &player.quests);
+        decode_player_row(row, lengths, &player);
         out_players->push_back(std::move(player));
     }
 

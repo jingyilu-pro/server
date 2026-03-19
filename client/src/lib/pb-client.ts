@@ -85,7 +85,7 @@ export const pbClient = {
       token,
     })
   },
-  createCharacter(account: string, characterName: string, token: string) {
+  createCharacter(account: string, characterName: string, originId: string, token: string) {
     return protobufRequest({
       kind: 'mud',
       requestType: 'mud.CharacterCreateRequest',
@@ -94,6 +94,7 @@ export const pbClient = {
       payload: {
         account,
         characterName,
+        originId,
       },
       token,
     })
@@ -118,6 +119,32 @@ export const pbClient = {
         account,
         afterEventId,
         limit,
+      },
+      token,
+    })
+  },
+  loadCodexList(account: string, category: string, token: string) {
+    return protobufRequest({
+      kind: 'mud',
+      requestType: 'mud.CodexListRequest',
+      responseType: 'mud.CodexListResponse',
+      path: `${gameBase}/v1/game/codex/list`,
+      payload: {
+        account,
+        category,
+      },
+      token,
+    })
+  },
+  loadCodexDetail(account: string, entryId: string, token: string) {
+    return protobufRequest({
+      kind: 'mud',
+      requestType: 'mud.CodexDetailRequest',
+      responseType: 'mud.CodexDetailResponse',
+      path: `${gameBase}/v1/game/codex/detail`,
+      payload: {
+        account,
+        entryId,
       },
       token,
     })

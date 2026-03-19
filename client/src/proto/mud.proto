@@ -48,6 +48,118 @@ message TeamState {
   repeated TeamMember members = 3;
 }
 
+message BaseAttributeState {
+  int32 spi = 1;
+  int32 gin = 2;
+  int32 str = 3;
+  int32 per = 4;
+  int32 int_attr = 5;
+  int32 cha = 6;
+  int32 luc = 7;
+}
+
+message StatusAttributeState {
+  int32 kee = 1;
+  int32 sen = 2;
+  int32 sta = 3;
+  int32 mana = 4;
+}
+
+message CombatAttributeState {
+  int32 phys_hit = 1;
+  int32 phys_crit = 2;
+  int32 phys_damage = 3;
+  int32 phys_haste = 4;
+  int32 spell_hit = 5;
+  int32 spell_crit = 6;
+  int32 spell_damage = 7;
+  int32 spell_haste = 8;
+  int32 dodge = 9;
+  int32 block = 10;
+  int32 shield = 11;
+  int32 parry = 12;
+  int32 armor = 13;
+  int32 resist_fire = 14;
+  int32 resist_ice = 15;
+  int32 resist_thunder = 16;
+  int32 resist_wind = 17;
+  int32 resist_corrosion = 18;
+  int32 resist_poison = 19;
+  int32 resist_pierce = 20;
+  int32 resist_slash = 21;
+  int32 resist_blunt = 22;
+}
+
+message RaceState {
+  string origin_id = 1;
+  string origin_name = 2;
+  string race_name = 3;
+  string homeland = 4;
+  string description = 5;
+}
+
+message SkillSummary {
+  string skill_id = 1;
+  string name = 2;
+  string category = 3;
+  int32 level = 4;
+  int64 proficiency = 5;
+  string description = 6;
+}
+
+message SpellSummary {
+  string spell_id = 1;
+  string name = 2;
+  string element = 3;
+  int32 level = 4;
+  int64 proficiency = 5;
+  int32 mana_cost = 6;
+  string description = 7;
+  bool unlocked = 8;
+}
+
+message RecipeSummary {
+  string recipe_id = 1;
+  string name = 2;
+  bool unlocked = 3;
+  int32 level = 4;
+  int64 proficiency = 5;
+  string description = 6;
+}
+
+message ProfessionState {
+  int32 alchemy_level = 1;
+  int32 exploration_level = 2;
+  int32 formation_level = 3;
+  int32 forging_level = 4;
+}
+
+message CodexSummary {
+  string entry_id = 1;
+  string category = 2;
+  string title = 3;
+  string summary = 4;
+  bool unlocked = 5;
+  bool unread = 6;
+  string unlock_source = 7;
+}
+
+message CodexEntry {
+  string entry_id = 1;
+  string category = 2;
+  string title = 3;
+  string summary = 4;
+  string content = 5;
+  repeated string related_scene_ids = 6;
+  repeated string related_npc_ids = 7;
+  repeated string related_monster_ids = 8;
+  repeated string related_item_ids = 9;
+  repeated string related_sect_ids = 10;
+  string unlock_source = 11;
+  bool unlocked = 12;
+  bool unread = 13;
+}
+
 message SceneExit {
   string direction = 1;
   string target_scene_id = 2;
@@ -59,6 +171,7 @@ message SceneNpc {
   string name = 2;
   bool has_quest = 3;
   string hint = 4;
+  string codex_entry_id = 5;
 }
 
 message ScenePlayer {
@@ -76,6 +189,37 @@ message SceneItem {
   string description = 4;
   string source = 5;
   int32 price = 6;
+  string codex_entry_id = 7;
+}
+
+message SceneResourceNode {
+  string node_id = 1;
+  string name = 2;
+  string description = 3;
+  string drop_item_id = 4;
+  string drop_item_name = 5;
+  int32 drop_item_count = 6;
+  string codex_entry_id = 7;
+}
+
+message SceneGroundLoot {
+  string loot_id = 1;
+  string item_id = 2;
+  string item_name = 3;
+  int32 quantity = 4;
+  string description = 5;
+  string codex_entry_id = 6;
+  bool lootable = 7;
+}
+
+message SceneHazard {
+  string hazard_id = 1;
+  string name = 2;
+  string description = 3;
+  int32 hp_cost = 4;
+  int32 mana_cost = 5;
+  int32 sta_cost = 6;
+  string codex_entry_id = 7;
 }
 
 message SceneSnapshot {
@@ -89,6 +233,10 @@ message SceneSnapshot {
   repeated string shops = 8;
   repeated ScenePlayer players = 9;
   repeated SceneItem items = 10;
+  repeated SceneResourceNode resource_nodes = 11;
+  repeated SceneGroundLoot ground_loots = 12;
+  repeated SceneHazard hazards = 13;
+  repeated string related_codex_entry_ids = 14;
 }
 
 message PlayerSnapshot {
@@ -112,6 +260,15 @@ message PlayerSnapshot {
   string progression_chapter = 18;
   repeated string unlocked_regions = 19;
   int64 sect_contribution = 20;
+  RaceState race = 21;
+  BaseAttributeState base_attributes = 22;
+  StatusAttributeState status_attributes = 23;
+  CombatAttributeState combat_attributes = 24;
+  repeated SkillSummary skills = 25;
+  repeated SpellSummary spells = 26;
+  repeated RecipeSummary recipes = 27;
+  ProfessionState profession = 28;
+  repeated CodexSummary codex_summaries = 29;
 }
 
 message GameEvent {
@@ -130,6 +287,10 @@ message CommandResult {
   string summary = 4;
   repeated string hints = 5;
   int32 recommended_poll_interval_ms = 6;
+  repeated CodexSummary unlocked_codex_entries = 7;
+  string spell_summary = 8;
+  string brew_summary = 9;
+  string hazard_feedback = 10;
 }
 
 message BootstrapRequest {
@@ -146,11 +307,13 @@ message BootstrapResponse {
   SceneSnapshot scene = 7;
   repeated GameEvent events = 8;
   uint64 next_event_id = 9;
+  repeated RaceState available_origins = 10;
 }
 
 message CharacterCreateRequest {
   string account = 1;
   string character_name = 2;
+  string origin_id = 3;
 }
 
 message CharacterCreateResponse {
@@ -196,6 +359,32 @@ message FeedPullResponse {
   uint64 next_event_id = 6;
   int32 recommended_poll_interval_ms = 7;
   SceneSnapshot scene = 8;
+}
+
+message CodexListRequest {
+  string account = 1;
+  string category = 2;
+}
+
+message CodexListResponse {
+  int32 code = 1;
+  string message = 2;
+  string trace_id = 3;
+  int64 server_time_ms = 4;
+  repeated CodexSummary entries = 5;
+}
+
+message CodexDetailRequest {
+  string account = 1;
+  string entry_id = 2;
+}
+
+message CodexDetailResponse {
+  int32 code = 1;
+  string message = 2;
+  string trace_id = 3;
+  int64 server_time_ms = 4;
+  CodexEntry entry = 5;
 }
 
 message RankEntry {

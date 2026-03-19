@@ -75,3 +75,4 @@ add_subdirectory(${SERVICE_DIR}/client)
 
 add_subdirectory(${PROJECT_SOURCE_DIR}/app/application)
 add_subdirectory(${PROJECT_SOURCE_DIR}/app/apptool)
+add_subdirectory(${PROJECT_SOURCE_DIR}/scripts)

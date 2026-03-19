@@ -236,6 +236,46 @@ input {
   grid-template-columns: 1fr;
 }
 
+.origin-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.origin-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-height: 108px;
+  padding: 12px;
+  border-radius: 18px;
+  border: 1px solid rgba(232, 191, 133, 0.16);
+  color: var(--text);
+  text-align: left;
+  background: rgba(255, 240, 220, 0.04);
+}
+
+.origin-card strong,
+.origin-card small,
+.origin-card p {
+  margin: 0;
+}
+
+.origin-card small,
+.origin-card p {
+  color: var(--muted);
+}
+
+.origin-card.active {
+  border-color: rgba(245, 191, 114, 0.52);
+  background: linear-gradient(180deg, rgba(164, 95, 49, 0.84) 0%, rgba(84, 47, 25, 0.94) 100%);
+}
+
+.origin-preview-card {
+  margin-top: 10px;
+}
+
 label span {
   display: block;
   margin-bottom: 8px;
@@ -636,6 +676,18 @@ input::placeholder {
 
 .rail-button--monster {
   border-color: rgba(183, 137, 255, 0.26);
+}
+
+.rail-button--resource {
+  border-color: rgba(126, 216, 172, 0.28);
+}
+
+.rail-button--loot {
+  border-color: rgba(245, 199, 122, 0.28);
+}
+
+.rail-button--hazard {
+  border-color: rgba(255, 129, 129, 0.28);
 }
 
 .rail-label {
@@ -1064,8 +1116,20 @@ input::placeholder {
   color: #e1a8ff;
 }
 
+.command-tone-spell {
+  color: #a3c8ff;
+}
+
 .command-tone-cultivation {
   color: #7ec7ff;
+}
+
+.command-tone-gather {
+  color: #8edaa9;
+}
+
+.command-tone-alchemy {
+  color: #f2c77f;
 }
 
 .command-tone-trade {
@@ -1074,6 +1138,10 @@ input::placeholder {
 
 .command-tone-group {
   color: #8dd2a2;
+}
+
+.command-tone-manual {
+  color: #ffb8a2;
 }
 
 .command-grid {
@@ -1107,8 +1175,20 @@ input::placeholder {
   border-color: rgba(183, 137, 255, 0.3);
 }
 
+.command-card.command-tone-spell {
+  border-color: rgba(114, 182, 255, 0.3);
+}
+
 .command-card.command-tone-cultivation {
   border-color: rgba(114, 182, 255, 0.28);
+}
+
+.command-card.command-tone-gather {
+  border-color: rgba(95, 209, 160, 0.28);
+}
+
+.command-card.command-tone-alchemy {
+  border-color: rgba(244, 210, 127, 0.3);
 }
 
 .command-card.command-tone-trade {
@@ -1117,6 +1197,10 @@ input::placeholder {
 
 .command-card.command-tone-group {
   border-color: rgba(141, 210, 162, 0.26);
+}
+
+.command-card.command-tone-manual {
+  border-color: rgba(239, 124, 103, 0.26);
 }
 
 .command-card-detail {
@@ -1299,6 +1383,10 @@ input::placeholder {
 
 .dock-tone-rank {
   color: #79e0c6;
+}
+
+.dock-tone-codex {
+  color: #ffb69a;
 }
 
 .vital-card {
@@ -1518,6 +1606,18 @@ input::placeholder {
   color: #d7a7ff;
 }
 
+.scene-entity-tone-resource {
+  color: #8edaa9;
+}
+
+.scene-entity-tone-loot {
+  color: #f2c77f;
+}
+
+.scene-entity-tone-hazard {
+  color: #ff9b8d;
+}
+
 .scene-entity-kind.scene-entity-tone-quest,
 .scene-entity-action-card.scene-entity-tone-quest,
 .scene-entity-tab-button.scene-entity-tone-quest {
@@ -1552,6 +1652,49 @@ input::placeholder {
 .scene-entity-action-card.scene-entity-tone-monster,
 .scene-entity-tab-button.scene-entity-tone-monster {
   border-color: rgba(183, 137, 255, 0.3);
+}
+
+.scene-entity-kind.scene-entity-tone-resource,
+.scene-entity-action-card.scene-entity-tone-resource,
+.scene-entity-tab-button.scene-entity-tone-resource {
+  border-color: rgba(95, 209, 160, 0.28);
+}
+
+.scene-entity-kind.scene-entity-tone-loot,
+.scene-entity-action-card.scene-entity-tone-loot,
+.scene-entity-tab-button.scene-entity-tone-loot {
+  border-color: rgba(244, 210, 127, 0.3);
+}
+
+.scene-entity-kind.scene-entity-tone-hazard,
+.scene-entity-action-card.scene-entity-tone-hazard,
+.scene-entity-tab-button.scene-entity-tone-hazard {
+  border-color: rgba(239, 124, 103, 0.3);
+}
+
+.codex-category-strip {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: 0;
+}
+
+.codex-entry-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.codex-entry-card {
+  width: 100%;
+  text-align: left;
+}
+
+.codex-entry-card.active {
+  border-color: rgba(245, 191, 114, 0.44);
+  background: rgba(255, 240, 220, 0.08);
+}
+
+.codex-detail-card {
+  white-space: pre-wrap;
 }
 
 @media (hover: hover) {
@@ -1614,6 +1757,10 @@ input::placeholder {
 
   .form-grid,
   .command-form {
+    grid-template-columns: 1fr;
+  }
+
+  .origin-grid {
     grid-template-columns: 1fr;
   }
 

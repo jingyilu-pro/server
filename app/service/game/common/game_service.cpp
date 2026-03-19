@@ -363,6 +363,12 @@ GameService::GameService(const RuntimeConfig& config,
     register_handler("/v1/game/feed/pull", [this](evhttp_request* request) {
         pull_feed_async(request);
     });
+    register_handler("/v1/game/codex/list", [this](evhttp_request* request) {
+        codex_list_async(request);
+    });
+    register_handler("/v1/game/codex/detail", [this](evhttp_request* request) {
+        codex_detail_async(request);
+    });
     register_handler("/v1/game/rank/list", [this](evhttp_request* request) {
         rank_list_async(request);
     });
@@ -995,7 +1001,9 @@ coro_task_t GameService::create_character_async(evhttp_request* request)
             }
             else
             {
-                auto player = m_mud_runtime->build_default_player(account, normalized_name);
+                auto player = m_mud_runtime->build_default_player(account,
+                                                                  normalized_name,
+                                                                  mud_request.origin_id());
                 auto* create_result = dynamic_cast<MudPlayerRepositoryOpResult*>(co_await m_mud_player_repository->create_player(player));
                 if(create_result == nullptr || !create_result->success || !create_result->create_ok)
                 {
@@ -1309,6 +1317,164 @@ coro_task_t GameService::pull_feed_async(evhttp_request* request)
             http_code_message::gateway::set_code_message(&response,
                                                          http_code_message::gateway::code::kSuccess,
                                                          http_code_message::gateway::message::kOk);
+        }
+    }
+    else
+    {
+        http_code_message::gateway::set_code_message(&response, error_code, error_message);
+    }
+
+    write_protobuf_response(request, response, 200);
+    release_request(request);
+}
+
+coro_task_t GameService::codex_list_async(evhttp_request* request)
+{
+    retain_request(request);
+
+    mud::CodexListRequest mud_request;
+    auto body = read_request_body(request);
+    if(body.empty())
+    {
+        evhttp_send_error(request,
+                          http_code_message::transport::status::kBadRequest,
+                          http_code_message::transport::message::kEmptyProtobufBody);
+        release_request(request);
+        co_return;
+    }
+    if(!mud_request.ParseFromString(body))
+    {
+        evhttp_send_error(request,
+                          http_code_message::transport::status::kBadRequest,
+                          http_code_message::transport::message::kInvalidProtobuf);
+        release_request(request);
+        co_return;
+    }
+
+    mud::CodexListResponse response;
+    response.set_trace_id(make_trace_id());
+    response.set_server_time_ms(now_ms());
+
+    std::string account;
+    std::string request_token;
+    int error_code = http_code_message::gateway::code::kSuccess;
+    std::string error_message;
+    if(begin_authorize_mud_request(request,
+                                   mud_request.account(),
+                                   m_token_provider.get(),
+                                   m_mud_runtime.get(),
+                                   &account,
+                                   &request_token,
+                                   &error_code,
+                                   &error_message))
+    {
+        if(!validate_mud_session(m_session_store.get(), account, request_token, m_config.redis.op_timeout_ms))
+        {
+            http_code_message::gateway::set_code_message(&response,
+                                                         http_code_message::gateway::code::kInvalidOrExpiredJwt,
+                                                         http_code_message::gateway::message::kInvalidOrExpiredJwt);
+            write_protobuf_response(request, response, 200);
+            release_request(request);
+            co_return;
+        }
+
+        auto* load_result = dynamic_cast<MudPlayerRepositoryOpResult*>(co_await m_mud_player_repository->load_player(account));
+        if(load_result == nullptr || !load_result->success)
+        {
+            http_code_message::gateway::set_code_message(&response,
+                                                         http_code_message::gateway::code::kMudPlayerRepositoryUnavailable,
+                                                         "load mud player failed");
+        }
+        else if(!load_result->found || !load_result->player.has_value())
+        {
+            http_code_message::gateway::set_code_message(&response,
+                                                         http_code_message::gateway::code::kCharacterNotFound,
+                                                         http_code_message::gateway::message::kCharacterNotFound);
+        }
+        else
+        {
+            auto player = *load_result->player;
+            m_mud_runtime->normalize_player_state(&player);
+            m_mud_runtime->build_codex_list_response(player, mud_request.category(), &response);
+        }
+    }
+    else
+    {
+        http_code_message::gateway::set_code_message(&response, error_code, error_message);
+    }
+
+    write_protobuf_response(request, response, 200);
+    release_request(request);
+}
+
+coro_task_t GameService::codex_detail_async(evhttp_request* request)
+{
+    retain_request(request);
+
+    mud::CodexDetailRequest mud_request;
+    auto body = read_request_body(request);
+    if(body.empty())
+    {
+        evhttp_send_error(request,
+                          http_code_message::transport::status::kBadRequest,
+                          http_code_message::transport::message::kEmptyProtobufBody);
+        release_request(request);
+        co_return;
+    }
+    if(!mud_request.ParseFromString(body))
+    {
+        evhttp_send_error(request,
+                          http_code_message::transport::status::kBadRequest,
+                          http_code_message::transport::message::kInvalidProtobuf);
+        release_request(request);
+        co_return;
+    }
+
+    mud::CodexDetailResponse response;
+    response.set_trace_id(make_trace_id());
+    response.set_server_time_ms(now_ms());
+
+    std::string account;
+    std::string request_token;
+    int error_code = http_code_message::gateway::code::kSuccess;
+    std::string error_message;
+    if(begin_authorize_mud_request(request,
+                                   mud_request.account(),
+                                   m_token_provider.get(),
+                                   m_mud_runtime.get(),
+                                   &account,
+                                   &request_token,
+                                   &error_code,
+                                   &error_message))
+    {
+        if(!validate_mud_session(m_session_store.get(), account, request_token, m_config.redis.op_timeout_ms))
+        {
+            http_code_message::gateway::set_code_message(&response,
+                                                         http_code_message::gateway::code::kInvalidOrExpiredJwt,
+                                                         http_code_message::gateway::message::kInvalidOrExpiredJwt);
+            write_protobuf_response(request, response, 200);
+            release_request(request);
+            co_return;
+        }
+
+        auto* load_result = dynamic_cast<MudPlayerRepositoryOpResult*>(co_await m_mud_player_repository->load_player(account));
+        if(load_result == nullptr || !load_result->success)
+        {
+            http_code_message::gateway::set_code_message(&response,
+                                                         http_code_message::gateway::code::kMudPlayerRepositoryUnavailable,
+                                                         "load mud player failed");
+        }
+        else if(!load_result->found || !load_result->player.has_value())
+        {
+            http_code_message::gateway::set_code_message(&response,
+                                                         http_code_message::gateway::code::kCharacterNotFound,
+                                                         http_code_message::gateway::message::kCharacterNotFound);
+        }
+        else
+        {
+            auto player = *load_result->player;
+            m_mud_runtime->normalize_player_state(&player);
+            m_mud_runtime->build_codex_detail_response(player, mud_request.entry_id(), &response);
         }
     }
     else

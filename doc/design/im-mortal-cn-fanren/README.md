@@ -1,0 +1,97 @@
+# im-mortal.cn 凡人修仙传文档抓取
+
+- 来源入口: https://im-mortal.cn/%E5%87%A1%E4%BA%BA%E4%BF%AE%E4%BB%99%E4%BC%A0
+- 抓取时间: 2026-03-18T12:00:30.411Z
+- 说明: 保留原始 HTML 快照，并额外生成便于仓库内阅读和继续整理的 Markdown 版本。
+
+## 文档索引
+
+- 凡人修仙传 / 凡人修仙传
+  - 源地址: https://im-mortal.cn/%E5%87%A1%E4%BA%BA%E4%BF%AE%E4%BB%99%E4%BC%A0
+  - Markdown: markdown/fanren_overview.md
+  - HTML: pages/fanren_overview.html
+- game_wiki:alchemy / 炼丹
+  - 源地址: https://im-mortal.cn/game_wiki/alchemy
+  - Markdown: markdown/game_wiki_alchemy.md
+  - HTML: pages/game_wiki_alchemy.html
+- game_wiki:basic_attribute / 基础属性
+  - 源地址: https://im-mortal.cn/game_wiki/basic_attribute
+  - Markdown: markdown/game_wiki_basic_attribute.md
+  - HTML: pages/game_wiki_basic_attribute.html
+- game_wiki:combat_attribute / 争斗属性
+  - 源地址: https://im-mortal.cn/game_wiki/combat_attribute
+  - Markdown: markdown/game_wiki_combat_attribute.md
+  - HTML: pages/game_wiki_combat_attribute.html
+- game_wiki:dummy / 该主题尚不存在
+  - 源地址: https://im-mortal.cn/game_wiki/dummy
+  - Markdown: markdown/game_wiki_dummy.md
+  - HTML: pages/game_wiki_dummy.html
+- game_wiki:forging / 该主题尚不存在
+  - 源地址: https://im-mortal.cn/game_wiki/forging
+  - Markdown: markdown/game_wiki_forging.md
+  - HTML: pages/game_wiki_forging.html
+- game_wiki:handmademap / 天南全图
+  - 源地址: https://im-mortal.cn/game_wiki/handmademap
+  - Markdown: markdown/game_wiki_handmademap.md
+  - HTML: pages/game_wiki_handmademap.html
+  - 图片: assets/_media_game_wiki_E5_A4_A9_E5_8D_97_E5_85_A8_E5_9B_BE.jpg, assets/_media_game_wiki_E5_87_A1_E4_BA_BA_E7_95_8C_E5_85_A8_E5_9B_BE.jpg
+- game_wiki:hanli_timeline / 年历表版本一
+  - 源地址: https://im-mortal.cn/game_wiki/hanli_timeline
+  - Markdown: markdown/game_wiki_hanli_timeline.md
+  - HTML: pages/game_wiki_hanli_timeline.html
+- game_wiki:jinzhi / 禁制
+  - 源地址: https://im-mortal.cn/game_wiki/jinzhi
+  - Markdown: markdown/game_wiki_jinzhi.md
+  - HTML: pages/game_wiki_jinzhi.html
+- game_wiki:level / 境界层次
+  - 源地址: https://im-mortal.cn/game_wiki/level
+  - Markdown: markdown/game_wiki_level.md
+  - HTML: pages/game_wiki_level.html
+- game_wiki:main_character / 核心人物、重要人物
+  - 源地址: https://im-mortal.cn/game_wiki/main_character
+  - Markdown: markdown/game_wiki_main_character.md
+  - HTML: pages/game_wiki_main_character.html
+- game_wiki:melee / 炼体
+  - 源地址: https://im-mortal.cn/game_wiki/melee
+  - Markdown: markdown/game_wiki_melee.md
+  - HTML: pages/game_wiki_melee.html
+- game_wiki:monster_geography_clan / 妖兽篇
+  - 源地址: https://im-mortal.cn/game_wiki/monster_geography_clan
+  - Markdown: markdown/game_wiki_monster_geography_clan.md
+  - HTML: pages/game_wiki_monster_geography_clan.html
+- game_wiki:normal_character / 普通人物、次要人物
+  - 源地址: https://im-mortal.cn/game_wiki/normal_character
+  - Markdown: markdown/game_wiki_normal_character.md
+  - HTML: pages/game_wiki_normal_character.html
+- game_wiki:race / 种族设计
+  - 源地址: https://im-mortal.cn/game_wiki/race
+  - Markdown: markdown/game_wiki_race.md
+  - HTML: pages/game_wiki_race.html
+- game_wiki:setting_medicine_spell / 设定篇
+  - 源地址: https://im-mortal.cn/game_wiki/setting_medicine_spell
+  - Markdown: markdown/game_wiki_setting_medicine_spell.md
+  - HTML: pages/game_wiki_setting_medicine_spell.html
+- game_wiki:sheet / 该主题尚不存在
+  - 源地址: https://im-mortal.cn/game_wiki/sheet
+  - Markdown: markdown/game_wiki_sheet.md
+  - HTML: pages/game_wiki_sheet.html
+- game_wiki:skill / 基本技能（skill）
+  - 源地址: https://im-mortal.cn/game_wiki/skill
+  - Markdown: markdown/game_wiki_skill.md
+  - HTML: pages/game_wiki_skill.html
+- game_wiki:spell / 法术
+  - 源地址: https://im-mortal.cn/game_wiki/spell
+  - Markdown: markdown/game_wiki_spell.md
+  - HTML: pages/game_wiki_spell.html
+- game_wiki:stats / 状态属性
+  - 源地址: https://im-mortal.cn/game_wiki/stats
+  - Markdown: markdown/game_wiki_stats.md
+  - HTML: pages/game_wiki_stats.html
+- game_wiki:treasure_zhenfa / 材料篇
+  - 源地址: https://im-mortal.cn/game_wiki/treasure_zhenfa
+  - Markdown: markdown/game_wiki_treasure_zhenfa.md
+  - HTML: pages/game_wiki_treasure_zhenfa.html
+- game_wiki:zhenfa / 阵法
+  - 源地址: https://im-mortal.cn/game_wiki/zhenfa
+  - Markdown: markdown/game_wiki_zhenfa.md
+  - HTML: pages/game_wiki_zhenfa.html

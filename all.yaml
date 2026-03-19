@@ -1,14 +1,20 @@
 ﻿server:
   manager:
     host: 127.0.0.1
+    # 在 WSL 开发环境中实际监听所有网卡，方便 Windows 侧 Vite proxy 访问
+    bind_host: 0.0.0.0
     # manager 使用固定端口，作为统一入口
     port: 18080
   login:
     host: 127.0.0.1
+    # 对外仍通告 127.0.0.1，但监听放开到 WSL 网卡
+    bind_host: 0.0.0.0
     # H5 直连反向代理时建议固定端口
     port: 18081
   game:
     host: 127.0.0.1
+    # 对外仍通告 127.0.0.1，但监听放开到 WSL 网卡
+    bind_host: 0.0.0.0
     # H5 直连反向代理时建议固定端口
     port: 18082
 

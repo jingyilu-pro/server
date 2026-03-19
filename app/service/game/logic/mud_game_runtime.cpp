@@ -72,6 +72,31 @@ std::string normalize_direction(std::string value)
     return value;
 }
 
+int flag_int_value(const MudPlayerState& player, const std::string& key, int default_value)
+{
+    if(auto iter = player.flags.find(key); iter != player.flags.end())
+    {
+        try
+        {
+            return std::stoi(iter->second);
+        }
+        catch(...)
+        {
+            return default_value;
+        }
+    }
+    return default_value;
+}
+
+void set_flag_int(MudPlayerState* player, const std::string& key, int value)
+{
+    if(player == nullptr || key.empty())
+    {
+        return;
+    }
+    player->flags[key] = std::to_string(value);
+}
+
 } // namespace
 
 MudGameRuntime::MudGameRuntime(std::shared_ptr<MudWorld> world,
@@ -132,13 +157,15 @@ bool MudGameRuntime::verify_account_match(const std::string& jwt_account,
 }
 
 MudPlayerState MudGameRuntime::build_default_player(const std::string& account,
-                                                    const std::string& character_name) const
+                                                    const std::string& character_name,
+                                                    const std::string& origin_id) const
 {
-    return make_default_player(account, character_name);
+    return make_default_player(account, character_name, origin_id);
 }
 
 MudPlayerState MudGameRuntime::make_default_player(const std::string& account,
-                                                   const std::string& character_name) const
+                                                   const std::string& character_name,
+                                                   const std::string& origin_id) const
 {
     MudPlayerState player;
     player.account = account;
@@ -157,9 +184,18 @@ MudPlayerState MudGameRuntime::make_default_player(const std::string& account,
     player.next_breakthrough_exp = m_world->defaults().starter_next_breakthrough_exp;
     player.primary_skill = m_world->defaults().starter_skill;
     player.skill_level = 1;
+    player.origin_id = origin_id;
     for(const auto& starter_item : m_world->defaults().starter_inventory)
     {
         add_inventory_item(&player, starter_item.item_id, starter_item.quantity, starter_item.equipped);
+    }
+    for(const auto& starter_spell_id : m_world->defaults().starter_spell_ids)
+    {
+        player.spells.push_back(MudSpellState{starter_spell_id, 1, 0, true});
+    }
+    for(const auto& starter_recipe_id : m_world->defaults().starter_recipe_ids)
+    {
+        player.recipes.push_back(MudRecipeState{starter_recipe_id, 1, 0, true});
     }
     if(const auto* starter_quest = m_world->find_quest("qixuan_herb"); starter_quest != nullptr)
     {
@@ -169,8 +205,311 @@ MudPlayerState MudGameRuntime::make_default_player(const std::string& account,
         quest_state.progress = 0;
         player.quests.push_back(std::move(quest_state));
     }
+    normalize_player_state(&player);
+    MudCommandExecution unlocks;
+    unlock_codex_by_trigger(&player, "enter_scene", player.location_scene_id, &unlocks);
     refresh_quest_progress(&player);
     return player;
+}
+
+void MudGameRuntime::fill_origin_state(const MudPlayerState& player,
+                                       mud::RaceState* state) const
+{
+    if(state == nullptr)
+    {
+        return;
+    }
+    state->set_origin_id(player.origin_id);
+    state->set_origin_name(player.origin_name);
+    state->set_race_name(player.race_name);
+    state->set_homeland(player.homeland);
+    if(const auto* origin = m_world->find_origin(player.origin_id); origin != nullptr)
+    {
+        state->set_description(origin->description);
+    }
+}
+
+void MudGameRuntime::fill_base_attributes(const MudBaseAttributeState& state,
+                                          mud::BaseAttributeState* output) const
+{
+    if(output == nullptr)
+    {
+        return;
+    }
+    output->set_spi(state.spi);
+    output->set_gin(state.gin);
+    output->set_str(state.str);
+    output->set_per(state.per);
+    output->set_int_attr(state.int_attr);
+    output->set_cha(state.cha);
+    output->set_luc(state.luc);
+}
+
+void MudGameRuntime::fill_status_attributes(const MudStatusAttributeState& state,
+                                            mud::StatusAttributeState* output) const
+{
+    if(output == nullptr)
+    {
+        return;
+    }
+    output->set_kee(state.kee);
+    output->set_sen(state.sen);
+    output->set_sta(state.sta);
+    output->set_mana(state.mana);
+}
+
+void MudGameRuntime::fill_combat_attributes(const MudCombatAttributeState& state,
+                                            mud::CombatAttributeState* output) const
+{
+    if(output == nullptr)
+    {
+        return;
+    }
+    output->set_phys_hit(state.phys_hit);
+    output->set_phys_crit(state.phys_crit);
+    output->set_phys_damage(state.phys_damage);
+    output->set_phys_haste(state.phys_haste);
+    output->set_spell_hit(state.spell_hit);
+    output->set_spell_crit(state.spell_crit);
+    output->set_spell_damage(state.spell_damage);
+    output->set_spell_haste(state.spell_haste);
+    output->set_dodge(state.dodge);
+    output->set_block(state.block);
+    output->set_shield(state.shield);
+    output->set_parry(state.parry);
+    output->set_armor(state.armor);
+    output->set_resist_fire(state.resist_fire);
+    output->set_resist_ice(state.resist_ice);
+    output->set_resist_thunder(state.resist_thunder);
+    output->set_resist_wind(state.resist_wind);
+    output->set_resist_corrosion(state.resist_corrosion);
+    output->set_resist_poison(state.resist_poison);
+    output->set_resist_pierce(state.resist_pierce);
+    output->set_resist_slash(state.resist_slash);
+    output->set_resist_blunt(state.resist_blunt);
+}
+
+void MudGameRuntime::sync_origin_from_world(MudPlayerState* player) const
+{
+    if(player == nullptr)
+    {
+        return;
+    }
+
+    const MudOriginConfig* origin = nullptr;
+    if(!player->origin_id.empty())
+    {
+        origin = m_world->find_origin(player->origin_id);
+    }
+    if(origin == nullptr)
+    {
+        const auto origins = m_world->origins();
+        if(!origins.empty())
+        {
+            origin = m_world->find_origin(origins.front().origin_id);
+        }
+    }
+    if(origin == nullptr)
+    {
+        return;
+    }
+
+    player->origin_id = origin->origin_id;
+    player->origin_name = origin->name;
+    player->race_name = origin->race_name;
+    player->homeland = origin->homeland;
+    if(player->base_attributes.spi == 0 && player->base_attributes.gin == 0 && player->base_attributes.str == 0)
+    {
+        player->base_attributes = origin->base_attributes;
+    }
+    if(player->primary_skill.empty())
+    {
+        if(const auto* skill = m_world->find_skill(origin->starter_skill_id); skill != nullptr)
+        {
+            player->primary_skill = skill->name;
+        }
+    }
+}
+
+void MudGameRuntime::derive_player_combat_state(MudPlayerState* player) const
+{
+    if(player == nullptr)
+    {
+        return;
+    }
+
+    const auto& default_status = m_world->default_status_attributes();
+    const auto& default_combat = m_world->default_combat_attributes();
+    player->status_attributes.kee = std::max(default_status.kee,
+                                             80 + player->base_attributes.str * 6 + player->base_attributes.gin * 4 +
+                                                 player->realm_stage * 16);
+    player->status_attributes.sen = std::max(default_status.sen,
+                                             40 + player->base_attributes.spi * 6 + player->realm_stage * 8);
+    player->status_attributes.sta = std::max(default_status.sta,
+                                             50 + player->base_attributes.str * 5 + player->base_attributes.per * 3);
+    player->status_attributes.mana = std::max(default_status.mana,
+                                              30 + player->base_attributes.spi * 5 + player->base_attributes.int_attr * 4 +
+                                                  player->realm_stage * 10);
+
+    player->combat_attributes = default_combat;
+    player->combat_attributes.phys_hit += player->base_attributes.per + player->skill_level;
+    player->combat_attributes.phys_damage += player->base_attributes.str * 2 + player->realm_stage * 4;
+    player->combat_attributes.phys_crit += player->base_attributes.luc / 2;
+    player->combat_attributes.spell_hit += player->base_attributes.spi + player->realm_stage * 2;
+    player->combat_attributes.spell_damage += player->base_attributes.int_attr * 2 + player->realm_stage * 5;
+    player->combat_attributes.spell_crit += player->base_attributes.luc / 2;
+    player->combat_attributes.dodge += player->base_attributes.per / 2;
+    player->combat_attributes.armor += player->base_attributes.str + player->realm_stage * 3;
+
+    player->max_hp = player->status_attributes.kee;
+    player->hp = std::clamp(player->hp <= 0 ? player->max_hp : player->hp, 1, player->max_hp);
+    player->attack_power = player->combat_attributes.phys_damage;
+    player->defense_power = player->combat_attributes.armor;
+}
+
+bool MudGameRuntime::normalize_player_state(MudPlayerState* player) const
+{
+    if(player == nullptr)
+    {
+        return false;
+    }
+
+    const auto before_origin_id = player->origin_id;
+    const auto before_hp = player->hp;
+    sync_origin_from_world(player);
+
+    if(player->base_attributes.spi == 0 && player->base_attributes.gin == 0 &&
+       player->base_attributes.str == 0 && player->base_attributes.per == 0 &&
+       player->base_attributes.int_attr == 0)
+    {
+        player->base_attributes = m_world->default_base_attributes();
+        if(const auto* origin = m_world->find_origin(player->origin_id); origin != nullptr)
+        {
+            player->base_attributes = origin->base_attributes;
+        }
+    }
+
+    if(player->skills.empty())
+    {
+        MudSkillState skill_state;
+        skill_state.skill_id = "long_spring_art";
+        skill_state.level = std::max(1, player->skill_level);
+        skill_state.proficiency = player->exp;
+        player->skills.push_back(std::move(skill_state));
+    }
+
+    if(player->spells.empty())
+    {
+        for(const auto& starter_spell_id : m_world->defaults().starter_spell_ids)
+        {
+            player->spells.push_back(MudSpellState{starter_spell_id, 1, 0, true});
+        }
+    }
+
+    if(player->recipes.empty())
+    {
+        for(const auto& starter_recipe_id : m_world->defaults().starter_recipe_ids)
+        {
+            player->recipes.push_back(MudRecipeState{starter_recipe_id, 1, 0, true});
+        }
+    }
+
+    if(player->profession.alchemy_level <= 0)
+    {
+        player->profession.alchemy_level = 1;
+        player->profession.exploration_level = 1;
+        player->profession.formation_level = 1;
+        player->profession.forging_level = 1;
+    }
+
+    derive_player_combat_state(player);
+    if(player->flags.find("current_mana") == player->flags.end())
+    {
+        set_flag_int(player, "current_mana", player->status_attributes.mana);
+    }
+    if(player->flags.find("current_sen") == player->flags.end())
+    {
+        set_flag_int(player, "current_sen", player->status_attributes.sen);
+    }
+    if(player->flags.find("current_sta") == player->flags.end())
+    {
+        set_flag_int(player, "current_sta", player->status_attributes.sta);
+    }
+    return before_origin_id != player->origin_id || before_hp != player->hp;
+}
+
+bool MudGameRuntime::is_codex_unlocked(const MudPlayerState& player, const std::string& entry_id) const
+{
+    return std::any_of(player.codex_entries.begin(), player.codex_entries.end(), [&](const MudCodexState& state) {
+        return state.entry_id == entry_id;
+    });
+}
+
+bool MudGameRuntime::unlock_codex_entry(MudPlayerState* player,
+                                        const std::string& entry_id,
+                                        MudCommandExecution* execution) const
+{
+    if(player == nullptr || entry_id.empty() || is_codex_unlocked(*player, entry_id))
+    {
+        return false;
+    }
+
+    MudCodexState state;
+    state.entry_id = entry_id;
+    state.unread = true;
+    state.unlocked_at_ms = mud_now_ms();
+    player->codex_entries.push_back(state);
+    if(execution != nullptr)
+    {
+        execution->unlocked_codex_entry_ids.push_back(entry_id);
+        if(const auto* entry = m_world->find_codex_entry(entry_id); entry != nullptr)
+        {
+            execution->hints.push_back("手册解锁：" + entry->title);
+        }
+    }
+    return true;
+}
+
+void MudGameRuntime::unlock_codex_by_trigger(MudPlayerState* player,
+                                             const std::string& trigger,
+                                             const std::string& target_id,
+                                             MudCommandExecution* execution) const
+{
+    if(player == nullptr)
+    {
+        return;
+    }
+    for(const auto* entry : m_world->codex_entries_for_unlock(trigger, target_id))
+    {
+        if(entry != nullptr)
+        {
+            unlock_codex_entry(player, entry->entry_id, execution);
+        }
+    }
+}
+
+void MudGameRuntime::fill_codex_summary(const MudPlayerState& player,
+                                        const MudCodexEntryConfig& entry,
+                                        mud::CodexSummary* output) const
+{
+    if(output == nullptr)
+    {
+        return;
+    }
+    output->set_entry_id(entry.entry_id);
+    output->set_category(entry.category);
+    output->set_title(entry.title);
+    output->set_summary(entry.summary);
+    output->set_unlocked(is_codex_unlocked(player, entry.entry_id));
+    output->set_unread(false);
+    for(const auto& state : player.codex_entries)
+    {
+        if(state.entry_id == entry.entry_id)
+        {
+            output->set_unread(state.unread);
+            break;
+        }
+    }
 }
 
 void MudGameRuntime::fill_player_snapshot(const MudPlayerState& player,
@@ -206,6 +545,11 @@ void MudGameRuntime::fill_player_snapshot(const MudPlayerState& player,
     sect->set_sect_rank(player.sect_rank);
     sect->set_joined(!player.sect_id.empty());
 
+    fill_origin_state(player, snapshot->mutable_race());
+    fill_base_attributes(player.base_attributes, snapshot->mutable_base_attributes());
+    fill_status_attributes(player.status_attributes, snapshot->mutable_status_attributes());
+    fill_combat_attributes(player.combat_attributes, snapshot->mutable_combat_attributes());
+
     snapshot->clear_inventory();
     for(const auto& item_state : player.inventory)
     {
@@ -236,14 +580,21 @@ void MudGameRuntime::fill_player_snapshot(const MudPlayerState& player,
     snapshot->add_known_commands("look");
     snapshot->add_known_commands("map");
     snapshot->add_known_commands("go <direction>");
+    snapshot->add_known_commands("inspect <target>");
     snapshot->add_known_commands("talk <npc>");
     snapshot->add_known_commands("accept <quest>");
     snapshot->add_known_commands("submit <quest>");
     snapshot->add_known_commands("fight <target>");
     snapshot->add_known_commands("use <item>");
+    snapshot->add_known_commands("loot <item>");
+    snapshot->add_known_commands("harvest <node>");
+    snapshot->add_known_commands("cast <spell> <target>");
     snapshot->add_known_commands("flee");
     snapshot->add_known_commands("practice <skill>");
+    snapshot->add_known_commands("meditate");
     snapshot->add_known_commands("breakthrough");
+    snapshot->add_known_commands("brew <recipe>");
+    snapshot->add_known_commands("codex <category> [entry]");
     snapshot->add_known_commands("buy <item>");
     snapshot->add_known_commands("sell <item>");
     snapshot->add_known_commands("join <sect>");
@@ -259,6 +610,92 @@ void MudGameRuntime::fill_player_snapshot(const MudPlayerState& player,
         snapshot->add_unlocked_regions(region);
     }
     snapshot->set_sect_contribution(sect_contribution_for_player(player));
+
+    snapshot->clear_skills();
+    for(const auto& skill_state : player.skills)
+    {
+        const auto* skill_config = m_world->find_skill(skill_state.skill_id);
+        auto* output = snapshot->add_skills();
+        output->set_skill_id(skill_state.skill_id);
+        output->set_name(skill_config == nullptr ? skill_state.skill_id : skill_config->name);
+        output->set_category(skill_config == nullptr ? "" : skill_config->category);
+        output->set_level(skill_state.level);
+        output->set_proficiency(skill_state.proficiency);
+        output->set_description(skill_config == nullptr ? "" : skill_config->description);
+    }
+
+    snapshot->clear_spells();
+    for(const auto& spell_state : player.spells)
+    {
+        const auto* spell_config = m_world->find_spell(spell_state.spell_id);
+        auto* output = snapshot->add_spells();
+        output->set_spell_id(spell_state.spell_id);
+        output->set_name(spell_config == nullptr ? spell_state.spell_id : spell_config->name);
+        output->set_element(spell_config == nullptr ? "" : spell_config->element);
+        output->set_level(spell_state.level);
+        output->set_proficiency(spell_state.proficiency);
+        output->set_mana_cost(spell_config == nullptr ? 0 : spell_config->mana_cost);
+        output->set_description(spell_config == nullptr ? "" : spell_config->description);
+        output->set_unlocked(spell_state.unlocked);
+    }
+
+    snapshot->clear_recipes();
+    for(const auto& recipe_state : player.recipes)
+    {
+        const auto* recipe_config = m_world->find_recipe(recipe_state.recipe_id);
+        auto* output = snapshot->add_recipes();
+        output->set_recipe_id(recipe_state.recipe_id);
+        output->set_name(recipe_config == nullptr ? recipe_state.recipe_id : recipe_config->name);
+        output->set_unlocked(recipe_state.unlocked);
+        output->set_level(recipe_state.level);
+        output->set_proficiency(recipe_state.proficiency);
+        output->set_description(recipe_config == nullptr ? "" : recipe_config->description);
+    }
+
+    auto* profession = snapshot->mutable_profession();
+    profession->set_alchemy_level(player.profession.alchemy_level);
+    profession->set_exploration_level(player.profession.exploration_level);
+    profession->set_formation_level(player.profession.formation_level);
+    profession->set_forging_level(player.profession.forging_level);
+
+    snapshot->clear_codex_summaries();
+    static const std::vector<std::string> kCodexCategories = {
+        "人物志", "宗门志", "妖兽志", "奇虫志", "地理志", "灵草丹药志", "功法技能志", "法术志", "宝物阵法志", "韩立年历"};
+    for(const auto& category : kCodexCategories)
+    {
+        auto entries = m_world->codex_entries_for_category(category);
+        if(entries.empty())
+        {
+            continue;
+        }
+        int unlocked_count = 0;
+        int unread_count = 0;
+        for(const auto& entry : entries)
+        {
+            if(is_codex_unlocked(player, entry.entry_id))
+            {
+                ++unlocked_count;
+            }
+        }
+        for(const auto& state : player.codex_entries)
+        {
+            if(state.unread)
+            {
+                if(const auto* entry = m_world->find_codex_entry(state.entry_id);
+                   entry != nullptr && entry->category == category)
+                {
+                    ++unread_count;
+                }
+            }
+        }
+        auto* summary = snapshot->add_codex_summaries();
+        summary->set_entry_id(category);
+        summary->set_category(category);
+        summary->set_title(category);
+        summary->set_summary("已解锁 " + std::to_string(unlocked_count) + "/" + std::to_string(entries.size()));
+        summary->set_unlocked(unlocked_count > 0);
+        summary->set_unread(unread_count > 0);
+    }
 }
 
 void MudGameRuntime::fill_scene_snapshot(const MudPlayerState& player,
@@ -285,6 +722,10 @@ void MudGameRuntime::fill_scene_snapshot(const MudPlayerState& player,
     snapshot->clear_shops();
     snapshot->clear_players();
     snapshot->clear_items();
+    snapshot->clear_resource_nodes();
+    snapshot->clear_ground_loots();
+    snapshot->clear_hazards();
+    snapshot->clear_related_codex_entry_ids();
 
     for(const auto& entry : scene->exits)
     {
@@ -309,6 +750,7 @@ void MudGameRuntime::fill_scene_snapshot(const MudPlayerState& player,
         node->set_name(npc->name);
         node->set_has_quest(!npc->quest_ids.empty());
         node->set_hint(npc->hint);
+        node->set_codex_entry_id(npc->codex_entry_id);
     }
 
     for(const auto& monster_id : scene->monster_ids)
@@ -331,7 +773,66 @@ void MudGameRuntime::fill_scene_snapshot(const MudPlayerState& player,
             visible_item->set_description(item->description);
             visible_item->set_source("shop");
             visible_item->set_price(item->price);
+            visible_item->set_codex_entry_id(item->codex_entry_id);
         }
+    }
+
+    for(const auto& node_id : scene->resource_node_ids)
+    {
+        const auto* node = m_world->find_resource_node(node_id);
+        if(node == nullptr)
+        {
+            continue;
+        }
+        const auto* item = m_world->find_item(node->drop_item_id);
+        auto* output = snapshot->add_resource_nodes();
+        output->set_node_id(node->node_id);
+        output->set_name(node->name);
+        output->set_description(node->description);
+        output->set_drop_item_id(node->drop_item_id);
+        output->set_drop_item_name(item == nullptr ? node->drop_item_id : item->name);
+        output->set_drop_item_count(node->drop_item_count);
+        output->set_codex_entry_id(node->codex_entry_id);
+    }
+
+    for(const auto& loot_id : scene->ground_loot_ids)
+    {
+        const auto* loot = m_world->find_ground_loot(loot_id);
+        if(loot == nullptr)
+        {
+            continue;
+        }
+        const auto* item = m_world->find_item(loot->item_id);
+        auto* output = snapshot->add_ground_loots();
+        output->set_loot_id(loot->loot_id);
+        output->set_item_id(loot->item_id);
+        output->set_item_name(item == nullptr ? loot->item_id : item->name);
+        output->set_quantity(loot->quantity);
+        output->set_description(loot->description);
+        output->set_codex_entry_id(item == nullptr ? "" : item->codex_entry_id);
+        output->set_lootable(true);
+    }
+
+    for(const auto& hazard_id : scene->hazard_ids)
+    {
+        const auto* hazard = m_world->find_hazard(hazard_id);
+        if(hazard == nullptr)
+        {
+            continue;
+        }
+        auto* output = snapshot->add_hazards();
+        output->set_hazard_id(hazard->hazard_id);
+        output->set_name(hazard->name);
+        output->set_description(hazard->description);
+        output->set_hp_cost(hazard->hp_cost);
+        output->set_mana_cost(hazard->mana_cost);
+        output->set_sta_cost(hazard->sta_cost);
+        output->set_codex_entry_id(hazard->codex_entry_id);
+    }
+
+    for(const auto& entry_id : scene->codex_entry_ids)
+    {
+        snapshot->add_related_codex_entry_ids(entry_id);
     }
 
     std::vector<const OnlinePresenceState*> visible_players;
@@ -487,6 +988,16 @@ void MudGameRuntime::build_bootstrap_response(const std::string& account,
     }
 
     response->set_need_create_character(!player.has_value());
+    response->clear_available_origins();
+    for(const auto& origin : m_world->origins())
+    {
+        auto* output = response->add_available_origins();
+        output->set_origin_id(origin.origin_id);
+        output->set_origin_name(origin.name);
+        output->set_race_name(origin.race_name);
+        output->set_homeland(origin.homeland);
+        output->set_description(origin.description);
+    }
     if(!player.has_value())
     {
         MudPlayerState preview;
@@ -500,25 +1011,29 @@ void MudGameRuntime::build_bootstrap_response(const std::string& account,
         return;
     }
 
-    m_character_names[player->account] = player->character_name;
-    remember_scene_presence(*player);
+    auto normalized_player = *player;
+    normalize_player_state(&normalized_player);
+    MudCommandExecution bootstrap_unlocks;
+    unlock_codex_by_trigger(&normalized_player, "enter_scene", normalized_player.location_scene_id, &bootstrap_unlocks);
+    m_character_names[normalized_player.account] = normalized_player.character_name;
+    remember_scene_presence(normalized_player);
     if(auto team_iter = m_team_by_account.find(player->account); team_iter != m_team_by_account.end())
     {
         if(auto state_iter = m_teams.find(team_iter->second); state_iter != m_teams.end())
         {
             for(auto& member : state_iter->second.members)
             {
-                if(member.account == player->account)
+                if(member.account == normalized_player.account)
                 {
-                    member.display_name = player->character_name;
-                    member.player_state = *player;
+                    member.display_name = normalized_player.character_name;
+                    member.player_state = normalized_player;
                     break;
                 }
             }
         }
     }
-    fill_player_snapshot(*player, response->mutable_player());
-    fill_scene_snapshot(*player, response->mutable_scene());
+    fill_player_snapshot(normalized_player, response->mutable_player());
+    fill_scene_snapshot(normalized_player, response->mutable_scene());
     auto recent_events = recent_events_for_account(account, 50);
     add_events_to_response(recent_events, response->mutable_events());
     http_code_message::gateway::set_code_message(response,
@@ -536,31 +1051,33 @@ void MudGameRuntime::build_create_character_response(const MudPlayerState& playe
         return;
     }
 
-    m_character_names[player.account] = player.character_name;
-    remember_scene_presence(player);
-    if(auto team_iter = m_team_by_account.find(player.account); team_iter != m_team_by_account.end())
+    auto normalized_player = player;
+    normalize_player_state(&normalized_player);
+    m_character_names[normalized_player.account] = normalized_player.character_name;
+    remember_scene_presence(normalized_player);
+    if(auto team_iter = m_team_by_account.find(normalized_player.account); team_iter != m_team_by_account.end())
     {
         if(auto state_iter = m_teams.find(team_iter->second); state_iter != m_teams.end())
         {
             for(auto& member : state_iter->second.members)
             {
-                if(member.account == player.account)
+                if(member.account == normalized_player.account)
                 {
-                    member.display_name = player.character_name;
-                    member.player_state = player;
+                    member.display_name = normalized_player.character_name;
+                    member.player_state = normalized_player;
                     break;
                 }
             }
         }
     }
     std::vector<MudEventEnvelope> events;
-    append_event(player.account,
+    append_event(normalized_player.account,
                  "system",
                  "踏入修仙路",
-                 player.character_name + "自七玄门山脚启程，正式踏上凡人修仙之路。",
+                 normalized_player.character_name + "自七玄门山脚启程，正式踏上凡人修仙之路。",
                  &events);
-    fill_player_snapshot(player, response->mutable_player());
-    fill_scene_snapshot(player, response->mutable_scene());
+    fill_player_snapshot(normalized_player, response->mutable_player());
+    fill_scene_snapshot(normalized_player, response->mutable_scene());
     add_events_to_response(events, response->mutable_events());
     response->set_next_event_id(events.empty() ? (m_next_event_id == 0 ? 0 : (m_next_event_id - 1)) : events.back().event_id);
     http_code_message::gateway::set_code_message(response,
@@ -601,10 +1118,21 @@ void MudGameRuntime::build_command_response(const MudPlayerState& player,
     result->set_title(execution.title);
     result->set_summary(execution.summary);
     result->set_recommended_poll_interval_ms(execution.recommended_poll_interval_ms);
+    result->set_spell_summary(execution.spell_summary);
+    result->set_brew_summary(execution.brew_summary);
+    result->set_hazard_feedback(execution.hazard_feedback);
     result->clear_hints();
     for(const auto& hint : execution.hints)
     {
         result->add_hints(hint);
+    }
+    result->clear_unlocked_codex_entries();
+    for(const auto& entry_id : execution.unlocked_codex_entry_ids)
+    {
+        if(const auto* entry = m_world->find_codex_entry(entry_id); entry != nullptr)
+        {
+            fill_codex_summary(player, *entry, result->add_unlocked_codex_entries());
+        }
     }
 
     fill_player_snapshot(player, response->mutable_player());
@@ -663,10 +1191,87 @@ void MudGameRuntime::build_feed_response(const std::string& account,
     response->set_recommended_poll_interval_ms(1500);
     if(player.has_value())
     {
-        m_character_names[player->account] = player->character_name;
-        remember_scene_presence(*player);
-        fill_scene_snapshot(*player, response->mutable_scene());
+        auto normalized_player = *player;
+        normalize_player_state(&normalized_player);
+        m_character_names[normalized_player.account] = normalized_player.character_name;
+        remember_scene_presence(normalized_player);
+        fill_scene_snapshot(normalized_player, response->mutable_scene());
     }
+    http_code_message::gateway::set_code_message(response,
+                                                 http_code_message::gateway::code::kSuccess,
+                                                 http_code_message::gateway::message::kOk);
+}
+
+void MudGameRuntime::build_codex_list_response(const MudPlayerState& player,
+                                               const std::string& category,
+                                               mud::CodexListResponse* response) const
+{
+    if(response == nullptr)
+    {
+        return;
+    }
+
+    response->clear_entries();
+    for(const auto& entry : m_world->codex_entries_for_category(category))
+    {
+        fill_codex_summary(player, entry, response->add_entries());
+    }
+    http_code_message::gateway::set_code_message(response,
+                                                 http_code_message::gateway::code::kSuccess,
+                                                 http_code_message::gateway::message::kOk);
+}
+
+void MudGameRuntime::build_codex_detail_response(const MudPlayerState& player,
+                                                 const std::string& entry_id,
+                                                 mud::CodexDetailResponse* response) const
+{
+    if(response == nullptr)
+    {
+        return;
+    }
+
+    const auto* entry = m_world->find_codex_entry(entry_id);
+    if(entry == nullptr)
+    {
+        http_code_message::gateway::set_code_message(response,
+                                                     http_code_message::gateway::code::kInvalidMudCommand,
+                                                     "codex entry not found");
+        return;
+    }
+
+    auto* output = response->mutable_entry();
+    output->set_entry_id(entry->entry_id);
+    output->set_category(entry->category);
+    output->set_title(entry->title);
+    output->set_summary(entry->summary);
+    output->set_content(is_codex_unlocked(player, entry->entry_id) ? entry->content : "资料未明，需通过剧情与探索解锁。");
+    output->clear_related_scene_ids();
+    output->clear_related_npc_ids();
+    output->clear_related_monster_ids();
+    output->clear_related_item_ids();
+    output->clear_related_sect_ids();
+    for(const auto& value : entry->related_scene_ids)
+    {
+        output->add_related_scene_ids(value);
+    }
+    for(const auto& value : entry->related_npc_ids)
+    {
+        output->add_related_npc_ids(value);
+    }
+    for(const auto& value : entry->related_monster_ids)
+    {
+        output->add_related_monster_ids(value);
+    }
+    for(const auto& value : entry->related_item_ids)
+    {
+        output->add_related_item_ids(value);
+    }
+    for(const auto& value : entry->related_sect_ids)
+    {
+        output->add_related_sect_ids(value);
+    }
+    output->set_unlocked(is_codex_unlocked(player, entry->entry_id));
+    output->set_unread(false);
     http_code_message::gateway::set_code_message(response,
                                                  http_code_message::gateway::code::kSuccess,
                                                  http_code_message::gateway::message::kOk);
@@ -1034,7 +1639,7 @@ coro_task_t MudGameRuntime::create_character_async(const std::string& account,
         co_return;
     }
 
-    auto player = make_default_player(account, normalized_name);
+    auto player = make_default_player(account, normalized_name, "");
     auto* create_result = dynamic_cast<MudPlayerRepositoryOpResult*>(co_await m_repository->create_player(player));
     if(create_result == nullptr || !create_result->success || !create_result->create_ok)
     {
@@ -1169,6 +1774,8 @@ MudCommandExecution MudGameRuntime::execute_command(MudPlayerState* player,
         return execution;
     }
 
+    normalize_player_state(player);
+
     auto parsed = parse_mud_command(command_text);
     if(parsed.verb.empty())
     {
@@ -1185,6 +1792,10 @@ MudCommandExecution MudGameRuntime::execute_command(MudPlayerState* player,
     if(parsed.verb == "map")
     {
         return execute_map(player);
+    }
+    if(parsed.verb == "inspect")
+    {
+        return execute_inspect(player, parsed.args);
     }
     if(parsed.verb == "go")
     {
@@ -1210,6 +1821,18 @@ MudCommandExecution MudGameRuntime::execute_command(MudPlayerState* player,
     {
         return execute_use(player, parsed.args);
     }
+    if(parsed.verb == "loot")
+    {
+        return execute_loot(player, parsed.args);
+    }
+    if(parsed.verb == "harvest")
+    {
+        return execute_harvest(player, parsed.args);
+    }
+    if(parsed.verb == "cast")
+    {
+        return execute_cast(player, parsed.args);
+    }
     if(parsed.verb == "flee")
     {
         return execute_flee();
@@ -1218,9 +1841,17 @@ MudCommandExecution MudGameRuntime::execute_command(MudPlayerState* player,
     {
         return execute_practice(player, parsed.args);
     }
+    if(parsed.verb == "meditate")
+    {
+        return execute_meditate(player);
+    }
     if(parsed.verb == "breakthrough")
     {
         return execute_breakthrough(player);
+    }
+    if(parsed.verb == "brew")
+    {
+        return execute_brew(player, parsed.args);
     }
     if(parsed.verb == "buy")
     {
@@ -1246,10 +1877,14 @@ MudCommandExecution MudGameRuntime::execute_command(MudPlayerState* player,
     {
         return execute_chat(*player, parsed.raw_args);
     }
+    if(parsed.verb == "codex")
+    {
+        return execute_codex(player, parsed.args);
+    }
 
     execution.title = "未知指令";
     execution.summary = "未识别的指令：" + parsed.verb;
-    execution.hints = {"可用指令：look / map / go / talk / accept / submit / fight / use / practice / breakthrough"};
+    execution.hints = {"可用指令：look / map / inspect / go / talk / accept / submit / fight / cast / loot / harvest / use / meditate / practice / breakthrough / brew / codex"};
     return execution;
 }
 
@@ -1338,6 +1973,7 @@ MudCommandExecution MudGameRuntime::execute_go(MudPlayerState* player,
         execution.title = "御风而行";
         execution.summary = "你离开「" + scene->name + "」，来到「" +
                             (target == nullptr ? iter->second : target->name) + "」。";
+        unlock_codex_by_trigger(player, "enter_scene", player->location_scene_id, &execution);
         append_event(player->account,
                      "move",
                      execution.title,
@@ -1375,6 +2011,7 @@ MudCommandExecution MudGameRuntime::execute_talk(MudPlayerState* player,
     execution.success = true;
     execution.title = "与" + npc->name + "交谈";
     execution.summary = npc->dialogue.empty() ? (npc->name + "静静看着你。") : npc->dialogue;
+    unlock_codex_by_trigger(player, "talk_npc", npc->npc_id, &execution);
     for(const auto& quest_id : npc->quest_ids)
     {
         const auto* quest = m_world->find_quest(quest_id);
@@ -1438,6 +2075,7 @@ MudCommandExecution MudGameRuntime::execute_accept(MudPlayerState* player,
     execution.title = "接取任务";
     execution.summary = "你接下了任务「" + quest->title + "」。";
     execution.hints.push_back(quest->description);
+    unlock_codex_by_trigger(player, "accept_quest", quest->quest_id, &execution);
     append_event(player->account,
                  "quest",
                  execution.title,
@@ -1494,6 +2132,7 @@ MudCommandExecution MudGameRuntime::execute_submit(MudPlayerState* player,
     if(!quest->reward_item_id.empty() && quest->reward_item_count > 0)
     {
         add_inventory_item(player, quest->reward_item_id, quest->reward_item_count, false);
+        unlock_codex_by_trigger(player, "obtain_item", quest->reward_item_id, &execution);
     }
     refresh_quest_progress(player);
 
@@ -1502,6 +2141,7 @@ MudCommandExecution MudGameRuntime::execute_submit(MudPlayerState* player,
     execution.summary = "你完成了「" + quest->title + "」，获得灵石 " +
                         std::to_string(quest->reward_spirit_stone) + "、修为 " +
                         std::to_string(quest->reward_exp) + "。";
+    unlock_codex_by_trigger(player, "submit_quest", quest->quest_id, &execution);
     if(!quest->reward_item_id.empty() && quest->reward_item_count > 0)
     {
         execution.hints.push_back("奖励物品：" + quest->reward_item_id + " x" + std::to_string(quest->reward_item_count));
@@ -1547,6 +2187,7 @@ MudCommandExecution MudGameRuntime::execute_fight(MudPlayerState* player,
         if(!monster->drop_item_id.empty() && monster->drop_item_count > 0)
         {
             add_inventory_item(player, monster->drop_item_id, monster->drop_item_count, false);
+            unlock_codex_by_trigger(player, "obtain_item", monster->drop_item_id, &execution);
         }
         refresh_quest_progress(player);
 
@@ -1555,6 +2196,7 @@ MudCommandExecution MudGameRuntime::execute_fight(MudPlayerState* player,
         execution.summary = "你击败了「" + monster->name + "」，获得修为 " +
                             std::to_string(monster->reward_exp) + "、灵石 " +
                             std::to_string(monster->reward_spirit_stone) + "。";
+        unlock_codex_by_trigger(player, "defeat_monster", monster->monster_id, &execution);
         append_event(player->account,
                      "combat",
                      execution.title,
@@ -1693,6 +2335,7 @@ MudCommandExecution MudGameRuntime::execute_practice(MudPlayerState* player,
     execution.success = true;
     execution.title = "吐纳修炼";
     execution.summary = "你运转「" + player->primary_skill + "」，修为增加 " + std::to_string(gain) + "。";
+    unlock_codex_by_trigger(player, "practice_skill", "long_spring_art", &execution);
     append_event(player->account,
                  "cultivation",
                  execution.title,
@@ -1732,6 +2375,7 @@ MudCommandExecution MudGameRuntime::execute_breakthrough(MudPlayerState* player)
     execution.success = true;
     execution.title = "突破成功";
     execution.summary = "你成功突破至「" + player->realm_name + "」，气血与战力大涨。";
+    unlock_codex_by_trigger(player, "breakthrough_realm", std::to_string(player->realm_stage), &execution);
     append_event(player->account,
                  "breakthrough",
                  execution.title,
@@ -1793,6 +2437,7 @@ MudCommandExecution MudGameRuntime::execute_buy(MudPlayerState* player,
     execution.success = true;
     execution.title = "交易完成";
     execution.summary = "你买下了「" + item_config->name + "」，花费灵石 " + std::to_string(item_config->price) + "。";
+    unlock_codex_by_trigger(player, "obtain_item", item_config->item_id, &execution);
     append_event(player->account,
                  "trade",
                  execution.title,
@@ -1955,6 +2600,7 @@ MudCommandExecution MudGameRuntime::execute_join(MudPlayerState* player,
     execution.success = true;
     execution.title = "拜入宗门";
     execution.summary = "你正式加入「" + matched_sect->name + "」，身份为「" + matched_sect->rank_title + "」。";
+    unlock_codex_by_trigger(player, "join_sect", matched_sect->sect_id, &execution);
     append_event("",
                  "sect",
                  execution.title,
@@ -2263,6 +2909,380 @@ MudCommandExecution MudGameRuntime::execute_chat(const MudPlayerState& player,
     return execution;
 }
 
+MudCommandExecution MudGameRuntime::execute_inspect(MudPlayerState* player,
+                                                    const std::vector<std::string>& args)
+{
+    MudCommandExecution execution;
+    if(player == nullptr)
+    {
+        execution.title = "查看失败";
+        execution.summary = "玩家状态为空。";
+        return execution;
+    }
+    if(args.empty())
+    {
+        execution.title = "查看目标";
+        execution.summary = "请使用 inspect <target> 查看人物、妖兽、资源点或物件。";
+        return execution;
+    }
+
+    const auto key = args.front();
+    if(const auto* npc = match_scene_npc(*player, key); npc != nullptr)
+    {
+        execution.success = true;
+        execution.title = npc->name;
+        execution.summary = npc->description.empty() ? npc->hint : npc->description;
+        execution.hints.push_back(npc->dialogue);
+        if(!npc->codex_entry_id.empty())
+        {
+            unlock_codex_entry(player, npc->codex_entry_id, &execution);
+        }
+        return execution;
+    }
+    if(const auto* monster = match_scene_monster(*player, key); monster != nullptr)
+    {
+        execution.success = true;
+        execution.title = monster->name;
+        execution.summary = monster->description;
+        execution.hints.push_back("掉落：" + monster->drop_item_id);
+        if(!monster->codex_entry_id.empty())
+        {
+            unlock_codex_entry(player, monster->codex_entry_id, &execution);
+        }
+        return execution;
+    }
+    if(const auto* node = match_scene_resource_node(*player, key); node != nullptr)
+    {
+        execution.success = true;
+        execution.title = node->name;
+        execution.summary = node->description;
+        execution.hints.push_back("可采集：" + node->drop_item_id + " x" + std::to_string(node->drop_item_count));
+        return execution;
+    }
+    if(const auto* loot = match_scene_ground_loot(*player, key); loot != nullptr)
+    {
+        const auto* item = m_world->find_item(loot->item_id);
+        execution.success = true;
+        execution.title = item == nullptr ? loot->item_id : item->name;
+        execution.summary = loot->description;
+        execution.hints.push_back("可拾取数量：" + std::to_string(loot->quantity));
+        if(item != nullptr && !item->codex_entry_id.empty())
+        {
+            unlock_codex_entry(player, item->codex_entry_id, &execution);
+        }
+        return execution;
+    }
+
+    const int inventory_index = find_inventory_index(*player, key);
+    if(inventory_index >= 0)
+    {
+        const auto& item_state = player->inventory[static_cast<size_t>(inventory_index)];
+        const auto* item = m_world->find_item(item_state.item_id);
+        execution.success = true;
+        execution.title = item == nullptr ? item_state.item_id : item->name;
+        execution.summary = item == nullptr ? "背包中的一件物品。" : item->description;
+        execution.hints.push_back("数量：" + std::to_string(item_state.quantity));
+        if(item != nullptr && !item->codex_entry_id.empty())
+        {
+            unlock_codex_entry(player, item->codex_entry_id, &execution);
+        }
+        return execution;
+    }
+
+    execution.title = "目标未明";
+    execution.summary = "当前视野中找不到这个目标。";
+    return execution;
+}
+
+MudCommandExecution MudGameRuntime::execute_loot(MudPlayerState* player,
+                                                 const std::vector<std::string>& args)
+{
+    MudCommandExecution execution;
+    if(player == nullptr || args.empty())
+    {
+        execution.title = "拾取失败";
+        execution.summary = "请使用 loot <item>。";
+        return execution;
+    }
+
+    const auto* loot = match_scene_ground_loot(*player, args.front());
+    if(loot == nullptr)
+    {
+        execution.title = "无可拾取";
+        execution.summary = "当前场景没有这件地面物件。";
+        return execution;
+    }
+
+    const auto one_time_key = "loot:" + loot->loot_id;
+    if(loot->one_time && player->flags[one_time_key] == "1")
+    {
+        execution.title = "已拾取";
+        execution.summary = "这件物品你已经收起了。";
+        return execution;
+    }
+
+    add_inventory_item(player, loot->item_id, loot->quantity, false);
+    set_flag_int(player, one_time_key, 1);
+    unlock_codex_by_trigger(player, "obtain_item", loot->item_id, &execution);
+    execution.success = true;
+    execution.title = "拾取成功";
+    execution.summary = "你拾起了地上的物件。";
+    append_event(player->account, "loot", execution.title, execution.summary, &execution.events);
+    return execution;
+}
+
+MudCommandExecution MudGameRuntime::execute_harvest(MudPlayerState* player,
+                                                    const std::vector<std::string>& args)
+{
+    MudCommandExecution execution;
+    if(player == nullptr || args.empty())
+    {
+        execution.title = "采集失败";
+        execution.summary = "请使用 harvest <node>。";
+        return execution;
+    }
+
+    const auto* node = match_scene_resource_node(*player, args.front());
+    if(node == nullptr)
+    {
+        execution.title = "无可采集";
+        execution.summary = "当前场景没有这个资源点。";
+        return execution;
+    }
+
+    const auto now = mud_now_ms();
+    const auto cooldown_key = "harvest:" + node->node_id;
+    const auto last_ms = flag_int_value(*player, cooldown_key, 0);
+    if(last_ms > 0 && now - last_ms < node->cooldown_ms)
+    {
+        execution.title = "尚未恢复";
+        execution.summary = "这个资源点还没有恢复灵性。";
+        return execution;
+    }
+
+    add_inventory_item(player, node->drop_item_id, node->drop_item_count, false);
+    set_flag_int(player, cooldown_key, static_cast<int>(now));
+    player->profession.exploration_level = std::max(1, player->profession.exploration_level) + 1;
+    unlock_codex_by_trigger(player, "obtain_item", node->drop_item_id, &execution);
+    execution.success = true;
+    execution.title = "采集完成";
+    execution.summary = "你从资源点中收获了材料。";
+    append_event(player->account, "harvest", execution.title, execution.summary, &execution.events);
+    return execution;
+}
+
+MudCommandExecution MudGameRuntime::execute_cast(MudPlayerState* player,
+                                                 const std::vector<std::string>& args)
+{
+    MudCommandExecution execution;
+    if(player == nullptr || args.size() < 2)
+    {
+        execution.title = "施法失败";
+        execution.summary = "请使用 cast <spell> <target>。";
+        return execution;
+    }
+
+    MudSpellState* spell_state = nullptr;
+    const std::string spell_key = mud_to_lower_ascii(args[0]);
+    for(auto& spell : player->spells)
+    {
+        const auto* config = m_world->find_spell(spell.spell_id);
+        if(config != nullptr &&
+           (mud_to_lower_ascii(config->name) == spell_key || mud_to_lower_ascii(config->spell_id) == spell_key))
+        {
+            spell_state = &spell;
+            break;
+        }
+    }
+    if(spell_state == nullptr)
+    {
+        execution.title = "法术未习";
+        execution.summary = "你尚未掌握这门法术。";
+        return execution;
+    }
+
+    const auto* spell_config = m_world->find_spell(spell_state->spell_id);
+    const auto* monster = match_scene_monster(*player, args[1]);
+    if(spell_config == nullptr || monster == nullptr)
+    {
+        execution.title = "施法失败";
+        execution.summary = "当前无法对这个目标施法。";
+        return execution;
+    }
+
+    const int current_mana = flag_int_value(*player, "current_mana", player->status_attributes.mana);
+    if(current_mana < spell_config->mana_cost)
+    {
+        execution.title = "法力不足";
+        execution.summary = "当前法力不足以施展此术。";
+        return execution;
+    }
+
+    const int damage = std::max(1,
+                                spell_config->power + spell_state->level * 4 + player->base_attributes.int_attr +
+                                    player->combat_attributes.spell_damage - monster->defense / 2);
+    set_flag_int(player, "current_mana", std::max(0, current_mana - spell_config->mana_cost));
+    player->exp += monster->reward_exp / 2;
+    spell_state->proficiency += damage;
+    execution.success = true;
+    execution.title = "法术命中";
+    execution.summary = "你施展「" + spell_config->name + "」，命中「" + monster->name + "」。";
+    execution.spell_summary = spell_config->name + " 对 " + monster->name + " 造成 " + std::to_string(damage) + " 点法术伤害";
+    execution.hints.push_back("法力消耗：" + std::to_string(spell_config->mana_cost));
+    if(damage >= monster->hp)
+    {
+        player->spirit_stone += monster->reward_spirit_stone;
+        if(!monster->drop_item_id.empty())
+        {
+            add_inventory_item(player, monster->drop_item_id, monster->drop_item_count, false);
+            unlock_codex_by_trigger(player, "obtain_item", monster->drop_item_id, &execution);
+        }
+        unlock_codex_by_trigger(player, "defeat_monster", monster->monster_id, &execution);
+        execution.hints.push_back("妖兽在法术下溃散。");
+    }
+    unlock_codex_by_trigger(player, "cast_spell", spell_state->spell_id, &execution);
+    append_event(player->account, "spell", execution.title, execution.spell_summary, &execution.events);
+    return execution;
+}
+
+MudCommandExecution MudGameRuntime::execute_meditate(MudPlayerState* player)
+{
+    MudCommandExecution execution;
+    if(player == nullptr)
+    {
+        execution.title = "调息失败";
+        execution.summary = "玩家状态为空。";
+        return execution;
+    }
+
+    set_flag_int(player, "current_mana", player->status_attributes.mana);
+    set_flag_int(player, "current_sen", player->status_attributes.sen);
+    set_flag_int(player, "current_sta", player->status_attributes.sta);
+    player->exp += 12;
+    execution.success = true;
+    execution.title = "静坐调息";
+    execution.summary = "你缓缓调匀呼吸，法力、神念与气力都恢复了不少。";
+    append_event(player->account, "cultivation", execution.title, execution.summary, &execution.events);
+    return execution;
+}
+
+MudCommandExecution MudGameRuntime::execute_brew(MudPlayerState* player,
+                                                 const std::vector<std::string>& args)
+{
+    MudCommandExecution execution;
+    if(player == nullptr || args.empty())
+    {
+        execution.title = "炼制失败";
+        execution.summary = "请使用 brew <recipe>。";
+        return execution;
+    }
+
+    const std::string recipe_key = mud_to_lower_ascii(args.front());
+    const MudRecipeConfig* recipe_config = nullptr;
+    for(const auto& recipe_state : player->recipes)
+    {
+        const auto* config = m_world->find_recipe(recipe_state.recipe_id);
+        if(config != nullptr &&
+           (mud_to_lower_ascii(config->recipe_id) == recipe_key || mud_to_lower_ascii(config->name) == recipe_key))
+        {
+            recipe_config = config;
+            break;
+        }
+    }
+    if(recipe_config == nullptr)
+    {
+        recipe_config = m_world->find_recipe(args.front());
+    }
+    if(recipe_config == nullptr)
+    {
+        execution.title = "配方未得";
+        execution.summary = "你尚未掌握这张配方。";
+        return execution;
+    }
+
+    for(const auto& ingredient : recipe_config->ingredient_items)
+    {
+        if(inventory_count(*player, ingredient.item_id) < ingredient.quantity)
+        {
+            execution.title = "材料不足";
+            execution.summary = "炼制所需材料不足。";
+            execution.hints.push_back("缺少：" + ingredient.item_id);
+            return execution;
+        }
+    }
+
+    for(const auto& ingredient : recipe_config->ingredient_items)
+    {
+        remove_inventory_item(player, ingredient.item_id, ingredient.quantity);
+    }
+    add_inventory_item(player, recipe_config->result_item_id, recipe_config->result_quantity, false);
+    if(auto* recipe_state = find_recipe_state(player, recipe_config->recipe_id); recipe_state != nullptr)
+    {
+        recipe_state->unlocked = true;
+        recipe_state->proficiency += 12;
+    }
+    player->profession.alchemy_level = std::max(1, player->profession.alchemy_level + 1);
+    unlock_codex_by_trigger(player, "brew_recipe", recipe_config->recipe_id, &execution);
+    unlock_codex_by_trigger(player, "obtain_item", recipe_config->result_item_id, &execution);
+    execution.success = true;
+    execution.title = "炼制完成";
+    execution.summary = "你顺利完成了一次炼制。";
+    execution.brew_summary = recipe_config->name + " -> " + recipe_config->result_item_id + " x" +
+                             std::to_string(recipe_config->result_quantity);
+    append_event(player->account, "brew", execution.title, execution.brew_summary, &execution.events);
+    return execution;
+}
+
+MudCommandExecution MudGameRuntime::execute_codex(MudPlayerState* player,
+                                                  const std::vector<std::string>& args)
+{
+    MudCommandExecution execution;
+    if(player == nullptr)
+    {
+        execution.title = "手册不可用";
+        execution.summary = "玩家状态为空。";
+        return execution;
+    }
+    if(args.empty())
+    {
+        execution.success = true;
+        execution.title = "手册分类";
+        execution.summary = "可查看人物志、宗门志、妖兽志、奇虫志、地理志、灵草丹药志、功法技能志、法术志、宝物阵法志、韩立年历。";
+        return execution;
+    }
+
+    const auto category = args.front();
+    if(args.size() == 1)
+    {
+        const auto entries = m_world->codex_entries_for_category(category);
+        execution.success = true;
+        execution.title = category;
+        execution.summary = "该分类共 " + std::to_string(entries.size()) + " 条。";
+        for(const auto& entry : entries)
+        {
+            execution.hints.push_back((is_codex_unlocked(*player, entry.entry_id) ? "已解锁 · " : "未解锁 · ") + entry.title);
+        }
+        return execution;
+    }
+
+    const auto key = mud_to_lower_ascii(args[1]);
+    for(const auto& entry : m_world->codex_entries_for_category(category))
+    {
+        if(mud_to_lower_ascii(entry.entry_id) == key || mud_to_lower_ascii(entry.title) == key)
+        {
+            execution.success = true;
+            execution.title = entry.title;
+            execution.summary = entry.summary;
+            execution.hints.push_back(is_codex_unlocked(*player, entry.entry_id) ? entry.content : "资料未明，需继续推进剧情解锁。");
+            return execution;
+        }
+    }
+
+    execution.title = "条目未找到";
+    execution.summary = "当前分类下没有这个手册条目。";
+    return execution;
+}
+
 const MudSceneConfig* MudGameRuntime::current_scene(const MudPlayerState& player) const
 {
     const auto* scene = m_world == nullptr ? nullptr : m_world->find_scene(player.location_scene_id);
@@ -2352,6 +3372,54 @@ const MudMonsterConfig* MudGameRuntime::match_scene_monster(const MudPlayerState
     return nullptr;
 }
 
+const MudResourceNodeConfig* MudGameRuntime::match_scene_resource_node(const MudPlayerState& player,
+                                                                       const std::string& key) const
+{
+    const auto* scene = current_scene(player);
+    if(scene == nullptr)
+    {
+        return nullptr;
+    }
+
+    const auto normalized_key = mud_to_lower_ascii(key);
+    for(const auto& node_id : scene->resource_node_ids)
+    {
+        const auto* node = m_world->find_resource_node(node_id);
+        if(node != nullptr &&
+           (normalized_key.empty() || mud_to_lower_ascii(node->node_id) == normalized_key ||
+            mud_to_lower_ascii(node->name) == normalized_key))
+        {
+            return node;
+        }
+    }
+    return nullptr;
+}
+
+const MudGroundLootConfig* MudGameRuntime::match_scene_ground_loot(const MudPlayerState& player,
+                                                                   const std::string& key) const
+{
+    const auto* scene = current_scene(player);
+    if(scene == nullptr)
+    {
+        return nullptr;
+    }
+
+    const auto normalized_key = mud_to_lower_ascii(key);
+    for(const auto& loot_id : scene->ground_loot_ids)
+    {
+        const auto* loot = m_world->find_ground_loot(loot_id);
+        const auto* item = loot == nullptr ? nullptr : m_world->find_item(loot->item_id);
+        if(loot != nullptr &&
+           (normalized_key.empty() || mud_to_lower_ascii(loot->loot_id) == normalized_key ||
+            (item != nullptr && mud_to_lower_ascii(item->name) == normalized_key) ||
+            mud_to_lower_ascii(loot->item_id) == normalized_key))
+        {
+            return loot;
+        }
+    }
+    return nullptr;
+}
+
 int MudGameRuntime::find_inventory_index(const MudPlayerState& player, const std::string& key) const
 {
     const auto normalized_key = mud_to_lower_ascii(key);
@@ -2404,6 +3472,54 @@ const MudQuestState* MudGameRuntime::find_quest_state(const MudPlayerState& play
         if(quest.quest_id == quest_id)
         {
             return &quest;
+        }
+    }
+    return nullptr;
+}
+
+MudSkillState* MudGameRuntime::find_skill_state(MudPlayerState* player, const std::string& skill_id) const
+{
+    if(player == nullptr)
+    {
+        return nullptr;
+    }
+    for(auto& skill : player->skills)
+    {
+        if(skill.skill_id == skill_id)
+        {
+            return &skill;
+        }
+    }
+    return nullptr;
+}
+
+MudSpellState* MudGameRuntime::find_spell_state(MudPlayerState* player, const std::string& spell_id) const
+{
+    if(player == nullptr)
+    {
+        return nullptr;
+    }
+    for(auto& spell : player->spells)
+    {
+        if(spell.spell_id == spell_id)
+        {
+            return &spell;
+        }
+    }
+    return nullptr;
+}
+
+MudRecipeState* MudGameRuntime::find_recipe_state(MudPlayerState* player, const std::string& recipe_id) const
+{
+    if(player == nullptr)
+    {
+        return nullptr;
+    }
+    for(auto& recipe : player->recipes)
+    {
+        if(recipe.recipe_id == recipe_id)
+        {
+            return &recipe;
         }
     }
     return nullptr;

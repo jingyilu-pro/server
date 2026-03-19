@@ -1,0 +1,332 @@
+//
+// Lightweight protobuf-over-HTTP smoke client for the MUD flow.
+// It talks directly to the existing manager/login/game services using raw TCP
+// so it can run inside WSL without extra Python or Node dependencies.
+//
+
+#include "protocol/gateway.pb.h"
+#include "protocol/mud.pb.h"
+
+#include <arpa/inet.h>
+#include <netinet/in.h>
+#include <sys/socket.h>
+#include <unistd.h>
+
+#include <algorithm>
+#include <array>
+#include <chrono>
+#include <cctype>
+#include <cstdint>
+#include <cstdlib>
+#include <cstring>
+#include <iostream>
+#include <optional>
+#include <sstream>
+#include <stdexcept>
+#include <string>
+#include <string_view>
+#include <vector>
+
+namespace
+{
+
+struct HttpResponse
+{
+    int status = 0;
+    std::string body;
+};
+
+std::string trim_copy(std::string value)
+{
+    auto not_space = [](unsigned char ch) {
+        return !std::isspace(ch);
+    };
+    value.erase(value.begin(),
+                std::find_if(value.begin(), value.end(), not_space));
+    value.erase(std::find_if(value.rbegin(), value.rend(), not_space).base(),
+                value.end());
+    return value;
+}
+
+HttpResponse post_protobuf(const std::string& host,
+                           uint16_t port,
+                           const std::string& path,
+                           const std::string& body,
+                           const std::string& bearer_token)
+{
+    const int fd = ::socket(AF_INET, SOCK_STREAM, 0);
+    if(fd < 0)
+    {
+        throw std::runtime_error("socket() failed");
+    }
+
+    sockaddr_in addr{};
+    addr.sin_family = AF_INET;
+    addr.sin_port = htons(port);
+    if(::inet_pton(AF_INET, host.c_str(), &addr.sin_addr) != 1)
+    {
+        ::close(fd);
+        throw std::runtime_error("inet_pton() failed for host " + host);
+    }
+
+    if(::connect(fd, reinterpret_cast<const sockaddr*>(&addr), sizeof(addr)) != 0)
+    {
+        const std::string error = std::strerror(errno);
+        ::close(fd);
+        throw std::runtime_error("connect() failed: " + error);
+    }
+
+    std::ostringstream request;
+    request << "POST " << path << " HTTP/1.1\r\n";
+    request << "Host: " << host << ":" << port << "\r\n";
+    request << "Content-Type: application/x-protobuf\r\n";
+    request << "Content-Length: " << body.size() << "\r\n";
+    request << "Connection: close\r\n";
+    if(!bearer_token.empty())
+    {
+        request << "Authorization: Bearer " << bearer_token << "\r\n";
+    }
+    request << "\r\n";
+    request << body;
+
+    const std::string serialized = request.str();
+    size_t written = 0;
+    while(written < serialized.size())
+    {
+        const ssize_t result =
+            ::send(fd, serialized.data() + static_cast<ssize_t>(written), serialized.size() - written, 0);
+        if(result <= 0)
+        {
+            const std::string error = std::strerror(errno);
+            ::close(fd);
+            throw std::runtime_error("send() failed: " + error);
+        }
+        written += static_cast<size_t>(result);
+    }
+
+    std::string response;
+    std::array<char, 8192> buffer{};
+    while(true)
+    {
+        const ssize_t read_bytes = ::recv(fd, buffer.data(), buffer.size(), 0);
+        if(read_bytes < 0)
+        {
+            const std::string error = std::strerror(errno);
+            ::close(fd);
+            throw std::runtime_error("recv() failed: " + error);
+        }
+        if(read_bytes == 0)
+        {
+            break;
+        }
+        response.append(buffer.data(), static_cast<size_t>(read_bytes));
+    }
+    ::close(fd);
+
+    const size_t header_end = response.find("\r\n\r\n");
+    if(header_end == std::string::npos)
+    {
+        throw std::runtime_error("invalid HTTP response");
+    }
+
+    const std::string header_text = response.substr(0, header_end);
+    const std::string body_text = response.substr(header_end + 4);
+
+    std::istringstream header_stream(header_text);
+    std::string status_line;
+    std::getline(header_stream, status_line);
+    status_line = trim_copy(status_line);
+
+    std::istringstream status_stream(status_line);
+    std::string http_version;
+    int status_code = 0;
+    status_stream >> http_version >> status_code;
+    if(status_code <= 0)
+    {
+        throw std::runtime_error("unable to parse HTTP status line: " + status_line);
+    }
+
+    return HttpResponse{status_code, body_text};
+}
+
+template <typename RequestMessage, typename ResponseMessage>
+ResponseMessage call_endpoint(const std::string& host,
+                              uint16_t port,
+                              const std::string& path,
+                              const RequestMessage& request,
+                              const std::string& bearer_token = {})
+{
+    std::string body;
+    if(!request.SerializeToString(&body))
+    {
+        throw std::runtime_error("SerializeToString failed for " + path);
+    }
+
+    const auto response = post_protobuf(host, port, path, body, bearer_token);
+    if(response.status != 200)
+    {
+        throw std::runtime_error("HTTP " + std::to_string(response.status) + " for " + path);
+    }
+
+    ResponseMessage parsed;
+    if(!parsed.ParseFromString(response.body))
+    {
+        throw std::runtime_error("ParseFromString failed for " + path);
+    }
+    return parsed;
+}
+
+std::string first_unlocked_codex_entry_id(const mud::CodexListResponse& response)
+{
+    for(const auto& entry : response.entries())
+    {
+        if(entry.unlocked())
+        {
+            return entry.entry_id();
+        }
+    }
+    if(response.entries_size() > 0)
+    {
+        return response.entries(0).entry_id();
+    }
+    return {};
+}
+
+} // namespace
+
+int main()
+{
+    GOOGLE_PROTOBUF_VERIFY_VERSION;
+
+    try
+    {
+        const auto now_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+                                std::chrono::system_clock::now().time_since_epoch())
+                                .count();
+        const std::string suffix = std::to_string(now_ms % 100000000);
+        const std::string account = "smoke_" + suffix;
+        const std::string password = "pass123456";
+
+        gateway::RouteLoginRequest route_request;
+        route_request.set_client_version("mud_smoke_cpp");
+        const auto route_response =
+            call_endpoint<gateway::RouteLoginRequest, gateway::RouteLoginResponse>(
+                "127.0.0.1", 18080, "/v1/route/login", route_request);
+
+        gateway::AuthRegisterRequest register_request;
+        register_request.set_account(account);
+        register_request.set_password(password);
+        const auto register_response =
+            call_endpoint<gateway::AuthRegisterRequest, gateway::AuthRegisterResponse>(
+                "127.0.0.1", 18081, "/v1/auth/register", register_request);
+
+        gateway::AuthLoginRequest login_request;
+        login_request.set_account(account);
+        login_request.set_password(password);
+        const auto login_response =
+            call_endpoint<gateway::AuthLoginRequest, gateway::AuthLoginResponse>(
+                "127.0.0.1", 18081, "/v1/auth/login", login_request);
+        const std::string token = login_response.jwt();
+
+        gateway::GameEnterRequest enter_request;
+        enter_request.set_account(account);
+        const auto enter_response =
+            call_endpoint<gateway::GameEnterRequest, gateway::GameEnterResponse>(
+                "127.0.0.1", 18082, "/v1/game/enter", enter_request, token);
+
+        mud::BootstrapRequest bootstrap_request;
+        bootstrap_request.set_account(account);
+        const auto bootstrap_response =
+            call_endpoint<mud::BootstrapRequest, mud::BootstrapResponse>(
+                "127.0.0.1", 18082, "/v1/game/bootstrap", bootstrap_request, token);
+
+        mud::CharacterCreateRequest create_request;
+        create_request.set_account(account);
+        create_request.set_character_name("烟测" + suffix.substr(suffix.size() >= 4 ? suffix.size() - 4 : 0));
+        if(bootstrap_response.available_origins_size() > 0)
+        {
+            create_request.set_origin_id(bootstrap_response.available_origins(0).origin_id());
+        }
+        const auto create_response =
+            call_endpoint<mud::CharacterCreateRequest, mud::CharacterCreateResponse>(
+                "127.0.0.1", 18082, "/v1/game/character/create", create_request, token);
+
+        mud::CommandExecuteRequest inspect_request;
+        inspect_request.set_account(account);
+        inspect_request.set_command("inspect 厉飞雨");
+        const auto inspect_response =
+            call_endpoint<mud::CommandExecuteRequest, mud::CommandExecuteResponse>(
+                "127.0.0.1", 18082, "/v1/game/command/execute", inspect_request, token);
+
+        mud::CodexListRequest codex_list_request;
+        codex_list_request.set_account(account);
+        codex_list_request.set_category("人物志");
+        const auto codex_list_response =
+            call_endpoint<mud::CodexListRequest, mud::CodexListResponse>(
+                "127.0.0.1", 18082, "/v1/game/codex/list", codex_list_request, token);
+
+        mud::CodexDetailRequest codex_detail_request;
+        codex_detail_request.set_account(account);
+        codex_detail_request.set_entry_id(first_unlocked_codex_entry_id(codex_list_response));
+        const auto codex_detail_response =
+            call_endpoint<mud::CodexDetailRequest, mud::CodexDetailResponse>(
+                "127.0.0.1", 18082, "/v1/game/codex/detail", codex_detail_request, token);
+
+        std::cout << "account=" << account << "\n";
+        std::cout << "route_code=" << route_response.code()
+                  << " login_endpoint=" << route_response.login_endpoint().host() << ":"
+                  << route_response.login_endpoint().port()
+                  << " game_endpoint=" << route_response.game_endpoint().host() << ":"
+                  << route_response.game_endpoint().port() << "\n";
+        std::cout << "register_code=" << register_response.code()
+                  << " login_code=" << login_response.code()
+                  << " enter_code=" << enter_response.code() << "\n";
+        std::cout << "bootstrap_code=" << bootstrap_response.code()
+                  << " need_create_character=" << (bootstrap_response.need_create_character() ? "true" : "false")
+                  << " origins=" << bootstrap_response.available_origins_size() << "\n";
+        std::cout << "create_code=" << create_response.code()
+                  << " scene=" << create_response.scene().scene_name()
+                  << " npc_count=" << create_response.scene().npcs_size()
+                  << " player_origin=" << create_response.player().race().origin_name()
+                  << " spells=" << create_response.player().spells_size()
+                  << " recipes=" << create_response.player().recipes_size()
+                  << " codex_summaries=" << create_response.player().codex_summaries_size()
+                  << "\n";
+        for(const auto& npc : create_response.scene().npcs())
+        {
+            std::cout << "scene_npc=" << npc.npc_id() << ":" << npc.name() << "\n";
+        }
+        std::cout << "inspect_code=" << inspect_response.code()
+                  << " inspect_success=" << (inspect_response.result().success() ? "true" : "false")
+                  << " inspect_title=" << inspect_response.result().title()
+                  << " inspect_summary=" << inspect_response.result().summary() << "\n";
+        for(const auto& unlocked : inspect_response.result().unlocked_codex_entries())
+        {
+            std::cout << "inspect_unlocked_codex=" << unlocked.title() << "\n";
+        }
+        int unlocked_count = 0;
+        for(const auto& entry : codex_list_response.entries())
+        {
+            if(entry.unlocked())
+            {
+                ++unlocked_count;
+            }
+        }
+        std::cout << "codex_list_code=" << codex_list_response.code()
+                  << " entries=" << codex_list_response.entries_size()
+                  << " unlocked=" << unlocked_count << "\n";
+        std::cout << "codex_detail_code=" << codex_detail_response.code()
+                  << " title=" << codex_detail_response.entry().title()
+                  << " unlocked=" << (codex_detail_response.entry().unlocked() ? "true" : "false")
+                  << " category=" << codex_detail_response.entry().category() << "\n";
+
+        google::protobuf::ShutdownProtobufLibrary();
+        return 0;
+    }
+    catch(const std::exception& error)
+    {
+        std::cerr << "mud_smoke failed: " << error.what() << "\n";
+        google::protobuf::ShutdownProtobufLibrary();
+        return 1;
+    }
+}

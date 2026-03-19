@@ -26,6 +26,7 @@ struct EndpointConfig
 {
     std::string host = "127.0.0.1";
     uint16_t port = 0;
+    std::string bind_host;
 };
 
 struct ServerConfig

@@ -41,6 +41,7 @@ export const useGameStore = defineStore('game', {
     commandHistory: [] as string[],
     nextEventId: 0,
     needCreateCharacter: false,
+    availableOrigins: [] as Record<string, any>[],
     lastResult: null as Record<string, any> | null,
     loading: false,
     error: '',
@@ -48,6 +49,8 @@ export const useGameStore = defineStore('game', {
     pollTimer: 0 as number | ReturnType<typeof setTimeout>,
     rankings: [] as Record<string, any>[],
     rankingType: 'realm' as 'realm' | 'wealth' | 'combat',
+    codexEntries: [] as Record<string, any>[],
+    codexDetail: null as Record<string, any> | null,
   }),
   getters: {
     authenticated: (state) => Boolean(state.account && state.token),
@@ -144,6 +147,7 @@ export const useGameStore = defineStore('game', {
       this.needCreateCharacter = Boolean(response.needCreateCharacter)
       this.player = response.player ?? null
       this.scene = response.scene ?? null
+      this.availableOrigins = (response.availableOrigins as Record<string, any>[]) ?? []
       this.lastResult = null
       this.appendEvents((response.events as Record<string, any>[]) ?? [])
       this.nextEventId = Number(response.nextEventId ?? 0)
@@ -152,14 +156,14 @@ export const useGameStore = defineStore('game', {
         this.schedulePolling()
       }
     },
-    async createCharacter(characterName: string) {
+    async createCharacter(characterName: string, originId: string) {
       if (!this.authenticated) {
         return
       }
 
       this.loading = true
       try {
-        const response = await pbClient.createCharacter(this.account, characterName, this.token)
+        const response = await pbClient.createCharacter(this.account, characterName, originId, this.token)
         if ((response.code ?? -1) !== 0) {
           throw new Error(response.message ?? '创建角色失败')
         }
@@ -226,6 +230,28 @@ export const useGameStore = defineStore('game', {
       this.rankingType = leaderboard
       this.rankings = (response.entries as Record<string, any>[]) ?? []
     },
+    async loadCodexList(category = '') {
+      if (!this.authenticated) {
+        return
+      }
+
+      const response = await pbClient.loadCodexList(this.account, category, this.token)
+      if ((response.code ?? -1) !== 0) {
+        throw new Error(response.message ?? '加载手册失败')
+      }
+      this.codexEntries = (response.entries as Record<string, any>[]) ?? []
+    },
+    async loadCodexDetail(entryId: string) {
+      if (!this.authenticated) {
+        return
+      }
+
+      const response = await pbClient.loadCodexDetail(this.account, entryId, this.token)
+      if ((response.code ?? -1) !== 0) {
+        throw new Error(response.message ?? '加载手册详情失败')
+      }
+      this.codexDetail = (response.entry as Record<string, any> | undefined) ?? null
+    },
     logout() {
       this.stopPolling()
       this.account = ''
@@ -236,9 +262,12 @@ export const useGameStore = defineStore('game', {
       this.commandHistory = []
       this.nextEventId = 0
       this.needCreateCharacter = false
+      this.availableOrigins = []
       this.lastResult = null
       this.error = ''
       this.rankings = []
+      this.codexEntries = []
+      this.codexDetail = null
       this.clearAuth()
     },
   },

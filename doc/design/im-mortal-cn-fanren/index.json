@@ -1,0 +1,207 @@
+{
+  "source": "https://im-mortal.cn/%E5%87%A1%E4%BA%BA%E4%BF%AE%E4%BB%99%E4%BC%A0",
+  "fetchedAt": "2026-03-18T12:00:30.411Z",
+  "pages": [
+    {
+      "slug": "fanren_overview",
+      "title": "凡人修仙传",
+      "heading": "凡人修仙传",
+      "source": "https://im-mortal.cn/%E5%87%A1%E4%BA%BA%E4%BF%AE%E4%BB%99%E4%BC%A0",
+      "markdown": "markdown/fanren_overview.md",
+      "html": "pages/fanren_overview.html",
+      "images": []
+    },
+    {
+      "slug": "game_wiki_alchemy",
+      "title": "game_wiki:alchemy",
+      "heading": "炼丹",
+      "source": "https://im-mortal.cn/game_wiki/alchemy",
+      "markdown": "markdown/game_wiki_alchemy.md",
+      "html": "pages/game_wiki_alchemy.html",
+      "images": []
+    },
+    {
+      "slug": "game_wiki_basic_attribute",
+      "title": "game_wiki:basic_attribute",
+      "heading": "基础属性",
+      "source": "https://im-mortal.cn/game_wiki/basic_attribute",
+      "markdown": "markdown/game_wiki_basic_attribute.md",
+      "html": "pages/game_wiki_basic_attribute.html",
+      "images": []
+    },
+    {
+      "slug": "game_wiki_combat_attribute",
+      "title": "game_wiki:combat_attribute",
+      "heading": "争斗属性",
+      "source": "https://im-mortal.cn/game_wiki/combat_attribute",
+      "markdown": "markdown/game_wiki_combat_attribute.md",
+      "html": "pages/game_wiki_combat_attribute.html",
+      "images": []
+    },
+    {
+      "slug": "game_wiki_dummy",
+      "title": "game_wiki:dummy",
+      "heading": "该主题尚不存在",
+      "source": "https://im-mortal.cn/game_wiki/dummy",
+      "markdown": "markdown/game_wiki_dummy.md",
+      "html": "pages/game_wiki_dummy.html",
+      "images": []
+    },
+    {
+      "slug": "game_wiki_forging",
+      "title": "game_wiki:forging",
+      "heading": "该主题尚不存在",
+      "source": "https://im-mortal.cn/game_wiki/forging",
+      "markdown": "markdown/game_wiki_forging.md",
+      "html": "pages/game_wiki_forging.html",
+      "images": []
+    },
+    {
+      "slug": "game_wiki_handmademap",
+      "title": "game_wiki:handmademap",
+      "heading": "天南全图",
+      "source": "https://im-mortal.cn/game_wiki/handmademap",
+      "markdown": "markdown/game_wiki_handmademap.md",
+      "html": "pages/game_wiki_handmademap.html",
+      "images": [
+        "assets/_media_game_wiki_E5_A4_A9_E5_8D_97_E5_85_A8_E5_9B_BE.jpg",
+        "assets/_media_game_wiki_E5_87_A1_E4_BA_BA_E7_95_8C_E5_85_A8_E5_9B_BE.jpg"
+      ]
+    },
+    {
+      "slug": "game_wiki_hanli_timeline",
+      "title": "game_wiki:hanli_timeline",
+      "heading": "年历表版本一",
+      "source": "https://im-mortal.cn/game_wiki/hanli_timeline",
+      "markdown": "markdown/game_wiki_hanli_timeline.md",
+      "html": "pages/game_wiki_hanli_timeline.html",
+      "images": []
+    },
+    {
+      "slug": "game_wiki_jinzhi",
+      "title": "game_wiki:jinzhi",
+      "heading": "禁制",
+      "source": "https://im-mortal.cn/game_wiki/jinzhi",
+      "markdown": "markdown/game_wiki_jinzhi.md",
+      "html": "pages/game_wiki_jinzhi.html",
+      "images": []
+    },
+    {
+      "slug": "game_wiki_level",
+      "title": "game_wiki:level",
+      "heading": "境界层次",
+      "source": "https://im-mortal.cn/game_wiki/level",
+      "markdown": "markdown/game_wiki_level.md",
+      "html": "pages/game_wiki_level.html",
+      "images": []
+    },
+    {
+      "slug": "game_wiki_main_character",
+      "title": "game_wiki:main_character",
+      "heading": "核心人物、重要人物",
+      "source": "https://im-mortal.cn/game_wiki/main_character",
+      "markdown": "markdown/game_wiki_main_character.md",
+      "html": "pages/game_wiki_main_character.html",
+      "images": []
+    },
+    {
+      "slug": "game_wiki_melee",
+      "title": "game_wiki:melee",
+      "heading": "炼体",
+      "source": "https://im-mortal.cn/game_wiki/melee",
+      "markdown": "markdown/game_wiki_melee.md",
+      "html": "pages/game_wiki_melee.html",
+      "images": []
+    },
+    {
+      "slug": "game_wiki_monster_geography_clan",
+      "title": "game_wiki:monster_geography_clan",
+      "heading": "妖兽篇",
+      "source": "https://im-mortal.cn/game_wiki/monster_geography_clan",
+      "markdown": "markdown/game_wiki_monster_geography_clan.md",
+      "html": "pages/game_wiki_monster_geography_clan.html",
+      "images": []
+    },
+    {
+      "slug": "game_wiki_normal_character",
+      "title": "game_wiki:normal_character",
+      "heading": "普通人物、次要人物",
+      "source": "https://im-mortal.cn/game_wiki/normal_character",
+      "markdown": "markdown/game_wiki_normal_character.md",
+      "html": "pages/game_wiki_normal_character.html",
+      "images": []
+    },
+    {
+      "slug": "game_wiki_race",
+      "title": "game_wiki:race",
+      "heading": "种族设计",
+      "source": "https://im-mortal.cn/game_wiki/race",
+      "markdown": "markdown/game_wiki_race.md",
+      "html": "pages/game_wiki_race.html",
+      "images": []
+    },
+    {
+      "slug": "game_wiki_setting_medicine_spell",
+      "title": "game_wiki:setting_medicine_spell",
+      "heading": "设定篇",
+      "source": "https://im-mortal.cn/game_wiki/setting_medicine_spell",
+      "markdown": "markdown/game_wiki_setting_medicine_spell.md",
+      "html": "pages/game_wiki_setting_medicine_spell.html",
+      "images": []
+    },
+    {
+      "slug": "game_wiki_sheet",
+      "title": "game_wiki:sheet",
+      "heading": "该主题尚不存在",
+      "source": "https://im-mortal.cn/game_wiki/sheet",
+      "markdown": "markdown/game_wiki_sheet.md",
+      "html": "pages/game_wiki_sheet.html",
+      "images": []
+    },
+    {
+      "slug": "game_wiki_skill",
+      "title": "game_wiki:skill",
+      "heading": "基本技能（skill）",
+      "source": "https://im-mortal.cn/game_wiki/skill",
+      "markdown": "markdown/game_wiki_skill.md",
+      "html": "pages/game_wiki_skill.html",
+      "images": []
+    },
+    {
+      "slug": "game_wiki_spell",
+      "title": "game_wiki:spell",
+      "heading": "法术",
+      "source": "https://im-mortal.cn/game_wiki/spell",
+      "markdown": "markdown/game_wiki_spell.md",
+      "html": "pages/game_wiki_spell.html",
+      "images": []
+    },
+    {
+      "slug": "game_wiki_stats",
+      "title": "game_wiki:stats",
+      "heading": "状态属性",
+      "source": "https://im-mortal.cn/game_wiki/stats",
+      "markdown": "markdown/game_wiki_stats.md",
+      "html": "pages/game_wiki_stats.html",
+      "images": []
+    },
+    {
+      "slug": "game_wiki_treasure_zhenfa",
+      "title": "game_wiki:treasure_zhenfa",
+      "heading": "材料篇",
+      "source": "https://im-mortal.cn/game_wiki/treasure_zhenfa",
+      "markdown": "markdown/game_wiki_treasure_zhenfa.md",
+      "html": "pages/game_wiki_treasure_zhenfa.html",
+      "images": []
+    },
+    {
+      "slug": "game_wiki_zhenfa",
+      "title": "game_wiki:zhenfa",
+      "heading": "阵法",
+      "source": "https://im-mortal.cn/game_wiki/zhenfa",
+      "markdown": "markdown/game_wiki_zhenfa.md",
+      "html": "pages/game_wiki_zhenfa.html",
+      "images": []
+    }
+  ]
+}

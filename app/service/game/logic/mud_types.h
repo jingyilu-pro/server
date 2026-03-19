@@ -31,6 +31,57 @@ enum class MudLeaderboardType
     combat,
 };
 
+struct MudUnlockRule
+{
+    std::string trigger;
+    std::string target_id;
+};
+
+struct MudBaseAttributeState
+{
+    int spi = 0;
+    int gin = 0;
+    int str = 0;
+    int per = 0;
+    int int_attr = 0;
+    int cha = 0;
+    int luc = 0;
+};
+
+struct MudStatusAttributeState
+{
+    int kee = 0;
+    int sen = 0;
+    int sta = 0;
+    int mana = 0;
+};
+
+struct MudCombatAttributeState
+{
+    int phys_hit = 0;
+    int phys_crit = 0;
+    int phys_damage = 0;
+    int phys_haste = 0;
+    int spell_hit = 0;
+    int spell_crit = 0;
+    int spell_damage = 0;
+    int spell_haste = 0;
+    int dodge = 0;
+    int block = 0;
+    int shield = 0;
+    int parry = 0;
+    int armor = 0;
+    int resist_fire = 0;
+    int resist_ice = 0;
+    int resist_thunder = 0;
+    int resist_wind = 0;
+    int resist_corrosion = 0;
+    int resist_poison = 0;
+    int resist_pierce = 0;
+    int resist_slash = 0;
+    int resist_blunt = 0;
+};
+
 struct MudStarterInventoryItem
 {
     std::string item_id;
@@ -43,6 +94,8 @@ struct MudWorldDefaults
     std::string starting_scene_id;
     std::string starter_title;
     std::string starter_skill;
+    std::vector<std::string> starter_spell_ids;
+    std::vector<std::string> starter_recipe_ids;
     std::string starter_realm_name;
     int starter_realm_stage = 0;
     int starter_hp = 100;
@@ -54,6 +107,18 @@ struct MudWorldDefaults
     std::vector<std::string> realm_names;
 };
 
+struct MudOriginConfig
+{
+    std::string origin_id;
+    std::string name;
+    std::string race_name;
+    std::string homeland;
+    std::string description;
+    MudBaseAttributeState base_attributes;
+    std::string starter_skill_id;
+    std::vector<std::string> starter_spell_ids;
+};
+
 struct MudItemConfig
 {
     std::string item_id;
@@ -62,12 +127,19 @@ struct MudItemConfig
     std::string description;
     int price = 0;
     int hp_restore = 0;
+    int mana_restore = 0;
+    int sen_restore = 0;
+    int sta_restore = 0;
     int64_t exp_gain = 0;
     int skill_level_gain = 0;
     int attack_bonus = 0;
     int defense_bonus = 0;
+    int spell_damage_bonus = 0;
+    int spell_haste_bonus = 0;
     bool consumable = false;
     bool equipable = false;
+    std::vector<std::string> tags;
+    std::string codex_entry_id;
 };
 
 struct MudQuestConfig
@@ -84,6 +156,8 @@ struct MudQuestConfig
     std::string reward_item_id;
     int reward_item_count = 0;
     std::string reward_sect_id;
+    std::vector<MudUnlockRule> unlock_rules;
+    std::string chapter;
 };
 
 struct MudNpcConfig
@@ -95,6 +169,9 @@ struct MudNpcConfig
     std::string dialogue;
     std::vector<std::string> quest_ids;
     std::string sect_offer_id;
+    std::string role;
+    std::string description;
+    std::string codex_entry_id;
 };
 
 struct MudMonsterConfig
@@ -109,6 +186,10 @@ struct MudMonsterConfig
     int64_t reward_exp = 0;
     std::string drop_item_id;
     int drop_item_count = 0;
+    std::string description;
+    std::string kind;
+    std::string element;
+    std::string codex_entry_id;
 };
 
 struct MudSectConfig
@@ -118,6 +199,128 @@ struct MudSectConfig
     std::string rank_title;
     std::string join_scene_id;
     std::string join_npc_id;
+    std::string description;
+    std::string codex_entry_id;
+    bool joinable = false;
+};
+
+struct MudSkillConfig
+{
+    std::string skill_id;
+    std::string name;
+    std::string category;
+    std::string description;
+    std::string governing_attribute;
+    bool starter = false;
+    std::string chapter;
+    std::string codex_entry_id;
+};
+
+struct MudSpellConfig
+{
+    std::string spell_id;
+    std::string name;
+    std::string element;
+    std::string description;
+    int mana_cost = 0;
+    int power = 0;
+    int required_realm_stage = 0;
+    std::string granted_by_item_id;
+    std::string chapter;
+    std::string codex_entry_id;
+};
+
+struct MudRecipeIngredient
+{
+    std::string item_id;
+    int quantity = 0;
+};
+
+struct MudRecipeConfig
+{
+    std::string recipe_id;
+    std::string name;
+    std::string description;
+    std::string result_item_id;
+    int result_quantity = 0;
+    std::vector<MudRecipeIngredient> ingredient_items;
+    std::string station_scene_id;
+    std::string npc_id;
+    double success_rate = 0.8;
+    std::string required_skill_id;
+    std::string chapter;
+    std::string codex_entry_id;
+};
+
+struct MudTreasureConfig
+{
+    std::string treasure_id;
+    std::string name;
+    std::string description;
+    std::string effect_summary;
+};
+
+struct MudFormationConfig
+{
+    std::string formation_id;
+    std::string name;
+    std::string description;
+    std::string scene_id;
+    std::string effect_summary;
+    std::string codex_entry_id;
+};
+
+struct MudResourceNodeConfig
+{
+    std::string node_id;
+    std::string name;
+    std::string scene_id;
+    std::string description;
+    std::string drop_item_id;
+    int drop_item_count = 0;
+    int cooldown_ms = 0;
+    std::string required_skill_id;
+    std::string codex_entry_id;
+};
+
+struct MudGroundLootConfig
+{
+    std::string loot_id;
+    std::string scene_id;
+    std::string item_id;
+    int quantity = 0;
+    std::string description;
+    bool one_time = true;
+    std::string codex_entry_id;
+};
+
+struct MudHazardConfig
+{
+    std::string hazard_id;
+    std::string scene_id;
+    std::string name;
+    std::string description;
+    int hp_cost = 0;
+    int mana_cost = 0;
+    int sta_cost = 0;
+    int sen_cost = 0;
+    std::string resist_key;
+    std::string codex_entry_id;
+};
+
+struct MudCodexEntryConfig
+{
+    std::string entry_id;
+    std::string category;
+    std::string title;
+    std::string summary;
+    std::string content;
+    std::vector<std::string> related_scene_ids;
+    std::vector<std::string> related_npc_ids;
+    std::vector<std::string> related_monster_ids;
+    std::vector<std::string> related_item_ids;
+    std::vector<std::string> related_sect_ids;
+    std::vector<MudUnlockRule> unlock_rules;
 };
 
 struct MudSceneConfig
@@ -130,6 +333,14 @@ struct MudSceneConfig
     std::vector<std::string> npc_ids;
     std::vector<std::string> monster_ids;
     std::vector<std::string> shop_item_ids;
+    std::vector<std::string> resource_node_ids;
+    std::vector<std::string> ground_loot_ids;
+    std::vector<std::string> hazard_ids;
+    std::vector<std::string> codex_entry_ids;
+    int map_x = 0;
+    int map_y = 0;
+    std::string chapter;
+    std::string codex_entry_id;
 };
 
 struct MudInventoryItemState
@@ -144,6 +355,44 @@ struct MudQuestState
     std::string quest_id;
     std::string status;
     int progress = 0;
+};
+
+struct MudSkillState
+{
+    std::string skill_id;
+    int level = 1;
+    int64_t proficiency = 0;
+};
+
+struct MudSpellState
+{
+    std::string spell_id;
+    int level = 1;
+    int64_t proficiency = 0;
+    bool unlocked = true;
+};
+
+struct MudRecipeState
+{
+    std::string recipe_id;
+    int level = 1;
+    int64_t proficiency = 0;
+    bool unlocked = false;
+};
+
+struct MudProfessionState
+{
+    int alchemy_level = 1;
+    int exploration_level = 1;
+    int formation_level = 1;
+    int forging_level = 1;
+};
+
+struct MudCodexState
+{
+    std::string entry_id;
+    bool unread = true;
+    int64_t unlocked_at_ms = 0;
 };
 
 struct MudPlayerState
@@ -170,8 +419,21 @@ struct MudPlayerState
     std::string team_id;
     std::string team_name;
     std::string team_leader_account;
+    std::string origin_id;
+    std::string origin_name;
+    std::string race_name;
+    std::string homeland;
     std::vector<MudInventoryItemState> inventory;
     std::vector<MudQuestState> quests;
+    MudBaseAttributeState base_attributes;
+    MudStatusAttributeState status_attributes;
+    MudCombatAttributeState combat_attributes;
+    std::vector<MudSkillState> skills;
+    std::vector<MudSpellState> spells;
+    std::vector<MudRecipeState> recipes;
+    std::vector<MudCodexState> codex_entries;
+    MudProfessionState profession;
+    std::unordered_map<std::string, std::string> flags;
 };
 
 struct MudEventEnvelope
@@ -200,6 +462,10 @@ struct MudCommandExecution
     int recommended_poll_interval_ms = 1500;
     std::vector<MudEventEnvelope> events;
     std::vector<MudPlayerState> extra_players_to_save;
+    std::vector<std::string> unlocked_codex_entry_ids;
+    std::string spell_summary;
+    std::string brew_summary;
+    std::string hazard_feedback;
 };
 
 struct MudLeaderboardEntry

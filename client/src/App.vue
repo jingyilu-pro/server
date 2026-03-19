@@ -4,11 +4,22 @@ import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { useGameStore } from '@/stores/game'
 import { directionLabelMap, worldMapEdges, worldMapNodes } from '@/lib/world-map'
 
-type SideTab = 'player' | 'quests' | 'inventory' | 'map' | 'team' | 'rank'
+type SideTab = 'player' | 'quests' | 'inventory' | 'map' | 'team' | 'rank' | 'codex'
 type ComposerMode = 'chat' | 'command'
-type CommandCategoryId = 'social' | 'explore' | 'tasks' | 'combat' | 'cultivation' | 'trade' | 'group'
+type CommandCategoryId =
+  | 'social'
+  | 'explore'
+  | 'tasks'
+  | 'combat'
+  | 'spell'
+  | 'cultivation'
+  | 'gather'
+  | 'alchemy'
+  | 'trade'
+  | 'group'
+  | 'manual'
 type OverlayPanel = 'none' | 'commands' | 'scene' | SideTab
-type SceneInteractableKind = 'player' | 'npc' | 'shop' | 'monster'
+type SceneInteractableKind = 'player' | 'npc' | 'shop' | 'monster' | 'resource' | 'loot' | 'hazard'
 
 interface CommandAction {
   key: string
@@ -19,6 +30,8 @@ interface CommandAction {
   composer?: ComposerMode
   chatChannel?: 'world' | 'team'
   prefillText?: string
+  codexEntryId?: string
+  codexCategory?: string
 }
 
 interface DenseLine {
@@ -60,6 +73,7 @@ const store = useGameStore()
 const account = ref(store.account)
 const password = ref('')
 const characterName = ref('')
+const selectedOriginId = ref('')
 const composerText = ref('')
 const activeTab = ref<SideTab>('player')
 const activeCommandCategory = ref<CommandCategoryId>('social')
@@ -67,8 +81,12 @@ const composerMode = ref<ComposerMode>('chat')
 const chatChannel = ref<'world' | 'team'>('world')
 const activeOverlay = ref<OverlayPanel>('none')
 const selectedSceneInteractableKey = ref('')
+const selectedCodexCategory = ref('人物志')
+const selectedCodexEntryId = ref('')
 const eventViewport = ref<HTMLElement | null>(null)
 const storyViewport = ref<HTMLElement | null>(null)
+
+const codexCategories = ['人物志', '宗门志', '妖兽志', '奇虫志', '地理志', '灵草丹药志', '功法技能志', '法术志', '宝物阵法志', '韩立年历'] as const
 
 const sceneQuestOffers: Record<string, Array<{ id: string; title: string; summary: string }>> = {
   jiayuan_market: [{ id: 'qixuan_herb', title: '墨府采药', summary: '嘉元城总管正急需黄精草，你若接下此事，便能借此熟悉坊市与采集路线。' }],
@@ -90,15 +108,20 @@ const categoryLabels: Record<CommandCategoryId, string> = {
   explore: '探索',
   tasks: '任务',
   combat: '战斗',
+  spell: '法术',
   cultivation: '修炼',
+  gather: '采集',
+  alchemy: '炼制',
   trade: '交易',
   group: '宗门队伍',
+  manual: '手册',
 }
 
 const sideTabLabels: Array<{ id: SideTab; label: string }> = [
   { id: 'player', label: '人物' },
   { id: 'quests', label: '任务' },
   { id: 'inventory', label: '背包' },
+  { id: 'codex', label: '手册' },
   { id: 'map', label: '地图' },
   { id: 'team', label: '队伍' },
   { id: 'rank', label: '排行' },
@@ -121,6 +144,7 @@ const rankingOptions: Array<{ id: 'realm' | 'wealth' | 'combat'; label: string }
 
 const scene = computed(() => store.scene ?? {})
 const player = computed(() => store.player ?? {})
+const availableOrigins = computed(() => (store.availableOrigins as Record<string, any>[] | undefined) ?? [])
 const currentSceneId = computed(() => String(scene.value.sceneId ?? ''))
 const channelEvents = computed(() => store.events.slice(-4))
 const latestEventId = computed(() => store.events[store.events.length - 1]?.eventId)
@@ -131,6 +155,12 @@ const npcs = computed(() => (scene.value.npcs as Record<string, any>[] | undefin
 const monsters = computed(() => (scene.value.monsters as string[] | undefined) ?? [])
 const shops = computed(() => (scene.value.shops as string[] | undefined) ?? [])
 const scenePlayers = computed(() => (scene.value.players as Record<string, any>[] | undefined) ?? [])
+const sceneResourceNodes = computed(() => (scene.value.resourceNodes as Record<string, any>[] | undefined) ?? [])
+const sceneGroundLoots = computed(() => (scene.value.groundLoots as Record<string, any>[] | undefined) ?? [])
+const sceneHazards = computed(() => (scene.value.hazards as Record<string, any>[] | undefined) ?? [])
+const codexSummaries = computed(() => (player.value.codexSummaries as Record<string, any>[] | undefined) ?? [])
+const codexEntries = computed(() => (store.codexEntries as Record<string, any>[] | undefined) ?? [])
+const codexDetail = computed(() => store.codexDetail as Record<string, any> | null)
 const sceneItems = computed(() => {
   const items = (scene.value.items as Record<string, any>[] | undefined) ?? []
   if (items.length > 0) {
@@ -146,6 +176,17 @@ const sceneItems = computed(() => {
   }))
 })
 const teamMembers = computed(() => (player.value.team?.members as Record<string, any>[] | undefined) ?? [])
+const selectedOrigin = computed(
+  () =>
+    availableOrigins.value.find((origin) => String(origin.originId ?? '') === selectedOriginId.value) ??
+    availableOrigins.value[0] ??
+    null,
+)
+const selectedCodexSummary = computed(
+  () =>
+    codexSummaries.value.find((summary) => String(summary.category ?? summary.entryId ?? '') === selectedCodexCategory.value) ??
+    null,
+)
 
 const worldMapNodeLookup = new Map(worldMapNodes.map((node) => [node.id, node]))
 
@@ -174,6 +215,7 @@ const mapEdges = computed(() =>
 
 const commandCategories = computed(() => {
   const currentQuestIds = new Set(quests.value.map((quest) => String(quest.questId ?? '')))
+  const firstMonster = monsters.value[0]
 
   const social: CommandAction[] = [
     {
@@ -258,6 +300,23 @@ const commandCategories = computed(() => {
     },
   ]
 
+  const spell: CommandAction[] = [
+    ...(((player.value.spells as Record<string, any>[] | undefined) ?? []).filter((item) => Boolean(item.unlocked))).map((item) => ({
+      key: `cast-${String(item.spellId)}`,
+      label: `施放·${String(item.name)}`,
+      detail: firstMonster ? `默认对 ${firstMonster} 施法，也可切到原始指令改目标。` : '先选定目标，再通过原始指令施放。',
+      command: firstMonster ? `cast ${String(item.spellId)} ${firstMonster}` : `cast ${String(item.spellId)} `,
+      execute: Boolean(firstMonster),
+      composer: firstMonster ? undefined : ('command' as const),
+    })),
+    {
+      key: 'meditate',
+      label: '吐纳调息',
+      detail: '恢复法力、神念与气力，准备下一轮施法。',
+      command: 'meditate',
+    },
+  ]
+
   const cultivation: CommandAction[] = [
     {
       key: 'practice',
@@ -271,6 +330,30 @@ const commandCategories = computed(() => {
       detail: '修为充足时冲击下一层境界。',
       command: 'breakthrough',
     },
+  ]
+
+  const gather: CommandAction[] = [
+    ...sceneResourceNodes.value.map((node) => ({
+      key: `harvest-${String(node.nodeId)}`,
+      label: `采集·${String(node.name)}`,
+      detail: `采集 ${String(node.dropItemName ?? node.dropItemId ?? '材料')}。`,
+      command: `harvest ${String(node.nodeId)}`,
+    })),
+    ...sceneGroundLoots.value.map((loot) => ({
+      key: `loot-${String(loot.lootId)}`,
+      label: `拾取·${String(loot.itemName)}`,
+      detail: `拾起地面上的 ${String(loot.itemName ?? loot.itemId)}。`,
+      command: `loot ${String(loot.lootId ?? loot.itemId)}`,
+    })),
+  ]
+
+  const alchemy: CommandAction[] = [
+    ...(((player.value.recipes as Record<string, any>[] | undefined) ?? []).filter((item) => Boolean(item.unlocked))).map((item) => ({
+      key: `brew-${String(item.recipeId)}`,
+      label: `炼制·${String(item.name)}`,
+      detail: String(item.description ?? '按配方炼制丹药与辅助物。'),
+      command: `brew ${String(item.recipeId)}`,
+    })),
   ]
 
   const trade: CommandAction[] = [
@@ -325,14 +408,29 @@ const commandCategories = computed(() => {
     },
   ]
 
+  const manual: CommandAction[] = codexCategories.map((category) => {
+    const summary =
+      codexSummaries.value.find((item) => String(item.category ?? item.entryId ?? '') === category) ?? null
+    return {
+      key: `manual-${category}`,
+      label: category,
+      detail: String(summary?.summary ?? '打开分类手册，查看当前已解锁条目。'),
+      codexCategory: category,
+    }
+  })
+
   return [
     { id: 'social' as const, label: categoryLabels.social, actions: social },
     { id: 'explore' as const, label: categoryLabels.explore, actions: explore },
     { id: 'tasks' as const, label: categoryLabels.tasks, actions: taskActions },
     { id: 'combat' as const, label: categoryLabels.combat, actions: combat },
+    { id: 'spell' as const, label: categoryLabels.spell, actions: spell },
     { id: 'cultivation' as const, label: categoryLabels.cultivation, actions: cultivation },
+    { id: 'gather' as const, label: categoryLabels.gather, actions: gather },
+    { id: 'alchemy' as const, label: categoryLabels.alchemy, actions: alchemy },
     { id: 'trade' as const, label: categoryLabels.trade, actions: trade },
     { id: 'group' as const, label: categoryLabels.group, actions: group },
+    { id: 'manual' as const, label: categoryLabels.manual, actions: manual },
   ]
 })
 
@@ -367,6 +465,14 @@ const sceneInteractables = computed<SceneInteractable[]>(() => {
     const displayName = String(scenePlayer.characterName ?? scenePlayer.account ?? '无名修士')
     const sameTeam = teamAccountSet.has(playerAccount)
     const playerActions: CommandAction[] = [
+      {
+        key: `interactable-inspect-player-${playerAccount}`,
+        label: '观察对方',
+        detail: '先从外观和称号上判断对方来历。',
+        composer: 'chat',
+        chatChannel: 'world',
+        prefillText: `看向 ${displayName} `,
+      },
       {
         key: `interactable-chat-world-${playerAccount}`,
         label: '频道招呼',
@@ -410,6 +516,12 @@ const sceneInteractables = computed<SceneInteractable[]>(() => {
     const npcName = String(npc.name ?? '无名修士')
     const npcActions: CommandAction[] = [
       {
+        key: `interactable-inspect-npc-${String(npc.npcId ?? npcName)}`,
+        label: `端详·${npcName}`,
+        detail: '先仔细观察此人的来历与气度。',
+        command: `inspect ${npcName}`,
+      },
+      {
         key: `interactable-talk-${String(npc.npcId ?? npcName)}`,
         label: `交谈·${npcName}`,
         detail: '先与此人交谈，打探消息和后续线索。',
@@ -443,6 +555,15 @@ const sceneInteractables = computed<SceneInteractable[]>(() => {
         label: `拜入·${sect.name}`,
         detail: '若条件足够，可当场拜入宗门。',
         command: sect.command,
+      })
+    }
+
+    if (String(npc.codexEntryId ?? '')) {
+      npcActions.push({
+        key: `interactable-codex-npc-${String(npc.npcId ?? npcName)}`,
+        label: '查看资料',
+        detail: '打开手册查看此人物的资料条目。',
+        codexEntryId: String(npc.codexEntryId),
       })
     }
 
@@ -483,6 +604,22 @@ const sceneInteractables = computed<SceneInteractable[]>(() => {
       })
     }
 
+    itemActions.push({
+      key: `interactable-inspect-item-${itemId}`,
+      label: `查看·${itemName}`,
+      detail: '先看看这件物件的来历与用途。',
+      command: `inspect ${itemId || itemName}`,
+    })
+
+    if (String(sceneItem.codexEntryId ?? '')) {
+      itemActions.push({
+        key: `interactable-codex-item-${itemId}`,
+        label: '查看资料',
+        detail: '打开手册查看这件物件相关的设定。',
+        codexEntryId: String(sceneItem.codexEntryId),
+      })
+    }
+
     entries.push({
       key: `interactable-shop-${itemId}-${itemSource}`,
       kind: 'shop',
@@ -513,11 +650,23 @@ const sceneInteractables = computed<SceneInteractable[]>(() => {
       meta: ['可发起战斗', '战后可能获得掉落或修为'],
       actions: [
         {
+          key: `interactable-inspect-${monster}`,
+          label: `查看·${monster}`,
+          detail: '先探明敌手，再决定出手方式。',
+          command: `inspect ${monster}`,
+        },
+        {
           key: `interactable-fight-${monster}`,
           label: `挑战·${monster}`,
           detail: '立即进入战斗，检验当前战力。',
           command: `fight ${monster}`,
         },
+        ...(((player.value.spells as Record<string, any>[] | undefined) ?? []).filter((item) => Boolean(item.unlocked)).slice(0, 1).map((spell) => ({
+          key: `interactable-cast-${monster}-${String(spell.spellId)}`,
+          label: `法术·${String(spell.name)}`,
+          detail: '以当前掌握的法术先手试探。',
+          command: `cast ${String(spell.spellId)} ${monster}`,
+        })) as CommandAction[]),
         {
           key: `interactable-practice-${monster}`,
           label: '先行调息',
@@ -525,6 +674,121 @@ const sceneInteractables = computed<SceneInteractable[]>(() => {
           command: `practice ${primarySkill}`,
         },
       ],
+    })
+  })
+
+  sceneResourceNodes.value.forEach((node) => {
+    const actions: CommandAction[] = [
+      {
+        key: `interactable-inspect-resource-${String(node.nodeId)}`,
+        label: `查看·${String(node.name)}`,
+        detail: '观察采集点的环境和可得材料。',
+        command: `inspect ${String(node.nodeId ?? node.name)}`,
+      },
+      {
+        key: `interactable-harvest-${String(node.nodeId)}`,
+        label: `采集·${String(node.name)}`,
+        detail: `尝试获得 ${String(node.dropItemName ?? node.dropItemId ?? '材料')}。`,
+        command: `harvest ${String(node.nodeId ?? node.name)}`,
+      },
+    ]
+    if (String(node.codexEntryId ?? '')) {
+      actions.push({
+        key: `interactable-codex-resource-${String(node.nodeId)}`,
+        label: '查看资料',
+        detail: '打开手册查看这处资源点相关资料。',
+        codexEntryId: String(node.codexEntryId),
+      })
+    }
+
+    entries.push({
+      key: `interactable-resource-${String(node.nodeId)}`,
+      kind: 'resource',
+      railLabel: '采点',
+      railCaption: shortenText(String(node.name ?? '资源点'), 5),
+      title: String(node.name ?? '资源点'),
+      subtitle: '视野可见采集点',
+      description: String(node.description ?? '这里有可采集的灵材与原料。'),
+      meta: [
+        `产出：${String(node.dropItemName ?? node.dropItemId ?? '未知材料')}`,
+        Number(node.dropItemCount ?? 0) > 0 ? `数量：${String(node.dropItemCount)}` : '',
+      ].filter(Boolean) as string[],
+      actions,
+    })
+  })
+
+  sceneGroundLoots.value.forEach((loot) => {
+    const actions: CommandAction[] = [
+      {
+        key: `interactable-inspect-loot-${String(loot.lootId)}`,
+        label: `查看·${String(loot.itemName)}`,
+        detail: '看看地面遗落物的来历和价值。',
+        command: `inspect ${String(loot.lootId ?? loot.itemId ?? loot.itemName)}`,
+      },
+      {
+        key: `interactable-loot-${String(loot.lootId)}`,
+        label: `拾取·${String(loot.itemName)}`,
+        detail: '把这件遗落物收入囊中。',
+        command: `loot ${String(loot.lootId ?? loot.itemId ?? loot.itemName)}`,
+      },
+    ]
+    if (String(loot.codexEntryId ?? '')) {
+      actions.push({
+        key: `interactable-codex-loot-${String(loot.lootId)}`,
+        label: '查看资料',
+        detail: '打开手册查看相关物件条目。',
+        codexEntryId: String(loot.codexEntryId),
+      })
+    }
+
+    entries.push({
+      key: `interactable-loot-${String(loot.lootId)}`,
+      kind: 'loot',
+      railLabel: '遗落',
+      railCaption: shortenText(String(loot.itemName ?? '遗落物'), 5),
+      title: String(loot.itemName ?? loot.itemId ?? '遗落物'),
+      subtitle: '地面可拾取物件',
+      description: String(loot.description ?? '一件散落在地上的物件。'),
+      meta: [`数量：${String(loot.quantity ?? 1)}`],
+      actions,
+    })
+  })
+
+  sceneHazards.value.forEach((hazard) => {
+    const actions: CommandAction[] = []
+    if (String(hazard.codexEntryId ?? '')) {
+      actions.push({
+        key: `interactable-codex-hazard-${String(hazard.hazardId)}`,
+        label: '查看资料',
+        detail: '打开手册查看这处禁制或险地说明。',
+        codexEntryId: String(hazard.codexEntryId),
+      })
+    }
+    if (!actions.length) {
+      actions.push({
+        key: `interactable-chat-hazard-${String(hazard.hazardId)}`,
+        label: '记录异象',
+        detail: '切到聊天输入，记下此地异常。',
+        composer: 'chat',
+        chatChannel: 'world',
+        prefillText: `此地遇到${String(hazard.name ?? '禁制')}，`,
+      })
+    }
+
+    entries.push({
+      key: `interactable-hazard-${String(hazard.hazardId)}`,
+      kind: 'hazard',
+      railLabel: '禁制',
+      railCaption: shortenText(String(hazard.name ?? '禁制'), 5),
+      title: String(hazard.name ?? '禁制'),
+      subtitle: '场景中的机关与风险',
+      description: String(hazard.description ?? '这处区域存在明显的灵压与禁制反应。'),
+      meta: [
+        Number(hazard.hpCost ?? 0) > 0 ? `气血消耗：${String(hazard.hpCost)}` : '',
+        Number(hazard.manaCost ?? 0) > 0 ? `法力消耗：${String(hazard.manaCost)}` : '',
+        Number(hazard.staCost ?? 0) > 0 ? `气力消耗：${String(hazard.staCost)}` : '',
+      ].filter(Boolean) as string[],
+      actions,
     })
   })
 
@@ -681,6 +945,33 @@ const sceneTranscript = computed<DenseLine[]>(() => {
     })
   }
 
+  if (sceneResourceNodes.value.length > 0) {
+    lines.push({
+      key: `scene-resource-${currentSceneId.value}`,
+      tag: '采集',
+      text: `附近可采集 ${sceneResourceNodes.value.map((entry) => String(entry.name ?? entry.nodeId)).join('、')}。`,
+      tone: 'hint',
+    })
+  }
+
+  if (sceneGroundLoots.value.length > 0) {
+    lines.push({
+      key: `scene-ground-loot-${currentSceneId.value}`,
+      tag: '遗落',
+      text: `地面遗落着 ${sceneGroundLoots.value.map((entry) => String(entry.itemName ?? entry.itemId)).join('、')}。`,
+      tone: 'system',
+    })
+  }
+
+  if (sceneHazards.value.length > 0) {
+    lines.push({
+      key: `scene-hazard-${currentSceneId.value}`,
+      tag: '禁制',
+      text: `此地存在 ${sceneHazards.value.map((entry) => String(entry.name ?? entry.hazardId)).join('、')}。`,
+      tone: 'quest',
+    })
+  }
+
   if (store.lastResult?.title || store.lastResult?.summary) {
     const resultText = [String(store.lastResult?.title ?? ''), String(store.lastResult?.summary ?? '')]
       .filter(Boolean)
@@ -698,6 +989,42 @@ const sceneTranscript = computed<DenseLine[]>(() => {
       key: `result-hint-${String(store.nextEventId)}-${index}`,
       tag: '提示',
       text: hint,
+      tone: 'hint',
+    })
+  })
+
+  if (String(store.lastResult?.spellSummary ?? '')) {
+    lines.push({
+      key: `result-spell-${String(store.nextEventId)}`,
+      tag: '法术',
+      text: String(store.lastResult?.spellSummary),
+      tone: 'combat',
+    })
+  }
+
+  if (String(store.lastResult?.brewSummary ?? '')) {
+    lines.push({
+      key: `result-brew-${String(store.nextEventId)}`,
+      tag: '炼制',
+      text: String(store.lastResult?.brewSummary),
+      tone: 'system',
+    })
+  }
+
+  if (String(store.lastResult?.hazardFeedback ?? '')) {
+    lines.push({
+      key: `result-hazard-${String(store.nextEventId)}`,
+      tag: '禁制',
+      text: String(store.lastResult?.hazardFeedback),
+      tone: 'hint',
+    })
+  }
+
+  ;((store.lastResult?.unlockedCodexEntries as Record<string, any>[] | undefined) ?? []).slice(0, 2).forEach((entry, index) => {
+    lines.push({
+      key: `result-codex-${String(store.nextEventId)}-${index}`,
+      tag: '手册',
+      text: `解锁资料：${String(entry.title ?? entry.entryId ?? '未知条目')}。`,
       tone: 'hint',
     })
   })
@@ -863,6 +1190,9 @@ function sceneInteractableKindLabel(kind: SceneInteractableKind) {
     npc: '人物',
     shop: '物件',
     monster: '妖兽',
+    resource: '采集点',
+    loot: '遗落物',
+    hazard: '禁制',
   }
   return labels[kind] ?? '交互'
 }
@@ -873,6 +1203,60 @@ function sceneItemSourceLabel(source: string) {
     ground: '地面物件',
   }
   return labels[source] ?? '可见物件'
+}
+
+async function ensureCodexLoaded(category = selectedCodexCategory.value) {
+  const normalizedCategory = category || selectedCodexCategory.value
+  selectedCodexCategory.value = normalizedCategory
+  await store.loadCodexList(normalizedCategory)
+
+  const entries = (store.codexEntries as Record<string, any>[] | undefined) ?? []
+  const nextEntryId =
+    selectedCodexEntryId.value && entries.some((entry) => String(entry.entryId ?? '') === selectedCodexEntryId.value)
+      ? selectedCodexEntryId.value
+      : String(entries[0]?.entryId ?? '')
+
+  selectedCodexEntryId.value = nextEntryId
+  if (!nextEntryId) {
+    store.codexDetail = null
+    return
+  }
+
+  await store.loadCodexDetail(nextEntryId)
+}
+
+async function openCodexOverlay(category = selectedCodexCategory.value) {
+  activeTab.value = 'codex'
+  activeOverlay.value = 'codex'
+  try {
+    await ensureCodexLoaded(category)
+  } catch (error) {
+    setError(error)
+  }
+}
+
+async function openCodexEntry(entryId: string, categoryHint = '') {
+  activeTab.value = 'codex'
+  activeOverlay.value = 'codex'
+
+  try {
+    if (categoryHint) {
+      selectedCodexCategory.value = categoryHint
+      await store.loadCodexList(categoryHint)
+    } else if (!store.codexEntries.length) {
+      await store.loadCodexList(selectedCodexCategory.value)
+    }
+
+    await store.loadCodexDetail(entryId)
+    const resolvedCategory = String(store.codexDetail?.category ?? categoryHint ?? '')
+    if (resolvedCategory && resolvedCategory !== selectedCodexCategory.value) {
+      selectedCodexCategory.value = resolvedCategory
+      await store.loadCodexList(resolvedCategory)
+    }
+    selectedCodexEntryId.value = entryId
+  } catch (error) {
+    setError(error)
+  }
 }
 
 function openSceneInteractable(item: SceneInteractable) {
@@ -930,7 +1314,11 @@ async function login(autoRegister = false) {
 
 async function createCharacter() {
   try {
-    await store.createCharacter(characterName.value)
+    if (!selectedOriginId.value) {
+      throw new Error('请先选择一个出身。')
+    }
+
+    await store.createCharacter(characterName.value, selectedOriginId.value)
     characterName.value = ''
   } catch (error) {
     setError(error)
@@ -958,6 +1346,16 @@ async function submitComposer(commandOverride?: string) {
 }
 
 function applyAction(action: CommandAction) {
+  if (action.codexEntryId) {
+    void openCodexEntry(action.codexEntryId, action.codexCategory ?? '')
+    return
+  }
+
+  if (action.codexCategory) {
+    void openCodexOverlay(action.codexCategory)
+    return
+  }
+
   if (action.composer === 'chat') {
     composerMode.value = 'chat'
     chatChannel.value = action.chatChannel ?? 'world'
@@ -1013,16 +1411,34 @@ onMounted(async () => {
 })
 
 watch(activeOverlay, async (value) => {
-  if (value !== 'rank' || !store.authenticated) {
-    return
-  }
-
   try {
-    await store.loadRankings(store.rankingType)
+    if (value === 'rank' && store.authenticated) {
+      await store.loadRankings(store.rankingType)
+    }
+    if (value === 'codex' && store.authenticated) {
+      await ensureCodexLoaded(selectedCodexCategory.value)
+    }
   } catch (error) {
     setError(error)
   }
 })
+
+watch(
+  () => availableOrigins.value.map((origin) => String(origin.originId ?? '')).join('|'),
+  () => {
+    if (!availableOrigins.value.length) {
+      selectedOriginId.value = ''
+      return
+    }
+
+    if (availableOrigins.value.some((origin) => String(origin.originId ?? '') === selectedOriginId.value)) {
+      return
+    }
+
+    selectedOriginId.value = String(availableOrigins.value[0]?.originId ?? '')
+  },
+  { immediate: true },
+)
 
 watch(
   [
@@ -1098,16 +1514,40 @@ watch(
     <section v-else-if="store.needCreateCharacter" class="auth-card">
       <div class="card-heading">
         <h2>塑造新角色</h2>
-        <p>创建后自动带上新手任务“墨府采药”，可直接开始第一段剧情。</p>
+        <p>先定姓名，再选一处人界出身。不同出身会带来不同的初始属性与剧情气质。</p>
       </div>
       <div class="form-grid single-column">
         <label>
           <span>角色名</span>
           <input v-model="characterName" maxlength="24" placeholder="例如 韩立" @keyup.enter="createCharacter()" />
         </label>
+        <div>
+          <span>人界出身</span>
+          <div class="origin-grid">
+            <button
+              v-for="origin in availableOrigins"
+              :key="origin.originId"
+              type="button"
+              class="origin-card"
+              :class="{ active: selectedOriginId === String(origin.originId) }"
+              @click="selectedOriginId = String(origin.originId)"
+            >
+              <strong>{{ origin.originName }}</strong>
+              <small>{{ origin.homeland }}</small>
+              <p>{{ origin.description }}</p>
+            </button>
+          </div>
+          <article v-if="selectedOrigin" class="detail-card origin-preview-card">
+            <p class="detail-title">{{ selectedOrigin.originName }} · {{ selectedOrigin.raceName }}</p>
+            <p>{{ selectedOrigin.description }}</p>
+            <p>故土：{{ selectedOrigin.homeland }}</p>
+          </article>
+        </div>
       </div>
       <div class="action-row">
-        <button type="button" class="primary-button" :disabled="store.loading" @click="createCharacter()">踏入修仙路</button>
+        <button type="button" class="primary-button" :disabled="store.loading || !selectedOriginId" @click="createCharacter()">
+          踏入修仙路
+        </button>
       </div>
     </section>
 
@@ -1170,6 +1610,7 @@ watch(
                 <button type="button" class="mini-tool-button" @click="activeCommandCategory = 'social'; openOverlay('commands')">闲聊</button>
                 <button type="button" class="mini-tool-button" @click="activeCommandCategory = 'tasks'; openOverlay('commands')">任务</button>
                 <button type="button" class="mini-tool-button" @click="activeCommandCategory = 'explore'; openOverlay('commands')">附近</button>
+                <button type="button" class="mini-tool-button" @click="void openCodexOverlay('地理志')">手册</button>
               </div>
             </div>
 
@@ -1191,6 +1632,9 @@ watch(
               <span class="meta-tag" v-for="entry in scenePlayers" :key="entry.account">玩家 · {{ entry.characterName }}</span>
               <span class="meta-tag" v-for="npc in npcs" :key="npc.npcId">人物 · {{ npc.name }}</span>
               <span class="meta-tag" v-for="sceneItem in sceneItems" :key="`${sceneItem.itemId}-${sceneItem.source}`">物件 · {{ sceneItem.name }}</span>
+              <span class="meta-tag" v-for="node in sceneResourceNodes" :key="node.nodeId">采点 · {{ node.name }}</span>
+              <span class="meta-tag" v-for="loot in sceneGroundLoots" :key="loot.lootId">遗落 · {{ loot.itemName }}</span>
+              <span class="meta-tag" v-for="hazard in sceneHazards" :key="hazard.hazardId">禁制 · {{ hazard.name }}</span>
               <span class="meta-tag" v-for="monster in monsters" :key="monster">妖兽 · {{ monster }}</span>
             </div>
 
@@ -1285,7 +1729,7 @@ watch(
     </main>
 
     <div v-if="store.authenticated && activeOverlay !== 'none'" class="overlay-backdrop" @click.self="closeOverlay()">
-      <section class="overlay-sheet" :class="{ 'overlay-sheet--wide': activeOverlay === 'map' || activeOverlay === 'commands' }">
+      <section class="overlay-sheet" :class="{ 'overlay-sheet--wide': activeOverlay === 'map' || activeOverlay === 'commands' || activeOverlay === 'codex' }">
         <div class="overlay-grabber" aria-hidden="true"></div>
         <header class="overlay-header">
           <div>
@@ -1425,6 +1869,7 @@ watch(
               </article>
             </div>
             <div class="info-block">
+              <p>出身：{{ player.race?.originName || '未定' }} · {{ player.race?.homeland || '人界' }}</p>
               <p>本命功法：{{ player.cultivation?.primarySkill || '长春功' }}</p>
               <p>功法等级：{{ player.cultivation?.skillLevel || 1 }}</p>
               <p>突破需求：{{ player.cultivation?.exp || 0 }} / {{ player.cultivation?.nextBreakthroughExp || 0 }}</p>
@@ -1432,6 +1877,18 @@ watch(
               <p>宗门贡献：{{ player.sectContribution || 0 }}</p>
               <p>已解锁区域：{{ (player.unlockedRegions || []).join('、') || '七玄门' }}</p>
             </div>
+            <article class="detail-card">
+              <p class="detail-title">基础属性</p>
+              <p>神识 {{ player.baseAttributes?.spi || 0 }} · 经脉 {{ player.baseAttributes?.gin || 0 }} · 炼体 {{ player.baseAttributes?.str || 0 }}</p>
+              <p>灵觉 {{ player.baseAttributes?.per || 0 }} · 悟性 {{ player.baseAttributes?.int || 0 }} · 魅力 {{ player.baseAttributes?.cha || 0 }} · 机缘 {{ player.baseAttributes?.luc || 0 }}</p>
+              <p>法力 {{ player.statusAttributes?.mana || 0 }} · 神念 {{ player.statusAttributes?.sen || 0 }} · 气力 {{ player.statusAttributes?.sta || 0 }}</p>
+            </article>
+            <article class="detail-card">
+              <p class="detail-title">技艺概览</p>
+              <p>技能：{{ ((player.skills || []) as Record<string, any>[]).map((item) => item.name).join('、') || '尚未习得' }}</p>
+              <p>法术：{{ ((player.spells || []) as Record<string, any>[]).filter((item) => item.unlocked).map((item) => item.name).join('、') || '尚未习得' }}</p>
+              <p>配方：{{ ((player.recipes || []) as Record<string, any>[]).filter((item) => item.unlocked).map((item) => item.name).join('、') || '尚未掌握' }}</p>
+            </article>
           </div>
 
           <div v-else-if="activeInfoTab === 'quests'" class="detail-stack">
@@ -1450,6 +1907,54 @@ watch(
               <p>数量：{{ item.quantity }} <span v-if="item.equipped">· 已装备</span></p>
             </article>
             <p v-if="inventory.length === 0" class="empty-text">背包空空如也。</p>
+          </div>
+
+          <div v-else-if="activeInfoTab === 'codex'" class="detail-stack">
+            <div class="tab-strip codex-category-strip">
+              <button
+                v-for="category in codexCategories"
+                :key="category"
+                type="button"
+                class="tab-button command-tab-button"
+                :class="{ active: selectedCodexCategory === category }"
+                @click="void openCodexOverlay(category)"
+              >
+                {{ category }}
+              </button>
+            </div>
+
+            <article v-if="selectedCodexSummary" class="detail-card">
+              <p class="detail-title">{{ selectedCodexCategory }}</p>
+              <p>{{ selectedCodexSummary.summary }}</p>
+              <p>未读状态：{{ selectedCodexSummary.unread ? '有新资料' : '已阅' }}</p>
+            </article>
+
+            <div class="codex-entry-list">
+              <button
+                v-for="entry in codexEntries"
+                :key="entry.entryId"
+                type="button"
+                class="detail-card codex-entry-card"
+                :class="{ active: selectedCodexEntryId === String(entry.entryId) }"
+                @click="void openCodexEntry(String(entry.entryId), selectedCodexCategory)"
+              >
+                <p class="detail-title">{{ entry.title }}</p>
+                <p>{{ entry.summary }}</p>
+                <p>{{ entry.unlocked ? '已解锁' : '资料未明' }}<span v-if="entry.unread"> · 新</span></p>
+              </button>
+            </div>
+
+            <article v-if="codexDetail" class="detail-card codex-detail-card">
+              <p class="detail-title">{{ codexDetail.title }}</p>
+              <p>{{ codexDetail.summary }}</p>
+              <p>{{ codexDetail.content }}</p>
+              <p v-if="(codexDetail.relatedSceneIds || []).length > 0">关联场景：{{ codexDetail.relatedSceneIds.join('、') }}</p>
+              <p v-if="(codexDetail.relatedNpcIds || []).length > 0">关联人物：{{ codexDetail.relatedNpcIds.join('、') }}</p>
+              <p v-if="(codexDetail.relatedMonsterIds || []).length > 0">关联妖兽：{{ codexDetail.relatedMonsterIds.join('、') }}</p>
+              <p v-if="(codexDetail.relatedItemIds || []).length > 0">关联物件：{{ codexDetail.relatedItemIds.join('、') }}</p>
+            </article>
+
+            <p v-if="codexEntries.length === 0" class="empty-text">这一分类的资料尚未解锁，继续探索、交谈、击败敌手或取得关键物品后会逐步开启。</p>
           </div>
 
           <div v-else-if="activeInfoTab === 'team'" class="detail-stack">

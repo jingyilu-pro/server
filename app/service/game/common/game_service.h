@@ -63,6 +63,8 @@ private:
     coro_task_t create_character_async(evhttp_request* request);
     coro_task_t execute_command_async(evhttp_request* request);
     coro_task_t pull_feed_async(evhttp_request* request);
+    coro_task_t codex_list_async(evhttp_request* request);
+    coro_task_t codex_detail_async(evhttp_request* request);
     coro_task_t rank_list_async(evhttp_request* request);
 
 private:

@@ -34,3 +34,18 @@ TODO
 - 评估是否还需要做真正的微信小游戏打包方案；当前改动属于 H5/小程序 WebView 风格适配，不是小游戏原生包体接入。
 - 如果继续贴近参考图，可以再把底部功能按钮做成图标化宫格，并给弹窗增加更强的过渡动效。
 - 当前“可见物件”先覆盖场景里明面可见的摊位/物件；若后续要做真正的“地面掉落物”，需要再补场景掉落状态持久化和拾取协议。
+- 2026-03-18: 新增世界内容结构化源 `doc/mud/source/` 并通过 `scripts/build_mud_world.mjs` 合并生成运行时 `doc/mud/world_data.json`；当前生成结果为 49 个场景、44 个 NPC、25 个妖兽/奇虫、20 条任务、65 个物件、235 条手册条目。
+- 2026-03-18: 扩展 `mud.proto` / `mud_world` / `mud_game_runtime` / `mud_player_repository`，把人界出身、基础/状态/争斗属性、技能、法术、炼丹配方、资源点、地面掉落、场景禁制、手册摘要与详情接口一起接入现有 protobuf-over-HTTP 链路。
+- 2026-03-18: H5 侧补齐出身建角、手册入口、法术/采集/炼制/手册指令分类、场景可见对象弹窗与资料跳转，保持微信小游戏风格单屏主界面不变。
+- 2026-03-18: 修复 `scripts/build_mud_world.mjs` 的场景关系生成 bug。此前 `buildSceneRelations(scenes, npcs, 'npc_ids')` 会把目标数组字段当成源对象 id 字段，导致生成包出现 `npc_ids: [null, null]`；现已改成显式 `npc_id -> npc_ids`、`monster_id -> monster_ids`、`node_id -> resource_node_ids`、`loot_id -> ground_loot_ids`、`hazard_id -> hazard_ids` 映射，并在构建期对缺失字段直接报错。
+- 2026-03-18: 修复后重新生成世界包，验证 `qixuan_square.npc_ids` 已恢复为 `li_feiyu` 与 `zhang_tie`，生成 JSON 中不再出现由该问题导致的 `null` 关系项。
+- 2026-03-18: 新增可复用的 WSL 侧 protobuf 烟测工具 `scripts/mud_smoke.cpp`，通过原生 TCP + protobuf 直连 `manager/login/game`，已纳入 CMake 目标 `mud_smoke`，可用于回归 `route/login -> register -> login -> enter -> bootstrap -> create -> inspect -> codex` 主链路。
+- 2026-03-18: 由于本机 WSL `localhost` 端口映射当前未生效，Windows 侧无法直接访问 WSL 内的 `127.0.0.1:18080/18081/18082`；本轮联调改为在 WSL 内运行 `mud_smoke`。烟测结果确认：`bootstrap.availableOrigins=5`、新角色进入七玄门外场时 `scene.npcs=2`（厉飞雨、张铁）、`inspect 厉飞雨` 成功并解锁人物志、`codex/list` 与 `codex/detail` 正常返回。
+- 2026-03-18: 本轮验证已通过 `node scripts/build_mud_world.mjs`、`npm test`、`npm run build`、`cmake --build build-wsl-main --target application mud_smoke -j2` 和 WSL 内 `./build-wsl-main/scripts/mud_smoke`。
+- 2026-03-19: 为了解决 Windows 侧前端无法访问 WSL 内后端的问题，`EndpointConfig` 新增 `bind_host`，`BasicHttpService` 改为“绑定地址”和“对外通告地址”分离；`all.yaml` 现将 `manager/login/game` 配成 `host: 127.0.0.1` + `bind_host: 0.0.0.0`，日志会显示 `listening at 0.0.0.0:port (advertised as 127.0.0.1:port)`。
+- 2026-03-19: `client/vite.config.ts` 新增代理主机解析逻辑，优先读取 `MUD_PROXY_HOST` / `VITE_PROXY_BACKEND_HOST` / `VITE_API_PROXY_HOST`，若未设置且运行在 Windows，则自动取 `wsl hostname -I` 的首个 IPv4 作为 dev proxy 后端主机；`client/README.md` 已补充说明。
+- 2026-03-19: 重新编译 WSL 后端并按新配置启动后，确认 `manager/login/game` 已监听 `0.0.0.0:18080/18081/18082`，同时仍向客户端返回 `127.0.0.1:18081/18082` 作为固定对外地址。
+- 2026-03-19: Windows 侧已完成两段真实回归：
+- 直接请求 `http://172.17.126.104:18080/v1/route/login` 成功返回 protobuf 路由结果，证明 Windows -> WSL 服务访问恢复。
+- 通过临时 Vite dev server `http://127.0.0.1:5174` 走 `/api/manager|login|game` 代理，成功完成 `route/login -> register -> auth/login -> game/enter -> bootstrap -> character/create`，建角后场景为“七玄门外场”，可见 NPC 为“厉飞雨 / 张铁”。
+- 2026-03-19: 用本机 Chrome headless 访问 `http://127.0.0.1:5174/`，DOM 正常加载到“进入凡人世界”登录页，并输出了登录页截图到临时目录，说明前端页面本身也可正常打开。

@@ -379,6 +379,11 @@ bool set_config_value(RuntimeConfig* config, const std::string& key, const std::
         config->server.manager.host = trim(value);
         return true;
     }
+    if(key == "server.manager.bind_host")
+    {
+        config->server.manager.bind_host = trim(value);
+        return true;
+    }
     if(key == "server.manager.port")
     {
         uint16_t port = 0;
@@ -394,6 +399,11 @@ bool set_config_value(RuntimeConfig* config, const std::string& key, const std::
         config->server.login.host = trim(value);
         return true;
     }
+    if(key == "server.login.bind_host")
+    {
+        config->server.login.bind_host = trim(value);
+        return true;
+    }
     if(key == "server.login.port")
     {
         uint16_t port = 0;
@@ -407,6 +417,11 @@ bool set_config_value(RuntimeConfig* config, const std::string& key, const std::
     if(key == "server.game.host")
     {
         config->server.game.host = trim(value);
+        return true;
+    }
+    if(key == "server.game.bind_host")
+    {
+        config->server.game.bind_host = trim(value);
         return true;
     }
     if(key == "server.game.port")

@@ -42,6 +42,16 @@
 namespace
 {
 
+EndpointConfig bind_endpoint_for(const EndpointConfig& endpoint)
+{
+    EndpointConfig bind_endpoint = endpoint;
+    if(!bind_endpoint.bind_host.empty())
+    {
+        bind_endpoint.host = bind_endpoint.bind_host;
+    }
+    return bind_endpoint;
+}
+
 uint16_t resolve_bound_port(evhttp_bound_socket* bound_socket)
 {
     if(bound_socket == nullptr)
@@ -121,13 +131,15 @@ bool BasicHttpService::start()
 
     evhttp_set_gencb(m_evhttp, &BasicHttpService::global_request_callback, this);
 
+    EndpointConfig bind_endpoint = bind_endpoint_for(m_endpoint);
+
     if(m_auto_assign_port)
     {
-        const auto bind_port = static_cast<ev_uint16_t>(m_endpoint.port);
-        auto* bound_socket = evhttp_bind_socket_with_handle(m_evhttp, m_endpoint.host.c_str(), bind_port);
+        const auto bind_port = static_cast<ev_uint16_t>(bind_endpoint.port);
+        auto* bound_socket = evhttp_bind_socket_with_handle(m_evhttp, bind_endpoint.host.c_str(), bind_port);
         if(bound_socket == nullptr)
         {
-            spdlog::error("{} failed to bind endpoint {}", m_service_name, make_endpoint_text(m_endpoint));
+            spdlog::error("{} failed to bind endpoint {}", m_service_name, make_endpoint_text(bind_endpoint));
             evhttp_free(m_evhttp);
             m_evhttp = nullptr;
             event_base_free(m_event_base);
@@ -146,13 +158,16 @@ bool BasicHttpService::start()
             return false;
         }
         m_endpoint.port = bound_port;
+        bind_endpoint.port = bound_port;
     }
     else
     {
-        const auto bind_result = evhttp_bind_socket(m_evhttp, m_endpoint.host.c_str(), static_cast<ev_uint16_t>(m_endpoint.port));
+        const auto bind_result = evhttp_bind_socket(m_evhttp,
+                                                    bind_endpoint.host.c_str(),
+                                                    static_cast<ev_uint16_t>(bind_endpoint.port));
         if(bind_result != 0)
         {
-            spdlog::error("{} failed to bind endpoint {}", m_service_name, make_endpoint_text(m_endpoint));
+            spdlog::error("{} failed to bind endpoint {}", m_service_name, make_endpoint_text(bind_endpoint));
             evhttp_free(m_evhttp);
             m_evhttp = nullptr;
             event_base_free(m_event_base);
@@ -163,7 +178,17 @@ bool BasicHttpService::start()
 
     m_running.store(true);
     m_thread = std::thread(&BasicHttpService::event_loop, this);
-    spdlog::info("{} listening at {}", m_service_name, make_endpoint_text(m_endpoint));
+    if(bind_endpoint.host != m_endpoint.host)
+    {
+        spdlog::info("{} listening at {} (advertised as {})",
+                     m_service_name,
+                     make_endpoint_text(bind_endpoint),
+                     make_endpoint_text(m_endpoint));
+    }
+    else
+    {
+        spdlog::info("{} listening at {}", m_service_name, make_endpoint_text(m_endpoint));
+    }
     return true;
 }
 
