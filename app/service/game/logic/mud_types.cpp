@@ -89,6 +89,22 @@ MudCommandParseResult parse_mud_command(const std::string& command)
 MudLeaderboardType mud_parse_leaderboard_type(const std::string& value)
 {
     const auto normalized = mud_to_lower_ascii(mud_trim(value));
+    if(normalized == "alchemy" || normalized == "dan" || normalized == "dandao")
+    {
+        return MudLeaderboardType::alchemy;
+    }
+    if(normalized == "travel" || normalized == "explore" || normalized == "tour")
+    {
+        return MudLeaderboardType::travel;
+    }
+    if(normalized == "bounty" || normalized == "wanted")
+    {
+        return MudLeaderboardType::bounty;
+    }
+    if(normalized == "chief" || normalized == "first" || normalized == "sect")
+    {
+        return MudLeaderboardType::chief;
+    }
     if(normalized == "wealth" || normalized == "money" || normalized == "stone")
     {
         return MudLeaderboardType::wealth;
@@ -104,6 +120,14 @@ std::string mud_leaderboard_name(MudLeaderboardType type)
 {
     switch(type)
     {
+    case MudLeaderboardType::alchemy:
+        return "alchemy";
+    case MudLeaderboardType::travel:
+        return "travel";
+    case MudLeaderboardType::bounty:
+        return "bounty";
+    case MudLeaderboardType::chief:
+        return "chief";
     case MudLeaderboardType::wealth:
         return "wealth";
     case MudLeaderboardType::combat:

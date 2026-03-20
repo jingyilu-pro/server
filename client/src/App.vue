@@ -6,6 +6,7 @@ import { directionLabelMap, worldMapEdges, worldMapNodes } from '@/lib/world-map
 
 type SideTab = 'player' | 'quests' | 'inventory' | 'map' | 'team' | 'rank' | 'codex'
 type ComposerMode = 'chat' | 'command'
+type RankingType = 'realm' | 'wealth' | 'combat' | 'alchemy' | 'travel' | 'bounty' | 'chief'
 type CommandCategoryId =
   | 'social'
   | 'explore'
@@ -79,6 +80,7 @@ const account = ref(store.account)
 const password = ref('')
 const characterName = ref('')
 const selectedOriginId = ref('')
+const selectedBackgroundId = ref('')
 const composerText = ref('')
 const activeTab = ref<SideTab>('player')
 const activeCommandCategory = ref<CommandCategoryId>('social')
@@ -108,15 +110,23 @@ const sceneQuestOffers: Record<string, Array<{ id: string; title: string; summar
   qixuan_square: [{ id: 'backslope_wolf_skin', title: '后山狼皮', summary: '厉飞雨想先看看你敢不敢见血，这条支线会带你熟悉七玄门后山与基础战斗。' }],
   qixuan_dormitory: [{ id: 'qixuan_stream_note', title: '溪边药方', summary: '孙二正急着找回被风吹走的药方纸，顺着这条线能把你带到洗剑溪与医师处。' }],
   qixuan_stream: [{ id: 'qixuan_stream_note', title: '溪边药方', summary: '药方找到后，可在洗剑溪交回医师完成这段跑腿。' }],
+  wanderer_camp: [{ id: 'wanderer_dewleaf_task', title: '露叶试手', summary: '许游方想先看看你会不会做最基础的采药活。' }],
+  wanderer_creek: [{ id: 'wanderer_resin_task', title: '焦土取脂', summary: '蓝药娘缺一点黄琥脂，正好能带你熟悉山野采集和风险区。' }],
   jiayuan_market: [{ id: 'qixuan_herb', title: '墨府采药', summary: '嘉元城总管正急需黄精草，你若接下此事，便能借此熟悉坊市与采集路线。' }],
   mofu_front_hall: [{ id: 'mofu_guest_token', title: '墨府来客令', summary: '墨府前厅散落着来客令牌，适合继续熟悉搜寻与拾取。' }],
+  escort_post: [{ id: 'escort_token_task', title: '官道清匪', summary: '东门驿棚的沈镖头正在看人，先替他办妥第一件官道差事。' }],
+  relay_station: [{ id: 'escort_seal_task', title: '封签送驿', summary: '周驿吏急着找回封签，这条线会把你正式带进护送生态。' }],
   tainan_gate: [{ id: 'ruins_old_map', title: '残垣旧图', summary: '流动牙人正在替海港一带打听旧图下落，这会把你一路引向血禁残垣与天南港。' }],
   tainan_fair: [{ id: 'fair_rumor_packet', title: '小会密闻', summary: '旧书摊想买虚天传闻，适合把太南谷里的人物与摊位继续串起来。' }],
   xin_house: [{ id: 'tainan_snake', title: '太南异胆', summary: '辛如音需要妖蛇异胆试阵，这条线会带你熟悉太南谷附近的战斗与材料循环。' }],
   array_lane: [{ id: 'tainan_array_flag', title: '阵旗回收', summary: '阵旗巷学徒正收残片，这条线更偏向阵法与拾取。' }],
+  loose_camp_square: [{ id: 'loose_rumor_task', title: '棚市风声', summary: '温散人想先看看你在散修棚市里会不会找路、找人、找消息。' }],
+  loose_medicine_tent: [{ id: 'loose_stone_task', title: '石林识物', summary: '青药师缺一片月壳，刚好能带你熟悉散修坊周围的采集与识物。' }],
   huangfeng_outpost: [{ id: 'huangfeng_letter', title: '黄枫谷羽信', summary: '外营弟子正等人送一封羽信入谷，这是接触黄枫谷主线的入口。' }],
   huangfeng_medicine_terrace: [{ id: 'medicine_moss', title: '药台苔引', summary: '药梯台正在收灵苔药引，适合继续熟悉采药与炼制材料。' }],
   huangfeng_scripture: [{ id: 'huangfeng_manual', title: '藏经抄卷', summary: '藏经石廊的执事在等一卷误落抄卷，这条线会把你带往黄枫谷典籍区。' }],
+  spirit_beast_outer_gate: [{ id: 'spirit_feed_task', title: '外门草料差', summary: '灵兽山外门先看你能不能把最基础的草料差事办稳。' }],
+  spirit_beast_beast_pen: [{ id: 'spirit_bug_task', title: '灵虫粉翅', summary: '周饲兽需要几片墨蛾翅，这条线会把你带进灵兽山的日常循环。' }],
   blood_gate: [
     { id: 'blood_forbidden_token', title: '血禁采兰', summary: '血禁执事正在收血兰验阵，这是血色禁地的正式入口任务。' },
     { id: 'blood_swamp_rescue', title: '沼泽驱邪', summary: '血雾沼泽的虫群样本也有人悬赏，适合继续深入禁地。' },
@@ -125,17 +135,24 @@ const sceneQuestOffers: Record<string, Array<{ id: string; title: string; summar
     { id: 'ruins_old_map', title: '残垣旧图', summary: '旧图真正的买家在海港，交到海商牙人手里才能换到远航门路。' },
     { id: 'chaos_sea_chart', title: '乱星海海图', summary: '海商牙人正在找修补海图禁制的材料，这会继续把你推向乱星海。' },
   ],
+  harbor_backbay: [{ id: 'harbor_shell_task', title: '后湾盐壳', summary: '吴老渔想先看看你会不会做最基础的后湾海猎活。' }],
+  harbor_net_field: [{ id: 'harbor_chart_task', title: '后湾海图', summary: '彭网师正在整理后湾潮路，正缺一个能跑腿也能下水的人。' }],
   smuggler_alley: [{ id: 'harbor_signal', title: '暗巷接头', summary: '暗潮小巷有人在收接头暗号，适合补足港口支线。' }],
   chaos_sea_port: [{ id: 'captain_supply', title: '远航补给', summary: '曲船主还缺远航物资，这条线会把你送上真正的海路。' }],
+  outer_isles_wharf: [{ id: 'outer_pearl_task', title: '群岛采珠', summary: '群岛小埠的人先看你会不会摸珠、会不会识潮，再决定值不值得带你出海。' }],
+  outer_isles_market: [{ id: 'outer_coral_task', title: '风暴珊瑚', summary: '蓝采珠缺一截风暴珊瑚，这会让你更早接触群岛高价值采集点。' }],
   chaos_sea_ship: [{ id: 'demon_fish_core', title: '妖鱼内丹', summary: '船上术士正在收妖鱼内丹，可顺手把海战与法术线串起来。' }],
   chaos_sea_isle: [{ id: 'chaos_relic', title: '孤岛残碑', summary: '残碑孤岛的隐士需要残钥碎片，这会引出虚天殿前置线。' }],
   xutian_hall: [{ id: 'xutian_key', title: '虚天残钥', summary: '守门残灵在等残钥，交齐后才能真正逼近虚天殿内层。' }],
   xutian_star_platform: [{ id: 'xutian_star_map', title: '星纹演算', summary: '祭台残灵正在收星纹拓片，这是逼近内殿玄门的最后一步。' }],
+  xutian_rune_garden: [{ id: 'void_crystal_task', title: '裂隙晶砂', summary: '记纹残灵只认裂隙晶砂，这条线会把你带进虚天残区的炼制与高危循环。' }],
+  xutian_shard_steps: [{ id: 'void_rune_task', title: '残纹归位', summary: '拾屑傀还在执行古老命令，你可以顺着它的需求继续深探残区。' }],
 }
 
 const sceneSectOffers: Record<string, Array<{ command: string; name: string; summary: string }>> = {
   qixuan_hall: [{ command: 'join qixuan_gate', name: '七玄门', summary: '七玄门适合凡人启程，在这里能打好最初的修行和江湖根基。' }],
   huangfeng_hall: [{ command: 'join huangfeng_valley', name: '黄枫谷', summary: '黄枫谷重视基础与心性，是越国七派里较稳的一条成长路线。' }],
+  spirit_beast_outer_gate: [{ command: 'join spirit_beast_mountain', name: '灵兽山', summary: '灵兽山更偏向驭兽、照料、采药与灵虫线，适合喜欢长期养成和资源循环的玩家。' }],
   yanyue_peak: [{ command: 'join yanyue_sect', name: '掩月宗', summary: '掩月宗重视身法与法门，入门后更适合往灵动轻灵路线修行。' }],
 }
 
@@ -210,15 +227,20 @@ const dockEntries: DockEntry[] = [
   })),
 ]
 
-const rankingOptions: Array<{ id: 'realm' | 'wealth' | 'combat'; label: string }> = [
+const rankingOptions: Array<{ id: RankingType; label: string }> = [
   { id: 'realm', label: '境界榜' },
   { id: 'wealth', label: '财富榜' },
   { id: 'combat', label: '战力榜' },
+  { id: 'alchemy', label: '丹道榜' },
+  { id: 'travel', label: '游历榜' },
+  { id: 'bounty', label: '赏金榜' },
+  { id: 'chief', label: '首席榜' },
 ]
 
 const scene = computed(() => store.scene ?? {})
 const player = computed(() => store.player ?? {})
 const availableOrigins = computed(() => (store.availableOrigins as Record<string, any>[] | undefined) ?? [])
+const availableBackgrounds = computed(() => (store.availableBackgrounds as Record<string, any>[] | undefined) ?? [])
 const currentSceneId = computed(() => String(scene.value.sceneId ?? ''))
 const chatEvents = computed(() => store.events.filter((event) => isChatEvent(event)))
 const latestChatEventId = computed(() => chatEvents.value[chatEvents.value.length - 1]?.eventId)
@@ -266,6 +288,12 @@ const selectedOrigin = computed(
     availableOrigins.value[0] ??
     null,
 )
+const selectedBackground = computed(
+  () =>
+    availableBackgrounds.value.find((background) => String(background.backgroundId ?? '') === selectedBackgroundId.value) ??
+    availableBackgrounds.value[0] ??
+    null,
+)
 const selectedCodexSummary = computed(
   () =>
     codexSummaries.value.find((summary) => String(summary.category ?? summary.entryId ?? '') === selectedCodexCategory.value) ??
@@ -297,7 +325,52 @@ const mapEdges = computed(() =>
     .filter((edge): edge is NonNullable<typeof edge> => Boolean(edge)),
 )
 
+function buildCatalogCommandAction(definition: Record<string, any>): CommandAction {
+  const command = String(definition.command ?? '')
+  const composerMode = String(definition.composerMode ?? 'command')
+  const chat = String(definition.chatChannel ?? '')
+  return {
+    key: `catalog-${String(definition.commandId ?? definition.label ?? command)}`,
+    label: String(definition.label ?? command ?? '指令'),
+    detail: String(definition.summary ?? '通过底层命令目录提供的操作。'),
+    command,
+    execute: Boolean(definition.executeImmediately),
+    composer: composerMode === 'chat' ? 'chat' : 'command',
+    chatChannel: chat === 'team' ? 'team' : 'world',
+    prefillText: composerMode === 'chat' ? '' : command,
+  }
+}
+
+function mergeActionsWithCatalog(
+  categoryId: CommandCategoryId,
+  actions: CommandAction[],
+  catalog: Record<string, any>[],
+) {
+  const actionSignature = (action: CommandAction) =>
+    action.composer === 'chat'
+      ? `chat:${action.chatChannel ?? 'world'}`
+      : `command:${action.command ?? ''}`
+
+  const merged = [...actions]
+  const seen = new Set(actions.map((action) => actionSignature(action)))
+
+  catalog
+    .filter((definition) => String(definition.category ?? '') === categoryId)
+    .forEach((definition) => {
+      const action = buildCatalogCommandAction(definition)
+      const signature = actionSignature(action)
+      if (seen.has(signature)) {
+        return
+      }
+      seen.add(signature)
+      merged.push(action)
+    })
+
+  return merged
+}
+
 const commandCategories = computed(() => {
+  const commandCatalog = (player.value.commandCatalog as Record<string, any>[] | undefined) ?? []
   const availableSceneQuestOffers = (sceneQuestOffers[currentSceneId.value] ?? []).filter(
     (quest) => !currentQuestIds.value.has(quest.id),
   )
@@ -308,7 +381,7 @@ const commandCategories = computed(() => {
   )
   const firstMonster = monsters.value[0]
 
-  const social: CommandAction[] = [
+  const social = mergeActionsWithCatalog('social', [
     {
       key: 'chat-world',
       label: '世界聊天',
@@ -331,9 +404,9 @@ const commandCategories = computed(() => {
       detail: '查看最近的世界事件。',
       command: 'event',
     },
-  ]
+  ], commandCatalog)
 
-  const explore: CommandAction[] = [
+  const explore = mergeActionsWithCatalog('explore', [
     { key: 'look', label: '查看场景', detail: '重读当前场景描述。', command: 'look' },
     { key: 'map', label: '查看地图', detail: '查看整张人界地图。', command: 'map' },
     ...exits.value.map((exit) => ({
@@ -342,9 +415,9 @@ const commandCategories = computed(() => {
       detail: `移动到${String(exit.targetSceneName ?? exit.targetSceneId ?? '未知地点')}。`,
       command: `go ${String(exit.direction)}`,
     })),
-  ]
+  ], commandCatalog)
 
-  const taskActions: CommandAction[] = [
+  const taskActions = mergeActionsWithCatalog('tasks', [
     ...npcs.value.map((npc) => ({
       key: `talk-${String(npc.npcId)}`,
       label: `交谈·${String(npc.name)}`,
@@ -363,10 +436,10 @@ const commandCategories = computed(() => {
         detail: '材料已齐，可以当场提交。',
         command: `submit ${String(quest.questId)}`,
       })),
-  ]
+  ], commandCatalog)
 
   const consumables = inventory.value.filter((item) => ['consumable'].includes(String(item.itemType ?? '')))
-  const combat: CommandAction[] = [
+  const combat = mergeActionsWithCatalog('combat', [
     ...monsters.value.map((monster) => ({
       key: `fight-${monster}`,
       label: `挑战·${monster}`,
@@ -385,9 +458,9 @@ const commandCategories = computed(() => {
       detail: '退出战斗节奏，稳住气血。',
       command: 'flee',
     },
-  ]
+  ], commandCatalog)
 
-  const spell: CommandAction[] = [
+  const spell = mergeActionsWithCatalog('spell', [
     ...(((player.value.spells as Record<string, any>[] | undefined) ?? []).filter((item) => Boolean(item.unlocked))).map((item) => ({
       key: `cast-${String(item.spellId)}`,
       label: `施放·${String(item.name)}`,
@@ -402,9 +475,9 @@ const commandCategories = computed(() => {
       detail: '恢复法力、神念与气力，准备下一轮施法。',
       command: 'meditate',
     },
-  ]
+  ], commandCatalog)
 
-  const cultivation: CommandAction[] = [
+  const cultivation = mergeActionsWithCatalog('cultivation', [
     {
       key: 'practice',
       label: `修炼·${String(player.value.cultivation?.primarySkill ?? '长春功')}`,
@@ -417,9 +490,9 @@ const commandCategories = computed(() => {
       detail: '修为充足时冲击下一层境界。',
       command: 'breakthrough',
     },
-  ]
+  ], commandCatalog)
 
-  const gather: CommandAction[] = [
+  const gather = mergeActionsWithCatalog('gather', [
     ...sceneResourceNodes.value.map((node) => ({
       key: `harvest-${String(node.nodeId)}`,
       label: `采集·${String(node.name)}`,
@@ -432,18 +505,18 @@ const commandCategories = computed(() => {
       detail: `拾起地面上的 ${String(loot.itemName ?? loot.itemId)}。`,
       command: `loot ${String(loot.lootId ?? loot.itemId)}`,
     })),
-  ]
+  ], commandCatalog)
 
-  const alchemy: CommandAction[] = [
+  const alchemy = mergeActionsWithCatalog('alchemy', [
     ...(((player.value.recipes as Record<string, any>[] | undefined) ?? []).filter((item) => Boolean(item.unlocked))).map((item) => ({
       key: `brew-${String(item.recipeId)}`,
       label: `炼制·${String(item.name)}`,
       detail: String(item.description ?? '按配方炼制丹药与辅助物。'),
       command: `brew ${String(item.recipeId)}`,
     })),
-  ]
+  ], commandCatalog)
 
-  const trade: CommandAction[] = [
+  const trade = mergeActionsWithCatalog('trade', [
     ...shops.value.map((shop) => ({
       key: `buy-${shop}`,
       label: `购买·${shop}`,
@@ -456,9 +529,9 @@ const commandCategories = computed(() => {
       detail: '把背包中的物品卖给坊市。',
       command: `sell ${String(item.itemId)}`,
     })),
-  ]
+  ], commandCatalog)
 
-  const group: CommandAction[] = [
+  const group = mergeActionsWithCatalog('group', [
     ...(sceneSectOffers[currentSceneId.value] ?? [])
       .filter(() => !player.value.sect?.joined)
       .map((sect) => ({
@@ -493,9 +566,9 @@ const commandCategories = computed(() => {
       execute: false,
       composer: 'command',
     },
-  ]
+  ], commandCatalog)
 
-  const manual: CommandAction[] = codexCategories.map((category) => {
+  const manual = mergeActionsWithCatalog('manual', codexCategories.map((category) => {
     const summary =
       codexSummaries.value.find((item) => String(item.category ?? item.entryId ?? '') === category) ?? null
     return {
@@ -504,7 +577,7 @@ const commandCategories = computed(() => {
       detail: String(summary?.summary ?? '打开分类手册，查看当前已解锁条目。'),
       codexCategory: category,
     }
-  })
+  }), commandCatalog)
 
   return [
     { id: 'social' as const, label: categoryLabels.social, actions: social },
@@ -1820,8 +1893,11 @@ async function createCharacter() {
     if (!selectedOriginId.value) {
       throw new Error('请先选择一个出身。')
     }
+    if (!selectedBackgroundId.value) {
+      throw new Error('请先选择一个凡俗背景。')
+    }
 
-    await store.createCharacter(characterName.value, selectedOriginId.value)
+    await store.createCharacter(characterName.value, selectedOriginId.value, selectedBackgroundId.value)
     characterName.value = ''
   } catch (error) {
     setError(error)
@@ -1904,7 +1980,7 @@ function applyAction(action: CommandAction) {
   void submitComposer(action.command)
 }
 
-async function loadRanking(kind: 'realm' | 'wealth' | 'combat') {
+async function loadRanking(kind: RankingType) {
   try {
     await store.loadRankings(kind)
   } catch (error) {
@@ -1952,6 +2028,23 @@ watch(
     }
 
     selectedOriginId.value = String(availableOrigins.value[0]?.originId ?? '')
+  },
+  { immediate: true },
+)
+
+watch(
+  () => availableBackgrounds.value.map((background) => String(background.backgroundId ?? '')).join('|'),
+  () => {
+    if (!availableBackgrounds.value.length) {
+      selectedBackgroundId.value = ''
+      return
+    }
+
+    if (availableBackgrounds.value.some((background) => String(background.backgroundId ?? '') === selectedBackgroundId.value)) {
+      return
+    }
+
+    selectedBackgroundId.value = String(availableBackgrounds.value[0]?.backgroundId ?? '')
   },
   { immediate: true },
 )
@@ -2115,7 +2208,7 @@ watch(
     <section v-else-if="showCreateCharacterView" class="auth-card">
       <div class="card-heading">
         <h2>塑造新角色</h2>
-        <p>当前账号：{{ store.account }}。先定姓名，再选一处人界出身；如果这个账号本来就有角色，也可以先重新检查存档。</p>
+        <p>当前账号：{{ store.account }}。先定姓名，再选人界出身与凡俗背景；如果这个账号本来就有角色，也可以先重新检查存档。</p>
       </div>
       <div class="form-grid single-column">
         <label>
@@ -2144,9 +2237,31 @@ watch(
             <p>故土：{{ selectedOrigin.homeland }}</p>
           </article>
         </div>
+        <div>
+          <span>凡俗背景</span>
+          <div class="origin-grid">
+            <button
+              v-for="background in availableBackgrounds"
+              :key="background.backgroundId"
+              type="button"
+              class="origin-card"
+              :class="{ active: selectedBackgroundId === String(background.backgroundId) }"
+              @click="selectedBackgroundId = String(background.backgroundId)"
+            >
+              <strong>{{ background.name }}</strong>
+              <small>{{ background.focusLabel }}</small>
+              <p>{{ background.description }}</p>
+            </button>
+          </div>
+          <article v-if="selectedBackground" class="detail-card origin-preview-card">
+            <p class="detail-title">{{ selectedBackground.name }} · {{ selectedBackground.starterTitle }}</p>
+            <p>{{ selectedBackground.description }}</p>
+            <p>发展重点：{{ selectedBackground.focusLabel }}</p>
+          </article>
+        </div>
       </div>
       <div class="action-row">
-        <button type="button" class="primary-button" :disabled="store.loading || !selectedOriginId" @click="createCharacter()">
+        <button type="button" class="primary-button" :disabled="store.loading || !selectedOriginId || !selectedBackgroundId" @click="createCharacter()">
           踏入修仙路
         </button>
         <button type="button" class="secondary-button" :disabled="store.loading" @click="retryBootstrap()">重新检查角色</button>
@@ -2632,8 +2747,9 @@ watch(
             </div>
             <article v-for="entry in store.rankings" :key="`${store.rankingType}-${entry.rank}`" class="detail-card">
               <p class="detail-title">第 {{ entry.rank }} 名 · {{ entry.characterName }}</p>
-              <p>{{ entry.account }} · {{ entry.realmName }} · {{ entry.sectName || '散修' }}</p>
-              <p>等级 {{ entry.level }} · 修为 {{ entry.exp }} · 灵石 {{ entry.spiritStone }}</p>
+              <p>{{ entry.account }} · {{ entry.title || entry.realmName || '未定头衔' }}</p>
+              <p>{{ entry.extra || entry.sectName || '散修' }}</p>
+              <p>分数 {{ entry.score }} · 等级 {{ entry.level }} · 灵石 {{ entry.spiritStone }}</p>
             </article>
             <p v-if="store.rankings.length === 0" class="empty-text">当前暂无排行数据。</p>
           </div>

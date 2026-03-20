@@ -74,6 +74,17 @@ TODO
 - 2026-03-19: 提交 `妖鱼内丹` 后继续探索，已从 `妖鱼巢湾 -> 风暴航道 -> 虚天殿外殿` 真实走通；说明当前世界内容至少已经能从乱星海入口推进到虚天殿入口，不再停在海港演示层。
 
 上一轮关注点已解决
+- 2026-03-20: 纯 MUD 化共享世界扩展已接入 `doc/mud/source/pure_mud_shared_world.mjs`，并通过 `scene_patches` 把新增区域挂到现有主图。当前 `node scripts/build_mud_world.mjs` 产物计数为：`scenes=121`、`npcs=80`、`monsters=62`、`quests=34`、`items=121`、`codex_entries=462`，已达到阶段一共享世界房间/NPC/敌对目标/物品基线。
+- 2026-03-20: 本轮新增了“凡俗背景”整链路：`mud.proto` -> `mud_game_runtime` -> `mud_player_repository` -> H5 建角页 -> `scripts/mud_smoke.cpp` 已全部打通。烟测脚本现在会一并提交 `background_id`，并把账号名固定生成成纯字母数字，避免再次撞上新注册账号格式限制。
+- 2026-03-20: 继续沿用的后续回归流程已经固化，可直接复用：
+- `node scripts/build_mud_world.mjs`
+- `cd client && npm test -- --run`
+- `cd client && npm run build`
+- `wsl bash -lc "cd /mnt/c/Work/Projects/server/app/protocol && ../../build-wsl-main/libs/protobuf/bin/protoc -I=. --cpp_out=./protocol mud.proto"`
+- `wsl bash -lc "cd /mnt/c/Work/Projects/server && cmake --build build-wsl-main --target application mud_smoke -j2"`
+- 如本机端口 `18080/18081/18082` 仍是旧进程，先重启 `./build-wsl-main/app/application/application --mode all --config all.yaml`
+- `wsl bash -lc "cd /mnt/c/Work/Projects/server && ./build-wsl-main/scripts/mud_smoke"`
+- 2026-03-20: 本轮真实烟测已通过 `route/login -> register -> login -> enter -> bootstrap -> character/create -> inspect -> codex` 闭环；重启到新进程后，`mud_smoke` 实测返回 `origins=5`、`backgrounds=5`、建角成功且可正常解锁人物志条目。
 - 主界面“当前主线”在后期章节回退显示旧支线 `太南异胆` 的误导问题已修正。
 - `灵帆海船 -> 甲板术士` 在 `妖鱼内丹` 提交后会显示后续剧情提示，不再误标成还有未接任务。
 - 当前法力 / 神念 / 气力 已进入主 HUD 与人物弹窗，不再只能看到上限值。

@@ -44,7 +44,8 @@ public:
                               std::string* resolved_account) const;
     MudPlayerState build_default_player(const std::string& account,
                                         const std::string& character_name,
-                                        const std::string& origin_id = "") const;
+                                        const std::string& origin_id = "",
+                                        const std::string& background_id = "") const;
     void build_bootstrap_response(const std::string& account,
                                   const std::optional<MudPlayerState>& player,
                                   mud::BootstrapResponse* response);
@@ -78,6 +79,8 @@ public:
                                 mud::BootstrapResponse* response);
     coro_task_t create_character_async(const std::string& account,
                                        const std::string& character_name,
+                                       const std::string& origin_id,
+                                       const std::string& background_id,
                                        mud::CharacterCreateResponse* response);
     coro_task_t execute_command_async(const std::string& account,
                                       const std::string& command,
@@ -97,13 +100,16 @@ private:
 private:
     MudPlayerState make_default_player(const std::string& account,
                                        const std::string& character_name,
-                                       const std::string& origin_id) const;
+                                       const std::string& origin_id,
+                                       const std::string& background_id) const;
     void fill_player_snapshot(const MudPlayerState& player,
                               mud::PlayerSnapshot* snapshot) const;
     void fill_scene_snapshot(const MudPlayerState& player,
                              mud::SceneSnapshot* snapshot) const;
     void fill_origin_state(const MudPlayerState& player,
                            mud::RaceState* state) const;
+    void fill_background_state(const MudPlayerState& player,
+                               mud::BackgroundState* state) const;
     void fill_base_attributes(const MudBaseAttributeState& state,
                               mud::BaseAttributeState* output) const;
     void fill_status_attributes(const MudStatusAttributeState& state,
@@ -114,7 +120,12 @@ private:
                             const MudCodexEntryConfig& entry,
                             mud::CodexSummary* output) const;
     void sync_origin_from_world(MudPlayerState* player) const;
+    void sync_background_from_world(MudPlayerState* player) const;
     void derive_player_combat_state(MudPlayerState* player) const;
+    std::vector<std::string> titles_for_player(const MudPlayerState& player) const;
+    std::string current_chief_title_for_player(const MudPlayerState& player) const;
+    void fill_command_catalog(const MudPlayerState& player,
+                              google::protobuf::RepeatedPtrField<mud::CommandDefinition>* output) const;
     bool unlock_codex_entry(MudPlayerState* player,
                             const std::string& entry_id,
                             MudCommandExecution* execution) const;
@@ -140,6 +151,8 @@ private:
     std::vector<std::string> unlocked_regions_for_player(const MudPlayerState& player) const;
     std::string progression_chapter_for_player(const MudPlayerState& player) const;
     int64_t sect_contribution_for_player(const MudPlayerState& player) const;
+    int64_t leaderboard_score(MudLeaderboardType leaderboard_type, const MudPlayerState& player) const;
+    std::string leaderboard_extra(MudLeaderboardType leaderboard_type, const MudPlayerState& player) const;
     MudCommandExecution execute_command(MudPlayerState* player,
                                         const std::string& command_text);
     MudCommandExecution execute_look(MudPlayerState* player) const;
@@ -171,6 +184,30 @@ private:
     MudCommandExecution execute_event() const;
     MudCommandExecution execute_chat(const MudPlayerState& player,
                                      const std::string& raw_args);
+    MudCommandExecution execute_say(const MudPlayerState& player,
+                                    const std::string& raw_args);
+    MudCommandExecution execute_tell(MudPlayerState* player,
+                                     const std::vector<std::string>& args,
+                                     const std::string& raw_args);
+    MudCommandExecution execute_reply(MudPlayerState* player,
+                                      const std::string& raw_args);
+    MudCommandExecution execute_emote(const MudPlayerState& player,
+                                      const std::string& raw_args);
+    MudCommandExecution execute_follow(MudPlayerState* player,
+                                       const std::vector<std::string>& args);
+    MudCommandExecution execute_guard(MudPlayerState* player,
+                                      const std::vector<std::string>& args);
+    MudCommandExecution execute_trade(MudPlayerState* player,
+                                      const std::vector<std::string>& args);
+    MudCommandExecution execute_challenge(MudPlayerState* player,
+                                          const std::vector<std::string>& args);
+    MudCommandExecution execute_score(const MudPlayerState& player) const;
+    MudCommandExecution execute_tasks(const MudPlayerState& player) const;
+    MudCommandExecution execute_skills(const MudPlayerState& player) const;
+    MudCommandExecution execute_spells(const MudPlayerState& player) const;
+    MudCommandExecution execute_family(const MudPlayerState& player) const;
+    MudCommandExecution execute_who(const MudPlayerState& player) const;
+    MudCommandExecution execute_rumor(const MudPlayerState& player) const;
     MudCommandExecution execute_inspect(MudPlayerState* player,
                                         const std::vector<std::string>& args);
     MudCommandExecution execute_loot(MudPlayerState* player,
@@ -192,6 +229,8 @@ private:
                                         const std::string& key) const;
     const MudMonsterConfig* match_scene_monster(const MudPlayerState& player,
                                                 const std::string& key) const;
+    const OnlinePresenceState* match_scene_player_presence(const MudPlayerState& player,
+                                                           const std::string& key) const;
     const MudResourceNodeConfig* match_scene_resource_node(const MudPlayerState& player,
                                                            const std::string& key) const;
     const MudGroundLootConfig* match_scene_ground_loot(const MudPlayerState& player,

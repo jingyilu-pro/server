@@ -6,6 +6,7 @@ import worldMainline from '../doc/mud/source/world_mainline.mjs';
 import charactersSects from '../doc/mud/source/characters_sects.mjs';
 import creaturesResources from '../doc/mud/source/creatures_resources.mjs';
 import itemsSystems from '../doc/mud/source/items_systems.mjs';
+import pureMudExpansion from '../doc/mud/source/pure_mud_shared_world.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -51,6 +52,131 @@ function pushGrouped(grouped, key, value) {
 
 function uniqueStrings(values) {
   return [...new Set(values.filter(Boolean))];
+}
+
+function mergeArrays(...groups) {
+  return groups.flatMap((group) => (Array.isArray(group) ? group : []));
+}
+
+function defaultRoomType(scene) {
+  if (scene.room_type) {
+    return scene.room_type;
+  }
+  if ((scene.scene_id ?? '').includes('market') || (scene.scene_id ?? '').includes('street')) {
+    return '坊市';
+  }
+  if ((scene.scene_id ?? '').includes('dock') || (scene.scene_id ?? '').includes('port') || (scene.scene_id ?? '').includes('harbor')) {
+    return '港埠';
+  }
+  if ((scene.scene_id ?? '').includes('hall') || (scene.scene_id ?? '').includes('gate') || (scene.scene_id ?? '').includes('scripture')) {
+    return '宗门';
+  }
+  if ((scene.scene_id ?? '').includes('ship') || (scene.scene_id ?? '').includes('route') || (scene.scene_id ?? '').includes('reef')) {
+    return '海域';
+  }
+  if ((scene.scene_id ?? '').includes('xutian') || (scene.scene_id ?? '').includes('blood')) {
+    return '秘境';
+  }
+  if ((scene.scene_id ?? '').includes('forest') || (scene.scene_id ?? '').includes('slope') || (scene.scene_id ?? '').includes('marsh')) {
+    return '野外';
+  }
+  return '房间';
+}
+
+function defaultRiskLevel(scene) {
+  if (scene.risk_level) {
+    return scene.risk_level;
+  }
+  const danger = (scene.monster_ids?.length ?? 0) + (scene.hazard_ids?.length ?? 0);
+  if (scene.pvp_enabled) {
+    return '冲突';
+  }
+  if (danger >= 3) {
+    return '高危';
+  }
+  if (danger >= 1) {
+    return '历练';
+  }
+  return '安全';
+}
+
+function defaultRumors(scene) {
+  if (Array.isArray(scene.rumors) && scene.rumors.length > 0) {
+    return scene.rumors;
+  }
+  const hints = [];
+  if (scene.chapter) {
+    hints.push(`此地常有人提起「${scene.chapter}」相关的旧闻。`);
+  }
+  if ((scene.monster_ids?.length ?? 0) > 0) {
+    hints.push('附近修士常交换妖兽出没与掉落材料的消息。');
+  }
+  if ((scene.resource_node_ids?.length ?? 0) > 0) {
+    hints.push('这里的采集点很受散修与药师关注。');
+  }
+  if (scene.pvp_enabled) {
+    hints.push('此地偶有同道因资源与悬赏起争执。');
+  }
+  return hints;
+}
+
+function normalizeSceneMetadata(scenes) {
+  for (const scene of scenes) {
+    scene.room_type = defaultRoomType(scene);
+    scene.risk_level = defaultRiskLevel(scene);
+    scene.landmark = scene.landmark ?? scene.name;
+    scene.pvp_enabled = Boolean(scene.pvp_enabled);
+    scene.rumors = defaultRumors(scene);
+  }
+}
+
+function applyScenePatches(scenes, patches) {
+  if (!Array.isArray(patches) || patches.length === 0) {
+    return;
+  }
+
+  const sceneMap = buildIdMap(scenes, 'scene_id', 'scenes');
+  for (const patch of patches) {
+    const sceneId = String(patch?.scene_id ?? '');
+    if (!sceneId) {
+      throw new Error('scene_patches contains patch without scene_id');
+    }
+
+    const scene = sceneMap.get(sceneId);
+    if (!scene) {
+      throw new Error(`scene_patches references missing scene: ${sceneId}`);
+    }
+
+    if (patch.exits && typeof patch.exits === 'object') {
+      scene.exits = {
+        ...(scene.exits ?? {}),
+        ...patch.exits,
+      };
+    }
+
+    if (Array.isArray(patch.shop_item_ids)) {
+      scene.shop_item_ids = uniqueStrings([...(scene.shop_item_ids ?? []), ...patch.shop_item_ids]);
+    }
+
+    if (typeof patch.chapter === 'string' && patch.chapter) {
+      scene.chapter = patch.chapter;
+    }
+    if (typeof patch.room_type === 'string' && patch.room_type) {
+      scene.room_type = patch.room_type;
+    }
+    if (typeof patch.risk_level === 'string' && patch.risk_level) {
+      scene.risk_level = patch.risk_level;
+    }
+    if (typeof patch.landmark === 'string' && patch.landmark) {
+      scene.landmark = patch.landmark;
+    }
+    if (typeof patch.pvp_enabled === 'boolean') {
+      scene.pvp_enabled = patch.pvp_enabled;
+    }
+    if (Array.isArray(patch.rumors) && patch.rumors.length > 0) {
+      scene.rumors = uniqueStrings([...(scene.rumors ?? []), ...patch.rumors]);
+    }
+  }
 }
 
 function codexCategoryForItem(item) {
@@ -318,6 +444,7 @@ function buildSceneRelations(scenes, list, sourceIdKey, targetKey, label) {
 function validateRefs({
   scenes,
   origins,
+  backgrounds,
   items,
   sects,
   quests,
@@ -344,6 +471,7 @@ function validateRefs({
   const spellMap = buildIdMap(spells, 'spell_id', 'spells');
   const recipeMap = buildIdMap(recipes, 'recipe_id', 'recipes');
   const originMap = buildIdMap(origins, 'origin_id', 'origins');
+  const backgroundMap = buildIdMap(backgrounds, 'background_id', 'backgrounds');
   const formationMap = buildIdMap(formations, 'formation_id', 'formations');
 
   for (const scene of scenes) {
@@ -359,6 +487,12 @@ function validateRefs({
     mustExist(skillMap, origin.starter_skill_id, 'origin starter skill');
     for (const spellId of origin.starter_spell_ids ?? []) {
       mustExist(spellMap, spellId, 'origin starter spell');
+    }
+  }
+
+  for (const background of backgrounds) {
+    for (const starterItem of background.starter_inventory ?? []) {
+      mustExist(itemMap, starterItem.item_id, 'background starter item');
     }
   }
 
@@ -474,6 +608,7 @@ function validateRefs({
     spellMap,
     recipeMap,
     originMap,
+    backgroundMap,
     formationMap,
   };
 }
@@ -545,28 +680,78 @@ export const worldMapEdges: WorldMapEdge[] = ${JSON.stringify(mapPayload.edges, 
 }
 
 async function main() {
-  const scenes = structuredClone(worldMainline.scenes);
+  const scenes = mergeArrays(
+    structuredClone(worldMainline.scenes),
+    structuredClone(pureMudExpansion.scenes ?? []),
+  );
   const defaults = structuredClone(worldMainline.defaults);
   const origins = structuredClone(worldMainline.origins);
-  const quests = structuredClone(worldMainline.quests);
-  const manualCodexEntries = structuredClone(worldMainline.manual_codex_entries ?? []);
-  const sects = structuredClone(charactersSects.sects);
-  const npcs = structuredClone(charactersSects.npcs);
-  const monsters = structuredClone(creaturesResources.monsters);
-  const resourceNodes = structuredClone(creaturesResources.resource_nodes);
-  const groundLoots = structuredClone(creaturesResources.ground_loots);
-  const hazards = structuredClone(creaturesResources.hazards);
-  const items = structuredClone(itemsSystems.items);
-  const skills = structuredClone(itemsSystems.skills);
-  const spells = structuredClone(itemsSystems.spells);
-  const recipes = structuredClone(itemsSystems.recipes);
-  const treasures = structuredClone(itemsSystems.treasures);
-  const formations = structuredClone(itemsSystems.formations);
+  const backgrounds = structuredClone(pureMudExpansion.backgrounds ?? []);
+  const quests = mergeArrays(
+    structuredClone(worldMainline.quests),
+    structuredClone(pureMudExpansion.quests ?? []),
+  );
+  const manualCodexEntries = mergeArrays(
+    structuredClone(worldMainline.manual_codex_entries ?? []),
+    structuredClone(pureMudExpansion.manual_codex_entries ?? []),
+  );
+  const sects = mergeArrays(
+    structuredClone(charactersSects.sects),
+    structuredClone(pureMudExpansion.sects ?? []),
+  );
+  const npcs = mergeArrays(
+    structuredClone(charactersSects.npcs),
+    structuredClone(pureMudExpansion.npcs ?? []),
+  );
+  const monsters = mergeArrays(
+    structuredClone(creaturesResources.monsters),
+    structuredClone(pureMudExpansion.monsters ?? []),
+  );
+  const resourceNodes = mergeArrays(
+    structuredClone(creaturesResources.resource_nodes),
+    structuredClone(pureMudExpansion.resource_nodes ?? []),
+  );
+  const groundLoots = mergeArrays(
+    structuredClone(creaturesResources.ground_loots),
+    structuredClone(pureMudExpansion.ground_loots ?? []),
+  );
+  const hazards = mergeArrays(
+    structuredClone(creaturesResources.hazards),
+    structuredClone(pureMudExpansion.hazards ?? []),
+  );
+  const items = mergeArrays(
+    structuredClone(itemsSystems.items),
+    structuredClone(pureMudExpansion.items ?? []),
+  );
+  const skills = mergeArrays(
+    structuredClone(itemsSystems.skills),
+    structuredClone(pureMudExpansion.skills ?? []),
+  );
+  const spells = mergeArrays(
+    structuredClone(itemsSystems.spells),
+    structuredClone(pureMudExpansion.spells ?? []),
+  );
+  const recipes = mergeArrays(
+    structuredClone(itemsSystems.recipes),
+    structuredClone(pureMudExpansion.recipes ?? []),
+  );
+  const treasures = mergeArrays(
+    structuredClone(itemsSystems.treasures),
+    structuredClone(pureMudExpansion.treasures ?? []),
+  );
+  const formations = mergeArrays(
+    structuredClone(itemsSystems.formations),
+    structuredClone(pureMudExpansion.formations ?? []),
+  );
   const attributeDefaults = structuredClone(itemsSystems.attribute_defaults);
+
+  applyScenePatches(scenes, structuredClone(pureMudExpansion.scene_patches ?? []));
+  normalizeSceneMetadata(scenes);
 
   validateRefs({
     scenes,
     origins,
+    backgrounds,
     items,
     sects,
     quests,
@@ -609,6 +794,7 @@ async function main() {
     defaults,
     attribute_defaults: attributeDefaults,
     origins,
+    backgrounds,
     items,
     sects,
     quests,

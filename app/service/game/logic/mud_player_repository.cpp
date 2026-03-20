@@ -25,6 +25,7 @@
 #include <algorithm>
 #include <array>
 #include <cstring>
+#include <unordered_set>
 
 namespace
 {
@@ -54,6 +55,7 @@ constexpr const char* kMudCharacterTableSql =
     "team_name VARCHAR(128) NOT NULL DEFAULT '',"
     "team_leader_account VARCHAR(128) NOT NULL DEFAULT '',"
     "origin_id VARCHAR(64) NOT NULL DEFAULT '',"
+    "background_id VARCHAR(64) NOT NULL DEFAULT '',"
     "inventory_json LONGTEXT NOT NULL,"
     "quest_json LONGTEXT NOT NULL,"
     "attributes_json LONGTEXT NULL,"
@@ -69,8 +71,9 @@ constexpr const char* kMudCharacterTableSql =
     "updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"
     ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
 
-constexpr std::array<const char*, 10> kMudCharacterAlterSqls = {
+constexpr std::array<const char*, 11> kMudCharacterAlterSqls = {
     "ALTER TABLE mud_character ADD COLUMN IF NOT EXISTS origin_id VARCHAR(64) NOT NULL DEFAULT ''",
+    "ALTER TABLE mud_character ADD COLUMN IF NOT EXISTS background_id VARCHAR(64) NOT NULL DEFAULT ''",
     "ALTER TABLE mud_character ADD COLUMN IF NOT EXISTS attributes_json LONGTEXT NULL",
     "ALTER TABLE mud_character ADD COLUMN IF NOT EXISTS status_json LONGTEXT NULL",
     "ALTER TABLE mud_character ADD COLUMN IF NOT EXISTS combat_json LONGTEXT NULL",
@@ -85,9 +88,93 @@ constexpr std::array<const char*, 10> kMudCharacterAlterSqls = {
 constexpr const char* kPlayerSelectColumns =
     "account,character_name,level,hp,max_hp,attack_power,defense_power,spirit_stone,"
     "title,location_scene_id,realm_name,realm_stage,exp,next_breakthrough_exp,primary_skill,"
-    "skill_level,sect_id,sect_name,sect_rank,team_id,team_name,team_leader_account,origin_id,"
+    "skill_level,sect_id,sect_name,sect_rank,team_id,team_name,team_leader_account,origin_id,background_id,"
     "inventory_json,quest_json,attributes_json,status_json,combat_json,skills_json,spells_json,"
     "recipes_json,codex_json,profession_json,flags_json";
+
+int completed_quest_count(const MudPlayerState& player)
+{
+    return static_cast<int>(std::count_if(player.quests.begin(), player.quests.end(), [](const MudQuestState& quest) {
+        return quest.status == "completed";
+    }));
+}
+
+int flag_int_value(const MudPlayerState& player, const std::string& key, int default_value)
+{
+    if(auto iter = player.flags.find(key); iter != player.flags.end())
+    {
+        try
+        {
+            return std::stoi(iter->second);
+        }
+        catch(...)
+        {
+            return default_value;
+        }
+    }
+    return default_value;
+}
+
+int64_t leaderboard_score(MudLeaderboardType leaderboard_type, const MudPlayerState& player)
+{
+    const int64_t completed_quests = completed_quest_count(player);
+    switch(leaderboard_type)
+    {
+    case MudLeaderboardType::wealth:
+        return player.spirit_stone;
+    case MudLeaderboardType::combat:
+        return static_cast<int64_t>(player.attack_power + player.defense_power + player.level * 10);
+    case MudLeaderboardType::alchemy:
+        return static_cast<int64_t>(player.profession.alchemy_level) * 100000 +
+               static_cast<int64_t>(player.recipes.size()) * 1000 +
+               flag_int_value(player, "brew_success_count", 0);
+    case MudLeaderboardType::travel:
+        return static_cast<int64_t>(player.profession.exploration_level) * 100000 +
+               static_cast<int64_t>(player.codex_entries.size()) * 1000 + completed_quests;
+    case MudLeaderboardType::bounty:
+        return flag_int_value(player, "bounty_score", 0);
+    case MudLeaderboardType::chief:
+        return player.sect_id.empty() ? 0
+                                      : (completed_quests * 1000 + static_cast<int64_t>(player.realm_stage) * 100000 +
+                                         player.level * 100 + player.skill_level);
+    case MudLeaderboardType::realm:
+    default:
+        return static_cast<int64_t>(player.realm_stage) * 1000000 + player.exp;
+    }
+}
+
+std::string leaderboard_extra(MudLeaderboardType leaderboard_type, const MudPlayerState& player)
+{
+    switch(leaderboard_type)
+    {
+    case MudLeaderboardType::alchemy:
+        return "丹道 " + std::to_string(player.profession.alchemy_level) + "阶";
+    case MudLeaderboardType::travel:
+        return "游历 " + std::to_string(player.profession.exploration_level) + "阶";
+    case MudLeaderboardType::bounty:
+        return "赏格 " + std::to_string(flag_int_value(player, "bounty_score", 0));
+    case MudLeaderboardType::chief:
+        return player.sect_name.empty() ? "散修" : player.sect_name + " · " + player.sect_rank;
+    case MudLeaderboardType::combat:
+        return "战力 " + std::to_string(player.attack_power + player.defense_power);
+    case MudLeaderboardType::wealth:
+        return "灵石 " + std::to_string(player.spirit_stone);
+    case MudLeaderboardType::realm:
+    default:
+        return player.realm_name;
+    }
+}
+
+bool leaderboard_should_keep(MudLeaderboardType leaderboard_type, const MudPlayerState& player)
+{
+    switch(leaderboard_type)
+    {
+    case MudLeaderboardType::chief:
+        return !player.sect_id.empty();
+    default:
+        return true;
+    }
+}
 
 std::string encode_inventory_json(const std::vector<MudInventoryItemState>& inventory)
 {
@@ -952,17 +1039,18 @@ bool decode_player_row(MYSQL_ROW row, unsigned long* lengths, MudPlayerState* pl
     player->team_name = field_text(20);
     player->team_leader_account = field_text(21);
     player->origin_id = field_text(22);
-    decode_inventory_json(field_text(23), &player->inventory);
-    decode_quest_json(field_text(24), &player->quests);
-    decode_base_attributes_json(field_text(25), &player->base_attributes);
-    decode_status_attributes_json(field_text(26), &player->status_attributes);
-    decode_combat_attributes_json(field_text(27), &player->combat_attributes);
-    decode_skills_json(field_text(28), &player->skills);
-    decode_spells_json(field_text(29), &player->spells);
-    decode_recipes_json(field_text(30), &player->recipes);
-    decode_codex_json(field_text(31), &player->codex_entries);
-    decode_profession_json(field_text(32), &player->profession);
-    decode_flags_json(field_text(33), &player->flags);
+    player->background_id = field_text(23);
+    decode_inventory_json(field_text(24), &player->inventory);
+    decode_quest_json(field_text(25), &player->quests);
+    decode_base_attributes_json(field_text(26), &player->base_attributes);
+    decode_status_attributes_json(field_text(27), &player->status_attributes);
+    decode_combat_attributes_json(field_text(28), &player->combat_attributes);
+    decode_skills_json(field_text(29), &player->skills);
+    decode_spells_json(field_text(30), &player->spells);
+    decode_recipes_json(field_text(31), &player->recipes);
+    decode_codex_json(field_text(32), &player->codex_entries);
+    decode_profession_json(field_text(33), &player->profession);
+    decode_flags_json(field_text(34), &player->flags);
     return true;
 }
 
@@ -1505,7 +1593,7 @@ bool MySqlMudPlayerRepository::insert_player_record(MYSQL* mysql_handle,
         "INSERT INTO mud_character(account,character_name,level,hp,max_hp,attack_power,defense_power,"
         "spirit_stone,title,location_scene_id,realm_name,realm_stage,exp,next_breakthrough_exp,"
         "primary_skill,skill_level,sect_id,sect_name,sect_rank,team_id,team_name,team_leader_account,"
-        "origin_id,inventory_json,quest_json,attributes_json,status_json,combat_json,skills_json,"
+        "origin_id,background_id,inventory_json,quest_json,attributes_json,status_json,combat_json,skills_json,"
         "spells_json,recipes_json,codex_json,profession_json,flags_json) VALUES(" +
         quoted(player.account) + "," + quoted(player.character_name) + "," + std::to_string(player.level) + "," +
         std::to_string(player.hp) + "," + std::to_string(player.max_hp) + "," + std::to_string(player.attack_power) +
@@ -1515,8 +1603,8 @@ bool MySqlMudPlayerRepository::insert_player_record(MYSQL* mysql_handle,
         std::to_string(player.next_breakthrough_exp) + "," + quoted(player.primary_skill) + "," +
         std::to_string(player.skill_level) + "," + quoted(player.sect_id) + "," + quoted(player.sect_name) + "," +
         quoted(player.sect_rank) + "," + quoted(player.team_id) + "," + quoted(player.team_name) + "," +
-        quoted(player.team_leader_account) + "," + quoted(player.origin_id) + "," + quoted(inventory_json) + "," +
-        quoted(quest_json) + "," + quoted(attributes_json) + "," + quoted(status_json) + "," +
+        quoted(player.team_leader_account) + "," + quoted(player.origin_id) + "," + quoted(player.background_id) + "," +
+        quoted(inventory_json) + "," + quoted(quest_json) + "," + quoted(attributes_json) + "," + quoted(status_json) + "," +
         quoted(combat_json) + "," + quoted(skills_json) + "," + quoted(spells_json) + "," +
         quoted(recipes_json) + "," + quoted(codex_json) + "," + quoted(profession_json) + "," +
         quoted(flags_json) + ")";
@@ -1575,8 +1663,9 @@ bool MySqlMudPlayerRepository::update_player_record(MYSQL* mysql_handle,
         quoted(player.sect_id) + ",sect_name=" + quoted(player.sect_name) + ",sect_rank=" +
         quoted(player.sect_rank) + ",team_id=" + quoted(player.team_id) + ",team_name=" +
         quoted(player.team_name) + ",team_leader_account=" + quoted(player.team_leader_account) + ",origin_id=" +
-        quoted(player.origin_id) + ",inventory_json=" + quoted(inventory_json) + ",quest_json=" +
-        quoted(quest_json) + ",attributes_json=" + quoted(attributes_json) + ",status_json=" +
+        quoted(player.origin_id) + ",background_id=" + quoted(player.background_id) + ",inventory_json=" +
+        quoted(inventory_json) + ",quest_json=" + quoted(quest_json) + ",attributes_json=" +
+        quoted(attributes_json) + ",status_json=" +
         quoted(status_json) + ",combat_json=" + quoted(combat_json) + ",skills_json=" + quoted(skills_json) +
         ",spells_json=" + quoted(spells_json) + ",recipes_json=" + quoted(recipes_json) + ",codex_json=" +
         quoted(codex_json) + ",profession_json=" + quoted(profession_json) + ",flags_json=" +
@@ -1611,20 +1700,8 @@ bool MySqlMudPlayerRepository::query_top_players(MYSQL* mysql_handle,
 
     out_players->clear();
 
-    std::string order_by = "realm_stage DESC, exp DESC, level DESC";
-    if(leaderboard_type == MudLeaderboardType::wealth)
-    {
-        order_by = "spirit_stone DESC, exp DESC";
-    }
-    else if(leaderboard_type == MudLeaderboardType::combat)
-    {
-        order_by = "(attack_power + defense_power + level * 10) DESC, exp DESC";
-    }
-
     const int normalized_limit = std::clamp(limit <= 0 ? 10 : limit, 1, 50);
-    const std::string sql =
-        "SELECT " + std::string(kPlayerSelectColumns) + " FROM mud_character ORDER BY " + order_by + " LIMIT " +
-        std::to_string(normalized_limit);
+    const std::string sql = "SELECT " + std::string(kPlayerSelectColumns) + " FROM mud_character";
 
     if(mysql_query(mysql_handle, sql.c_str()) != 0)
     {
@@ -1645,7 +1722,7 @@ bool MySqlMudPlayerRepository::query_top_players(MYSQL* mysql_handle,
         return false;
     }
 
-    int rank = 1;
+    std::vector<MudLeaderboardEntry> collected;
     while(MYSQL_ROW row = mysql_fetch_row(result))
     {
         unsigned long* lengths = mysql_fetch_lengths(result);
@@ -1656,14 +1733,67 @@ bool MySqlMudPlayerRepository::query_top_players(MYSQL* mysql_handle,
 
         MudPlayerState player;
         decode_player_row(row, lengths, &player);
+        if(!leaderboard_should_keep(leaderboard_type, player))
+        {
+            continue;
+        }
 
         MudLeaderboardEntry entry;
-        entry.rank = rank++;
         entry.player = std::move(player);
-        out_players->push_back(std::move(entry));
+        entry.score = leaderboard_score(leaderboard_type, entry.player);
+        entry.extra = leaderboard_extra(leaderboard_type, entry.player);
+        collected.push_back(std::move(entry));
     }
 
     mysql_free_result(result);
+
+    std::sort(collected.begin(), collected.end(), [](const MudLeaderboardEntry& lhs, const MudLeaderboardEntry& rhs) {
+        if(lhs.score != rhs.score)
+        {
+            return lhs.score > rhs.score;
+        }
+        if(lhs.player.realm_stage != rhs.player.realm_stage)
+        {
+            return lhs.player.realm_stage > rhs.player.realm_stage;
+        }
+        if(lhs.player.exp != rhs.player.exp)
+        {
+            return lhs.player.exp > rhs.player.exp;
+        }
+        if(lhs.player.spirit_stone != rhs.player.spirit_stone)
+        {
+            return lhs.player.spirit_stone > rhs.player.spirit_stone;
+        }
+        return lhs.player.account < rhs.player.account;
+    });
+
+    if(leaderboard_type == MudLeaderboardType::chief)
+    {
+        std::vector<MudLeaderboardEntry> sect_chiefs;
+        std::unordered_set<std::string> seen_sects;
+        sect_chiefs.reserve(collected.size());
+        for(auto& entry : collected)
+        {
+            if(entry.player.sect_id.empty() || !seen_sects.insert(entry.player.sect_id).second)
+            {
+                continue;
+            }
+            sect_chiefs.push_back(std::move(entry));
+        }
+        collected = std::move(sect_chiefs);
+    }
+
+    if(static_cast<int>(collected.size()) > normalized_limit)
+    {
+        collected.resize(static_cast<size_t>(normalized_limit));
+    }
+
+    out_players->reserve(collected.size());
+    for(size_t index = 0; index < collected.size(); ++index)
+    {
+        collected[index].rank = static_cast<int>(index) + 1;
+        out_players->push_back(std::move(collected[index]));
+    }
     return true;
 }
 

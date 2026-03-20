@@ -29,6 +29,10 @@ enum class MudLeaderboardType
     wealth,
     realm,
     combat,
+    alchemy,
+    travel,
+    bounty,
+    chief,
 };
 
 struct MudUnlockRule
@@ -119,6 +123,17 @@ struct MudOriginConfig
     std::vector<std::string> starter_spell_ids;
 };
 
+struct MudBackgroundConfig
+{
+    std::string background_id;
+    std::string name;
+    std::string description;
+    std::string starter_title;
+    std::string focus_label;
+    MudBaseAttributeState attribute_bonus;
+    std::vector<MudStarterInventoryItem> starter_inventory;
+};
+
 struct MudItemConfig
 {
     std::string item_id;
@@ -197,6 +212,8 @@ struct MudSectConfig
     std::string sect_id;
     std::string name;
     std::string rank_title;
+    std::vector<std::string> rank_titles;
+    std::string chief_title;
     std::string join_scene_id;
     std::string join_npc_id;
     std::string description;
@@ -329,6 +346,11 @@ struct MudSceneConfig
     std::string name;
     std::string region_name;
     std::string description;
+    std::string room_type;
+    std::string risk_level;
+    std::string landmark;
+    bool pvp_enabled = false;
+    std::vector<std::string> rumors;
     std::unordered_map<std::string, std::string> exits;
     std::vector<std::string> npc_ids;
     std::vector<std::string> monster_ids;
@@ -423,6 +445,8 @@ struct MudPlayerState
     std::string origin_name;
     std::string race_name;
     std::string homeland;
+    std::string background_id;
+    std::string background_name;
     std::vector<MudInventoryItemState> inventory;
     std::vector<MudQuestState> quests;
     MudBaseAttributeState base_attributes;
@@ -472,6 +496,8 @@ struct MudLeaderboardEntry
 {
     int rank = 0;
     MudPlayerState player;
+    int64_t score = 0;
+    std::string extra;
 };
 
 struct MudTeamMemberState

@@ -204,7 +204,7 @@ int main()
                                 std::chrono::system_clock::now().time_since_epoch())
                                 .count();
         const std::string suffix = std::to_string(now_ms % 100000000);
-        const std::string account = "smoke_" + suffix;
+        const std::string account = "smoke" + suffix;
         const std::string password = "pass123456";
 
         gateway::RouteLoginRequest route_request;
@@ -247,6 +247,10 @@ int main()
         {
             create_request.set_origin_id(bootstrap_response.available_origins(0).origin_id());
         }
+        if(bootstrap_response.available_backgrounds_size() > 0)
+        {
+            create_request.set_background_id(bootstrap_response.available_backgrounds(0).background_id());
+        }
         const auto create_response =
             call_endpoint<mud::CharacterCreateRequest, mud::CharacterCreateResponse>(
                 "127.0.0.1", 18082, "/v1/game/character/create", create_request, token);
@@ -283,11 +287,13 @@ int main()
                   << " enter_code=" << enter_response.code() << "\n";
         std::cout << "bootstrap_code=" << bootstrap_response.code()
                   << " need_create_character=" << (bootstrap_response.need_create_character() ? "true" : "false")
-                  << " origins=" << bootstrap_response.available_origins_size() << "\n";
+                  << " origins=" << bootstrap_response.available_origins_size()
+                  << " backgrounds=" << bootstrap_response.available_backgrounds_size() << "\n";
         std::cout << "create_code=" << create_response.code()
                   << " scene=" << create_response.scene().scene_name()
                   << " npc_count=" << create_response.scene().npcs_size()
                   << " player_origin=" << create_response.player().race().origin_name()
+                  << " player_background=" << create_response.player().background().name()
                   << " spells=" << create_response.player().spells_size()
                   << " recipes=" << create_response.player().recipes_size()
                   << " codex_summaries=" << create_response.player().codex_summaries_size()

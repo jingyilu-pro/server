@@ -2,6 +2,8 @@ const sect = (sect_id, name, rank_title, join_scene_id, join_npc_id, description
   sect_id,
   name,
   rank_title,
+  rank_titles: extras.rank_titles ?? [rank_title],
+  chief_title: extras.chief_title ?? '首席',
   join_scene_id,
   join_npc_id,
   description,
@@ -23,11 +25,25 @@ const npc = (npc_id, name, scene_id, hint, dialogue, quest_ids = [], extras = {}
 
 export default {
   sects: [
-    sect('qixuan_gate', '七玄门', '外门弟子', 'qixuan_hall', 'han_zhanglao', '凡俗江湖门派，却也是许多修士的命运起点。'),
-    sect('huangfeng_valley', '黄枫谷', '黄枫谷记名弟子', 'huangfeng_hall', 'elder_ma', '越国七派之一，重根基、重药理，是稳健修行路线的代表。'),
-    sect('yanyue_sect', '掩月宗', '掩月宗外门弟子', 'tainan_fair', 'fairy_chen', '擅长身法与法门，行事多清冷而机敏。'),
+    sect('qixuan_gate', '七玄门', '记名弟子', 'qixuan_hall', 'han_zhanglao', '凡俗江湖门派，却也是许多修士的命运起点。', {
+      rank_titles: ['记名弟子', '外门弟子', '内门弟子', '执事'],
+      chief_title: '首席弟子',
+    }),
+    sect('huangfeng_valley', '黄枫谷', '记名弟子', 'huangfeng_hall', 'elder_ma', '越国七派之一，重根基、重药理，是稳健修行路线的代表。', {
+      rank_titles: ['记名弟子', '外门弟子', '内门弟子', '执事'],
+      chief_title: '首席弟子',
+    }),
+    sect('yanyue_sect', '掩月宗', '掩月宗外门弟子', 'tainan_fair', 'fairy_chen', '擅长身法与法门，行事多清冷而机敏。', {
+      joinable: false,
+      rank_titles: ['外门弟子', '内门弟子', '执事'],
+      chief_title: '月殿首席',
+    }),
     sect('giant_sword_clan', '巨剑门', '巨剑门客卿', '', '', '越国七派之一，以强攻与剑修见长。', { joinable: false }),
-    sect('spirit_beast_mountain', '灵兽山', '灵兽山执事', '', '', '专精驭兽与培育灵虫灵兽之道。', { joinable: false }),
+    sect('spirit_beast_mountain', '灵兽山', '记名弟子', 'spirit_beast_outer_gate', 'spirit_beast_steward', '专精驭兽与培育灵虫灵兽之道。', {
+      joinable: true,
+      rank_titles: ['记名弟子', '外山弟子', '内山弟子', '执事'],
+      chief_title: '灵兽首席',
+    }),
     sect('mask_sky_school', '化刀坞', '化刀坞门人', '', '', '重杀伐与兵刃祭炼，作风凌厉。', { joinable: false }),
   ],
   npcs: [

@@ -10,6 +10,8 @@ interface AuthState {
   token: string
 }
 
+type RankingType = 'realm' | 'wealth' | 'combat' | 'alchemy' | 'travel' | 'bounty' | 'chief'
+
 const gatewayErrorCode = {
   characterAlreadyExistsOrInvalidInput: 40002,
   invalidOrExpiredJwt: 40102,
@@ -78,6 +80,7 @@ export const useGameStore = defineStore('game', {
     nextEventId: 0,
     needCreateCharacter: false,
     availableOrigins: [] as Record<string, any>[],
+    availableBackgrounds: [] as Record<string, any>[],
     lastResult: null as Record<string, any> | null,
     loading: false,
     error: '',
@@ -86,7 +89,7 @@ export const useGameStore = defineStore('game', {
     pollIntervalMs: 1500,
     pollTimer: 0 as number | ReturnType<typeof setTimeout>,
     rankings: [] as Record<string, any>[],
-    rankingType: 'realm' as 'realm' | 'wealth' | 'combat',
+    rankingType: 'realm' as RankingType,
     codexEntries: [] as Record<string, any>[],
     codexDetail: null as Record<string, any> | null,
   }),
@@ -208,6 +211,7 @@ export const useGameStore = defineStore('game', {
         this.player = player
         this.scene = scene
         this.availableOrigins = (response.availableOrigins as Record<string, any>[]) ?? []
+        this.availableBackgrounds = (response.availableBackgrounds as Record<string, any>[]) ?? []
         this.lastResult = null
         this.pollError = ''
         this.pollFailureCount = 0
@@ -226,7 +230,7 @@ export const useGameStore = defineStore('game', {
         throw error
       }
     },
-    async createCharacter(characterName: string, originId: string) {
+    async createCharacter(characterName: string, originId: string, backgroundId = '') {
       if (!this.authenticated) {
         return
       }
@@ -234,7 +238,7 @@ export const useGameStore = defineStore('game', {
       this.loading = true
       this.error = ''
       try {
-        const response = await pbClient.createCharacter(this.account, characterName, originId, this.token)
+        const response = await pbClient.createCharacter(this.account, characterName, originId, backgroundId, this.token)
         if (isInvalidOrExpiredJwtResponse(response)) {
           this.logout()
           throw new Error('登录已失效，请重新登录')
@@ -324,7 +328,7 @@ export const useGameStore = defineStore('game', {
       this.nextEventId = Number(response.nextEventId ?? this.nextEventId)
       this.pollIntervalMs = Number(response.recommendedPollIntervalMs ?? this.pollIntervalMs)
     },
-    async loadRankings(leaderboard: 'realm' | 'wealth' | 'combat' = 'realm') {
+    async loadRankings(leaderboard: RankingType = 'realm') {
       if (!this.authenticated) {
         return
       }
@@ -369,6 +373,7 @@ export const useGameStore = defineStore('game', {
       this.nextEventId = 0
       this.needCreateCharacter = false
       this.availableOrigins = []
+      this.availableBackgrounds = []
       this.lastResult = null
       this.error = ''
       this.pollError = ''

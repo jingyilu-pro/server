@@ -98,6 +98,25 @@ message RaceState {
   string description = 5;
 }
 
+message BackgroundState {
+  string background_id = 1;
+  string name = 2;
+  string description = 3;
+  string starter_title = 4;
+  string focus_label = 5;
+}
+
+message CommandDefinition {
+  string command_id = 1;
+  string category = 2;
+  string label = 3;
+  string command = 4;
+  string summary = 5;
+  string composer_mode = 6;
+  string chat_channel = 7;
+  bool execute_immediately = 8;
+}
+
 message SkillSummary {
   string skill_id = 1;
   string name = 2;
@@ -237,6 +256,11 @@ message SceneSnapshot {
   repeated SceneGroundLoot ground_loots = 12;
   repeated SceneHazard hazards = 13;
   repeated string related_codex_entry_ids = 14;
+  string room_type = 15;
+  string risk_level = 16;
+  string landmark = 17;
+  repeated string rumors = 18;
+  bool pvp_enabled = 19;
 }
 
 message PlayerSnapshot {
@@ -270,6 +294,9 @@ message PlayerSnapshot {
   ProfessionState profession = 28;
   repeated CodexSummary codex_summaries = 29;
   StatusAttributeState current_status_attributes = 30;
+  BackgroundState background = 31;
+  repeated CommandDefinition command_catalog = 32;
+  repeated string titles = 33;
 }
 
 message GameEvent {
@@ -309,12 +336,14 @@ message BootstrapResponse {
   repeated GameEvent events = 8;
   uint64 next_event_id = 9;
   repeated RaceState available_origins = 10;
+  repeated BackgroundState available_backgrounds = 11;
 }
 
 message CharacterCreateRequest {
   string account = 1;
   string character_name = 2;
   string origin_id = 3;
+  string background_id = 4;
 }
 
 message CharacterCreateResponse {
@@ -397,6 +426,9 @@ message RankEntry {
   int64 exp = 6;
   int64 spirit_stone = 7;
   string sect_name = 8;
+  string title = 9;
+  int64 score = 10;
+  string extra = 11;
 }
 
 message RankListRequest {

@@ -159,6 +159,35 @@ void load_string_map(json_t* object, std::unordered_map<std::string, std::string
     }
 }
 
+void load_starter_inventory(json_t* array, std::vector<MudStarterInventoryItem>* output)
+{
+    if(array == nullptr || output == nullptr || !json_is_array(array))
+    {
+        return;
+    }
+
+    output->clear();
+    const size_t count = json_array_size(array);
+    output->reserve(count);
+    for(size_t index = 0; index < count; ++index)
+    {
+        auto* item = json_array_get(array, index);
+        if(item == nullptr || !json_is_object(item))
+        {
+            continue;
+        }
+
+        MudStarterInventoryItem config_item;
+        config_item.item_id = json_string_field(item, "item_id");
+        config_item.quantity = json_int_value(item, "quantity", 1);
+        config_item.equipped = json_bool_value(item, "equipped", false);
+        if(!config_item.item_id.empty() && config_item.quantity > 0)
+        {
+            output->push_back(std::move(config_item));
+        }
+    }
+}
+
 void load_unlock_rules(json_t* array, std::vector<MudUnlockRule>* output)
 {
     if(array == nullptr || output == nullptr || !json_is_array(array))
@@ -273,6 +302,7 @@ bool MudWorld::load_from_file(const std::string& path, std::string* error_messag
     m_default_status_attributes = MudStatusAttributeState{};
     m_default_combat_attributes = MudCombatAttributeState{};
     m_origins.clear();
+    m_backgrounds.clear();
     m_scenes.clear();
     m_npcs.clear();
     m_quests.clear();
@@ -331,29 +361,7 @@ bool MudWorld::load_from_file(const std::string& path, std::string* error_messag
     load_string_array(json_object_get(defaults, "starter_recipe_ids"), &m_defaults.starter_recipe_ids);
     load_string_array(json_object_get(defaults, "realm_names"), &m_defaults.realm_names);
 
-    if(auto* starter_inventory = json_object_get(defaults, "starter_inventory");
-       starter_inventory != nullptr && json_is_array(starter_inventory))
-    {
-        const size_t count = json_array_size(starter_inventory);
-        m_defaults.starter_inventory.reserve(count);
-        for(size_t index = 0; index < count; ++index)
-        {
-            auto* item = json_array_get(starter_inventory, index);
-            if(item == nullptr || !json_is_object(item))
-            {
-                continue;
-            }
-
-            MudStarterInventoryItem config_item;
-            config_item.item_id = json_string_field(item, "item_id");
-            config_item.quantity = json_int_value(item, "quantity", 1);
-            config_item.equipped = json_bool_value(item, "equipped", false);
-            if(!config_item.item_id.empty() && config_item.quantity > 0)
-            {
-                m_defaults.starter_inventory.push_back(std::move(config_item));
-            }
-        }
-    }
+    load_starter_inventory(json_object_get(defaults, "starter_inventory"), &m_defaults.starter_inventory);
 
     if(auto* attribute_defaults = json_object_get(root, "attribute_defaults");
        attribute_defaults != nullptr && json_is_object(attribute_defaults))
@@ -388,6 +396,33 @@ bool MudWorld::load_from_file(const std::string& path, std::string* error_messag
             if(!origin.origin_id.empty())
             {
                 m_origins.insert_or_assign(origin.origin_id, std::move(origin));
+            }
+        }
+    }
+
+    if(auto* backgrounds = json_object_get(root, "backgrounds");
+       backgrounds != nullptr && json_is_array(backgrounds))
+    {
+        const size_t count = json_array_size(backgrounds);
+        for(size_t index = 0; index < count; ++index)
+        {
+            auto* item = json_array_get(backgrounds, index);
+            if(item == nullptr || !json_is_object(item))
+            {
+                continue;
+            }
+
+            MudBackgroundConfig background;
+            background.background_id = json_string_field(item, "background_id");
+            background.name = json_string_field(item, "name");
+            background.description = json_string_field(item, "description");
+            background.starter_title = json_string_field(item, "starter_title");
+            background.focus_label = json_string_field(item, "focus_label");
+            background.attribute_bonus = load_base_attributes(json_object_get(item, "attribute_bonus"));
+            load_starter_inventory(json_object_get(item, "starter_inventory"), &background.starter_inventory);
+            if(!background.background_id.empty())
+            {
+                m_backgrounds.insert_or_assign(background.background_id, std::move(background));
             }
         }
     }
@@ -445,6 +480,8 @@ bool MudWorld::load_from_file(const std::string& path, std::string* error_messag
             sect.sect_id = json_string_field(item, "sect_id");
             sect.name = json_string_field(item, "name");
             sect.rank_title = json_string_field(item, "rank_title");
+            load_string_array(json_object_get(item, "rank_titles"), &sect.rank_titles);
+            sect.chief_title = json_string_field(item, "chief_title");
             sect.join_scene_id = json_string_field(item, "join_scene_id");
             sect.join_npc_id = json_string_field(item, "join_npc_id");
             sect.description = json_string_field(item, "description");
@@ -568,11 +605,16 @@ bool MudWorld::load_from_file(const std::string& path, std::string* error_messag
             scene.name = json_string_field(item, "name");
             scene.region_name = json_string_field(item, "region_name");
             scene.description = json_string_field(item, "description");
+            scene.room_type = json_string_field(item, "room_type");
+            scene.risk_level = json_string_field(item, "risk_level");
+            scene.landmark = json_string_field(item, "landmark");
+            scene.pvp_enabled = json_bool_value(item, "pvp_enabled", false);
             scene.map_x = json_int_value(item, "map_x", 0);
             scene.map_y = json_int_value(item, "map_y", 0);
             scene.chapter = json_string_field(item, "chapter");
             scene.codex_entry_id = json_string_field(item, "codex_entry_id");
             load_string_map(json_object_get(item, "exits"), &scene.exits);
+            load_string_array(json_object_get(item, "rumors"), &scene.rumors);
             load_string_array(json_object_get(item, "npc_ids"), &scene.npc_ids);
             load_string_array(json_object_get(item, "monster_ids"), &scene.monster_ids);
             load_string_array(json_object_get(item, "shop_item_ids"), &scene.shop_item_ids);
@@ -917,6 +959,20 @@ std::vector<MudOriginConfig> MudWorld::origins() const
     return result;
 }
 
+std::vector<MudBackgroundConfig> MudWorld::backgrounds() const
+{
+    std::vector<MudBackgroundConfig> result;
+    result.reserve(m_backgrounds.size());
+    for(const auto& [id, background] : m_backgrounds)
+    {
+        result.push_back(background);
+    }
+    std::sort(result.begin(), result.end(), [](const MudBackgroundConfig& lhs, const MudBackgroundConfig& rhs) {
+        return lhs.name < rhs.name;
+    });
+    return result;
+}
+
 std::vector<MudCodexEntryConfig> MudWorld::codex_entries_for_category(const std::string& category) const
 {
     std::vector<MudCodexEntryConfig> result;
@@ -960,6 +1016,11 @@ std::vector<const MudCodexEntryConfig*> MudWorld::codex_entries_for_unlock(const
 const MudOriginConfig* MudWorld::find_origin(const std::string& origin_id) const
 {
     return find_in_map(m_origins, origin_id);
+}
+
+const MudBackgroundConfig* MudWorld::find_background(const std::string& background_id) const
+{
+    return find_in_map(m_backgrounds, background_id);
 }
 
 const MudSceneConfig* MudWorld::find_scene(const std::string& scene_id) const

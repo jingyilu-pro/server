@@ -35,11 +35,13 @@ public:
     const MudStatusAttributeState& default_status_attributes() const;
     const MudCombatAttributeState& default_combat_attributes() const;
     std::vector<MudOriginConfig> origins() const;
+    std::vector<MudBackgroundConfig> backgrounds() const;
     std::vector<MudCodexEntryConfig> codex_entries_for_category(const std::string& category) const;
     std::vector<const MudCodexEntryConfig*> codex_entries_for_unlock(const std::string& trigger,
                                                                      const std::string& target_id) const;
 
     const MudOriginConfig* find_origin(const std::string& origin_id) const;
+    const MudBackgroundConfig* find_background(const std::string& background_id) const;
     const MudSceneConfig* find_scene(const std::string& scene_id) const;
     const MudNpcConfig* find_npc(const std::string& npc_id) const;
     const MudQuestConfig* find_quest(const std::string& quest_id) const;
@@ -62,6 +64,7 @@ private:
     MudStatusAttributeState m_default_status_attributes;
     MudCombatAttributeState m_default_combat_attributes;
     std::unordered_map<std::string, MudOriginConfig> m_origins;
+    std::unordered_map<std::string, MudBackgroundConfig> m_backgrounds;
     std::unordered_map<std::string, MudSceneConfig> m_scenes;
     std::unordered_map<std::string, MudNpcConfig> m_npcs;
     std::unordered_map<std::string, MudQuestConfig> m_quests;

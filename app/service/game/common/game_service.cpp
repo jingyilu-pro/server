@@ -1003,7 +1003,8 @@ coro_task_t GameService::create_character_async(evhttp_request* request)
             {
                 auto player = m_mud_runtime->build_default_player(account,
                                                                   normalized_name,
-                                                                  mud_request.origin_id());
+                                                                  mud_request.origin_id(),
+                                                                  mud_request.background_id());
                 auto* create_result = dynamic_cast<MudPlayerRepositoryOpResult*>(co_await m_mud_player_repository->create_player(player));
                 if(create_result == nullptr || !create_result->success || !create_result->create_ok)
                 {

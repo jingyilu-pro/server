@@ -98,7 +98,7 @@ export const pbClient = {
       token,
     })
   },
-  createCharacter(account: string, characterName: string, originId: string, token: string) {
+  createCharacter(account: string, characterName: string, originId: string, backgroundId: string, token: string) {
     return protobufRequest({
       kind: 'mud',
       requestType: 'mud.CharacterCreateRequest',
@@ -108,6 +108,7 @@ export const pbClient = {
         account,
         characterName,
         originId,
+        backgroundId,
       },
       token,
     })

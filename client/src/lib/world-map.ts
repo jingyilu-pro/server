@@ -363,6 +363,510 @@ export const worldMapNodes: WorldMapNode[] = [
     "region": "虚天殿",
     "x": 78,
     "y": 118
+  },
+  {
+    "id": "wanderer_trail",
+    "name": "散修古道",
+    "region": "七玄外野",
+    "x": -2,
+    "y": 28
+  },
+  {
+    "id": "wanderer_camp",
+    "name": "落脚草棚",
+    "region": "七玄外野",
+    "x": -10,
+    "y": 28
+  },
+  {
+    "id": "wanderer_creek",
+    "name": "乱石溪湾",
+    "region": "七玄外野",
+    "x": -18,
+    "y": 28
+  },
+  {
+    "id": "wanderer_brush",
+    "name": "狐草灌丛",
+    "region": "七玄外野",
+    "x": -26,
+    "y": 28
+  },
+  {
+    "id": "wanderer_stone_slope",
+    "name": "乱石坡",
+    "region": "七玄外野",
+    "x": -34,
+    "y": 28
+  },
+  {
+    "id": "wanderer_old_temple",
+    "name": "残庙旧址",
+    "region": "七玄外野",
+    "x": -42,
+    "y": 28
+  },
+  {
+    "id": "wanderer_firefield",
+    "name": "焦土地",
+    "region": "七玄外野",
+    "x": -50,
+    "y": 28
+  },
+  {
+    "id": "wanderer_fox_den",
+    "name": "狐穴坡",
+    "region": "七玄外野",
+    "x": -58,
+    "y": 28
+  },
+  {
+    "id": "wanderer_watch_tower",
+    "name": "断木望台",
+    "region": "七玄外野",
+    "x": -66,
+    "y": 28
+  },
+  {
+    "id": "wanderer_cold_pool",
+    "name": "寒潭边",
+    "region": "七玄外野",
+    "x": -74,
+    "y": 28
+  },
+  {
+    "id": "escort_post",
+    "name": "东门驿棚",
+    "region": "越京官道",
+    "x": 28,
+    "y": 8
+  },
+  {
+    "id": "escort_road",
+    "name": "碎石官道",
+    "region": "越京官道",
+    "x": 28,
+    "y": 0
+  },
+  {
+    "id": "escort_wayside",
+    "name": "路旁荒亭",
+    "region": "越京官道",
+    "x": 28,
+    "y": -8
+  },
+  {
+    "id": "bandit_gully",
+    "name": "截路沟",
+    "region": "越京官道",
+    "x": 28,
+    "y": -16
+  },
+  {
+    "id": "broken_bridge",
+    "name": "断桥坎",
+    "region": "越京官道",
+    "x": 28,
+    "y": -24
+  },
+  {
+    "id": "relay_station",
+    "name": "换马驿",
+    "region": "越京官道",
+    "x": 28,
+    "y": -32
+  },
+  {
+    "id": "granary_yard",
+    "name": "粮场外院",
+    "region": "越京官道",
+    "x": 28,
+    "y": -40
+  },
+  {
+    "id": "night_inn",
+    "name": "夜宿破栈",
+    "region": "越京官道",
+    "x": 28,
+    "y": -48
+  },
+  {
+    "id": "border_field",
+    "name": "边田荒地",
+    "region": "越京官道",
+    "x": 28,
+    "y": -56
+  },
+  {
+    "id": "yue_watch_pass",
+    "name": "越境望隘",
+    "region": "越京官道",
+    "x": 28,
+    "y": -64
+  },
+  {
+    "id": "loose_camp_gate",
+    "name": "散修地棚口",
+    "region": "太南散修坊",
+    "x": 42,
+    "y": 42
+  },
+  {
+    "id": "loose_camp_square",
+    "name": "散修棚市",
+    "region": "太南散修坊",
+    "x": 48,
+    "y": 48
+  },
+  {
+    "id": "loose_market_lane",
+    "name": "杂货棚巷",
+    "region": "太南散修坊",
+    "x": 54,
+    "y": 54
+  },
+  {
+    "id": "loose_medicine_tent",
+    "name": "药帐",
+    "region": "太南散修坊",
+    "x": 60,
+    "y": 60
+  },
+  {
+    "id": "loose_diviner_mat",
+    "name": "卜席角",
+    "region": "太南散修坊",
+    "x": 66,
+    "y": 66
+  },
+  {
+    "id": "loose_training_ground",
+    "name": "试手空地",
+    "region": "太南散修坊",
+    "x": 72,
+    "y": 72
+  },
+  {
+    "id": "loose_stone_forest",
+    "name": "乱石林",
+    "region": "太南散修坊",
+    "x": 78,
+    "y": 78
+  },
+  {
+    "id": "loose_hidden_pool",
+    "name": "暗池",
+    "region": "太南散修坊",
+    "x": 84,
+    "y": 84
+  },
+  {
+    "id": "loose_guest_hall",
+    "name": "借宿大棚",
+    "region": "太南散修坊",
+    "x": 90,
+    "y": 90
+  },
+  {
+    "id": "loose_bamboo_stage",
+    "name": "竹台",
+    "region": "太南散修坊",
+    "x": 96,
+    "y": 96
+  },
+  {
+    "id": "spirit_beast_outer_gate",
+    "name": "灵兽山外门",
+    "region": "灵兽山外岭",
+    "x": 4,
+    "y": 48
+  },
+  {
+    "id": "spirit_beast_broker_lane",
+    "name": "兽材街",
+    "region": "灵兽山外岭",
+    "x": -4,
+    "y": 48
+  },
+  {
+    "id": "spirit_beast_beast_pen",
+    "name": "外山兽栏",
+    "region": "灵兽山外岭",
+    "x": -12,
+    "y": 48
+  },
+  {
+    "id": "spirit_beast_insect_garden",
+    "name": "灵虫圃",
+    "region": "灵兽山外岭",
+    "x": -20,
+    "y": 48
+  },
+  {
+    "id": "spirit_beast_herb_ridge",
+    "name": "饲草岭",
+    "region": "灵兽山外岭",
+    "x": -28,
+    "y": 48
+  },
+  {
+    "id": "spirit_beast_worm_marsh",
+    "name": "虫泽",
+    "region": "灵兽山外岭",
+    "x": -36,
+    "y": 48
+  },
+  {
+    "id": "spirit_beast_taming_yard",
+    "name": "驯兽场",
+    "region": "灵兽山外岭",
+    "x": -44,
+    "y": 48
+  },
+  {
+    "id": "spirit_beast_inner_path",
+    "name": "内山小径",
+    "region": "灵兽山外岭",
+    "x": -52,
+    "y": 48
+  },
+  {
+    "id": "spirit_beast_bone_cave",
+    "name": "兽骨洞",
+    "region": "灵兽山外岭",
+    "x": -60,
+    "y": 48
+  },
+  {
+    "id": "spirit_beast_cliff_nest",
+    "name": "崖巢",
+    "region": "灵兽山外岭",
+    "x": -68,
+    "y": 48
+  },
+  {
+    "id": "spirit_beast_stream",
+    "name": "驭兽溪",
+    "region": "灵兽山外岭",
+    "x": -76,
+    "y": 48
+  },
+  {
+    "id": "spirit_beast_hall",
+    "name": "外山执事堂",
+    "region": "灵兽山外岭",
+    "x": -84,
+    "y": 48
+  },
+  {
+    "id": "harbor_backbay",
+    "name": "后湾口",
+    "region": "天南外港",
+    "x": 20,
+    "y": 90
+  },
+  {
+    "id": "harbor_fish_lane",
+    "name": "鱼棚街",
+    "region": "天南外港",
+    "x": 26,
+    "y": 96
+  },
+  {
+    "id": "harbor_salt_house",
+    "name": "晒盐棚",
+    "region": "天南外港",
+    "x": 32,
+    "y": 102
+  },
+  {
+    "id": "harbor_net_field",
+    "name": "晒网场",
+    "region": "天南外港",
+    "x": 38,
+    "y": 108
+  },
+  {
+    "id": "harbor_cliff_ladder",
+    "name": "崖梯",
+    "region": "天南外港",
+    "x": 44,
+    "y": 114
+  },
+  {
+    "id": "harbor_drift_shore",
+    "name": "漂木滩",
+    "region": "天南外港",
+    "x": 50,
+    "y": 120
+  },
+  {
+    "id": "harbor_tide_pool",
+    "name": "潮池",
+    "region": "天南外港",
+    "x": 56,
+    "y": 126
+  },
+  {
+    "id": "harbor_reef_steps",
+    "name": "礁阶",
+    "region": "天南外港",
+    "x": 62,
+    "y": 132
+  },
+  {
+    "id": "harbor_lamp_tower",
+    "name": "后湾灯塔",
+    "region": "天南外港",
+    "x": 68,
+    "y": 138
+  },
+  {
+    "id": "harbor_hidden_cove",
+    "name": "暗湾",
+    "region": "天南外港",
+    "x": 74,
+    "y": 144
+  },
+  {
+    "id": "outer_isles_wharf",
+    "name": "群岛小埠",
+    "region": "乱星近海群岛",
+    "x": 8,
+    "y": 98
+  },
+  {
+    "id": "outer_isles_market",
+    "name": "珠市棚",
+    "region": "乱星近海群岛",
+    "x": 0,
+    "y": 98
+  },
+  {
+    "id": "outer_isles_shell_beach",
+    "name": "贝滩",
+    "region": "乱星近海群岛",
+    "x": -8,
+    "y": 98
+  },
+  {
+    "id": "outer_isles_palm_ridge",
+    "name": "风榈脊",
+    "region": "乱星近海群岛",
+    "x": -16,
+    "y": 98
+  },
+  {
+    "id": "outer_isles_storm_tree",
+    "name": "雷木坡",
+    "region": "乱星近海群岛",
+    "x": -24,
+    "y": 98
+  },
+  {
+    "id": "outer_isles_lagoon",
+    "name": "月泻潟湖",
+    "region": "乱星近海群岛",
+    "x": -32,
+    "y": 98
+  },
+  {
+    "id": "outer_isles_coral_path",
+    "name": "珊瑚径",
+    "region": "乱星近海群岛",
+    "x": -40,
+    "y": 98
+  },
+  {
+    "id": "outer_isles_black_reef",
+    "name": "黑礁外缘",
+    "region": "乱星近海群岛",
+    "x": -48,
+    "y": 98
+  },
+  {
+    "id": "outer_isles_moon_cove",
+    "name": "望月湾",
+    "region": "乱星近海群岛",
+    "x": -56,
+    "y": 98
+  },
+  {
+    "id": "outer_isles_watch_altar",
+    "name": "听潮坛",
+    "region": "乱星近海群岛",
+    "x": -64,
+    "y": 98
+  },
+  {
+    "id": "xutian_void_rift",
+    "name": "裂隙口",
+    "region": "虚天残区",
+    "x": 78,
+    "y": 126
+  },
+  {
+    "id": "xutian_ash_corridor",
+    "name": "灰廊",
+    "region": "虚天残区",
+    "x": 78,
+    "y": 134
+  },
+  {
+    "id": "xutian_shard_steps",
+    "name": "碎阶",
+    "region": "虚天残区",
+    "x": 78,
+    "y": 142
+  },
+  {
+    "id": "xutian_rune_garden",
+    "name": "残纹庭",
+    "region": "虚天残区",
+    "x": 78,
+    "y": 150
+  },
+  {
+    "id": "xutian_broken_stair",
+    "name": "断升台",
+    "region": "虚天残区",
+    "x": 78,
+    "y": 158
+  },
+  {
+    "id": "xutian_shadow_pool",
+    "name": "影池",
+    "region": "虚天残区",
+    "x": 78,
+    "y": 166
+  },
+  {
+    "id": "xutian_silent_vault",
+    "name": "静库",
+    "region": "虚天残区",
+    "x": 78,
+    "y": 174
+  },
+  {
+    "id": "xutian_crystal_bridge",
+    "name": "晶桥",
+    "region": "虚天残区",
+    "x": 78,
+    "y": 182
+  },
+  {
+    "id": "xutian_star_pit",
+    "name": "星坑",
+    "region": "虚天残区",
+    "x": 78,
+    "y": 190
+  },
+  {
+    "id": "xutian_endless_wall",
+    "name": "无尽壁",
+    "region": "虚天残区",
+    "x": 78,
+    "y": 198
   }
 ]
 
@@ -396,6 +900,10 @@ export const worldMapEdges: WorldMapEdge[] = [
     "to": "jiayuan_east_gate"
   },
   {
+    "from": "qixuan_backslope",
+    "to": "wanderer_trail"
+  },
+  {
     "from": "qixuan_stream",
     "to": "qixuan_backslope"
   },
@@ -410,6 +918,10 @@ export const worldMapEdges: WorldMapEdge[] = [
   {
     "from": "jiayuan_east_gate",
     "to": "mofu_gate"
+  },
+  {
+    "from": "jiayuan_east_gate",
+    "to": "escort_post"
   },
   {
     "from": "jiayuan_market",
@@ -458,6 +970,10 @@ export const worldMapEdges: WorldMapEdge[] = [
   {
     "from": "tainan_gate",
     "to": "huangfeng_outpost"
+  },
+  {
+    "from": "tainan_gate",
+    "to": "loose_camp_gate"
   },
   {
     "from": "tainan_fair",
@@ -524,6 +1040,10 @@ export const worldMapEdges: WorldMapEdge[] = [
     "to": "tiannan_harbor"
   },
   {
+    "from": "huangfeng_foothill",
+    "to": "spirit_beast_outer_gate"
+  },
+  {
     "from": "huangfeng_cloud_bridge",
     "to": "blood_swamp"
   },
@@ -568,6 +1088,10 @@ export const worldMapEdges: WorldMapEdge[] = [
     "to": "chaos_sea_port"
   },
   {
+    "from": "tiannan_harbor",
+    "to": "harbor_backbay"
+  },
+  {
     "from": "tiannan_market",
     "to": "tiannan_dock"
   },
@@ -602,6 +1126,10 @@ export const worldMapEdges: WorldMapEdge[] = [
   {
     "from": "chaos_sea_port",
     "to": "reef_shore"
+  },
+  {
+    "from": "chaos_sea_port",
+    "to": "outer_isles_wharf"
   },
   {
     "from": "chaos_sea_ship",
@@ -654,5 +1182,269 @@ export const worldMapEdges: WorldMapEdge[] = [
   {
     "from": "xutian_star_platform",
     "to": "xutian_inner_gate"
+  },
+  {
+    "from": "xutian_inner_gate",
+    "to": "xutian_void_rift"
+  },
+  {
+    "from": "wanderer_trail",
+    "to": "wanderer_camp"
+  },
+  {
+    "from": "wanderer_camp",
+    "to": "wanderer_creek"
+  },
+  {
+    "from": "wanderer_creek",
+    "to": "wanderer_brush"
+  },
+  {
+    "from": "wanderer_brush",
+    "to": "wanderer_stone_slope"
+  },
+  {
+    "from": "wanderer_stone_slope",
+    "to": "wanderer_old_temple"
+  },
+  {
+    "from": "wanderer_old_temple",
+    "to": "wanderer_firefield"
+  },
+  {
+    "from": "wanderer_firefield",
+    "to": "wanderer_fox_den"
+  },
+  {
+    "from": "wanderer_fox_den",
+    "to": "wanderer_watch_tower"
+  },
+  {
+    "from": "wanderer_watch_tower",
+    "to": "wanderer_cold_pool"
+  },
+  {
+    "from": "escort_post",
+    "to": "escort_road"
+  },
+  {
+    "from": "escort_road",
+    "to": "escort_wayside"
+  },
+  {
+    "from": "escort_wayside",
+    "to": "bandit_gully"
+  },
+  {
+    "from": "bandit_gully",
+    "to": "broken_bridge"
+  },
+  {
+    "from": "broken_bridge",
+    "to": "relay_station"
+  },
+  {
+    "from": "relay_station",
+    "to": "granary_yard"
+  },
+  {
+    "from": "granary_yard",
+    "to": "night_inn"
+  },
+  {
+    "from": "night_inn",
+    "to": "border_field"
+  },
+  {
+    "from": "border_field",
+    "to": "yue_watch_pass"
+  },
+  {
+    "from": "loose_camp_gate",
+    "to": "loose_camp_square"
+  },
+  {
+    "from": "loose_camp_square",
+    "to": "loose_market_lane"
+  },
+  {
+    "from": "loose_market_lane",
+    "to": "loose_medicine_tent"
+  },
+  {
+    "from": "loose_medicine_tent",
+    "to": "loose_diviner_mat"
+  },
+  {
+    "from": "loose_diviner_mat",
+    "to": "loose_training_ground"
+  },
+  {
+    "from": "loose_training_ground",
+    "to": "loose_stone_forest"
+  },
+  {
+    "from": "loose_stone_forest",
+    "to": "loose_hidden_pool"
+  },
+  {
+    "from": "loose_hidden_pool",
+    "to": "loose_guest_hall"
+  },
+  {
+    "from": "loose_guest_hall",
+    "to": "loose_bamboo_stage"
+  },
+  {
+    "from": "spirit_beast_outer_gate",
+    "to": "spirit_beast_broker_lane"
+  },
+  {
+    "from": "spirit_beast_broker_lane",
+    "to": "spirit_beast_beast_pen"
+  },
+  {
+    "from": "spirit_beast_beast_pen",
+    "to": "spirit_beast_insect_garden"
+  },
+  {
+    "from": "spirit_beast_insect_garden",
+    "to": "spirit_beast_herb_ridge"
+  },
+  {
+    "from": "spirit_beast_herb_ridge",
+    "to": "spirit_beast_worm_marsh"
+  },
+  {
+    "from": "spirit_beast_worm_marsh",
+    "to": "spirit_beast_taming_yard"
+  },
+  {
+    "from": "spirit_beast_taming_yard",
+    "to": "spirit_beast_inner_path"
+  },
+  {
+    "from": "spirit_beast_inner_path",
+    "to": "spirit_beast_bone_cave"
+  },
+  {
+    "from": "spirit_beast_bone_cave",
+    "to": "spirit_beast_cliff_nest"
+  },
+  {
+    "from": "spirit_beast_cliff_nest",
+    "to": "spirit_beast_stream"
+  },
+  {
+    "from": "spirit_beast_stream",
+    "to": "spirit_beast_hall"
+  },
+  {
+    "from": "harbor_backbay",
+    "to": "harbor_fish_lane"
+  },
+  {
+    "from": "harbor_fish_lane",
+    "to": "harbor_salt_house"
+  },
+  {
+    "from": "harbor_salt_house",
+    "to": "harbor_net_field"
+  },
+  {
+    "from": "harbor_net_field",
+    "to": "harbor_cliff_ladder"
+  },
+  {
+    "from": "harbor_cliff_ladder",
+    "to": "harbor_drift_shore"
+  },
+  {
+    "from": "harbor_drift_shore",
+    "to": "harbor_tide_pool"
+  },
+  {
+    "from": "harbor_tide_pool",
+    "to": "harbor_reef_steps"
+  },
+  {
+    "from": "harbor_reef_steps",
+    "to": "harbor_lamp_tower"
+  },
+  {
+    "from": "harbor_lamp_tower",
+    "to": "harbor_hidden_cove"
+  },
+  {
+    "from": "outer_isles_wharf",
+    "to": "outer_isles_market"
+  },
+  {
+    "from": "outer_isles_market",
+    "to": "outer_isles_shell_beach"
+  },
+  {
+    "from": "outer_isles_shell_beach",
+    "to": "outer_isles_palm_ridge"
+  },
+  {
+    "from": "outer_isles_palm_ridge",
+    "to": "outer_isles_storm_tree"
+  },
+  {
+    "from": "outer_isles_storm_tree",
+    "to": "outer_isles_lagoon"
+  },
+  {
+    "from": "outer_isles_lagoon",
+    "to": "outer_isles_coral_path"
+  },
+  {
+    "from": "outer_isles_coral_path",
+    "to": "outer_isles_black_reef"
+  },
+  {
+    "from": "outer_isles_black_reef",
+    "to": "outer_isles_moon_cove"
+  },
+  {
+    "from": "outer_isles_moon_cove",
+    "to": "outer_isles_watch_altar"
+  },
+  {
+    "from": "xutian_void_rift",
+    "to": "xutian_ash_corridor"
+  },
+  {
+    "from": "xutian_ash_corridor",
+    "to": "xutian_shard_steps"
+  },
+  {
+    "from": "xutian_shard_steps",
+    "to": "xutian_rune_garden"
+  },
+  {
+    "from": "xutian_rune_garden",
+    "to": "xutian_broken_stair"
+  },
+  {
+    "from": "xutian_broken_stair",
+    "to": "xutian_shadow_pool"
+  },
+  {
+    "from": "xutian_shadow_pool",
+    "to": "xutian_silent_vault"
+  },
+  {
+    "from": "xutian_silent_vault",
+    "to": "xutian_crystal_bridge"
+  },
+  {
+    "from": "xutian_crystal_bridge",
+    "to": "xutian_star_pit"
+  },
+  {
+    "from": "xutian_star_pit",
+    "to": "xutian_endless_wall"
   }
 ]
