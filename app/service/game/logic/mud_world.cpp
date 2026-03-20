@@ -608,6 +608,7 @@ bool MudWorld::load_from_file(const std::string& path, std::string* error_messag
             scene.room_type = json_string_field(item, "room_type");
             scene.risk_level = json_string_field(item, "risk_level");
             scene.landmark = json_string_field(item, "landmark");
+            scene.room_layer = json_string_field(item, "room_layer");
             scene.pvp_enabled = json_bool_value(item, "pvp_enabled", false);
             scene.map_x = json_int_value(item, "map_x", 0);
             scene.map_y = json_int_value(item, "map_y", 0);
@@ -615,6 +616,7 @@ bool MudWorld::load_from_file(const std::string& path, std::string* error_messag
             scene.codex_entry_id = json_string_field(item, "codex_entry_id");
             load_string_map(json_object_get(item, "exits"), &scene.exits);
             load_string_array(json_object_get(item, "rumors"), &scene.rumors);
+            load_string_array(json_object_get(item, "loop_tags"), &scene.loop_tags);
             load_string_array(json_object_get(item, "npc_ids"), &scene.npc_ids);
             load_string_array(json_object_get(item, "monster_ids"), &scene.monster_ids);
             load_string_array(json_object_get(item, "shop_item_ids"), &scene.shop_item_ids);

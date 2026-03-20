@@ -106,6 +106,64 @@ void attach_mud_events_to_response(const std::vector<MudEventEnvelope>& events,
     response->set_next_event_id(latest_event_id);
 }
 
+std::vector<MudEventEnvelope> curate_bootstrap_events(const std::vector<MudEventEnvelope>& events,
+                                                      const std::string& account)
+{
+    constexpr size_t kMaxAccountScopedEvents = 24;
+    constexpr size_t kMaxGlobalUniqueEvents = 8;
+    constexpr int64_t kGlobalEventMaxAgeMs = 10LL * 60LL * 1000LL;
+
+    const int64_t current_now_ms = now_ms();
+    size_t account_scoped_count = 0;
+    size_t global_unique_count = 0;
+    std::unordered_set<std::string> seen_global_events;
+    std::vector<MudEventEnvelope> curated;
+    curated.reserve(events.size());
+
+    for(auto iter = events.rbegin(); iter != events.rend(); ++iter)
+    {
+        const auto& event = *iter;
+        const bool is_account_scoped = !event.target_account.empty() && event.target_account == account;
+        if(is_account_scoped)
+        {
+            if(account_scoped_count >= kMaxAccountScopedEvents)
+            {
+                continue;
+            }
+            curated.push_back(event);
+            ++account_scoped_count;
+            continue;
+        }
+
+        if(!event.target_account.empty())
+        {
+            continue;
+        }
+
+        if(event.server_time_ms > 0 && current_now_ms - event.server_time_ms > kGlobalEventMaxAgeMs)
+        {
+            continue;
+        }
+
+        const std::string dedupe_key = event.type + "\n" + event.title + "\n" + event.content;
+        if(!seen_global_events.insert(dedupe_key).second)
+        {
+            continue;
+        }
+
+        if(global_unique_count >= kMaxGlobalUniqueEvents)
+        {
+            continue;
+        }
+
+        curated.push_back(event);
+        ++global_unique_count;
+    }
+
+    std::reverse(curated.begin(), curated.end());
+    return curated;
+}
+
 std::pair<std::string, std::string> next_world_event_text(int64_t now_ms, int interval_sec)
 {
     static const std::vector<std::pair<std::string, std::string>> kWorldEvents = {
@@ -914,7 +972,9 @@ coro_task_t GameService::bootstrap_async(evhttp_request* request)
                                            m_config.redis.op_timeout_ms) &&
                event_result.success)
             {
-                attach_mud_events_to_response(event_result.events, event_result.latest_event_id, &response);
+                attach_mud_events_to_response(curate_bootstrap_events(event_result.events, account),
+                                              event_result.latest_event_id,
+                                              &response);
             }
         }
     }

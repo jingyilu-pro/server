@@ -10,6 +10,7 @@ type RankingType = 'realm' | 'wealth' | 'combat' | 'alchemy' | 'travel' | 'bount
 type CommandCategoryId =
   | 'social'
   | 'explore'
+  | 'loops'
   | 'tasks'
   | 'combat'
   | 'spell'
@@ -170,7 +171,7 @@ const narrativeQuestOrder: Record<string, number> = {
   qixuan_stream_note: 1,
   qixuan_herb: 1,
   mofu_guest_token: 1,
-  ruins_old_map: 2,
+  ruins_old_map: 4,
   fair_rumor_packet: 2,
   tainan_snake: 2,
   tainan_array_flag: 2,
@@ -197,6 +198,7 @@ const sceneFollowupHints: Record<string, string> = {
 const categoryLabels: Record<CommandCategoryId, string> = {
   social: '交流',
   explore: '探索',
+  loops: '循环',
   tasks: '任务',
   combat: '战斗',
   spell: '法术',
@@ -438,6 +440,27 @@ const commandCategories = computed(() => {
       })),
   ], commandCatalog)
 
+  const loops = mergeActionsWithCatalog('loops', [
+    {
+      key: 'board',
+      label: '公共委托',
+      detail: '查看当前区域可接的事务和循环。',
+      command: 'board',
+    },
+    {
+      key: 'wanted',
+      label: '悬赏目标',
+      detail: '查看当前区域的怪物、掉落和风险。',
+      command: 'wanted',
+    },
+    {
+      key: 'claim',
+      label: '领取奖励',
+      detail: '查看是否有阶段或身份奖励可领。',
+      command: 'claim',
+    },
+  ], commandCatalog)
+
   const consumables = inventory.value.filter((item) => ['consumable'].includes(String(item.itemType ?? '')))
   const combat = mergeActionsWithCatalog('combat', [
     ...monsters.value.map((monster) => ({
@@ -582,6 +605,7 @@ const commandCategories = computed(() => {
   return [
     { id: 'social' as const, label: categoryLabels.social, actions: social },
     { id: 'explore' as const, label: categoryLabels.explore, actions: explore },
+    { id: 'loops' as const, label: categoryLabels.loops, actions: loops },
     { id: 'tasks' as const, label: categoryLabels.tasks, actions: taskActions },
     { id: 'combat' as const, label: categoryLabels.combat, actions: combat },
     { id: 'spell' as const, label: categoryLabels.spell, actions: spell },
@@ -1121,6 +1145,14 @@ const sceneMissionText = computed(() => {
     return `当前主线：${String(activeQuest.title)}，进度 ${String(activeQuest.progress ?? 0)} / ${String(activeQuest.target ?? 0)}。`
   }
 
+  const localBoardEntries = ((scene.value.localBoardEntries as Record<string, any>[] | undefined) ?? []).filter((entry) =>
+    String(entry.title ?? '').trim(),
+  )
+  if (localBoardEntries.length > 0) {
+    const firstEntry = localBoardEntries[0]
+    return `当前推荐：${String(firstEntry.title ?? '循环')}。${String(firstEntry.summary ?? '')}`
+  }
+
   const questOffer = (sceneQuestOffers[currentSceneId.value] ?? []).find(
     (quest) => !quests.value.some((item) => String(item.questId ?? '') === quest.id),
   )
@@ -1137,7 +1169,7 @@ const sceneMissionText = computed(() => {
     return '先在此地观察局势，再与场景人物交谈梳理后续线索。'
   }
 
-  return '多与场景人物交谈，寻找下一段机缘。'
+  return `多与场景人物交谈，优先尝试「${String(player.value.recommendedLoop ?? '采药炼丹')}」循环。`
 })
 
 const sceneDisplayTitle = computed(() => {
@@ -1194,6 +1226,11 @@ const quickStats = computed(() => [
     label: '修为',
     value: String(player.value.cultivation?.exp ?? 0),
   },
+  {
+    key: 'stage',
+    label: '阶段',
+    value: String(player.value.stageLabel ?? '启程'),
+  },
 ])
 
 const infoOverview = computed(() => [
@@ -1217,9 +1254,14 @@ const infoOverview = computed(() => [
     label: '背包',
     value: `${inventory.value.length} 格`,
   },
+  {
+    key: 'loop',
+    label: '推荐',
+    value: String(player.value.recommendedLoop ?? '采药炼丹'),
+  },
 ])
 
-const orientationTiles = computed<OrientationTile[]>(() => {
+const orientationLayout = computed(() => {
   const slotDirections: Array<{
     slot: OrientationTile['slot']
     directions: string[]
@@ -1240,11 +1282,15 @@ const orientationTiles = computed<OrientationTile[]>(() => {
       command: 'look',
     },
   ]
+  const consumedExitKeys = new Set<string>()
 
   slotDirections.forEach((slotConfig) => {
-    const exit = exits.value.find((item) => slotConfig.directions.includes(String(item.direction ?? '')))
+    const exit = slotConfig.directions
+      .map((direction) => exits.value.find((item) => String(item.direction ?? '') === direction))
+      .find((item): item is (typeof exits.value)[number] => Boolean(item))
     if (exit) {
       const direction = String(exit.direction ?? '')
+      consumedExitKeys.add(`${direction}:${String(exit.targetSceneId ?? '')}`)
       tiles.push({
         key: `orientation-${slotConfig.slot}-${direction}`,
         slot: slotConfig.slot,
@@ -1264,12 +1310,17 @@ const orientationTiles = computed<OrientationTile[]>(() => {
     })
   })
 
-  return tiles
+  return {
+    tiles,
+    extraExits: exits.value.filter(
+      (item) => !consumedExitKeys.has(`${String(item.direction ?? '')}:${String(item.targetSceneId ?? '')}`),
+    ),
+  }
 })
 
-const orientationExtraExits = computed(() =>
-  exits.value.filter((item) => !['north', 'south', 'east', 'west', 'up', 'down'].includes(String(item.direction ?? ''))),
-)
+const orientationTiles = computed(() => orientationLayout.value.tiles)
+
+const orientationExtraExits = computed(() => orientationLayout.value.extraExits)
 
 function setError(error: unknown) {
   store.error = error instanceof Error ? error.message : '发生未知错误'
@@ -1555,6 +1606,10 @@ function buildSceneSnapshotLines() {
   const regionName = String(scene.value.regionName ?? '').trim()
   const sceneName = String(scene.value.sceneName ?? '').trim()
   const sceneDescription = String(scene.value.description ?? '').trim()
+  const roomLayer = String(scene.value.roomLayer ?? '').trim()
+  const loopTags = ((scene.value.loopTags as string[] | undefined) ?? []).map((item) => String(item).trim()).filter(Boolean)
+  const resourceRefreshSummary = String(scene.value.resourceRefreshSummary ?? '').trim()
+  const localBoardEntries = ((scene.value.localBoardEntries as Record<string, any>[] | undefined) ?? []).slice(0, 3)
 
   if (regionName || sceneName) {
     lines.push({
@@ -1562,6 +1617,15 @@ function buildSceneSnapshotLines() {
       tag: '场景',
       text: [regionName, sceneName].filter(Boolean).join(' · '),
       tone: 'system',
+    })
+  }
+
+  if (roomLayer || loopTags.length > 0) {
+    lines.push({
+      key: `scene-layer-${currentSceneId.value}-${mainTimelineSequence + 1}`,
+      tag: '阶段',
+      text: [roomLayer, loopTags.length > 0 ? `循环：${loopTags.join('、')}` : ''].filter(Boolean).join(' · '),
+      tone: 'hint',
     })
   }
 
@@ -1646,6 +1710,24 @@ function buildSceneSnapshotLines() {
     })
   }
 
+  if (resourceRefreshSummary) {
+    lines.push({
+      key: `scene-refresh-${currentSceneId.value}-${mainTimelineSequence + 1}`,
+      tag: '资源',
+      text: resourceRefreshSummary,
+      tone: 'hint',
+    })
+  }
+
+  localBoardEntries.forEach((entry, index) => {
+    lines.push({
+      key: `scene-board-${currentSceneId.value}-${mainTimelineSequence + index + 1}`,
+      tag: '委托',
+      text: `${String(entry.title ?? '事务')}：${String(entry.summary ?? '')}`,
+      tone: 'quest',
+    })
+  })
+
   return lines
 }
 
@@ -1713,6 +1795,38 @@ function buildResultTimelineLines(result: Record<string, any>) {
       tag: '手册',
       text: `解锁资料：${String(entry.title ?? entry.entryId ?? '未知条目')}。`,
       tone: 'hint',
+    })
+  })
+
+  ;((result.panels as Record<string, any>[] | undefined) ?? []).slice(0, 2).forEach((panel, panelIndex) => {
+    const panelTitle = String(panel.title ?? panel.panelId ?? '结果面板').trim()
+    const panelSummary = String(panel.summary ?? '').trim()
+    if (panelSummary) {
+      lines.push({
+        key: `result-panel-summary-${panelIndex}-${mainTimelineSequence + 1}`,
+        tag: panelTitle,
+        text: panelSummary,
+        tone: 'system',
+      })
+    }
+
+    ;((panel.entries as Record<string, any>[] | undefined) ?? []).slice(0, 4).forEach((entry, entryIndex) => {
+      const title = String(entry.title ?? '条目').trim()
+      const summary = String(entry.summary ?? '').trim()
+      const status = String(entry.status ?? '').trim()
+      const reward = String(entry.rewardSummary ?? '').trim()
+      const text = [title, status ? `(${status})` : '', summary, reward ? `奖励：${reward}` : '']
+        .filter(Boolean)
+        .join(' ')
+      if (!text) {
+        return
+      }
+      lines.push({
+        key: `result-panel-entry-${panelIndex}-${entryIndex}-${mainTimelineSequence + 1}`,
+        tag: panelTitle,
+        text,
+        tone: 'hint',
+      })
     })
   })
 

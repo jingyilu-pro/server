@@ -140,7 +140,32 @@ int flag_int_value(const MudPlayerState& player, const std::string& key, int def
     return default_value;
 }
 
+int64_t flag_int64_value(const MudPlayerState& player, const std::string& key, int64_t default_value)
+{
+    if(auto iter = player.flags.find(key); iter != player.flags.end())
+    {
+        try
+        {
+            return std::stoll(iter->second);
+        }
+        catch(...)
+        {
+            return default_value;
+        }
+    }
+    return default_value;
+}
+
 void set_flag_int(MudPlayerState* player, const std::string& key, int value)
+{
+    if(player == nullptr || key.empty())
+    {
+        return;
+    }
+    player->flags[key] = std::to_string(value);
+}
+
+void set_flag_int64(MudPlayerState* player, const std::string& key, int64_t value)
 {
     if(player == nullptr || key.empty())
     {
@@ -173,6 +198,12 @@ bool quest_key_matches(const MudQuestConfig& quest, const std::string& normalize
 {
     return normalized_key.empty() || mud_to_lower_ascii(quest.quest_id) == normalized_key ||
            mud_to_lower_ascii(quest.title) == normalized_key;
+}
+
+bool has_loop_tag(const MudSceneConfig* scene, const std::string& tag)
+{
+    return scene != nullptr &&
+           std::find(scene->loop_tags.begin(), scene->loop_tags.end(), tag) != scene->loop_tags.end();
 }
 
 } // namespace
@@ -295,6 +326,10 @@ MudPlayerState MudGameRuntime::make_default_player(const std::string& account,
     {
         player.recipes.push_back(MudRecipeState{starter_recipe_id, 1, 0, true});
     }
+    set_flag_int64(&player, "created_at_s", mud_now_ms() / 1000);
+    set_flag_int(&player, "foundation_qihai", 0);
+    set_flag_int(&player, "loose_reputation", 0);
+    set_flag_int64(&player, "pvp_opt_in_until_s", 0);
     normalize_player_state(&player);
     MudCommandExecution unlocks;
     unlock_codex_by_trigger(&player, "enter_scene", player.location_scene_id, &unlocks);
@@ -395,6 +430,69 @@ void MudGameRuntime::fill_combat_attributes(const MudCombatAttributeState& state
     output->set_resist_pierce(state.resist_pierce);
     output->set_resist_slash(state.resist_slash);
     output->set_resist_blunt(state.resist_blunt);
+}
+
+void MudGameRuntime::fill_summary_entry(const MudSummaryEntry& entry,
+                                        mud::SummaryEntry* output) const
+{
+    if(output == nullptr)
+    {
+        return;
+    }
+    output->set_entry_id(entry.entry_id);
+    output->set_title(entry.title);
+    output->set_summary(entry.summary);
+    output->set_status(entry.status);
+    output->set_category(entry.category);
+    output->set_command(entry.command);
+    output->set_location_hint(entry.location_hint);
+    output->set_reward_summary(entry.reward_summary);
+}
+
+void MudGameRuntime::fill_structured_panel(const MudStructuredPanelState& panel,
+                                           mud::StructuredPanel* output) const
+{
+    if(output == nullptr)
+    {
+        return;
+    }
+    output->set_panel_id(panel.panel_id);
+    output->set_title(panel.title);
+    output->set_summary(panel.summary);
+    output->clear_entries();
+    for(const auto& entry : panel.entries)
+    {
+        fill_summary_entry(entry, output->add_entries());
+    }
+}
+
+void MudGameRuntime::fill_route_summary(const MudRouteSummaryState& route,
+                                        mud::RouteSummary* output) const
+{
+    if(output == nullptr)
+    {
+        return;
+    }
+    output->set_route_id(route.route_id);
+    output->set_title(route.title);
+    output->set_status(route.status);
+    output->set_summary(route.summary);
+    output->set_next_step(route.next_step);
+}
+
+void MudGameRuntime::fill_weekly_event_summary(const MudWeeklyEventSummaryState& event,
+                                               mud::WeeklyEventSummary* output) const
+{
+    if(output == nullptr)
+    {
+        return;
+    }
+    output->set_event_id(event.event_id);
+    output->set_title(event.title);
+    output->set_summary(event.summary);
+    output->set_risk_level(event.risk_level);
+    output->set_location_hint(event.location_hint);
+    output->set_command_hint(event.command_hint);
 }
 
 void MudGameRuntime::sync_origin_from_world(MudPlayerState* player) const
@@ -589,6 +687,14 @@ bool MudGameRuntime::normalize_player_state(MudPlayerState* player) const
     {
         set_flag_int(player, "current_sta", player->status_attributes.sta);
     }
+    if(player->flags.find("created_at_s") == player->flags.end())
+    {
+        set_flag_int64(player, "created_at_s", 1);
+    }
+    if(player->flags.find("pvp_opt_in_until_s") == player->flags.end())
+    {
+        set_flag_int64(player, "pvp_opt_in_until_s", 0);
+    }
     return before_origin_id != player->origin_id || before_background_id != player->background_id ||
            before_hp != player->hp;
 }
@@ -745,6 +851,11 @@ void MudGameRuntime::fill_player_snapshot(const MudPlayerState& player,
     snapshot->add_known_commands("rumor");
     snapshot->add_known_commands("who");
     snapshot->add_known_commands("score");
+    snapshot->add_known_commands("board");
+    snapshot->add_known_commands("duty");
+    snapshot->add_known_commands("wanted");
+    snapshot->add_known_commands("travel");
+    snapshot->add_known_commands("claim [id]");
     snapshot->add_known_commands("tasks");
     snapshot->add_known_commands("skills");
     snapshot->add_known_commands("spells");
@@ -766,6 +877,7 @@ void MudGameRuntime::fill_player_snapshot(const MudPlayerState& player,
     snapshot->add_known_commands("codex <category> [entry]");
     snapshot->add_known_commands("buy <item>");
     snapshot->add_known_commands("sell <item>");
+    snapshot->add_known_commands("contribute <item>");
     snapshot->add_known_commands("join <sect>");
     snapshot->add_known_commands("team create|join|info|leave");
     snapshot->add_known_commands("event");
@@ -792,6 +904,25 @@ void MudGameRuntime::fill_player_snapshot(const MudPlayerState& player,
     for(const auto& title : titles_for_player(player))
     {
         snapshot->add_titles(title);
+    }
+    snapshot->set_stage_label(stage_label_for_player(player));
+    snapshot->set_newbie_protected(has_newbie_protection(player));
+    snapshot->set_newbie_protection_summary(newbie_protection_summary_for_player(player));
+    snapshot->set_recommended_loop(recommended_loop_for_player(player));
+    snapshot->clear_route_summaries();
+    for(const auto& route : route_summaries_for_player(player))
+    {
+        fill_route_summary(route, snapshot->add_route_summaries());
+    }
+    snapshot->clear_weekly_events();
+    for(const auto& event : weekly_events_for_player(player))
+    {
+        fill_weekly_event_summary(event, snapshot->add_weekly_events());
+    }
+    snapshot->clear_unlocked_route_ids();
+    for(const auto& route_id : unlocked_routes_for_player(player))
+    {
+        snapshot->add_unlocked_route_ids(route_id);
     }
 
     snapshot->clear_skills();
@@ -903,6 +1034,7 @@ void MudGameRuntime::fill_scene_snapshot(const MudPlayerState& player,
     snapshot->set_risk_level(scene->risk_level);
     snapshot->set_landmark(scene->landmark);
     snapshot->set_pvp_enabled(scene->pvp_enabled);
+    snapshot->set_room_layer(scene->room_layer);
     snapshot->clear_exits();
     snapshot->clear_npcs();
     snapshot->clear_monsters();
@@ -914,6 +1046,8 @@ void MudGameRuntime::fill_scene_snapshot(const MudPlayerState& player,
     snapshot->clear_hazards();
     snapshot->clear_related_codex_entry_ids();
     snapshot->clear_rumors();
+    snapshot->clear_loop_tags();
+    snapshot->clear_local_board_entries();
 
     for(const auto& entry : scene->exits)
     {
@@ -1035,6 +1169,15 @@ void MudGameRuntime::fill_scene_snapshot(const MudPlayerState& player,
     {
         snapshot->add_rumors(rumor);
     }
+    for(const auto& tag : scene->loop_tags)
+    {
+        snapshot->add_loop_tags(tag);
+    }
+    for(const auto& entry : board_entries_for_player(player, scene))
+    {
+        fill_summary_entry(entry, snapshot->add_local_board_entries());
+    }
+    snapshot->set_resource_refresh_summary(resource_refresh_summary_for_scene(player, *scene));
 
     std::vector<const OnlinePresenceState*> visible_players;
     visible_players.reserve(m_online_presence.size());
@@ -1215,6 +1358,12 @@ void MudGameRuntime::build_bootstrap_response(const std::string& account,
         preview.account = account;
         preview.location_scene_id = m_world->defaults().starting_scene_id;
         fill_scene_snapshot(preview, response->mutable_scene());
+        response->set_stage_label("凡躯启程");
+        response->set_newbie_protected(true);
+        response->set_newbie_protection_summary("新角色处于新手保护期，可先观察世界、接引导事务、熟悉六大循环。");
+        response->set_recommended_loop("先在七玄门或太南散修坊接第一条事务，尽快形成一条稳定收益循环。");
+        response->clear_route_summaries();
+        response->clear_weekly_events();
         http_code_message::gateway::set_code_message(response,
                                                      http_code_message::gateway::code::kSuccess,
                                                      "character not found");
@@ -1245,6 +1394,7 @@ void MudGameRuntime::build_bootstrap_response(const std::string& account,
     }
     fill_player_snapshot(normalized_player, response->mutable_player());
     fill_scene_snapshot(normalized_player, response->mutable_scene());
+    fill_gameplay_guidance(normalized_player, response);
     auto recent_events = recent_events_for_account(account, 50);
     add_events_to_response(recent_events, response->mutable_events());
     http_code_message::gateway::set_code_message(response,
@@ -1344,6 +1494,11 @@ void MudGameRuntime::build_command_response(const MudPlayerState& player,
         {
             fill_codex_summary(player, *entry, result->add_unlocked_codex_entries());
         }
+    }
+    result->clear_panels();
+    for(const auto& panel : execution.panels)
+    {
+        fill_structured_panel(panel, result->add_panels());
     }
 
     fill_player_snapshot(player, response->mutable_player());
@@ -1702,11 +1857,14 @@ void MudGameRuntime::fill_command_catalog(const MudPlayerState&,
         {"map", "explore", "查看地图", "map", "查看当前世界主图。", "command", "", true},
         {"rumor", "explore", "打听传闻", "rumor", "查看当前房间与天地流言。", "command", "", true},
         {"who", "explore", "在线人物", "who", "查看附近与在线玩家。", "command", "", true},
+        {"travel", "explore", "路引航路", "travel", "查看已开路引、可走方向与下一站建议。", "command", "", true},
         {"inspect", "tasks", "查看目标", "inspect ", "查看人物、怪物、物件详情。", "command", "", false},
         {"talk", "tasks", "交谈人物", "talk ", "与 NPC 交谈。", "command", "", false},
         {"accept", "tasks", "接取任务", "accept ", "接取指定任务。", "command", "", false},
         {"submit", "tasks", "提交任务", "submit ", "提交已完成任务。", "command", "", false},
         {"tasks", "tasks", "任务列表", "tasks", "查看当前接取的任务。", "command", "", true},
+        {"board", "loops", "公共委托", "board", "查看当前区域可接的循环与委托。", "command", "", true},
+        {"wanted", "loops", "悬赏目标", "wanted", "查看当前房间和周边的悬赏目标。", "command", "", true},
         {"fight", "combat", "攻击目标", "fight ", "与妖兽或敌对目标交战。", "command", "", false},
         {"challenge", "combat", "切磋挑战", "challenge ", "在可冲突区挑战同场景玩家。", "command", "", false},
         {"flee", "combat", "抽身退后", "flee", "暂时脱离战斗节奏。", "command", "", true},
@@ -1725,6 +1883,9 @@ void MudGameRuntime::fill_command_catalog(const MudPlayerState&,
         {"trade", "trade", "交易请求", "trade ", "向同场景玩家发起交易请求。", "command", "", false},
         {"join", "group", "拜入势力", "join ", "加入当前可引荐的门派。", "command", "", false},
         {"family", "group", "身份门派", "family", "查看散修/门派身份与阶位。", "command", "", true},
+        {"duty", "group", "身份事务", "duty", "查看当前散修或门派的成长事务。", "command", "", true},
+        {"contribute", "group", "上交贡献", "contribute ", "上交当前背包材料，换取贡献或游历声望。", "command", "", false},
+        {"claim", "group", "领取奖励", "claim ", "领取身份、阶段或周循环奖励。", "command", "", false},
         {"team", "group", "队伍操作", "team ", "创建、加入或管理队伍。", "command", "", false},
         {"follow", "group", "跟随目标", "follow ", "标记要同行的目标。", "command", "", false},
         {"guard", "group", "护卫目标", "guard ", "标记要照应的目标。", "command", "", false},
@@ -1747,6 +1908,566 @@ void MudGameRuntime::fill_command_catalog(const MudPlayerState&,
     }
 }
 
+void MudGameRuntime::fill_gameplay_guidance(const MudPlayerState& player,
+                                            mud::BootstrapResponse* response) const
+{
+    if(response == nullptr)
+    {
+        return;
+    }
+    response->set_stage_label(stage_label_for_player(player));
+    response->set_newbie_protected(has_newbie_protection(player));
+    response->set_newbie_protection_summary(newbie_protection_summary_for_player(player));
+    response->set_recommended_loop(recommended_loop_for_player(player));
+    response->clear_route_summaries();
+    for(const auto& route : route_summaries_for_player(player))
+    {
+        fill_route_summary(route, response->add_route_summaries());
+    }
+    response->clear_weekly_events();
+    for(const auto& event : weekly_events_for_player(player))
+    {
+        fill_weekly_event_summary(event, response->add_weekly_events());
+    }
+}
+
+std::vector<std::string> MudGameRuntime::unlocked_routes_for_player(const MudPlayerState& player) const
+{
+    std::vector<std::string> routes{"loose_cultivator"};
+    const auto* scene = current_scene(player);
+    const auto has_completed = [&](const std::string& quest_id) {
+        return std::any_of(player.quests.begin(), player.quests.end(), [&](const MudQuestState& quest) {
+            return quest.quest_id == quest_id && quest.status == "completed";
+        });
+    };
+    const auto add_route = [&](const std::string& route_id) {
+        if(std::find(routes.begin(), routes.end(), route_id) == routes.end())
+        {
+            routes.push_back(route_id);
+        }
+    };
+
+    if(player.sect_id == "qixuan_gate" || has_completed("backslope_wolf_skin") || has_completed("qixuan_herb") ||
+       (scene != nullptr && scene->region_name == "七玄门"))
+    {
+        add_route("qixuan_gate");
+    }
+    if(player.sect_id == "huangfeng_valley" || has_completed("huangfeng_letter") ||
+       has_completed("medicine_moss") || (scene != nullptr && scene->region_name.find("黄枫谷") != std::string::npos))
+    {
+        add_route("huangfeng_valley");
+    }
+    if(player.sect_id == "spirit_beast_mountain" || has_completed("spirit_feed_task") ||
+       has_completed("spirit_bug_task") ||
+       (scene != nullptr && scene->region_name.find("灵兽山") != std::string::npos))
+    {
+        add_route("spirit_beast_mountain");
+    }
+    return routes;
+}
+
+std::string MudGameRuntime::stage_label_for_player(const MudPlayerState& player) const
+{
+    if(player.realm_stage >= 6)
+    {
+        return "筑基初成";
+    }
+    if(player.realm_stage >= 5)
+    {
+        return "筑基准备";
+    }
+    if(player.realm_stage >= 4)
+    {
+        return "炼气冲刺";
+    }
+    if(player.realm_stage >= 2)
+    {
+        return "炼气稳固";
+    }
+    if(player.realm_stage >= 1)
+    {
+        return "炼气启程";
+    }
+    return "凡躯启程";
+}
+
+bool MudGameRuntime::has_newbie_protection(const MudPlayerState& player) const
+{
+    const auto now_s = mud_now_ms() / 1000;
+    const auto opt_in_until_s = flag_int64_value(player, "pvp_opt_in_until_s", 0);
+    if(opt_in_until_s > now_s)
+    {
+        return false;
+    }
+    const auto created_at_s = flag_int64_value(player, "created_at_s", 1);
+    return (created_at_s > 1 && now_s - created_at_s < 3 * 60 * 60) || player.realm_stage < 4;
+}
+
+std::string MudGameRuntime::newbie_protection_summary_for_player(const MudPlayerState& player) const
+{
+    if(has_newbie_protection(player))
+    {
+        return "你仍处于新手保护期。三小时内或未到炼气中期前，在冲突区不会被其他玩家主动挑战。";
+    }
+    return "你的新手保护已解除，进入冲突区时请留意切磋与资源争夺。";
+}
+
+std::vector<MudRouteSummaryState> MudGameRuntime::route_summaries_for_player(const MudPlayerState& player) const
+{
+    const auto unlocked_routes = unlocked_routes_for_player(player);
+    const auto route_unlocked = [&](const std::string& route_id) {
+        return std::find(unlocked_routes.begin(), unlocked_routes.end(), route_id) != unlocked_routes.end();
+    };
+
+    const int loose_rep = flag_int_value(player, "loose_reputation", 0);
+    std::string loose_rank = "行脚";
+    if(loose_rep >= 720)
+    {
+        loose_rank = "洞主";
+    }
+    else if(loose_rep >= 420)
+    {
+        loose_rank = "采真";
+    }
+    else if(loose_rep >= 180)
+    {
+        loose_rank = "游方";
+    }
+
+    std::vector<MudRouteSummaryState> routes;
+    routes.push_back({"loose_cultivator",
+                      "散修",
+                      player.sect_id.empty() ? ("当前阶位：" + loose_rank) : "仍可游历",
+                      "散修路线强调采药、买卖、探路与公共委托，可不入门派一路打磨到筑基。",
+                      player.sect_id.empty() ? "多做 board / travel / contribute，先把游历声望推到下一阶。" : "即使已入门派，也能继续经营散修委托与坊市关系。 "});
+    routes.push_back({"qixuan_gate",
+                      "七玄门",
+                      player.sect_id == "qixuan_gate" ? "已加入" : (route_unlocked("qixuan_gate") ? "已接触" : "待接触"),
+                      "七玄门偏凡俗江湖与新手历练，适合先打基础、熟路子、做护送与巡山。",
+                      player.sect_id == "qixuan_gate" ? "继续做 duty 里的门内事务，稳步积累贡献。" : "先在七玄门和嘉元城完成引导事务，再考虑 join qixuan_gate。"});
+    routes.push_back({"huangfeng_valley",
+                      "黄枫谷",
+                      player.sect_id == "huangfeng_valley" ? "已加入" : (route_unlocked("huangfeng_valley") ? "可转入" : "待接触"),
+                      "黄枫谷提供药园、典籍与筑基散路线，是炼气后期转筑基的主力正道路线。",
+                      player.sect_id == "huangfeng_valley" ? "优先做药园和外务事务，准备筑基所需的贡献与材料。" : "去黄枫谷外营接黄枫谷羽信与后续事务。"});
+    routes.push_back({"spirit_beast_mountain",
+                      "灵兽山",
+                      player.sect_id == "spirit_beast_mountain" ? "已加入" : (route_unlocked("spirit_beast_mountain") ? "可转入" : "待接触"),
+                      "灵兽山更偏向灵兽、灵虫、采药和喂养循环，收益稳定，适合长期经营。",
+                      player.sect_id == "spirit_beast_mountain" ? "继续处理草料、灵虫和外岭差遣，稳住身份与材料来源。" : "先在灵兽山外门完成草料差与灵虫事务。 "});
+    return routes;
+}
+
+std::vector<MudWeeklyEventSummaryState> MudGameRuntime::weekly_events_for_player(const MudPlayerState&) const
+{
+    return {
+        {"blood_forbidden_open", "血禁开禁", "血色禁地每周会出现一次资源与妖兽同时活跃的窗口，单人可入，组队更稳。", "高危", "血禁石门、血雾沼泽、血兰谷", "wanted / board"},
+        {"outer_port_tide", "外港海潮", "天南外港和乱星近海会在潮期迎来海材暴增，适合跑海猎与采珠。", "中危", "天南外港、群岛小埠、听潮坛", "travel / board"},
+        {"black_reef_mining", "黑礁争采", "黑礁争采会刷新稀缺海材，也更容易引发玩家间的争夺与切磋。", "冲突", "黑礁、风暴航道、群岛礁路", "travel / wanted"}
+    };
+}
+
+std::string MudGameRuntime::recommended_loop_for_player(const MudPlayerState& player) const
+{
+    const auto* scene = current_scene(player);
+    if(player.realm_stage >= 5 && inventory_count(player, "foundation_pill") <= 0)
+    {
+        return "残区探禁";
+    }
+    if(player.sect_id.empty() && player.realm_stage < 3)
+    {
+        return has_loop_tag(scene, "采药炼丹") ? "采药炼丹" : "护送跑商";
+    }
+    if(!player.sect_id.empty() && has_loop_tag(scene, "门派事务"))
+    {
+        return "门派事务";
+    }
+    if(has_loop_tag(scene, "海猎采珠"))
+    {
+        return "海猎采珠";
+    }
+    if(has_loop_tag(scene, "巡山悬赏"))
+    {
+        return "巡山悬赏";
+    }
+    if(scene != nullptr && !scene->loop_tags.empty())
+    {
+        return scene->loop_tags.front();
+    }
+    return "采药炼丹";
+}
+
+std::vector<MudSummaryEntry> MudGameRuntime::board_entries_for_player(const MudPlayerState& player,
+                                                                      const MudSceneConfig* scene) const
+{
+    std::vector<MudSummaryEntry> entries;
+    if(scene == nullptr)
+    {
+        return entries;
+    }
+
+    const auto push_entry = [&](MudSummaryEntry entry) {
+        if(entry.entry_id.empty())
+        {
+            return;
+        }
+        if(std::any_of(entries.begin(), entries.end(), [&](const MudSummaryEntry& current) {
+               return current.entry_id == entry.entry_id;
+           }))
+        {
+            return;
+        }
+        entries.push_back(std::move(entry));
+    };
+
+    for(const auto& npc_id : scene->npc_ids)
+    {
+        const auto* npc = m_world->find_npc(npc_id);
+        if(npc == nullptr)
+        {
+            continue;
+        }
+        for(const auto& quest_id : npc->quest_ids)
+        {
+            const auto* quest = m_world->find_quest(quest_id);
+            if(quest == nullptr)
+            {
+                continue;
+            }
+            const auto* quest_state = find_quest_state(player, quest_id);
+            std::string status = "可接";
+            std::string command = "accept " + quest_id;
+            std::string summary = quest->description;
+            if(quest_state != nullptr)
+            {
+                if(quest_state->status == "completed")
+                {
+                    continue;
+                }
+                if(quest_state->status == "active")
+                {
+                    if(quest_state->progress >= quest->required_item_count)
+                    {
+                        status = "可交";
+                        command = "submit " + quest_id;
+                        summary = "材料已齐，可去交付任务。";
+                    }
+                    else
+                    {
+                        status = "进行中";
+                        summary = "当前进度 " + std::to_string(quest_state->progress) + "/" +
+                                  std::to_string(quest->required_item_count) + "。";
+                    }
+                }
+            }
+            push_entry({quest_id,
+                        quest->title,
+                        summary,
+                        status,
+                        "委托",
+                        command,
+                        npc->name,
+                        "灵石 " + std::to_string(quest->reward_spirit_stone) + " / 修为 " + std::to_string(quest->reward_exp)});
+        }
+    }
+
+    if(has_loop_tag(scene, "采药炼丹") && !scene->resource_node_ids.empty())
+    {
+        const auto* node = m_world->find_resource_node(scene->resource_node_ids.front());
+        if(node != nullptr)
+        {
+            push_entry({"loop_gather_" + node->node_id,
+                        "采药炼丹",
+                        "低风险起步循环，适合积累材料、丹药和基础收入。",
+                        "5-8 分钟",
+                        "循环",
+                        "harvest " + node->node_id,
+                        scene->name,
+                        item_with_count_label(m_world.get(), node->drop_item_id, node->drop_item_count)});
+        }
+    }
+    if(has_loop_tag(scene, "护送跑商"))
+    {
+        push_entry({"loop_trade_" + scene->scene_id,
+                    "护送跑商",
+                    "沿官道、驿站和港口跑线，稳定积累灵石、路引和图鉴见闻。",
+                    "8-12 分钟",
+                    "循环",
+                    "travel",
+                    scene->region_name,
+                    "灵石 / 游历"});
+    }
+    if(has_loop_tag(scene, "巡山悬赏") && !scene->monster_ids.empty())
+    {
+        if(const auto* monster = m_world->find_monster(scene->monster_ids.front()); monster != nullptr)
+        {
+            push_entry({"loop_bounty_" + monster->monster_id,
+                        "巡山悬赏",
+                        "以附近妖兽为目标，顺手积累修为、掉落和赏格。",
+                        "6-10 分钟",
+                        "循环",
+                        "fight " + monster->name,
+                        scene->name,
+                        "修为 " + std::to_string(monster->reward_exp)});
+        }
+    }
+    if(has_loop_tag(scene, "门派事务"))
+    {
+        push_entry({"loop_duty_" + scene->scene_id,
+                    "门派事务",
+                    "当前区域有身份相关事务可做，适合积累贡献与晋阶资历。",
+                    "6-10 分钟",
+                    "循环",
+                    "duty",
+                    scene->region_name,
+                    "贡献 / 资历"});
+    }
+    if(has_loop_tag(scene, "海猎采珠"))
+    {
+        push_entry({"loop_sea_" + scene->scene_id,
+                    "海猎采珠",
+                    "海猎适合中后期稳定刷海材、药引和稀缺海货。",
+                    "10-15 分钟",
+                    "循环",
+                    "wanted",
+                    scene->region_name,
+                    "海材 / 药引"});
+    }
+    if(has_loop_tag(scene, "残区探禁"))
+    {
+        push_entry({"loop_ruin_" + scene->scene_id,
+                    "残区探禁",
+                    "高风险高收益循环，主要产出筑基准备材料和禁制见闻。",
+                    "12-20 分钟",
+                    "循环",
+                    "wanted",
+                    scene->region_name,
+                    "筑基材料 / 禁制条目"});
+    }
+
+    return entries;
+}
+
+std::vector<MudSummaryEntry> MudGameRuntime::duty_entries_for_player(const MudPlayerState& player,
+                                                                     const MudSceneConfig* scene) const
+{
+    std::vector<MudSummaryEntry> entries;
+    if(player.sect_id.empty())
+    {
+        const int loose_rep = flag_int_value(player, "loose_reputation", 0);
+        std::string current_rank = "行脚";
+        int next_threshold = 180;
+        std::string next_rank = "游方";
+        if(loose_rep >= 720)
+        {
+            current_rank = "洞主";
+            next_threshold = 720;
+            next_rank.clear();
+        }
+        else if(loose_rep >= 420)
+        {
+            current_rank = "采真";
+            next_threshold = 720;
+            next_rank = "洞主";
+        }
+        else if(loose_rep >= 180)
+        {
+            current_rank = "游方";
+            next_threshold = 420;
+            next_rank = "采真";
+        }
+        entries.push_back({"loose_rank",
+                           "散修阶位",
+                           "当前散修身份为「" + current_rank + "」。",
+                           "游历声望 " + std::to_string(loose_rep),
+                           "身份",
+                           "",
+                           "太南散修坊 / 各地坊市",
+                           next_rank.empty() ? "已达当前阶段上限" : ("下阶：" + next_rank + " 需声望 " + std::to_string(next_threshold))});
+        entries.push_back({"loose_board",
+                           "散修事务",
+                           "散修路线依赖公共委托、采药、跑商与探路来稳步滚动收益。",
+                           "推荐",
+                           "事务",
+                           "board",
+                           scene == nullptr ? "公共世界" : scene->region_name,
+                           "灵石 / 手册 / 声望"});
+        entries.push_back({"loose_claim",
+                           "阶段奖励",
+                           "若有阶段奖励可领，可在此统一领取补给与阶段支持。",
+                           "可检查",
+                           "事务",
+                           "claim",
+                           "当前角色",
+                           "补给 / 丹药 / 灵石"});
+        return entries;
+    }
+
+    const auto* sect = m_world->find_sect(player.sect_id);
+    const int64_t contribution = sect_contribution_for_player(player);
+    std::vector<std::string> ranks = sect == nullptr ? std::vector<std::string>{player.sect_rank}
+                                                     : (sect->rank_titles.empty() ? std::vector<std::string>{sect->rank_title}
+                                                                                  : sect->rank_titles);
+    std::vector<int64_t> thresholds{0, 180, 420, 900};
+    std::string next_rank;
+    int64_t next_threshold = 0;
+    for(size_t index = 0; index < ranks.size() && index < thresholds.size(); ++index)
+    {
+        if(player.sect_rank == ranks[index] && index + 1 < ranks.size() && index + 1 < thresholds.size())
+        {
+            next_rank = ranks[index + 1];
+            next_threshold = thresholds[index + 1];
+            break;
+        }
+    }
+    entries.push_back({"sect_rank",
+                       "门派阶位",
+                       "你当前在「" + player.sect_name + "」的身份为「" + player.sect_rank + "」。",
+                       "贡献 " + std::to_string(contribution),
+                       "身份",
+                       "",
+                       player.sect_name,
+                       next_rank.empty() ? "已到当前阶段上限" : ("下阶：" + next_rank + " 需贡献 " + std::to_string(next_threshold))});
+    entries.push_back({"sect_contribute",
+                       "上交贡献物",
+                       "把当前背包里值钱或对门内有用的材料上交，可加快晋阶。",
+                       "可执行",
+                       "事务",
+                       "contribute ",
+                       scene == nullptr ? player.sect_name : scene->name,
+                       "贡献 / 声望"});
+    entries.push_back({"sect_board",
+                       "门内事务",
+                       "继续处理药园、巡查、外务、喂养和悬赏，身份成长会更稳。",
+                       "推荐",
+                       "事务",
+                       "board",
+                       player.sect_name,
+                       "贡献 / 材料 / 筑基准备"});
+    return entries;
+}
+
+std::vector<MudSummaryEntry> MudGameRuntime::wanted_entries_for_player(const MudPlayerState& player,
+                                                                       const MudSceneConfig* scene) const
+{
+    std::vector<MudSummaryEntry> entries;
+    if(scene == nullptr)
+    {
+        return entries;
+    }
+    for(const auto& monster_id : scene->monster_ids)
+    {
+        const auto* monster = m_world->find_monster(monster_id);
+        if(monster == nullptr)
+        {
+            continue;
+        }
+        entries.push_back({monster->monster_id,
+                           monster->name,
+                           monster->description,
+                           scene->risk_level.empty() ? "目标" : scene->risk_level,
+                           "悬赏",
+                           "fight " + monster->name,
+                           scene->name,
+                           "修为 " + std::to_string(monster->reward_exp) + " / " +
+                               item_with_count_label(m_world.get(), monster->drop_item_id, monster->drop_item_count)});
+    }
+    if(entries.empty())
+    {
+        entries.push_back({"wanted_none",
+                           "暂无悬赏",
+                           "当前房间暂无明确悬赏目标，可先用 board 查看其他循环。",
+                           "空闲",
+                           "悬赏",
+                           "board",
+                           scene->region_name,
+                           ""});
+    }
+    return entries;
+}
+
+std::vector<MudSummaryEntry> MudGameRuntime::travel_entries_for_player(const MudPlayerState& player,
+                                                                       const MudSceneConfig* scene) const
+{
+    std::vector<MudSummaryEntry> entries;
+    if(scene != nullptr)
+    {
+        for(const auto& exit : scene->exits)
+        {
+            const auto* target = m_world->find_scene(exit.second);
+            entries.push_back({"travel_exit_" + exit.first,
+                               direction_display_name(exit.first),
+                               "沿当前道路前往下一处房间。",
+                               "当前可行",
+                               "路引",
+                               "go " + exit.first,
+                               target == nullptr ? exit.second : target->name,
+                               target == nullptr ? "" : target->region_name});
+        }
+    }
+    for(const auto& region : unlocked_regions_for_player(player))
+    {
+        entries.push_back({"travel_region_" + region,
+                           region,
+                           "你已接触此片区域，可沿当地路引继续深入。",
+                           "已开路",
+                           "路引",
+                           "",
+                           region,
+                           ""});
+    }
+    return entries;
+}
+
+std::vector<MudSummaryEntry> MudGameRuntime::claim_entries_for_player(const MudPlayerState& player) const
+{
+    std::vector<MudSummaryEntry> entries;
+    if(flag_int_value(player, "claim:starter_supplies", 0) == 0)
+    {
+        entries.push_back({"starter_supplies", "启程补给", "领取一份新手补给，帮助你更稳地跑完前期循环。", "可领取", "奖励", "claim starter_supplies", "当前角色", "小回气散 x2"});
+    }
+    if(player.realm_stage >= 3 && flag_int_value(player, "claim:steady_income", 0) == 0)
+    {
+        entries.push_back({"steady_income", "稳路资粮", "炼气中前期的稳定收益奖励，帮助你继续滚动循环。", "可领取", "奖励", "claim steady_income", "当前角色", "游方散 x2"});
+    }
+    if((sect_contribution_for_player(player) >= 260 || flag_int_value(player, "loose_reputation", 0) >= 260) &&
+       flag_int_value(player, "claim:identity_credit", 0) == 0)
+    {
+        entries.push_back({"identity_credit", "身份资历", "身份路线达到一个节点后，可领取额外灵石与事务支持。", "可领取", "奖励", "claim identity_credit", "当前角色", "灵石 120"});
+    }
+    if(player.realm_stage >= 5 && inventory_count(player, "foundation_pill") <= 0 &&
+       flag_int_value(player, "claim:foundation_support", 0) == 0)
+    {
+        entries.push_back({"foundation_support", "筑基支持", "炼气后期可领取一份筑基支持物资，用于最后冲刺。", "可领取", "奖励", "claim foundation_support", "当前角色", "筑基散 x1"});
+    }
+    return entries;
+}
+
+std::string MudGameRuntime::resource_refresh_summary_for_scene(const MudPlayerState& player,
+                                                               const MudSceneConfig& scene) const
+{
+    if(scene.resource_node_ids.empty())
+    {
+        return "此地暂无资源点刷新。";
+    }
+    const auto now = mud_now_ms();
+    int ready_count = 0;
+    for(const auto& node_id : scene.resource_node_ids)
+    {
+        const auto* node = m_world->find_resource_node(node_id);
+        if(node == nullptr)
+        {
+            continue;
+        }
+        const auto last_ms = flag_int64_value(player, "harvest:" + node->node_id, 0);
+        if(last_ms <= 0 || now - last_ms >= node->cooldown_ms)
+        {
+            ++ready_count;
+        }
+    }
+    return "资源点 " + std::to_string(scene.resource_node_ids.size()) + " 处，可采 " + std::to_string(ready_count) + " 处。";
+}
+
 void MudGameRuntime::maybe_emit_world_event()
 {
     const int64_t now = mud_now_ms();
@@ -1756,10 +2477,9 @@ void MudGameRuntime::maybe_emit_world_event()
     }
 
     static const std::vector<std::pair<std::string, std::string>> kWorldEvents = {
-        {"黄枫谷收徒", "黄枫谷外门今日开山，越国散修纷纷前往试灵根。"},
-        {"血色禁地异动", "血色禁地外围灵气暴涨，有修士称见到异草出世。"},
-        {"乱星海风暴", "乱星海近海突起风暴，数支采药小队请求同道支援。"},
-        {"虚天殿传闻", "天南坊间再起虚天殿消息，诸多宗门已派人暗中探查。"}
+        {"血禁开禁", "血色禁地本周灵禁短暂松动，单人可闯，组队更稳，血兰与虫材都更活跃。"},
+        {"外港海潮", "天南外港与乱星近海迎来大潮期，海灵藻、珠蚌和潮砂的收益同时抬升。"},
+        {"黑礁争采", "黑礁深处冒出新的稀缺矿材与海齿，收益极高，也更容易引发同道争夺。"}
     };
 
     if(kWorldEvents.empty())
@@ -1875,7 +2595,7 @@ std::string MudGameRuntime::progression_chapter_for_player(const MudPlayerState&
 
 int64_t MudGameRuntime::sect_contribution_for_player(const MudPlayerState& player) const
 {
-    int64_t contribution = 0;
+    int64_t contribution = std::max(0, flag_int_value(player, "manual_contribution", 0));
     for(const auto& quest_state : player.quests)
     {
         if(quest_state.status != "completed")
@@ -2202,6 +2922,26 @@ MudCommandExecution MudGameRuntime::execute_command(MudPlayerState* player,
     {
         return execute_score(*player);
     }
+    if(parsed.verb == "board")
+    {
+        return execute_board(*player);
+    }
+    if(parsed.verb == "duty")
+    {
+        return execute_duty(*player);
+    }
+    if(parsed.verb == "wanted")
+    {
+        return execute_wanted(*player);
+    }
+    if(parsed.verb == "travel")
+    {
+        return execute_travel(*player);
+    }
+    if(parsed.verb == "claim")
+    {
+        return execute_claim(player, parsed.args);
+    }
     if(parsed.verb == "tasks")
     {
         return execute_tasks(*player);
@@ -2285,6 +3025,10 @@ MudCommandExecution MudGameRuntime::execute_command(MudPlayerState* player,
     if(parsed.verb == "sell")
     {
         return execute_sell(player, parsed.args);
+    }
+    if(parsed.verb == "contribute")
+    {
+        return execute_contribute(player, parsed.args);
     }
     if(parsed.verb == "join")
     {
@@ -2683,6 +3427,13 @@ MudCommandExecution MudGameRuntime::execute_submit(MudPlayerState* player,
     quest_state->progress = quest->required_item_count;
     player->spirit_stone += quest->reward_spirit_stone;
     player->exp += quest->reward_exp;
+    if(player->sect_id.empty())
+    {
+        set_flag_int(player,
+                     "loose_reputation",
+                     flag_int_value(*player, "loose_reputation", 0) +
+                         std::max(18, quest->reward_spirit_stone / 2 + static_cast<int>(quest->reward_exp / 12)));
+    }
     if(!quest->reward_item_id.empty() && quest->reward_item_count > 0)
     {
         add_inventory_item(player, quest->reward_item_id, quest->reward_item_count, false);
@@ -2745,10 +3496,23 @@ MudCommandExecution MudGameRuntime::execute_fight(MudPlayerState* player,
         player->hp = std::max(1, player->hp - std::max(1, monster_damage / 2));
         player->exp += monster->reward_exp;
         player->spirit_stone += monster->reward_spirit_stone;
+        set_flag_int(player,
+                     "bounty_score",
+                     flag_int_value(*player, "bounty_score", 0) + std::max(1, monster->reward_spirit_stone / 40));
+        if(player->sect_id.empty())
+        {
+            set_flag_int(player,
+                         "loose_reputation",
+                         flag_int_value(*player, "loose_reputation", 0) + std::max(8, monster->reward_spirit_stone / 6));
+        }
         if(!monster->drop_item_id.empty() && monster->drop_item_count > 0)
         {
             add_inventory_item(player, monster->drop_item_id, monster->drop_item_count, false);
             unlock_codex_by_trigger(player, "obtain_item", monster->drop_item_id, &execution);
+            execution.hints.push_back("掉落入包：" +
+                                      item_with_count_label(m_world.get(),
+                                                            monster->drop_item_id,
+                                                            monster->drop_item_count));
         }
         refresh_quest_progress(player);
 
@@ -2851,6 +3615,10 @@ MudCommandExecution MudGameRuntime::execute_use(MudPlayerState* player,
         player->hp = std::min(player->max_hp, player->hp + item_config->hp_restore);
         player->exp += item_config->exp_gain;
         player->skill_level += item_config->skill_level_gain;
+        set_flag_int(player,
+                     "foundation_qihai",
+                     flag_int_value(*player, "foundation_qihai", 0) +
+                         std::max(6, item_config->exp_gain > 0 ? static_cast<int>(item_config->exp_gain / 6) : 8));
         remove_inventory_item(player, inventory_item.item_id, 1);
         refresh_quest_progress(player);
         execution.success = true;
@@ -2898,6 +3666,9 @@ MudCommandExecution MudGameRuntime::execute_practice(MudPlayerState* player,
 
     const int64_t gain = 20 + static_cast<int64_t>(player->skill_level) * 10;
     player->exp += gain;
+    set_flag_int(player,
+                 "foundation_qihai",
+                 flag_int_value(*player, "foundation_qihai", 0) + std::max(12, static_cast<int>(gain / 2)));
     if(player->exp / 100 > player->skill_level)
     {
         ++player->skill_level;
@@ -2933,6 +3704,31 @@ MudCommandExecution MudGameRuntime::execute_breakthrough(MudPlayerState* player)
         execution.summary = "当前修为不足，尚不能突破。";
         execution.hints.push_back("继续修炼「" + player->primary_skill + "」，或挑战附近妖兽积累突破火候。");
         return execution;
+    }
+
+    if(player->realm_stage >= 6)
+    {
+        execution.title = "境界封盘";
+        execution.summary = "当前阶段上限已锁定为筑基初期，后续更高境界暂未开放。";
+        return execution;
+    }
+
+    if(player->realm_stage >= 5)
+    {
+        const int qihai = flag_int_value(*player, "foundation_qihai", 0);
+        const int64_t identity_credit = player->sect_id.empty() ? flag_int_value(*player, "loose_reputation", 0)
+                                                                : sect_contribution_for_player(*player);
+        const bool has_material = inventory_count(*player, "foundation_pill") > 0;
+        if(qihai < 120 || identity_credit < 260 || !has_material)
+        {
+            execution.title = "筑基未备";
+            execution.summary = "冲击筑基前还需要同时稳固气海、备齐材料并满足身份资历。";
+            execution.hints.push_back("气海稳固：" + std::to_string(qihai) + "/120");
+            execution.hints.push_back(std::string("筑基材料：") + (has_material ? "已备筑基散" : "缺少筑基散"));
+            execution.hints.push_back("身份资历：" + std::to_string(identity_credit) + "/260");
+            return execution;
+        }
+        remove_inventory_item(player, "foundation_pill", 1);
     }
 
     ++player->realm_stage;
@@ -3768,6 +4564,13 @@ MudCommandExecution MudGameRuntime::execute_challenge(MudPlayerState* player,
 
     auto target_player = target_presence->player;
     normalize_player_state(&target_player);
+    if(has_newbie_protection(target_player))
+    {
+        execution.title = "切磋受限";
+        execution.summary = "对方仍在新手保护期内，暂不能被主动挑战。";
+        return execution;
+    }
+    set_flag_int64(player, "pvp_opt_in_until_s", mud_now_ms() / 1000 + 10 * 60);
     const int attack_score = player->attack_power + player->combat_attributes.phys_hit / 2 + player->realm_stage * 4;
     const int defense_score = target_player.defense_power + target_player.combat_attributes.dodge / 2 +
                               target_player.realm_stage * 3;
@@ -3817,6 +4620,7 @@ MudCommandExecution MudGameRuntime::execute_score(const MudPlayerState& player) 
                         (player.sect_name.empty() ? std::string("散修") : player.sect_name);
     execution.hints.push_back("气血 " + std::to_string(player.hp) + "/" + std::to_string(player.max_hp) +
                               " · 灵石 " + std::to_string(player.spirit_stone));
+    execution.hints.push_back("阶段： " + stage_label_for_player(player) + " · 推荐循环：" + recommended_loop_for_player(player));
     execution.hints.push_back("神识 " + std::to_string(player.base_attributes.spi) + " · 经脉 " +
                               std::to_string(player.base_attributes.gin) + " · 炼体 " +
                               std::to_string(player.base_attributes.str) + " · 灵觉 " +
@@ -3828,6 +4632,226 @@ MudCommandExecution MudGameRuntime::execute_score(const MudPlayerState& player) 
     {
         execution.hints.push_back("头衔 · " + title);
     }
+    return execution;
+}
+
+MudCommandExecution MudGameRuntime::execute_board(const MudPlayerState& player) const
+{
+    MudCommandExecution execution;
+    const auto* scene = current_scene(player);
+    execution.success = true;
+    execution.title = "公共委托板";
+    execution.summary = "当前区域为你整理了可接事务、循环和下一步收益入口。";
+    MudStructuredPanelState panel;
+    panel.panel_id = "board";
+    panel.title = execution.title;
+    panel.summary = execution.summary;
+    panel.entries = board_entries_for_player(player, scene);
+    if(panel.entries.empty())
+    {
+        execution.hints.push_back("此地暂时没有新的公开委托，可先用 rumor 或 travel 换一处地方看看。");
+    }
+    else
+    {
+        execution.hints.push_back("可优先处理标记为“可接”或“可交”的条目。");
+        execution.panels.push_back(std::move(panel));
+    }
+    return execution;
+}
+
+MudCommandExecution MudGameRuntime::execute_duty(const MudPlayerState& player) const
+{
+    MudCommandExecution execution;
+    const auto* scene = current_scene(player);
+    execution.success = true;
+    execution.title = player.sect_id.empty() ? "散修事务" : (player.sect_name + "事务");
+    execution.summary = player.sect_id.empty() ? "散修也有完整身份链，可通过公共循环与游历声望一路走到筑基准备。"
+                                               : "门派事务是当前最稳的贡献与身份成长来源。";
+    MudStructuredPanelState panel;
+    panel.panel_id = "duty";
+    panel.title = execution.title;
+    panel.summary = execution.summary;
+    panel.entries = duty_entries_for_player(player, scene);
+    if(!panel.entries.empty())
+    {
+        execution.panels.push_back(std::move(panel));
+    }
+    return execution;
+}
+
+MudCommandExecution MudGameRuntime::execute_wanted(const MudPlayerState& player) const
+{
+    MudCommandExecution execution;
+    const auto* scene = current_scene(player);
+    execution.success = true;
+    execution.title = "悬赏目标";
+    execution.summary = "当前场景与周边的可战目标、掉落和风险如下。";
+    MudStructuredPanelState panel;
+    panel.panel_id = "wanted";
+    panel.title = execution.title;
+    panel.summary = execution.summary;
+    panel.entries = wanted_entries_for_player(player, scene);
+    if(!panel.entries.empty())
+    {
+        execution.panels.push_back(std::move(panel));
+    }
+    return execution;
+}
+
+MudCommandExecution MudGameRuntime::execute_travel(const MudPlayerState& player) const
+{
+    MudCommandExecution execution;
+    const auto* scene = current_scene(player);
+    execution.success = true;
+    execution.title = "路引与航路";
+    execution.summary = "这里整理了你当前可走的出口、已接触区域与建议前进方向。";
+    MudStructuredPanelState panel;
+    panel.panel_id = "travel";
+    panel.title = execution.title;
+    panel.summary = execution.summary;
+    panel.entries = travel_entries_for_player(player, scene);
+    if(!panel.entries.empty())
+    {
+        execution.panels.push_back(std::move(panel));
+    }
+    execution.hints.push_back("travel 只负责梳理路引和路线，不会直接把你传送过去。");
+    return execution;
+}
+
+MudCommandExecution MudGameRuntime::execute_claim(MudPlayerState* player,
+                                                  const std::vector<std::string>& args)
+{
+    MudCommandExecution execution;
+    if(player == nullptr)
+    {
+        execution.title = "领取失败";
+        execution.summary = "玩家状态为空。";
+        return execution;
+    }
+
+    const auto claimable = claim_entries_for_player(*player);
+    if(args.empty())
+    {
+        execution.success = true;
+        execution.title = "可领奖励";
+        execution.summary = claimable.empty() ? "当前没有可领取的奖励。" : "当前可领取的阶段与身份奖励如下。";
+        MudStructuredPanelState panel;
+        panel.panel_id = "claim";
+        panel.title = execution.title;
+        panel.summary = execution.summary;
+        panel.entries = claimable;
+        if(!panel.entries.empty())
+        {
+            execution.panels.push_back(std::move(panel));
+        }
+        return execution;
+    }
+
+    const auto claim_id = mud_to_lower_ascii(args.front());
+    const auto iter = std::find_if(claimable.begin(), claimable.end(), [&](const MudSummaryEntry& entry) {
+        return mud_to_lower_ascii(entry.entry_id) == claim_id;
+    });
+    if(iter == claimable.end())
+    {
+        execution.title = "领取失败";
+        execution.summary = "当前没有这个可领取奖励。";
+        execution.hints.push_back("可先执行 claim 查看当前奖励列表。");
+        return execution;
+    }
+
+    if(claim_id == "starter_supplies")
+    {
+        add_inventory_item(player, "small_recover_pill", 2, false);
+        set_flag_int(player, "claim:starter_supplies", 1);
+    }
+    else if(claim_id == "steady_income")
+    {
+        add_inventory_item(player, "wanderer_powder", 2, false);
+        set_flag_int(player, "claim:steady_income", 1);
+    }
+    else if(claim_id == "identity_credit")
+    {
+        player->spirit_stone += 120;
+        set_flag_int(player, "claim:identity_credit", 1);
+    }
+    else if(claim_id == "foundation_support")
+    {
+        add_inventory_item(player, "foundation_pill", 1, false);
+        set_flag_int(player, "claim:foundation_support", 1);
+    }
+
+    refresh_quest_progress(player);
+    execution.success = true;
+    execution.title = "领取成功";
+    execution.summary = "你领取了「" + iter->title + "」。";
+    append_event(player->account, "reward", execution.title, execution.summary, &execution.events);
+    return execution;
+}
+
+MudCommandExecution MudGameRuntime::execute_contribute(MudPlayerState* player,
+                                                       const std::vector<std::string>& args)
+{
+    MudCommandExecution execution;
+    if(player == nullptr || args.empty())
+    {
+        execution.title = "上交失败";
+        execution.summary = "请先指定背包中的材料或物件。";
+        return execution;
+    }
+
+    const int inventory_index = find_inventory_index(*player, args.front());
+    if(inventory_index < 0)
+    {
+        execution.title = "上交失败";
+        execution.summary = "背包中没有这件可上交物品。";
+        return execution;
+    }
+
+    const auto item_state = player->inventory[static_cast<size_t>(inventory_index)];
+    const auto* item = m_world->find_item(item_state.item_id);
+    if(item == nullptr)
+    {
+        execution.title = "上交失败";
+        execution.summary = "未识别这件物品，暂不能上交。";
+        return execution;
+    }
+
+    remove_inventory_item(player, item_state.item_id, 1);
+    const int gain = std::max(20, item->price / 2 + static_cast<int>(item->tags.size()) * 6);
+    if(player->sect_id.empty())
+    {
+        set_flag_int(player, "loose_reputation", flag_int_value(*player, "loose_reputation", 0) + gain);
+        execution.summary = "你上交了「" + item->name + "」，游历声望提升 " + std::to_string(gain) + "。";
+    }
+    else
+    {
+        set_flag_int(player, "manual_contribution", flag_int_value(*player, "manual_contribution", 0) + gain);
+        execution.summary = "你向「" + player->sect_name + "」上交了「" + item->name + "」，贡献提升 " + std::to_string(gain) + "。";
+        if(const auto* sect = m_world->find_sect(player->sect_id); sect != nullptr && !sect->rank_titles.empty())
+        {
+            const int64_t contribution = sect_contribution_for_player(*player);
+            if(contribution >= 900 && sect->rank_titles.size() >= 4)
+            {
+                player->sect_rank = sect->rank_titles[3];
+            }
+            else if(contribution >= 420 && sect->rank_titles.size() >= 3)
+            {
+                player->sect_rank = sect->rank_titles[2];
+            }
+            else if(contribution >= 180 && sect->rank_titles.size() >= 2)
+            {
+                player->sect_rank = sect->rank_titles[1];
+            }
+            else
+            {
+                player->sect_rank = sect->rank_titles.front();
+            }
+        }
+    }
+    execution.success = true;
+    execution.title = "上交完成";
+    execution.hints.push_back("可再用 duty 查看最新身份进度。");
+    append_event(player->account, "group", execution.title, execution.summary, &execution.events);
     return execution;
 }
 
@@ -3899,20 +4923,29 @@ MudCommandExecution MudGameRuntime::execute_family(const MudPlayerState& player)
         execution.hints.push_back("阶位： " + player.sect_rank + " · 贡献 " +
                                   std::to_string(sect_contribution_for_player(player)));
     }
-    else if(const auto* scene = current_scene(player); scene != nullptr)
+    else
     {
-        for(const auto& npc_id : scene->npc_ids)
+        execution.hints.push_back("散修声望： " + std::to_string(flag_int_value(player, "loose_reputation", 0)) +
+                                  " · 当前阶段 " + stage_label_for_player(player));
+        if(const auto* scene = current_scene(player); scene != nullptr)
         {
-            const auto* npc = m_world->find_npc(npc_id);
-            if(npc == nullptr || npc->sect_offer_id.empty())
+            for(const auto& npc_id : scene->npc_ids)
             {
-                continue;
-            }
-            if(const auto* sect = m_world->find_sect(npc->sect_offer_id); sect != nullptr)
-            {
-                execution.hints.push_back("可引荐： " + sect->name + "（找 " + npc->name + "）");
+                const auto* npc = m_world->find_npc(npc_id);
+                if(npc == nullptr || npc->sect_offer_id.empty())
+                {
+                    continue;
+                }
+                if(const auto* sect = m_world->find_sect(npc->sect_offer_id); sect != nullptr)
+                {
+                    execution.hints.push_back("可引荐： " + sect->name + "（找 " + npc->name + "）");
+                }
             }
         }
+    }
+    for(const auto& route : route_summaries_for_player(player))
+    {
+        execution.hints.push_back(route.title + " · " + route.status + " · " + route.next_step);
     }
     return execution;
 }
@@ -4125,7 +5158,7 @@ MudCommandExecution MudGameRuntime::execute_harvest(MudPlayerState* player,
 
     const auto now = mud_now_ms();
     const auto cooldown_key = "harvest:" + node->node_id;
-    const auto last_ms = flag_int_value(*player, cooldown_key, 0);
+    const auto last_ms = flag_int64_value(*player, cooldown_key, 0);
     if(last_ms > 0 && now - last_ms < node->cooldown_ms)
     {
         execution.title = "尚未恢复";
@@ -4134,8 +5167,12 @@ MudCommandExecution MudGameRuntime::execute_harvest(MudPlayerState* player,
     }
 
     add_inventory_item(player, node->drop_item_id, node->drop_item_count, false);
-    set_flag_int(player, cooldown_key, static_cast<int>(now));
+    set_flag_int64(player, cooldown_key, now);
     player->profession.exploration_level = std::max(1, player->profession.exploration_level) + 1;
+    if(player->sect_id.empty())
+    {
+        set_flag_int(player, "loose_reputation", flag_int_value(*player, "loose_reputation", 0) + 10);
+    }
     refresh_quest_progress(player);
     unlock_codex_by_trigger(player, "obtain_item", node->drop_item_id, &execution);
     execution.success = true;
@@ -4216,6 +5253,10 @@ MudCommandExecution MudGameRuntime::execute_cast(MudPlayerState* player,
         {
             add_inventory_item(player, monster->drop_item_id, monster->drop_item_count, false);
             unlock_codex_by_trigger(player, "obtain_item", monster->drop_item_id, &execution);
+            execution.hints.push_back("掉落入包：" +
+                                      item_with_count_label(m_world.get(),
+                                                            monster->drop_item_id,
+                                                            monster->drop_item_count));
         }
         refresh_quest_progress(player);
         execution.title = "法术得胜";
@@ -4249,6 +5290,7 @@ MudCommandExecution MudGameRuntime::execute_meditate(MudPlayerState* player)
     set_flag_int(player, "current_sen", player->status_attributes.sen);
     set_flag_int(player, "current_sta", player->status_attributes.sta);
     player->exp += 12;
+    set_flag_int(player, "foundation_qihai", flag_int_value(*player, "foundation_qihai", 0) + 12);
     execution.success = true;
     execution.title = "静坐调息";
     execution.summary = "你缓缓调匀呼吸，法力、神念与气力都恢复了不少。";

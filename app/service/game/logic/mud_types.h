@@ -86,6 +86,45 @@ struct MudCombatAttributeState
     int resist_blunt = 0;
 };
 
+struct MudSummaryEntry
+{
+    std::string entry_id;
+    std::string title;
+    std::string summary;
+    std::string status;
+    std::string category;
+    std::string command;
+    std::string location_hint;
+    std::string reward_summary;
+};
+
+struct MudStructuredPanelState
+{
+    std::string panel_id;
+    std::string title;
+    std::string summary;
+    std::vector<MudSummaryEntry> entries;
+};
+
+struct MudRouteSummaryState
+{
+    std::string route_id;
+    std::string title;
+    std::string status;
+    std::string summary;
+    std::string next_step;
+};
+
+struct MudWeeklyEventSummaryState
+{
+    std::string event_id;
+    std::string title;
+    std::string summary;
+    std::string risk_level;
+    std::string location_hint;
+    std::string command_hint;
+};
+
 struct MudStarterInventoryItem
 {
     std::string item_id;
@@ -349,8 +388,10 @@ struct MudSceneConfig
     std::string room_type;
     std::string risk_level;
     std::string landmark;
+    std::string room_layer;
     bool pvp_enabled = false;
     std::vector<std::string> rumors;
+    std::vector<std::string> loop_tags;
     std::unordered_map<std::string, std::string> exits;
     std::vector<std::string> npc_ids;
     std::vector<std::string> monster_ids;
@@ -490,6 +531,7 @@ struct MudCommandExecution
     std::string spell_summary;
     std::string brew_summary;
     std::string hazard_feedback;
+    std::vector<MudStructuredPanelState> panels;
 };
 
 struct MudLeaderboardEntry

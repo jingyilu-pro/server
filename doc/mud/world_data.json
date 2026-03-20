@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-03-20T04:19:09.129Z",
+  "generated_at": "2026-03-20T08:11:14.767Z",
   "defaults": {
     "starting_scene_id": "qixuan_square",
     "starter_title": "初入修仙路",
@@ -5879,9 +5879,13 @@
       "room_type": "宗门",
       "risk_level": "安全",
       "landmark": "七玄门议事堂",
+      "room_layer": "新手安全圈",
       "pvp_enabled": false,
       "rumors": [
         "此地常有人提起「七玄门启程」相关的旧闻。"
+      ],
+      "loop_tags": [
+        "门派事务"
       ],
       "codex_entry_id": "geo_qixuan_hall"
     },
@@ -5918,9 +5922,13 @@
       "room_type": "房间",
       "risk_level": "安全",
       "landmark": "七玄门外场",
+      "room_layer": "新手安全圈",
       "pvp_enabled": false,
       "rumors": [
         "此地常有人提起「七玄门启程」相关的旧闻。"
+      ],
+      "loop_tags": [
+        "门派事务"
       ],
       "codex_entry_id": "geo_qixuan_square"
     },
@@ -5953,9 +5961,13 @@
       "room_type": "房间",
       "risk_level": "安全",
       "landmark": "外门弟子舍",
+      "room_layer": "新手安全圈",
       "pvp_enabled": false,
       "rumors": [
         "此地常有人提起「七玄门启程」相关的旧闻。"
+      ],
+      "loop_tags": [
+        "门派事务"
       ],
       "codex_entry_id": "geo_qixuan_dormitory"
     },
@@ -5990,11 +6002,17 @@
       "room_type": "野外",
       "risk_level": "历练",
       "landmark": "后山缓坡",
+      "room_layer": "新手安全圈",
       "pvp_enabled": false,
       "rumors": [
         "此地常有人提起「散修启途」相关的旧闻。",
         "附近修士常交换妖兽出没与掉落材料的消息。",
         "这里的采集点很受散修与药师关注。"
+      ],
+      "loop_tags": [
+        "采药炼丹",
+        "巡山悬赏",
+        "门派事务"
       ],
       "codex_entry_id": "geo_qixuan_backslope"
     },
@@ -6027,10 +6045,15 @@
       "room_type": "房间",
       "risk_level": "安全",
       "landmark": "洗剑溪",
+      "room_layer": "新手安全圈",
       "pvp_enabled": false,
       "rumors": [
         "此地常有人提起「七玄门启程」相关的旧闻。",
         "这里的采集点很受散修与药师关注。"
+      ],
+      "loop_tags": [
+        "采药炼丹",
+        "门派事务"
       ],
       "codex_entry_id": "geo_qixuan_stream"
     },
@@ -6064,10 +6087,15 @@
       "room_type": "房间",
       "risk_level": "安全",
       "landmark": "药圃小院",
+      "room_layer": "新手安全圈",
       "pvp_enabled": false,
       "rumors": [
         "此地常有人提起「七玄门启程」相关的旧闻。",
         "这里的采集点很受散修与药师关注。"
+      ],
+      "loop_tags": [
+        "采药炼丹",
+        "门派事务"
       ],
       "codex_entry_id": "geo_qixuan_medicine_garden"
     },
@@ -6100,9 +6128,13 @@
       "room_type": "宗门",
       "risk_level": "安全",
       "landmark": "嘉元城东门",
+      "room_layer": "新手安全圈",
       "pvp_enabled": false,
       "rumors": [
         "此地常有人提起「越京官道」相关的旧闻。"
+      ],
+      "loop_tags": [
+        "护送跑商"
       ],
       "codex_entry_id": "geo_jiayuan_east_gate"
     },
@@ -6146,9 +6178,13 @@
       "room_type": "坊市",
       "risk_level": "安全",
       "landmark": "嘉元城集市",
+      "room_layer": "新手安全圈",
       "pvp_enabled": false,
       "rumors": [
         "此地常有人提起「嘉元城风波」相关的旧闻。"
+      ],
+      "loop_tags": [
+        "护送跑商"
       ],
       "codex_entry_id": "geo_jiayuan_market"
     },
@@ -6180,9 +6216,13 @@
       "room_type": "宗门",
       "risk_level": "安全",
       "landmark": "墨府大门",
+      "room_layer": "新手安全圈",
       "pvp_enabled": false,
       "rumors": [
         "此地常有人提起「嘉元城风波」相关的旧闻。"
+      ],
+      "loop_tags": [
+        "护送跑商"
       ],
       "codex_entry_id": "geo_mofu_gate"
     },
@@ -6215,9 +6255,13 @@
       "room_type": "宗门",
       "risk_level": "安全",
       "landmark": "墨府前厅",
+      "room_layer": "新手安全圈",
       "pvp_enabled": false,
       "rumors": [
         "此地常有人提起「嘉元城风波」相关的旧闻。"
+      ],
+      "loop_tags": [
+        "采药炼丹"
       ],
       "codex_entry_id": "geo_mofu_front_hall"
     },
@@ -6251,9 +6295,13 @@
       "room_type": "房间",
       "risk_level": "安全",
       "landmark": "墨府内院",
+      "room_layer": "新手安全圈",
       "pvp_enabled": false,
       "rumors": [
         "此地常有人提起「嘉元城风波」相关的旧闻。"
+      ],
+      "loop_tags": [
+        "采药炼丹"
       ],
       "codex_entry_id": "geo_mofu_courtyard"
     },
@@ -6285,11 +6333,16 @@
       "room_type": "野外",
       "risk_level": "历练",
       "landmark": "青竹林",
+      "room_layer": "新手安全圈",
       "pvp_enabled": false,
       "rumors": [
         "此地常有人提起「嘉元城风波」相关的旧闻。",
         "附近修士常交换妖兽出没与掉落材料的消息。",
         "这里的采集点很受散修与药师关注。"
+      ],
+      "loop_tags": [
+        "采药炼丹",
+        "巡山悬赏"
       ],
       "codex_entry_id": "geo_bamboo_forest"
     },
@@ -6323,11 +6376,16 @@
       "room_type": "野外",
       "risk_level": "历练",
       "landmark": "黄精坡",
+      "room_layer": "新手安全圈",
       "pvp_enabled": false,
       "rumors": [
         "此地常有人提起「嘉元城风波」相关的旧闻。",
         "附近修士常交换妖兽出没与掉落材料的消息。",
         "这里的采集点很受散修与药师关注。"
+      ],
+      "loop_tags": [
+        "采药炼丹",
+        "巡山悬赏"
       ],
       "codex_entry_id": "geo_herb_slope"
     },
@@ -6362,10 +6420,15 @@
       "room_type": "房间",
       "risk_level": "高危",
       "landmark": "后山洞窟",
+      "room_layer": "成长历练圈",
       "pvp_enabled": false,
       "rumors": [
         "此地常有人提起「嘉元城风波」相关的旧闻。",
         "附近修士常交换妖兽出没与掉落材料的消息。"
+      ],
+      "loop_tags": [
+        "巡山悬赏",
+        "残区探禁"
       ],
       "codex_entry_id": "geo_backhill_cave"
     },
@@ -6399,9 +6462,14 @@
       "room_type": "宗门",
       "risk_level": "安全",
       "landmark": "太南谷入口",
+      "room_layer": "新手安全圈",
       "pvp_enabled": false,
       "rumors": [
         "此地常有人提起「太南散修坊」相关的旧闻。"
+      ],
+      "loop_tags": [
+        "采药炼丹",
+        "护送跑商"
       ],
       "codex_entry_id": "geo_tainan_gate"
     },
@@ -6445,9 +6513,13 @@
       "room_type": "房间",
       "risk_level": "安全",
       "landmark": "太南小会",
+      "room_layer": "新手安全圈",
       "pvp_enabled": false,
       "rumors": [
         "此地常有人提起「太南小会」相关的旧闻。"
+      ],
+      "loop_tags": [
+        "采药炼丹"
       ],
       "codex_entry_id": "geo_tainan_fair"
     },
@@ -6481,9 +6553,13 @@
       "room_type": "房间",
       "risk_level": "安全",
       "landmark": "辛如音小筑",
+      "room_layer": "新手安全圈",
       "pvp_enabled": false,
       "rumors": [
         "此地常有人提起「太南小会」相关的旧闻。"
+      ],
+      "loop_tags": [
+        "采药炼丹"
       ],
       "codex_entry_id": "geo_xin_house"
     },
@@ -6519,9 +6595,13 @@
       "room_type": "坊市",
       "risk_level": "安全",
       "landmark": "符箓长街",
+      "room_layer": "新手安全圈",
       "pvp_enabled": false,
       "rumors": [
         "此地常有人提起「太南小会」相关的旧闻。"
+      ],
+      "loop_tags": [
+        "采药炼丹"
       ],
       "codex_entry_id": "geo_talisman_street"
     },
@@ -6563,9 +6643,13 @@
       "room_type": "房间",
       "risk_level": "安全",
       "landmark": "阵旗巷",
+      "room_layer": "新手安全圈",
       "pvp_enabled": false,
       "rumors": [
         "此地常有人提起「太南小会」相关的旧闻。"
+      ],
+      "loop_tags": [
+        "采药炼丹"
       ],
       "codex_entry_id": "geo_array_lane"
     },
@@ -6597,10 +6681,15 @@
       "room_type": "房间",
       "risk_level": "历练",
       "landmark": "山隙古道",
+      "room_layer": "新手安全圈",
       "pvp_enabled": false,
       "rumors": [
         "此地常有人提起「太南小会」相关的旧闻。",
         "附近修士常交换妖兽出没与掉落材料的消息。"
+      ],
+      "loop_tags": [
+        "采药炼丹",
+        "巡山悬赏"
       ],
       "codex_entry_id": "geo_mountain_path"
     },
@@ -6634,9 +6723,15 @@
       "room_type": "房间",
       "risk_level": "安全",
       "landmark": "黄枫谷外营",
+      "room_layer": "新手安全圈",
       "pvp_enabled": false,
       "rumors": [
         "此地常有人提起「黄枫谷门径」相关的旧闻。"
+      ],
+      "loop_tags": [
+        "采药炼丹",
+        "护送跑商",
+        "门派事务"
       ],
       "codex_entry_id": "geo_huangfeng_outpost"
     },
@@ -6674,9 +6769,14 @@
       "room_type": "宗门",
       "risk_level": "安全",
       "landmark": "黄枫谷偏殿",
+      "room_layer": "新手安全圈",
       "pvp_enabled": false,
       "rumors": [
         "此地常有人提起「黄枫谷门径」相关的旧闻。"
+      ],
+      "loop_tags": [
+        "采药炼丹",
+        "门派事务"
       ],
       "codex_entry_id": "geo_huangfeng_hall"
     },
@@ -6710,10 +6810,15 @@
       "room_type": "房间",
       "risk_level": "安全",
       "landmark": "药梯台",
+      "room_layer": "新手安全圈",
       "pvp_enabled": false,
       "rumors": [
         "此地常有人提起「黄枫谷门径」相关的旧闻。",
         "这里的采集点很受散修与药师关注。"
+      ],
+      "loop_tags": [
+        "采药炼丹",
+        "门派事务"
       ],
       "codex_entry_id": "geo_huangfeng_medicine_terrace"
     },
@@ -6747,9 +6852,14 @@
       "room_type": "宗门",
       "risk_level": "安全",
       "landmark": "藏经石廊",
+      "room_layer": "新手安全圈",
       "pvp_enabled": false,
       "rumors": [
         "此地常有人提起「黄枫谷门径」相关的旧闻。"
+      ],
+      "loop_tags": [
+        "采药炼丹",
+        "门派事务"
       ],
       "codex_entry_id": "geo_huangfeng_scripture"
     },
@@ -6789,11 +6899,17 @@
       "room_type": "房间",
       "risk_level": "历练",
       "landmark": "枫岭山麓",
+      "room_layer": "新手安全圈",
       "pvp_enabled": false,
       "rumors": [
         "此地常有人提起「灵兽山外岭」相关的旧闻。",
         "附近修士常交换妖兽出没与掉落材料的消息。",
         "这里的采集点很受散修与药师关注。"
+      ],
+      "loop_tags": [
+        "采药炼丹",
+        "巡山悬赏",
+        "门派事务"
       ],
       "codex_entry_id": "geo_huangfeng_foothill"
     },
@@ -6825,9 +6941,14 @@
       "room_type": "房间",
       "risk_level": "历练",
       "landmark": "云桥峰口",
+      "room_layer": "新手安全圈",
       "pvp_enabled": false,
       "rumors": [
         "此地常有人提起「黄枫谷门径」相关的旧闻。"
+      ],
+      "loop_tags": [
+        "采药炼丹",
+        "门派事务"
       ],
       "codex_entry_id": "geo_huangfeng_cloud_bridge"
     },
@@ -6862,9 +6983,14 @@
       "room_type": "宗门",
       "risk_level": "安全",
       "landmark": "血禁石门",
+      "room_layer": "成长历练圈",
       "pvp_enabled": false,
       "rumors": [
         "此地常有人提起「血色禁地」相关的旧闻。"
+      ],
+      "loop_tags": [
+        "护送跑商",
+        "残区探禁"
       ],
       "codex_entry_id": "geo_blood_gate"
     },
@@ -6902,11 +7028,17 @@
       "room_type": "秘境",
       "risk_level": "历练",
       "landmark": "血色禁地外围",
+      "room_layer": "成长历练圈",
       "pvp_enabled": false,
       "rumors": [
         "此地常有人提起「血色禁地」相关的旧闻。",
         "附近修士常交换妖兽出没与掉落材料的消息。",
         "这里的采集点很受散修与药师关注。"
+      ],
+      "loop_tags": [
+        "采药炼丹",
+        "巡山悬赏",
+        "残区探禁"
       ],
       "codex_entry_id": "geo_blood_forbidden_outer"
     },
@@ -6946,10 +7078,15 @@
       "room_type": "秘境",
       "risk_level": "高危",
       "landmark": "血雾沼泽",
+      "room_layer": "筑基冲刺圈",
       "pvp_enabled": false,
       "rumors": [
         "此地常有人提起「血色禁地」相关的旧闻。",
         "附近修士常交换妖兽出没与掉落材料的消息。"
+      ],
+      "loop_tags": [
+        "巡山悬赏",
+        "残区探禁"
       ],
       "codex_entry_id": "geo_blood_swamp"
     },
@@ -6986,11 +7123,17 @@
       "room_type": "秘境",
       "risk_level": "历练",
       "landmark": "血兰谷",
+      "room_layer": "筑基冲刺圈",
       "pvp_enabled": false,
       "rumors": [
         "此地常有人提起「血色禁地」相关的旧闻。",
         "附近修士常交换妖兽出没与掉落材料的消息。",
         "这里的采集点很受散修与药师关注。"
+      ],
+      "loop_tags": [
+        "采药炼丹",
+        "巡山悬赏",
+        "残区探禁"
       ],
       "codex_entry_id": "geo_blood_orchid_vale"
     },
@@ -7024,10 +7167,15 @@
       "room_type": "房间",
       "risk_level": "历练",
       "landmark": "灵兽祭坛",
+      "room_layer": "新手安全圈",
       "pvp_enabled": false,
       "rumors": [
         "此地常有人提起「血色禁地」相关的旧闻。",
         "附近修士常交换妖兽出没与掉落材料的消息。"
+      ],
+      "loop_tags": [
+        "巡山悬赏",
+        "门派事务"
       ],
       "codex_entry_id": "geo_spirit_beast_altar"
     },
@@ -7060,10 +7208,15 @@
       "room_type": "秘境",
       "risk_level": "历练",
       "landmark": "血禁残垣",
+      "room_layer": "成长历练圈",
       "pvp_enabled": false,
       "rumors": [
         "此地常有人提起「血色禁地」相关的旧闻。",
         "附近修士常交换妖兽出没与掉落材料的消息。"
+      ],
+      "loop_tags": [
+        "巡山悬赏",
+        "残区探禁"
       ],
       "codex_entry_id": "geo_blood_ruins"
     },
@@ -7101,9 +7254,14 @@
       "room_type": "港埠",
       "risk_level": "安全",
       "landmark": "天南港",
+      "room_layer": "新手安全圈",
       "pvp_enabled": false,
       "rumors": [
         "此地常有人提起「天南外港」相关的旧闻。"
+      ],
+      "loop_tags": [
+        "护送跑商",
+        "海猎采珠"
       ],
       "codex_entry_id": "geo_tiannan_harbor"
     },
@@ -7144,9 +7302,14 @@
       "room_type": "坊市",
       "risk_level": "安全",
       "landmark": "海商坊市",
+      "room_layer": "新手安全圈",
       "pvp_enabled": false,
       "rumors": [
         "此地常有人提起「天南港启航」相关的旧闻。"
+      ],
+      "loop_tags": [
+        "护送跑商",
+        "海猎采珠"
       ],
       "codex_entry_id": "geo_tiannan_market"
     },
@@ -7181,9 +7344,14 @@
       "room_type": "港埠",
       "risk_level": "安全",
       "landmark": "远航码头",
+      "room_layer": "新手安全圈",
       "pvp_enabled": false,
       "rumors": [
         "此地常有人提起「天南港启航」相关的旧闻。"
+      ],
+      "loop_tags": [
+        "护送跑商",
+        "海猎采珠"
       ],
       "codex_entry_id": "geo_tiannan_dock"
     },
@@ -7214,9 +7382,13 @@
       "room_type": "房间",
       "risk_level": "安全",
       "landmark": "望海风塔",
+      "room_layer": "新手安全圈",
       "pvp_enabled": false,
       "rumors": [
         "此地常有人提起「天南港启航」相关的旧闻。"
+      ],
+      "loop_tags": [
+        "海猎采珠"
       ],
       "codex_entry_id": "geo_sea_wind_tower"
     },
@@ -7250,9 +7422,13 @@
       "room_type": "房间",
       "risk_level": "安全",
       "landmark": "暗潮小巷",
+      "room_layer": "新手安全圈",
       "pvp_enabled": false,
       "rumors": [
         "此地常有人提起「天南港启航」相关的旧闻。"
+      ],
+      "loop_tags": [
+        "海猎采珠"
       ],
       "codex_entry_id": "geo_smuggler_alley"
     },
@@ -7290,10 +7466,14 @@
       "room_type": "港埠",
       "risk_level": "历练",
       "landmark": "乱星海近港",
+      "room_layer": "成长历练圈",
       "pvp_enabled": false,
       "rumors": [
         "此地常有人提起「乱星近海群岛」相关的旧闻。",
         "附近修士常交换妖兽出没与掉落材料的消息。"
+      ],
+      "loop_tags": [
+        "海猎采珠"
       ],
       "codex_entry_id": "geo_chaos_sea_port"
     },
@@ -7326,9 +7506,13 @@
       "room_type": "海域",
       "risk_level": "安全",
       "landmark": "灵帆海船",
+      "room_layer": "成长历练圈",
       "pvp_enabled": false,
       "rumors": [
         "此地常有人提起「乱星海漂流」相关的旧闻。"
+      ],
+      "loop_tags": [
+        "海猎采珠"
       ],
       "codex_entry_id": "geo_chaos_sea_ship"
     },
@@ -7363,9 +7547,13 @@
       "room_type": "房间",
       "risk_level": "安全",
       "landmark": "残碑孤岛",
+      "room_layer": "成长历练圈",
       "pvp_enabled": false,
       "rumors": [
         "此地常有人提起「乱星海漂流」相关的旧闻。"
+      ],
+      "loop_tags": [
+        "海猎采珠"
       ],
       "codex_entry_id": "geo_chaos_sea_isle"
     },
@@ -7402,11 +7590,16 @@
       "room_type": "海域",
       "risk_level": "历练",
       "landmark": "礁影浅滩",
+      "room_layer": "成长历练圈",
       "pvp_enabled": false,
       "rumors": [
         "此地常有人提起「乱星海漂流」相关的旧闻。",
         "附近修士常交换妖兽出没与掉落材料的消息。",
         "这里的采集点很受散修与药师关注。"
+      ],
+      "loop_tags": [
+        "采药炼丹",
+        "海猎采珠"
       ],
       "codex_entry_id": "geo_reef_shore"
     },
@@ -7441,10 +7634,16 @@
       "room_type": "房间",
       "risk_level": "高危",
       "landmark": "妖鱼巢湾",
+      "room_layer": "成长历练圈",
       "pvp_enabled": false,
       "rumors": [
         "此地常有人提起「乱星海漂流」相关的旧闻。",
         "附近修士常交换妖兽出没与掉落材料的消息。"
+      ],
+      "loop_tags": [
+        "巡山悬赏",
+        "海猎采珠",
+        "残区探禁"
       ],
       "codex_entry_id": "geo_demon_fish_nest"
     },
@@ -7479,9 +7678,13 @@
       "room_type": "海域",
       "risk_level": "历练",
       "landmark": "风暴航道",
+      "room_layer": "筑基冲刺圈",
       "pvp_enabled": false,
       "rumors": [
         "此地常有人提起「乱星海漂流」相关的旧闻。"
+      ],
+      "loop_tags": [
+        "海猎采珠"
       ],
       "codex_entry_id": "geo_storm_route"
     },
@@ -7515,9 +7718,13 @@
       "room_type": "宗门",
       "risk_level": "安全",
       "landmark": "虚天殿外殿",
+      "room_layer": "成长历练圈",
       "pvp_enabled": false,
       "rumors": [
         "此地常有人提起「虚天殿初启」相关的旧闻。"
+      ],
+      "loop_tags": [
+        "残区探禁"
       ],
       "codex_entry_id": "geo_xutian_hall"
     },
@@ -7550,10 +7757,15 @@
       "room_type": "秘境",
       "risk_level": "历练",
       "landmark": "虚天回廊",
+      "room_layer": "成长历练圈",
       "pvp_enabled": false,
       "rumors": [
         "此地常有人提起「虚天殿初启」相关的旧闻。",
         "附近修士常交换妖兽出没与掉落材料的消息。"
+      ],
+      "loop_tags": [
+        "巡山悬赏",
+        "残区探禁"
       ],
       "codex_entry_id": "geo_xutian_corridor"
     },
@@ -7588,10 +7800,15 @@
       "room_type": "秘境",
       "risk_level": "安全",
       "landmark": "丹房遗室",
+      "room_layer": "成长历练圈",
       "pvp_enabled": false,
       "rumors": [
         "此地常有人提起「虚天殿初启」相关的旧闻。",
         "这里的采集点很受散修与药师关注。"
+      ],
+      "loop_tags": [
+        "采药炼丹",
+        "残区探禁"
       ],
       "codex_entry_id": "geo_xutian_pill_room"
     },
@@ -7626,9 +7843,13 @@
       "room_type": "秘境",
       "risk_level": "历练",
       "landmark": "秘藏偏库",
+      "room_layer": "成长历练圈",
       "pvp_enabled": false,
       "rumors": [
         "此地常有人提起「虚天殿初启」相关的旧闻。"
+      ],
+      "loop_tags": [
+        "残区探禁"
       ],
       "codex_entry_id": "geo_xutian_treasure_chamber"
     },
@@ -7664,9 +7885,13 @@
       "room_type": "秘境",
       "risk_level": "安全",
       "landmark": "星纹祭台",
+      "room_layer": "成长历练圈",
       "pvp_enabled": false,
       "rumors": [
         "此地常有人提起「虚天殿初启」相关的旧闻。"
+      ],
+      "loop_tags": [
+        "残区探禁"
       ],
       "codex_entry_id": "geo_xutian_star_platform"
     },
@@ -7703,9 +7928,14 @@
       "room_type": "宗门",
       "risk_level": "历练",
       "landmark": "内殿玄门",
+      "room_layer": "成长历练圈",
       "pvp_enabled": false,
       "rumors": [
         "此地常有人提起「虚天残区」相关的旧闻。"
+      ],
+      "loop_tags": [
+        "护送跑商",
+        "残区探禁"
       ],
       "codex_entry_id": "geo_xutian_inner_gate"
     },
@@ -7738,6 +7968,10 @@
       "room_type": "野外",
       "risk_level": "安全",
       "landmark": "散修古道",
+      "room_layer": "成长历练圈",
+      "loop_tags": [
+        "采药炼丹"
+      ],
       "codex_entry_id": "geo_wanderer_trail"
     },
     {
@@ -7776,6 +8010,10 @@
       "room_type": "营地",
       "risk_level": "安全",
       "landmark": "落脚草棚",
+      "room_layer": "成长历练圈",
+      "loop_tags": [
+        "采药炼丹"
+      ],
       "codex_entry_id": "geo_wanderer_camp"
     },
     {
@@ -7811,6 +8049,10 @@
       "room_type": "野外",
       "risk_level": "历练",
       "landmark": "乱石溪湾",
+      "room_layer": "成长历练圈",
+      "loop_tags": [
+        "采药炼丹"
+      ],
       "codex_entry_id": "geo_wanderer_creek"
     },
     {
@@ -7846,6 +8088,10 @@
       "room_type": "野外",
       "risk_level": "历练",
       "landmark": "狐草灌丛",
+      "room_layer": "成长历练圈",
+      "loop_tags": [
+        "采药炼丹"
+      ],
       "codex_entry_id": "geo_wanderer_brush"
     },
     {
@@ -7881,6 +8127,10 @@
       "room_type": "野外",
       "risk_level": "历练",
       "landmark": "乱石坡",
+      "room_layer": "成长历练圈",
+      "loop_tags": [
+        "采药炼丹"
+      ],
       "codex_entry_id": "geo_wanderer_stone_slope"
     },
     {
@@ -7916,6 +8166,10 @@
       "room_type": "遗迹",
       "risk_level": "安全",
       "landmark": "残庙旧址",
+      "room_layer": "成长历练圈",
+      "loop_tags": [
+        "采药炼丹"
+      ],
       "codex_entry_id": "geo_wanderer_old_temple"
     },
     {
@@ -7954,6 +8208,10 @@
       "room_type": "野外",
       "risk_level": "历练",
       "landmark": "焦土地",
+      "room_layer": "成长历练圈",
+      "loop_tags": [
+        "采药炼丹"
+      ],
       "codex_entry_id": "geo_wanderer_firefield"
     },
     {
@@ -7988,6 +8246,10 @@
       "room_type": "野外",
       "risk_level": "冲突",
       "landmark": "狐穴坡",
+      "room_layer": "成长历练圈",
+      "loop_tags": [
+        "残区探禁"
+      ],
       "codex_entry_id": "geo_wanderer_fox_den"
     },
     {
@@ -8021,6 +8283,10 @@
       "room_type": "哨点",
       "risk_level": "安全",
       "landmark": "断木望台",
+      "room_layer": "成长历练圈",
+      "loop_tags": [
+        "采药炼丹"
+      ],
       "codex_entry_id": "geo_wanderer_watch_tower"
     },
     {
@@ -8055,6 +8321,10 @@
       "room_type": "野外",
       "risk_level": "历练",
       "landmark": "寒潭边",
+      "room_layer": "成长历练圈",
+      "loop_tags": [
+        "采药炼丹"
+      ],
       "codex_entry_id": "geo_wanderer_cold_pool"
     },
     {
@@ -8088,6 +8358,10 @@
       "room_type": "驿站",
       "risk_level": "安全",
       "landmark": "东门驿棚",
+      "room_layer": "成长历练圈",
+      "loop_tags": [
+        "护送跑商"
+      ],
       "codex_entry_id": "geo_escort_post"
     },
     {
@@ -8123,6 +8397,10 @@
       "room_type": "官道",
       "risk_level": "历练",
       "landmark": "碎石官道",
+      "room_layer": "成长历练圈",
+      "loop_tags": [
+        "护送跑商"
+      ],
       "codex_entry_id": "geo_escort_road"
     },
     {
@@ -8156,6 +8434,10 @@
       "room_type": "官道",
       "risk_level": "历练",
       "landmark": "路旁荒亭",
+      "room_layer": "成长历练圈",
+      "loop_tags": [
+        "护送跑商"
+      ],
       "codex_entry_id": "geo_escort_wayside"
     },
     {
@@ -8192,6 +8474,10 @@
       "room_type": "野外",
       "risk_level": "冲突",
       "landmark": "截路沟",
+      "room_layer": "成长历练圈",
+      "loop_tags": [
+        "残区探禁"
+      ],
       "codex_entry_id": "geo_bandit_gully"
     },
     {
@@ -8227,6 +8513,10 @@
       "room_type": "官道",
       "risk_level": "历练",
       "landmark": "断桥坎",
+      "room_layer": "成长历练圈",
+      "loop_tags": [
+        "采药炼丹"
+      ],
       "codex_entry_id": "geo_broken_bridge"
     },
     {
@@ -8268,6 +8558,10 @@
       "room_type": "驿站",
       "risk_level": "安全",
       "landmark": "换马驿",
+      "room_layer": "成长历练圈",
+      "loop_tags": [
+        "护送跑商"
+      ],
       "codex_entry_id": "geo_relay_station"
     },
     {
@@ -8300,6 +8594,10 @@
       "room_type": "院落",
       "risk_level": "安全",
       "landmark": "粮场外院",
+      "room_layer": "成长历练圈",
+      "loop_tags": [
+        "采药炼丹"
+      ],
       "codex_entry_id": "geo_granary_yard"
     },
     {
@@ -8333,6 +8631,10 @@
       "room_type": "客栈",
       "risk_level": "安全",
       "landmark": "夜宿破栈",
+      "room_layer": "成长历练圈",
+      "loop_tags": [
+        "采药炼丹"
+      ],
       "codex_entry_id": "geo_night_inn"
     },
     {
@@ -8369,6 +8671,10 @@
       "room_type": "野外",
       "risk_level": "冲突",
       "landmark": "边田荒地",
+      "room_layer": "成长历练圈",
+      "loop_tags": [
+        "残区探禁"
+      ],
       "codex_entry_id": "geo_border_field"
     },
     {
@@ -8404,6 +8710,10 @@
       "room_type": "关隘",
       "risk_level": "历练",
       "landmark": "越境望隘",
+      "room_layer": "成长历练圈",
+      "loop_tags": [
+        "采药炼丹"
+      ],
       "codex_entry_id": "geo_yue_watch_pass"
     },
     {
@@ -8434,6 +8744,11 @@
       "room_type": "营地",
       "risk_level": "安全",
       "landmark": "散修地棚口",
+      "room_layer": "新手安全圈",
+      "loop_tags": [
+        "采药炼丹",
+        "护送跑商"
+      ],
       "codex_entry_id": "geo_loose_camp_gate"
     },
     {
@@ -8472,6 +8787,10 @@
       "room_type": "坊市",
       "risk_level": "安全",
       "landmark": "散修棚市",
+      "room_layer": "新手安全圈",
+      "loop_tags": [
+        "采药炼丹"
+      ],
       "codex_entry_id": "geo_loose_camp_square"
     },
     {
@@ -8505,6 +8824,11 @@
       "room_type": "坊市",
       "risk_level": "安全",
       "landmark": "杂货棚巷",
+      "room_layer": "新手安全圈",
+      "loop_tags": [
+        "采药炼丹",
+        "护送跑商"
+      ],
       "codex_entry_id": "geo_loose_market_lane"
     },
     {
@@ -8540,6 +8864,10 @@
       "room_type": "营地",
       "risk_level": "安全",
       "landmark": "药帐",
+      "room_layer": "新手安全圈",
+      "loop_tags": [
+        "采药炼丹"
+      ],
       "codex_entry_id": "geo_loose_medicine_tent"
     },
     {
@@ -8573,6 +8901,10 @@
       "room_type": "营地",
       "risk_level": "安全",
       "landmark": "卜席角",
+      "room_layer": "新手安全圈",
+      "loop_tags": [
+        "采药炼丹"
+      ],
       "codex_entry_id": "geo_loose_diviner_mat"
     },
     {
@@ -8607,6 +8939,11 @@
       "room_type": "校场",
       "risk_level": "冲突",
       "landmark": "试手空地",
+      "room_layer": "新手安全圈",
+      "loop_tags": [
+        "采药炼丹",
+        "残区探禁"
+      ],
       "codex_entry_id": "geo_loose_training_ground"
     },
     {
@@ -8644,6 +8981,10 @@
       "room_type": "野外",
       "risk_level": "历练",
       "landmark": "乱石林",
+      "room_layer": "新手安全圈",
+      "loop_tags": [
+        "采药炼丹"
+      ],
       "codex_entry_id": "geo_loose_stone_forest"
     },
     {
@@ -8679,6 +9020,10 @@
       "room_type": "野外",
       "risk_level": "历练",
       "landmark": "暗池",
+      "room_layer": "新手安全圈",
+      "loop_tags": [
+        "采药炼丹"
+      ],
       "codex_entry_id": "geo_loose_hidden_pool"
     },
     {
@@ -8717,6 +9062,10 @@
       "room_type": "营地",
       "risk_level": "安全",
       "landmark": "借宿大棚",
+      "room_layer": "新手安全圈",
+      "loop_tags": [
+        "采药炼丹"
+      ],
       "codex_entry_id": "geo_loose_guest_hall"
     },
     {
@@ -8752,6 +9101,11 @@
       "room_type": "营地",
       "risk_level": "冲突",
       "landmark": "竹台",
+      "room_layer": "新手安全圈",
+      "loop_tags": [
+        "采药炼丹",
+        "残区探禁"
+      ],
       "codex_entry_id": "geo_loose_bamboo_stage"
     },
     {
@@ -8787,6 +9141,11 @@
       "room_type": "宗门",
       "risk_level": "安全",
       "landmark": "灵兽山外门",
+      "room_layer": "新手安全圈",
+      "loop_tags": [
+        "护送跑商",
+        "门派事务"
+      ],
       "codex_entry_id": "geo_spirit_beast_outer_gate"
     },
     {
@@ -8824,6 +9183,10 @@
       "room_type": "坊市",
       "risk_level": "安全",
       "landmark": "兽材街",
+      "room_layer": "新手安全圈",
+      "loop_tags": [
+        "门派事务"
+      ],
       "codex_entry_id": "geo_spirit_beast_broker_lane"
     },
     {
@@ -8861,6 +9224,10 @@
       "room_type": "宗门",
       "risk_level": "安全",
       "landmark": "外山兽栏",
+      "room_layer": "新手安全圈",
+      "loop_tags": [
+        "门派事务"
+      ],
       "codex_entry_id": "geo_spirit_beast_beast_pen"
     },
     {
@@ -8899,6 +9266,10 @@
       "room_type": "宗门",
       "risk_level": "历练",
       "landmark": "灵虫圃",
+      "room_layer": "新手安全圈",
+      "loop_tags": [
+        "门派事务"
+      ],
       "codex_entry_id": "geo_spirit_beast_insect_garden"
     },
     {
@@ -8934,6 +9305,10 @@
       "room_type": "野外",
       "risk_level": "历练",
       "landmark": "饲草岭",
+      "room_layer": "新手安全圈",
+      "loop_tags": [
+        "门派事务"
+      ],
       "codex_entry_id": "geo_spirit_beast_herb_ridge"
     },
     {
@@ -8973,6 +9348,11 @@
       "room_type": "野外",
       "risk_level": "冲突",
       "landmark": "虫泽",
+      "room_layer": "新手安全圈",
+      "loop_tags": [
+        "门派事务",
+        "残区探禁"
+      ],
       "codex_entry_id": "geo_spirit_beast_worm_marsh"
     },
     {
@@ -9006,6 +9386,10 @@
       "room_type": "校场",
       "risk_level": "历练",
       "landmark": "驯兽场",
+      "room_layer": "新手安全圈",
+      "loop_tags": [
+        "门派事务"
+      ],
       "codex_entry_id": "geo_spirit_beast_taming_yard"
     },
     {
@@ -9038,6 +9422,10 @@
       "room_type": "宗门",
       "risk_level": "历练",
       "landmark": "内山小径",
+      "room_layer": "新手安全圈",
+      "loop_tags": [
+        "门派事务"
+      ],
       "codex_entry_id": "geo_spirit_beast_inner_path"
     },
     {
@@ -9073,6 +9461,10 @@
       "room_type": "洞窟",
       "risk_level": "历练",
       "landmark": "兽骨洞",
+      "room_layer": "新手安全圈",
+      "loop_tags": [
+        "门派事务"
+      ],
       "codex_entry_id": "geo_spirit_beast_bone_cave"
     },
     {
@@ -9108,6 +9500,10 @@
       "room_type": "野外",
       "risk_level": "历练",
       "landmark": "崖巢",
+      "room_layer": "新手安全圈",
+      "loop_tags": [
+        "门派事务"
+      ],
       "codex_entry_id": "geo_spirit_beast_cliff_nest"
     },
     {
@@ -9143,6 +9539,10 @@
       "room_type": "野外",
       "risk_level": "安全",
       "landmark": "驭兽溪",
+      "room_layer": "新手安全圈",
+      "loop_tags": [
+        "门派事务"
+      ],
       "codex_entry_id": "geo_spirit_beast_stream"
     },
     {
@@ -9175,6 +9575,10 @@
       "room_type": "宗门",
       "risk_level": "安全",
       "landmark": "外山执事堂",
+      "room_layer": "新手安全圈",
+      "loop_tags": [
+        "门派事务"
+      ],
       "codex_entry_id": "geo_spirit_beast_hall"
     },
     {
@@ -9211,6 +9615,11 @@
       "room_type": "港埠",
       "risk_level": "安全",
       "landmark": "后湾口",
+      "room_layer": "新手安全圈",
+      "loop_tags": [
+        "护送跑商",
+        "海猎采珠"
+      ],
       "codex_entry_id": "geo_harbor_backbay"
     },
     {
@@ -9245,6 +9654,11 @@
       "room_type": "坊市",
       "risk_level": "安全",
       "landmark": "鱼棚街",
+      "room_layer": "成长历练圈",
+      "loop_tags": [
+        "护送跑商",
+        "海猎采珠"
+      ],
       "codex_entry_id": "geo_harbor_fish_lane"
     },
     {
@@ -9283,6 +9697,11 @@
       "room_type": "港埠",
       "risk_level": "安全",
       "landmark": "晒盐棚",
+      "room_layer": "成长历练圈",
+      "loop_tags": [
+        "护送跑商",
+        "海猎采珠"
+      ],
       "codex_entry_id": "geo_harbor_salt_house"
     },
     {
@@ -9316,6 +9735,11 @@
       "room_type": "港埠",
       "risk_level": "历练",
       "landmark": "晒网场",
+      "room_layer": "成长历练圈",
+      "loop_tags": [
+        "护送跑商",
+        "海猎采珠"
+      ],
       "codex_entry_id": "geo_harbor_net_field"
     },
     {
@@ -9351,6 +9775,11 @@
       "room_type": "海岸",
       "risk_level": "历练",
       "landmark": "崖梯",
+      "room_layer": "成长历练圈",
+      "loop_tags": [
+        "护送跑商",
+        "海猎采珠"
+      ],
       "codex_entry_id": "geo_harbor_cliff_ladder"
     },
     {
@@ -9383,6 +9812,11 @@
       "room_type": "海岸",
       "risk_level": "历练",
       "landmark": "漂木滩",
+      "room_layer": "成长历练圈",
+      "loop_tags": [
+        "护送跑商",
+        "海猎采珠"
+      ],
       "codex_entry_id": "geo_harbor_drift_shore"
     },
     {
@@ -9416,6 +9850,11 @@
       "room_type": "海岸",
       "risk_level": "历练",
       "landmark": "潮池",
+      "room_layer": "成长历练圈",
+      "loop_tags": [
+        "护送跑商",
+        "海猎采珠"
+      ],
       "codex_entry_id": "geo_harbor_tide_pool"
     },
     {
@@ -9452,6 +9891,12 @@
       "room_type": "海域",
       "risk_level": "冲突",
       "landmark": "礁阶",
+      "room_layer": "成长历练圈",
+      "loop_tags": [
+        "护送跑商",
+        "海猎采珠",
+        "残区探禁"
+      ],
       "codex_entry_id": "geo_harbor_reef_steps"
     },
     {
@@ -9485,6 +9930,11 @@
       "room_type": "港埠",
       "risk_level": "安全",
       "landmark": "后湾灯塔",
+      "room_layer": "成长历练圈",
+      "loop_tags": [
+        "护送跑商",
+        "海猎采珠"
+      ],
       "codex_entry_id": "geo_harbor_lamp_tower"
     },
     {
@@ -9523,6 +9973,12 @@
       "room_type": "海岸",
       "risk_level": "冲突",
       "landmark": "暗湾",
+      "room_layer": "成长历练圈",
+      "loop_tags": [
+        "护送跑商",
+        "海猎采珠",
+        "残区探禁"
+      ],
       "codex_entry_id": "geo_harbor_hidden_cove"
     },
     {
@@ -9557,6 +10013,11 @@
       "room_type": "港埠",
       "risk_level": "安全",
       "landmark": "群岛小埠",
+      "room_layer": "成长历练圈",
+      "loop_tags": [
+        "护送跑商",
+        "海猎采珠"
+      ],
       "codex_entry_id": "geo_outer_isles_wharf"
     },
     {
@@ -9595,6 +10056,11 @@
       "room_type": "坊市",
       "risk_level": "安全",
       "landmark": "珠市棚",
+      "room_layer": "成长历练圈",
+      "loop_tags": [
+        "护送跑商",
+        "海猎采珠"
+      ],
       "codex_entry_id": "geo_outer_isles_market"
     },
     {
@@ -9630,6 +10096,10 @@
       "room_type": "海岸",
       "risk_level": "历练",
       "landmark": "贝滩",
+      "room_layer": "成长历练圈",
+      "loop_tags": [
+        "海猎采珠"
+      ],
       "codex_entry_id": "geo_outer_isles_shell_beach"
     },
     {
@@ -9660,6 +10130,10 @@
       "room_type": "海岛",
       "risk_level": "历练",
       "landmark": "风榈脊",
+      "room_layer": "成长历练圈",
+      "loop_tags": [
+        "海猎采珠"
+      ],
       "codex_entry_id": "geo_outer_isles_palm_ridge"
     },
     {
@@ -9696,6 +10170,10 @@
       "room_type": "海岛",
       "risk_level": "历练",
       "landmark": "雷木坡",
+      "room_layer": "成长历练圈",
+      "loop_tags": [
+        "海猎采珠"
+      ],
       "codex_entry_id": "geo_outer_isles_storm_tree"
     },
     {
@@ -9729,6 +10207,10 @@
       "room_type": "海域",
       "risk_level": "历练",
       "landmark": "月泻潟湖",
+      "room_layer": "成长历练圈",
+      "loop_tags": [
+        "海猎采珠"
+      ],
       "codex_entry_id": "geo_outer_isles_lagoon"
     },
     {
@@ -9761,6 +10243,10 @@
       "room_type": "海域",
       "risk_level": "历练",
       "landmark": "珊瑚径",
+      "room_layer": "成长历练圈",
+      "loop_tags": [
+        "海猎采珠"
+      ],
       "codex_entry_id": "geo_outer_isles_coral_path"
     },
     {
@@ -9802,6 +10288,11 @@
       "room_type": "海域",
       "risk_level": "冲突",
       "landmark": "黑礁外缘",
+      "room_layer": "筑基冲刺圈",
+      "loop_tags": [
+        "海猎采珠",
+        "残区探禁"
+      ],
       "codex_entry_id": "geo_outer_isles_black_reef"
     },
     {
@@ -9835,6 +10326,11 @@
       "room_type": "海域",
       "risk_level": "冲突",
       "landmark": "望月湾",
+      "room_layer": "成长历练圈",
+      "loop_tags": [
+        "海猎采珠",
+        "残区探禁"
+      ],
       "codex_entry_id": "geo_outer_isles_moon_cove"
     },
     {
@@ -9875,6 +10371,10 @@
       "room_type": "海岛",
       "risk_level": "安全",
       "landmark": "听潮坛",
+      "room_layer": "成长历练圈",
+      "loop_tags": [
+        "海猎采珠"
+      ],
       "codex_entry_id": "geo_outer_isles_watch_altar"
     },
     {
@@ -9911,6 +10411,10 @@
       "room_type": "秘境",
       "risk_level": "高危",
       "landmark": "裂隙口",
+      "room_layer": "筑基冲刺圈",
+      "loop_tags": [
+        "残区探禁"
+      ],
       "codex_entry_id": "geo_xutian_void_rift"
     },
     {
@@ -9944,6 +10448,10 @@
       "room_type": "秘境",
       "risk_level": "高危",
       "landmark": "灰廊",
+      "room_layer": "成长历练圈",
+      "loop_tags": [
+        "残区探禁"
+      ],
       "codex_entry_id": "geo_xutian_ash_corridor"
     },
     {
@@ -9977,6 +10485,10 @@
       "room_type": "秘境",
       "risk_level": "高危",
       "landmark": "碎阶",
+      "room_layer": "成长历练圈",
+      "loop_tags": [
+        "残区探禁"
+      ],
       "codex_entry_id": "geo_xutian_shard_steps"
     },
     {
@@ -10016,6 +10528,10 @@
       "room_type": "秘境",
       "risk_level": "高危",
       "landmark": "残纹庭",
+      "room_layer": "成长历练圈",
+      "loop_tags": [
+        "残区探禁"
+      ],
       "codex_entry_id": "geo_xutian_rune_garden"
     },
     {
@@ -10046,6 +10562,10 @@
       "room_type": "秘境",
       "risk_level": "高危",
       "landmark": "断升台",
+      "room_layer": "成长历练圈",
+      "loop_tags": [
+        "残区探禁"
+      ],
       "codex_entry_id": "geo_xutian_broken_stair"
     },
     {
@@ -10079,6 +10599,10 @@
       "room_type": "秘境",
       "risk_level": "高危",
       "landmark": "影池",
+      "room_layer": "成长历练圈",
+      "loop_tags": [
+        "残区探禁"
+      ],
       "codex_entry_id": "geo_xutian_shadow_pool"
     },
     {
@@ -10114,6 +10638,10 @@
       "room_type": "秘境",
       "risk_level": "高危",
       "landmark": "静库",
+      "room_layer": "成长历练圈",
+      "loop_tags": [
+        "残区探禁"
+      ],
       "codex_entry_id": "geo_xutian_silent_vault"
     },
     {
@@ -10148,6 +10676,10 @@
       "room_type": "秘境",
       "risk_level": "高危",
       "landmark": "晶桥",
+      "room_layer": "筑基冲刺圈",
+      "loop_tags": [
+        "残区探禁"
+      ],
       "codex_entry_id": "geo_xutian_crystal_bridge"
     },
     {
@@ -10184,6 +10716,10 @@
       "room_type": "秘境",
       "risk_level": "高危",
       "landmark": "星坑",
+      "room_layer": "筑基冲刺圈",
+      "loop_tags": [
+        "残区探禁"
+      ],
       "codex_entry_id": "geo_xutian_star_pit"
     },
     {
@@ -10223,6 +10759,10 @@
       "room_type": "秘境",
       "risk_level": "高危",
       "landmark": "无尽壁",
+      "room_layer": "筑基冲刺圈",
+      "loop_tags": [
+        "残区探禁"
+      ],
       "codex_entry_id": "geo_xutian_endless_wall"
     }
   ],

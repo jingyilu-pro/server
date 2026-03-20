@@ -120,13 +120,110 @@ function defaultRumors(scene) {
   return hints;
 }
 
+function defaultRoomLayer(scene) {
+  if (scene.room_layer) {
+    return scene.room_layer;
+  }
+
+  const id = String(scene.scene_id ?? '');
+  const region = String(scene.region_name ?? '');
+  const safeIds = [
+    'qixuan_',
+    'jiayuan_',
+    'mofu_',
+    'tainan_',
+    'xin_house',
+    'talisman_street',
+    'array_lane',
+    'loose_',
+    'huangfeng_outpost',
+    'huangfeng_hall',
+    'huangfeng_medicine_terrace',
+    'huangfeng_scripture',
+    'spirit_beast_outer_gate',
+    'spirit_beast_beast_pen',
+    'spirit_beast_',
+    'tiannan_harbor',
+    'harbor_backbay',
+  ];
+  if (safeIds.some((prefix) => id === prefix || id.startsWith(prefix)) || /七玄门|嘉元城|墨府|太南谷|黄枫谷|灵兽山|天南海岸/.test(region)) {
+    return '新手安全圈';
+  }
+
+  if (
+    id.startsWith('blood_') ||
+    id.startsWith('chaos_sea_') ||
+    id.startsWith('outer_isles_') ||
+    id.startsWith('xutian_') ||
+    id.startsWith('escort_') ||
+    id.startsWith('wanderer_') ||
+    id.startsWith('harbor_') ||
+    id === 'storm_route' ||
+    id === 'reef_shore' ||
+    id === 'demon_fish_nest'
+  ) {
+    if (
+      id.includes('deep') ||
+      id.includes('void') ||
+      id.includes('black_reef') ||
+      id.includes('star_pit') ||
+      id.includes('endless_wall') ||
+      id.includes('crystal_bridge') ||
+      id === 'storm_route' ||
+      id === 'blood_swamp' ||
+      id === 'blood_orchid_vale'
+    ) {
+      return '筑基冲刺圈';
+    }
+    return '成长历练圈';
+  }
+
+  return '成长历练圈';
+}
+
+function defaultLoopTags(scene) {
+  if (Array.isArray(scene.loop_tags) && scene.loop_tags.length > 0) {
+    return uniqueStrings(scene.loop_tags);
+  }
+
+  const tags = [];
+  const id = String(scene.scene_id ?? '');
+  const region = String(scene.region_name ?? '');
+
+  if ((scene.resource_node_ids?.length ?? 0) > 0 || /药|坊|棚|谷|圃|台/.test(region + id)) {
+    tags.push('采药炼丹');
+  }
+  if (/escort|relay|road|post|station|gate|market|harbor|wharf|dock/i.test(id)) {
+    tags.push('护送跑商');
+  }
+  if ((scene.monster_ids?.length ?? 0) > 0 && !/chaos_sea|outer_isles|harbor|reef|port/i.test(id)) {
+    tags.push('巡山悬赏');
+  }
+  if (/qixuan|huangfeng|spirit_beast/i.test(id) || /七玄门|黄枫谷|灵兽山/.test(region)) {
+    tags.push('门派事务');
+  }
+  if (/chaos_sea|outer_isles|harbor|reef|port|storm/i.test(id) || /海/.test(region)) {
+    tags.push('海猎采珠');
+  }
+  if (/blood|xutian|void|star|forbidden|ruin/i.test(id) || scene.risk_level === '高危' || scene.pvp_enabled) {
+    tags.push('残区探禁');
+  }
+
+  if (tags.length === 0) {
+    tags.push('采药炼丹');
+  }
+  return uniqueStrings(tags);
+}
+
 function normalizeSceneMetadata(scenes) {
   for (const scene of scenes) {
     scene.room_type = defaultRoomType(scene);
     scene.risk_level = defaultRiskLevel(scene);
     scene.landmark = scene.landmark ?? scene.name;
+    scene.room_layer = defaultRoomLayer(scene);
     scene.pvp_enabled = Boolean(scene.pvp_enabled);
     scene.rumors = defaultRumors(scene);
+    scene.loop_tags = defaultLoopTags(scene);
   }
 }
 
@@ -170,11 +267,17 @@ function applyScenePatches(scenes, patches) {
     if (typeof patch.landmark === 'string' && patch.landmark) {
       scene.landmark = patch.landmark;
     }
+    if (typeof patch.room_layer === 'string' && patch.room_layer) {
+      scene.room_layer = patch.room_layer;
+    }
     if (typeof patch.pvp_enabled === 'boolean') {
       scene.pvp_enabled = patch.pvp_enabled;
     }
     if (Array.isArray(patch.rumors) && patch.rumors.length > 0) {
       scene.rumors = uniqueStrings([...(scene.rumors ?? []), ...patch.rumors]);
+    }
+    if (Array.isArray(patch.loop_tags) && patch.loop_tags.length > 0) {
+      scene.loop_tags = uniqueStrings([...(scene.loop_tags ?? []), ...patch.loop_tags]);
     }
   }
 }

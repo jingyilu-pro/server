@@ -116,6 +116,14 @@ private:
                                 mud::StatusAttributeState* output) const;
     void fill_combat_attributes(const MudCombatAttributeState& state,
                                 mud::CombatAttributeState* output) const;
+    void fill_summary_entry(const MudSummaryEntry& entry,
+                            mud::SummaryEntry* output) const;
+    void fill_structured_panel(const MudStructuredPanelState& panel,
+                               mud::StructuredPanel* output) const;
+    void fill_route_summary(const MudRouteSummaryState& route,
+                            mud::RouteSummary* output) const;
+    void fill_weekly_event_summary(const MudWeeklyEventSummaryState& event,
+                                   mud::WeeklyEventSummary* output) const;
     void fill_codex_summary(const MudPlayerState& player,
                             const MudCodexEntryConfig& entry,
                             mud::CodexSummary* output) const;
@@ -126,6 +134,8 @@ private:
     std::string current_chief_title_for_player(const MudPlayerState& player) const;
     void fill_command_catalog(const MudPlayerState& player,
                               google::protobuf::RepeatedPtrField<mud::CommandDefinition>* output) const;
+    void fill_gameplay_guidance(const MudPlayerState& player,
+                                mud::BootstrapResponse* response) const;
     bool unlock_codex_entry(MudPlayerState* player,
                             const std::string& entry_id,
                             MudCommandExecution* execution) const;
@@ -149,8 +159,26 @@ private:
                             mud::TeamState* snapshot) const;
     void maybe_emit_world_event();
     std::vector<std::string> unlocked_regions_for_player(const MudPlayerState& player) const;
+    std::vector<std::string> unlocked_routes_for_player(const MudPlayerState& player) const;
     std::string progression_chapter_for_player(const MudPlayerState& player) const;
     int64_t sect_contribution_for_player(const MudPlayerState& player) const;
+    std::string stage_label_for_player(const MudPlayerState& player) const;
+    bool has_newbie_protection(const MudPlayerState& player) const;
+    std::string newbie_protection_summary_for_player(const MudPlayerState& player) const;
+    std::vector<MudRouteSummaryState> route_summaries_for_player(const MudPlayerState& player) const;
+    std::vector<MudWeeklyEventSummaryState> weekly_events_for_player(const MudPlayerState& player) const;
+    std::string recommended_loop_for_player(const MudPlayerState& player) const;
+    std::vector<MudSummaryEntry> board_entries_for_player(const MudPlayerState& player,
+                                                          const MudSceneConfig* scene) const;
+    std::vector<MudSummaryEntry> duty_entries_for_player(const MudPlayerState& player,
+                                                         const MudSceneConfig* scene) const;
+    std::vector<MudSummaryEntry> wanted_entries_for_player(const MudPlayerState& player,
+                                                           const MudSceneConfig* scene) const;
+    std::vector<MudSummaryEntry> travel_entries_for_player(const MudPlayerState& player,
+                                                           const MudSceneConfig* scene) const;
+    std::vector<MudSummaryEntry> claim_entries_for_player(const MudPlayerState& player) const;
+    std::string resource_refresh_summary_for_scene(const MudPlayerState& player,
+                                                   const MudSceneConfig& scene) const;
     int64_t leaderboard_score(MudLeaderboardType leaderboard_type, const MudPlayerState& player) const;
     std::string leaderboard_extra(MudLeaderboardType leaderboard_type, const MudPlayerState& player) const;
     MudCommandExecution execute_command(MudPlayerState* player,
@@ -202,6 +230,14 @@ private:
     MudCommandExecution execute_challenge(MudPlayerState* player,
                                           const std::vector<std::string>& args);
     MudCommandExecution execute_score(const MudPlayerState& player) const;
+    MudCommandExecution execute_board(const MudPlayerState& player) const;
+    MudCommandExecution execute_duty(const MudPlayerState& player) const;
+    MudCommandExecution execute_wanted(const MudPlayerState& player) const;
+    MudCommandExecution execute_travel(const MudPlayerState& player) const;
+    MudCommandExecution execute_claim(MudPlayerState* player,
+                                      const std::vector<std::string>& args);
+    MudCommandExecution execute_contribute(MudPlayerState* player,
+                                           const std::vector<std::string>& args);
     MudCommandExecution execute_tasks(const MudPlayerState& player) const;
     MudCommandExecution execute_skills(const MudPlayerState& player) const;
     MudCommandExecution execute_spells(const MudPlayerState& player) const;

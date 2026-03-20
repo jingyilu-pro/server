@@ -121,3 +121,43 @@ TODO
 - 顶部聊天框已验证同样的阈值停跟随 / 恢复跟随逻辑。
 - 聊天弹层在自动化里通过临时缩小消息区高度制造真实溢出后，已验证同样的阈值停跟随 / 恢复跟随逻辑。
 - 后山缓坡的采点 `松脂草丛` 现已实测显示为中文提示：`可采集：松脂草 x1`，不再泄露内部 id。
+- 2026-03-20: 已按“筑基留存优化计划”补上第一条可玩纵切面。`mud.proto` / `mud_game_runtime` / `world_data.json` / H5 同步新增了：房间圈层 `新手安全圈 / 成长历练圈 / 筑基冲刺圈`、六条循环标签、结构化结果面板、阶段标签、新手保护、路线摘要、每周事件摘要，以及 `board / duty / wanted / travel / claim / contribute` 六个纯 MUD 命令。
+- 2026-03-20: `scripts/build_mud_world.mjs` 现在会自动把现有 121 个房间重排进三层圈和六条循环，不再只靠旧的演示型 `room_type / risk_level`；`SceneSnapshot` 也会下发 `room_layer / loop_tags / local_board_entries / resource_refresh_summary`，H5 主消息流已能直接展示这些内容。
+- 2026-03-20: `mud_game_runtime` 已新增筑基准备门槛与留存骨架：新手保护按“建角 3 小时内或未到炼气中期”生效；切磋会尊重保护期；`practice / meditate / 用药 / 完成事务 / 上交材料` 会推进气海稳固、游历声望或门派贡献；冲击 `筑基初期` 需要同时满足 `气海稳固 + 身份资历 + 筑基材料` 三条条件。
+- 2026-03-20: `scripts/mud_smoke.cpp` 已扩展为可复用的“留存纵切面”烟测工具，除原有 `inspect / codex` 外，还会验证 `board / duty / wanted / travel / claim`。在重启到新进程后，本轮烟测结果已确认：`room_layer=新手安全圈`、`stage=凡躯启程`、`newbie_protected=true`、`board/duty/wanted/travel/claim` 全部返回 `code=0` 且带结构化面板。
+- 2026-03-20: 本轮交付后的可复用回归流程更新为：
+- `node scripts/build_mud_world.mjs`
+- `wsl bash -lc "cd /mnt/c/Work/Projects/server/app/protocol && ../../build-wsl-main/libs/protobuf/bin/protoc -I=. --cpp_out=./protocol mud.proto"`
+- `wsl bash -lc "cd /mnt/c/Work/Projects/server && cmake --build build-wsl-main --target application mud_smoke -j2"`
+- 若 `mud_smoke` 里新命令仍返回 `40003`，说明端口上挂着旧进程；需先重启 `./build-wsl-main/app/application/application --mode all --config all.yaml`
+- `npm --prefix client test -- --run`
+- `npm --prefix client run build`
+- `wsl bash -lc "cd /mnt/c/Work/Projects/server && ./build-wsl-main/scripts/mud_smoke"`
+- 2026-03-20: 以“资深 MUD 玩家真机试玩”视角跑了一个全新账号 `vetpost0320a` / 角色 `资深回归乙`，从注册、建角、接 `后山狼皮`、去 `后山缓坡` 击败 `山灰狼` 到确认任务进度 `1 / 1` 的早期循环再次走通。
+- 2026-03-20: 本轮实玩发现 2 个明显的玩家体验问题，并已修复：
+- `bootstrap` 首屏会把 Redis 事件仓里过去一段时间积累的全局公告整批灌进主消息流，导致新号登录后出现多轮重复的 `黄枫谷收徒 / 血色禁地异动 / 乱星海风暴 / 虚天殿传闻`，把真正有用的房间信息淹没。现已在 `app/service/game/common/game_service.cpp` 对 `bootstrap` 事件做“保留账号定向事件 + 仅保留 10 分钟内去重后的少量全局事件”整理；新号首屏已只剩下少量近期事件，不再刷屏。
+- 战斗胜利虽然会把掉落塞进背包，但主消息流此前只写了修为和灵石，不会明确告诉玩家任务材料已入包。现已在 `app/service/game/logic/mud_game_runtime.cpp` 的近战/法术击杀分支补上 `掉落入包：物品 xN` 提示；真实回归中，击败 `山灰狼` 后主消息流已显示 `掉落入包：灰狼皮 x1`。
+- 2026-03-20: 本轮收尾验证已通过：
+- `wsl bash -lc "cd /mnt/c/Work/Projects/server && cmake --build build-wsl-main --target application mud_smoke -j2"`
+- `npm --prefix client test -- --run`
+- `npm --prefix client run build`
+- `wsl bash -lc "cd /mnt/c/Work/Projects/server && ./build-wsl-main/scripts/mud_smoke"`
+- Playwright + 本机 Chrome 会话 `mud-veteran-postfix-20260320`：已确认新号登录首屏世界公告去重成功，且 `山灰狼` 战斗结果新增掉落入包提示；截图保存为 `output/playwright/veteran-playtest-postfix-main.png`。
+- 2026-03-20: 额外说明：`develop-web-game` 自带的 `web_game_playwright_client.js` 在这台机器上会默认尝试启动独立 Playwright Chromium，但本地未安装其专用浏览器包，因此命中 `Executable doesn't exist ... chrome-headless-shell.exe`。本项目已继续使用可工作的 Playwright CLI + 本机 Google Chrome 回归链路，不需要另行下载浏览器。
+- 2026-03-20: 继续沿用本机 Chrome 会话 `mud-veteran-full-20260320` 以“老 MUD 玩家从零开号实玩”的方式推进账号 `vetfull0320a` / 角色 `硬核回归甲`。本轮从 `太南谷入口` 继续一路实跑到 `礁影浅滩`，实际再次覆盖了 `流动牙人 -> 残垣旧图 -> 辛如音小筑 -> 黄枫谷外营 -> 黄枫谷偏殿 -> 血禁石门 -> 血色禁地外围 -> 血雾沼泽 -> 灵兽祭坛 -> 血禁残垣 -> 海商坊市 -> 天南港 -> 乱星海近港 -> 礁影浅滩 -> 灵鳞浅滩`，并继续提交了 `乱星海海图`。
+- 2026-03-20: 本轮实玩新发现并修掉 2 个高价值前端体验缺陷，文件都在 `client/src/App.vue`：
+- 方位盘会在同一方位存在两条路时吞掉其中一条，例如 `太南谷入口` 同时存在 `south -> 黄枫谷外营` 与 `down -> 散修地棚口`、`天南港` 同时存在 `south -> 乱星海近港` 与 `down -> 后湾口`，旧逻辑只按 `find()` 取第一条，导致主线南路在 UI 上直接消失。现已改成“方位槽按方向优先级选主出口，未占用出口继续落到额外出口区”，实测 `天南港` 已同时显示 `南方·乱星海近港` 与额外的 `下方·后湾口`。
+- 主线追踪在跨章节长任务上会被错误降级或被早期支线抢走。典型复现是 `残垣旧图` 已接后，到了 `黄枫谷 / 血禁残垣` 还会显示 `太南异胆`，甚至在真正拾取旧图的 `血禁残垣` 退成泛化的“巡山悬赏”。根因是前端手写的 `narrativeQuestOrder` 把 `ruins_old_map` 误标成 `2`（太南小会段），与实际跨到血禁/海港的推进范围不符。现已把 `ruins_old_map` 调整为血禁段优先级，追踪会在相关场景继续把它当作主推进任务。
+- 2026-03-20: 修复后立刻做了热刷新 + 真实回放验证：
+- `礁影浅滩` 刷新恢复后仍能正确显示 `当前主线：乱星海海图，进度 1 / 1`。
+- `天南港` 方位盘现在能同时看到 `北方·血禁石门 / 西方·枫岭山麓 / 东方·海商坊市 / 南方·乱星海近港`，并在额外出口区单独显示 `下方·后湾口`，不再吞掉南路。
+- 使用同一会话再次提交 `乱星海海图` 后，后续链路仍正常返回 `任务完成：你完成了「乱星海海图」`，说明本轮前端修正没有破坏乱星海主线。
+- 2026-03-20: 本轮前端收尾验证已通过：
+- `npm --prefix client test -- --run`
+- `npm --prefix client run build`
+- `Playwright CLI + 本机 Chrome` 控制台检查无新增 error / warning；仅保留浏览器自身的 info 级提示 `Password field is not contained in a form`，目前不影响可玩性。
+- 2026-03-20: 按“第一个丰富内容版本做到筑基初期”的目标继续沿用会话 `mud-veteran-full-20260320`，以老 MUD 玩家真实玩法把账号 `vetfull0320a` / 角色 `硬核回归甲` 从前序海线推进到 `筑基初期`，本轮没有使用后台改数或跳过条件。
+- 2026-03-20: 实际打通的后段链路为：`灵帆海船 -> 提交 妖鱼内丹 -> 残碑孤岛 -> 礁影浅滩 -> 风暴航道 -> 虚天殿外殿 -> talk 守门残灵 -> accept 虚天残钥 -> submit 虚天残钥 -> breakthrough -> breakthrough -> practice x5 -> breakthrough`。
+- 2026-03-20: 这条真实链路里，`虚天残钥` 任务会奖励 `筑基散 x1` 与 `修为 420`；随后角色连续突破到 `炼气中期 / 炼气后期`，再通过 5 次 `practice` 累积补齐最终所需的修为与气海稳固，最后成功突破到 `筑基初期`。最终快照见 `.playwright-cli/page-2026-03-20T12-08-57-732Z.yml`，界面显示频道境界为 `筑基初期`、HUD 阶段为 `筑基初成`、修为为 `1949`。
+- 2026-03-20: 冲到 `筑基初期` 后又立刻整页 `reload` 做恢复验证，`.playwright-cli/page-2026-03-20T12-09-44-265Z.yml` 已确认刷新后仍停留在 `虚天殿外殿`，频道境界保持 `筑基初期`，说明 `bootstrap -> feed` 在这个里程碑境界上也能正常恢复。
+- 2026-03-20: 本轮实玩没有撞到新的阻塞 bug；现阶段“从零开号一路玩到筑基初期”的主闭环已经真实跑通，后续可继续沿用账号 `vetfull0320a` 或新建唯一账号，按同一条 `乱星海 -> 虚天殿 -> 筑基` 路线做回归。

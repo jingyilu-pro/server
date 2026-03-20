@@ -117,6 +117,41 @@ message CommandDefinition {
   bool execute_immediately = 8;
 }
 
+message SummaryEntry {
+  string entry_id = 1;
+  string title = 2;
+  string summary = 3;
+  string status = 4;
+  string category = 5;
+  string command = 6;
+  string location_hint = 7;
+  string reward_summary = 8;
+}
+
+message StructuredPanel {
+  string panel_id = 1;
+  string title = 2;
+  string summary = 3;
+  repeated SummaryEntry entries = 4;
+}
+
+message RouteSummary {
+  string route_id = 1;
+  string title = 2;
+  string status = 3;
+  string summary = 4;
+  string next_step = 5;
+}
+
+message WeeklyEventSummary {
+  string event_id = 1;
+  string title = 2;
+  string summary = 3;
+  string risk_level = 4;
+  string location_hint = 5;
+  string command_hint = 6;
+}
+
 message SkillSummary {
   string skill_id = 1;
   string name = 2;
@@ -261,6 +296,10 @@ message SceneSnapshot {
   string landmark = 17;
   repeated string rumors = 18;
   bool pvp_enabled = 19;
+  string room_layer = 20;
+  repeated string loop_tags = 21;
+  repeated SummaryEntry local_board_entries = 22;
+  string resource_refresh_summary = 23;
 }
 
 message PlayerSnapshot {
@@ -297,6 +336,13 @@ message PlayerSnapshot {
   BackgroundState background = 31;
   repeated CommandDefinition command_catalog = 32;
   repeated string titles = 33;
+  string stage_label = 34;
+  bool newbie_protected = 35;
+  repeated RouteSummary route_summaries = 36;
+  string recommended_loop = 37;
+  repeated WeeklyEventSummary weekly_events = 38;
+  string newbie_protection_summary = 39;
+  repeated string unlocked_route_ids = 40;
 }
 
 message GameEvent {
@@ -319,6 +365,7 @@ message CommandResult {
   string spell_summary = 8;
   string brew_summary = 9;
   string hazard_feedback = 10;
+  repeated StructuredPanel panels = 11;
 }
 
 message BootstrapRequest {
@@ -337,6 +384,12 @@ message BootstrapResponse {
   uint64 next_event_id = 9;
   repeated RaceState available_origins = 10;
   repeated BackgroundState available_backgrounds = 11;
+  string stage_label = 12;
+  bool newbie_protected = 13;
+  string newbie_protection_summary = 14;
+  repeated RouteSummary route_summaries = 15;
+  string recommended_loop = 16;
+  repeated WeeklyEventSummary weekly_events = 17;
 }
 
 message CharacterCreateRequest {

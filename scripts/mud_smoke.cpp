@@ -262,6 +262,20 @@ int main()
             call_endpoint<mud::CommandExecuteRequest, mud::CommandExecuteResponse>(
                 "127.0.0.1", 18082, "/v1/game/command/execute", inspect_request, token);
 
+        auto run_command = [&](const std::string& command) {
+            mud::CommandExecuteRequest request;
+            request.set_account(account);
+            request.set_command(command);
+            return call_endpoint<mud::CommandExecuteRequest, mud::CommandExecuteResponse>(
+                "127.0.0.1", 18082, "/v1/game/command/execute", request, token);
+        };
+
+        const auto board_response = run_command("board");
+        const auto duty_response = run_command("duty");
+        const auto wanted_response = run_command("wanted");
+        const auto travel_response = run_command("travel");
+        const auto claim_response = run_command("claim");
+
         mud::CodexListRequest codex_list_request;
         codex_list_request.set_account(account);
         codex_list_request.set_category("人物志");
@@ -291,9 +305,12 @@ int main()
                   << " backgrounds=" << bootstrap_response.available_backgrounds_size() << "\n";
         std::cout << "create_code=" << create_response.code()
                   << " scene=" << create_response.scene().scene_name()
+                  << " room_layer=" << create_response.scene().room_layer()
                   << " npc_count=" << create_response.scene().npcs_size()
                   << " player_origin=" << create_response.player().race().origin_name()
                   << " player_background=" << create_response.player().background().name()
+                  << " stage=" << create_response.player().stage_label()
+                  << " newbie_protected=" << (create_response.player().newbie_protected() ? "true" : "false")
                   << " spells=" << create_response.player().spells_size()
                   << " recipes=" << create_response.player().recipes_size()
                   << " codex_summaries=" << create_response.player().codex_summaries_size()
@@ -306,6 +323,27 @@ int main()
                   << " inspect_success=" << (inspect_response.result().success() ? "true" : "false")
                   << " inspect_title=" << inspect_response.result().title()
                   << " inspect_summary=" << inspect_response.result().summary() << "\n";
+        std::cout << "board_code=" << board_response.code()
+                  << " board_success=" << (board_response.result().success() ? "true" : "false")
+                  << " board_panels=" << board_response.result().panels_size()
+                  << " board_entries=" << (board_response.result().panels_size() > 0 ? board_response.result().panels(0).entries_size() : 0)
+                  << "\n";
+        std::cout << "duty_code=" << duty_response.code()
+                  << " duty_success=" << (duty_response.result().success() ? "true" : "false")
+                  << " duty_panels=" << duty_response.result().panels_size()
+                  << "\n";
+        std::cout << "wanted_code=" << wanted_response.code()
+                  << " wanted_success=" << (wanted_response.result().success() ? "true" : "false")
+                  << " wanted_entries=" << (wanted_response.result().panels_size() > 0 ? wanted_response.result().panels(0).entries_size() : 0)
+                  << "\n";
+        std::cout << "travel_code=" << travel_response.code()
+                  << " travel_success=" << (travel_response.result().success() ? "true" : "false")
+                  << " travel_entries=" << (travel_response.result().panels_size() > 0 ? travel_response.result().panels(0).entries_size() : 0)
+                  << "\n";
+        std::cout << "claim_code=" << claim_response.code()
+                  << " claim_success=" << (claim_response.result().success() ? "true" : "false")
+                  << " claim_entries=" << (claim_response.result().panels_size() > 0 ? claim_response.result().panels(0).entries_size() : 0)
+                  << "\n";
         for(const auto& unlocked : inspect_response.result().unlocked_codex_entries())
         {
             std::cout << "inspect_unlocked_codex=" << unlocked.title() << "\n";
