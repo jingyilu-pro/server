@@ -133,6 +133,11 @@ message StructuredPanel {
   string title = 2;
   string summary = 3;
   repeated SummaryEntry entries = 4;
+  string render_mode = 5;
+  string style_id = 6;
+  string compact_title = 7;
+  repeated string ascii_lines = 8;
+  repeated string inline_commands = 9;
 }
 
 message RouteSummary {
@@ -300,6 +305,12 @@ message SceneSnapshot {
   repeated string loop_tags = 21;
   repeated SummaryEntry local_board_entries = 22;
   string resource_refresh_summary = 23;
+  string ambient_mood = 24;
+  string palette_id = 25;
+  string scene_brief = 26;
+  string scene_aftertaste = 27;
+  repeated string presence_board = 28;
+  repeated string exit_board = 29;
 }
 
 message PlayerSnapshot {
@@ -343,6 +354,9 @@ message PlayerSnapshot {
   repeated WeeklyEventSummary weekly_events = 38;
   string newbie_protection_summary = 39;
   repeated string unlocked_route_ids = 40;
+  string status_line_text = 41;
+  string subprompt_text = 42;
+  repeated string available_short_commands = 43;
 }
 
 message GameEvent {
@@ -352,6 +366,10 @@ message GameEvent {
   string content = 4;
   int64 server_time_ms = 5;
   bool unread = 6;
+  string channel = 7;
+  string tone = 8;
+  string render_mode = 9;
+  repeated string emphasis_keywords = 10;
 }
 
 message CommandResult {

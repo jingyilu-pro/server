@@ -22,6 +22,7 @@
 
 #include <algorithm>
 #include <sstream>
+#include <utility>
 
 namespace
 {
@@ -40,6 +41,97 @@ std::string join_strings(const std::vector<std::string>& values, const char* sep
         output << values[index];
     }
     return output.str();
+}
+
+std::pair<std::string, std::string> parse_ask_topic_entry(const std::string& raw_entry)
+{
+    const auto entry = mud_trim(raw_entry);
+    if(entry.empty())
+    {
+        return {};
+    }
+
+    static const std::vector<std::string> kSeparators = {"=>", "｜", "|"};
+    for(const auto& separator : kSeparators)
+    {
+        const auto position = entry.find(separator);
+        if(position == std::string::npos)
+        {
+            continue;
+        }
+
+        return {
+            mud_trim(entry.substr(0, position)),
+            mud_trim(entry.substr(position + separator.size())),
+        };
+    }
+
+    return {entry, ""};
+}
+
+std::string ask_topic_label(const std::string& raw_entry)
+{
+    return parse_ask_topic_entry(raw_entry).first;
+}
+
+bool ask_topic_matches(const std::string& raw_entry,
+                       const std::string& raw_query)
+{
+    const auto label = ask_topic_label(raw_entry);
+    const auto query = mud_trim(raw_query);
+    if(label.empty() || query.empty())
+    {
+        return false;
+    }
+
+    const auto label_lower = mud_to_lower_ascii(label);
+    const auto query_lower = mud_to_lower_ascii(query);
+    return label == query || label.find(query) != std::string::npos || query.find(label) != std::string::npos ||
+           label_lower == query_lower || label_lower.find(query_lower) != std::string::npos ||
+           query_lower.find(label_lower) != std::string::npos;
+}
+
+std::string generic_ask_response(const MudNpcConfig& npc,
+                                 const std::string& topic_label)
+{
+    const auto topic = mud_trim(topic_label);
+    if(topic.empty())
+    {
+        return npc.name + "只是看了你一眼，像是在等你问得更明白些。";
+    }
+    if(topic.find("路") != std::string::npos || topic.find("去") != std::string::npos)
+    {
+        return npc.name + "低声提醒：修行路上先认清脚下去路，再谈更远的机缘。";
+    }
+    if(topic.find("差") != std::string::npos || topic.find("事") != std::string::npos || topic.find("任务") != std::string::npos)
+    {
+        return npc.name + "淡淡道：能先把眼前这件事办稳的人，往往才能走得更远。";
+    }
+    if(topic.find("宗") != std::string::npos || topic.find("门") != std::string::npos)
+    {
+        return npc.name + "提起各家势力时神色平静，只说修行路终究要看你自己站得住。";
+    }
+    if(topic.find("海") != std::string::npos || topic.find("风暴") != std::string::npos)
+    {
+        return npc.name + "望向远处，像是想起海上那些不肯轻易示人的风声。";
+    }
+    if(topic.find("血禁") != std::string::npos || topic.find("禁地") != std::string::npos)
+    {
+        return npc.name + "声音压得极低：禁地里的东西值钱，可更值钱的是你还能活着出来。";
+    }
+    if(topic.find("虚天") != std::string::npos)
+    {
+        return npc.name + "沉默片刻，只说虚天之事从来不是听几句传闻就能说透的。";
+    }
+    if(!npc.hint.empty())
+    {
+        return npc.hint;
+    }
+    if(!npc.dialogue.empty())
+    {
+        return npc.dialogue;
+    }
+    return npc.name + "没有再多说，只让你自己去看、去听、去走一遭。";
 }
 
 std::string normalize_direction(std::string value)
@@ -122,6 +214,273 @@ std::string item_with_count_label(const MudWorld* world,
                                   const char* fallback = "未知物品")
 {
     return item_display_name(world, item_id, fallback) + " x" + std::to_string(count);
+}
+
+std::string quest_status_display_name(const std::string& status)
+{
+    const auto normalized = mud_to_lower_ascii(mud_trim(status));
+    if(normalized == "active")
+    {
+        return "进行中";
+    }
+    if(normalized == "completed")
+    {
+        return "已完成";
+    }
+    if(normalized == "submitted")
+    {
+        return "已交付";
+    }
+    if(normalized == "ready")
+    {
+        return "可交付";
+    }
+    if(normalized == "available")
+    {
+        return "可接取";
+    }
+    return status.empty() ? std::string("未定") : status;
+}
+
+std::string item_type_display_name(const std::string& item_type)
+{
+    const auto normalized = mud_to_lower_ascii(mud_trim(item_type));
+    if(normalized.empty())
+    {
+        return "杂物";
+    }
+    if(normalized == "consumable")
+    {
+        return "丹药";
+    }
+    if(normalized == "weapon")
+    {
+        return "兵刃";
+    }
+    if(normalized == "armor")
+    {
+        return "护具";
+    }
+    if(normalized == "accessory")
+    {
+        return "饰物";
+    }
+    if(normalized == "material")
+    {
+        return "材料";
+    }
+    if(normalized == "treasure")
+    {
+        return "宝物";
+    }
+    if(normalized == "book")
+    {
+        return "典籍";
+    }
+    if(normalized == "recipe")
+    {
+        return "配方";
+    }
+    if(normalized == "quest")
+    {
+        return "任务物";
+    }
+    if(normalized == "tool")
+    {
+        return "器具";
+    }
+    return item_type;
+}
+
+std::vector<std::string> split_dense_sentences(const std::string& text, size_t limit = 4)
+{
+    const auto normalized = mud_trim(text);
+    if(normalized.empty())
+    {
+        return {};
+    }
+
+    std::vector<std::string> parts;
+    std::string remaining = normalized;
+    const std::vector<std::string> delimiters = {"。", "！", "？", "；"};
+    while(!remaining.empty() && parts.size() < limit)
+    {
+        size_t best_pos = std::string::npos;
+        size_t best_len = 0;
+        for(const auto& delimiter : delimiters)
+        {
+            const auto pos = remaining.find(delimiter);
+            if(pos != std::string::npos && (best_pos == std::string::npos || pos < best_pos))
+            {
+                best_pos = pos;
+                best_len = delimiter.size();
+            }
+        }
+
+        if(best_pos == std::string::npos)
+        {
+            parts.push_back(mud_trim(remaining));
+            break;
+        }
+
+        parts.push_back(mud_trim(remaining.substr(0, best_pos + best_len)));
+        remaining = mud_trim(remaining.substr(best_pos + best_len));
+    }
+    if(parts.empty())
+    {
+        parts.push_back(normalized);
+    }
+    return parts;
+}
+
+std::string first_dense_sentence(const std::string& text, const std::string& fallback = "")
+{
+    const auto parts = split_dense_sentences(text, 1);
+    if(!parts.empty() && !parts.front().empty())
+    {
+        return parts.front();
+    }
+    return fallback;
+}
+
+std::string scene_palette_id(const MudSceneConfig& scene)
+{
+    if(!scene.palette_id.empty())
+    {
+        return scene.palette_id;
+    }
+    const auto region = mud_to_lower_ascii(scene.region_name + " " + scene.name);
+    if(region.find("乱星") != std::string::npos || region.find("海") != std::string::npos || region.find("港") != std::string::npos)
+    {
+        return "sea_cold_ink";
+    }
+    if(region.find("血") != std::string::npos || region.find("禁") != std::string::npos)
+    {
+        return "forbidden_cinnabar";
+    }
+    if(region.find("虚天") != std::string::npos || region.find("残") != std::string::npos)
+    {
+        return "void_stone_blue";
+    }
+    if(region.find("黄枫") != std::string::npos)
+    {
+        return "autumn_olive";
+    }
+    return "warm_ink_scroll";
+}
+
+std::string scene_ambient_mood(const MudSceneConfig& scene)
+{
+    if(!scene.ambient_mood.empty())
+    {
+        return scene.ambient_mood;
+    }
+    if(scene.risk_level == "high")
+    {
+        return "杀机隐伏";
+    }
+    if(scene.risk_level == "mid")
+    {
+        return "风声微紧";
+    }
+    if(scene.room_type == "harbor" || scene.room_type == "sea")
+    {
+        return "潮声压耳";
+    }
+    return "灯影微温";
+}
+
+std::string event_channel_name(const MudEventEnvelope& event)
+{
+    const auto normalized = mud_to_lower_ascii(event.type);
+    if(normalized == "chat")
+    {
+        const auto title = mud_to_lower_ascii(event.title);
+        if(title.find("[team]") != std::string::npos)
+        {
+            return "team";
+        }
+        if(title.find("[tell") != std::string::npos)
+        {
+            return "tell";
+        }
+        if(title.find("[local]") != std::string::npos)
+        {
+            return "local";
+        }
+        return "world";
+    }
+    if(normalized == "combat" || normalized == "fight" || normalized == "spell")
+    {
+        return "combat";
+    }
+    if(normalized == "quest" || normalized == "join")
+    {
+        return "quest";
+    }
+    if(normalized == "harvest" || normalized == "loot" || normalized == "brew" || normalized == "inventory")
+    {
+        return "system";
+    }
+    return "system";
+}
+
+std::string event_tone_name(const MudEventEnvelope& event)
+{
+    const auto channel = event_channel_name(event);
+    if(channel == "world" || channel == "team" || channel == "tell" || channel == "local")
+    {
+        return "chat";
+    }
+    if(channel == "combat")
+    {
+        return "combat";
+    }
+    if(channel == "quest")
+    {
+        return "quest";
+    }
+    if(event.type == "harvest" || event.type == "loot")
+    {
+        return "hint";
+    }
+    return "system";
+}
+
+std::string panel_render_mode_for_id(const std::string& panel_id)
+{
+    const auto normalized = mud_to_lower_ascii(mud_trim(panel_id));
+    if(normalized == "map")
+    {
+        return "ascii_map";
+    }
+    if(normalized == "score" || normalized == "family" || normalized == "inspect")
+    {
+        return "dossier_block";
+    }
+    if(normalized == "who")
+    {
+        return "roster_block";
+    }
+    return "board_block";
+}
+
+std::string panel_style_for_id(const std::string& panel_id)
+{
+    const auto normalized = mud_to_lower_ascii(mud_trim(panel_id));
+    if(normalized == "map")
+    {
+        return "scroll-map";
+    }
+    if(normalized == "rank")
+    {
+        return "jianghu-board";
+    }
+    if(normalized == "journal" || normalized == "tasks")
+    {
+        return "travel-journal";
+    }
+    return "mud-tablet";
 }
 
 int flag_int_value(const MudPlayerState& player, const std::string& key, int default_value)
@@ -459,10 +818,40 @@ void MudGameRuntime::fill_structured_panel(const MudStructuredPanelState& panel,
     output->set_panel_id(panel.panel_id);
     output->set_title(panel.title);
     output->set_summary(panel.summary);
+    output->set_render_mode(panel.render_mode.empty() ? panel_render_mode_for_id(panel.panel_id) : panel.render_mode);
+    output->set_style_id(panel.style_id.empty() ? panel_style_for_id(panel.panel_id) : panel.style_id);
+    output->set_compact_title(panel.compact_title.empty() ? panel.title : panel.compact_title);
     output->clear_entries();
+    output->clear_ascii_lines();
+    output->clear_inline_commands();
     for(const auto& entry : panel.entries)
     {
         fill_summary_entry(entry, output->add_entries());
+        if(panel.ascii_lines.empty())
+        {
+            std::string line = entry.title;
+            if(!entry.status.empty())
+            {
+                line += "〔" + entry.status + "〕";
+            }
+            if(!entry.summary.empty())
+            {
+                line += " " + entry.summary;
+            }
+            output->add_ascii_lines(line);
+        }
+        if(panel.inline_commands.empty() && !entry.command.empty())
+        {
+            output->add_inline_commands(entry.command);
+        }
+    }
+    for(const auto& line : panel.ascii_lines)
+    {
+        output->add_ascii_lines(line);
+    }
+    for(const auto& command : panel.inline_commands)
+    {
+        output->add_inline_commands(command);
     }
 }
 
@@ -862,6 +1251,7 @@ void MudGameRuntime::fill_player_snapshot(const MudPlayerState& player,
     snapshot->add_known_commands("family");
     snapshot->add_known_commands("inspect <target>");
     snapshot->add_known_commands("talk <npc>");
+    snapshot->add_known_commands("ask <npc> <话题>");
     snapshot->add_known_commands("accept <quest>");
     snapshot->add_known_commands("submit <quest>");
     snapshot->add_known_commands("fight <target>");
@@ -909,6 +1299,22 @@ void MudGameRuntime::fill_player_snapshot(const MudPlayerState& player,
     snapshot->set_newbie_protected(has_newbie_protection(player));
     snapshot->set_newbie_protection_summary(newbie_protection_summary_for_player(player));
     snapshot->set_recommended_loop(recommended_loop_for_player(player));
+    const auto* scene = current_scene(player);
+    const std::string location_text =
+        scene == nullptr ? std::string("无名之地") : (scene->region_name.empty() ? scene->name : (scene->region_name + "-" + scene->name));
+    snapshot->set_status_line_text(player.character_name + " | " + player.realm_name + " | 气血 " +
+                                   std::to_string(player.hp) + "/" + std::to_string(player.max_hp) + " | 法力 " +
+                                   std::to_string(current_status.mana) + "/" + std::to_string(player.status_attributes.mana) +
+                                   " | 气力 " + std::to_string(current_status.sta) + "/" +
+                                   std::to_string(player.status_attributes.sta));
+    snapshot->set_subprompt_text((player.sect_name.empty() ? std::string("散修") : player.sect_name) + " | " + location_text +
+                                 " | " + (has_newbie_protection(player) ? std::string("新手庇护中") : std::string("可自由行走")));
+    snapshot->clear_available_short_commands();
+    static const std::vector<std::string> kShortCommands = {"look", "listen", "talk", "travel", "journal", "bag", "score", "rank"};
+    for(const auto& command : kShortCommands)
+    {
+        snapshot->add_available_short_commands(command);
+    }
     snapshot->clear_route_summaries();
     for(const auto& route : route_summaries_for_player(player))
     {
@@ -1048,6 +1454,8 @@ void MudGameRuntime::fill_scene_snapshot(const MudPlayerState& player,
     snapshot->clear_rumors();
     snapshot->clear_loop_tags();
     snapshot->clear_local_board_entries();
+    snapshot->clear_presence_board();
+    snapshot->clear_exit_board();
 
     for(const auto& entry : scene->exits)
     {
@@ -1071,7 +1479,7 @@ void MudGameRuntime::fill_scene_snapshot(const MudPlayerState& player,
         node->set_npc_id(npc->npc_id);
         node->set_name(npc->name);
         node->set_has_quest(!npc->quest_ids.empty());
-        node->set_hint(npc->hint);
+        node->set_hint(!npc->presence_text.empty() ? npc->presence_text : npc->hint);
         node->set_codex_entry_id(npc->codex_entry_id);
     }
 
@@ -1178,6 +1586,26 @@ void MudGameRuntime::fill_scene_snapshot(const MudPlayerState& player,
         fill_summary_entry(entry, snapshot->add_local_board_entries());
     }
     snapshot->set_resource_refresh_summary(resource_refresh_summary_for_scene(player, *scene));
+    snapshot->set_ambient_mood(scene_ambient_mood(*scene));
+    snapshot->set_palette_id(scene_palette_id(*scene));
+    snapshot->set_scene_brief(first_dense_sentence(scene->scene_brief.empty() ? scene->description : scene->scene_brief,
+                                                   scene->description));
+    if(!scene->scene_aftertaste.empty())
+    {
+        snapshot->set_scene_aftertaste(scene->scene_aftertaste);
+    }
+    else if(!scene->rumors.empty())
+    {
+        snapshot->set_scene_aftertaste(scene->rumors.front());
+    }
+    else if(!scene->landmark.empty())
+    {
+        snapshot->set_scene_aftertaste("此地地标：" + scene->landmark + "。");
+    }
+    else
+    {
+        snapshot->set_scene_aftertaste(scene_ambient_mood(*scene) + "。");
+    }
 
     std::vector<const OnlinePresenceState*> visible_players;
     visible_players.reserve(m_online_presence.size());
@@ -1224,6 +1652,72 @@ void MudGameRuntime::fill_scene_snapshot(const MudPlayerState& player,
         scene_player->set_title(presence->player.title);
         scene_player->set_realm_name(presence->player.realm_name);
         scene_player->set_sect_name(presence->player.sect_name);
+    }
+
+    for(const auto& npc_id : scene->npc_ids)
+    {
+        if(const auto* npc = m_world->find_npc(npc_id); npc != nullptr)
+        {
+            const std::string detail = !npc->presence_text.empty() ? npc->presence_text : (!npc->hint.empty() ? npc->hint : npc->dialogue);
+            snapshot->add_presence_board("人物｜" + npc->name + "｜" + first_dense_sentence(detail, "此人正在此地停留。"));
+        }
+    }
+    for(const auto* presence : visible_players)
+    {
+        if(presence == nullptr)
+        {
+            continue;
+        }
+        snapshot->add_presence_board("同道｜" + presence->player.character_name + "｜" + presence->player.realm_name);
+    }
+    for(const auto& monster_id : scene->monster_ids)
+    {
+        if(const auto* monster = m_world->find_monster(monster_id); monster != nullptr)
+        {
+            snapshot->add_presence_board("妖兽｜" + monster->name + "｜" + first_dense_sentence(monster->description, "气息危险。"));
+        }
+    }
+    for(const auto& item_id : scene->shop_item_ids)
+    {
+        if(const auto* item = m_world->find_item(item_id); item != nullptr)
+        {
+            snapshot->add_presence_board("物件｜" + item->name + "｜" + item_type_display_name(item->item_type));
+        }
+    }
+    for(const auto& node_id : scene->resource_node_ids)
+    {
+        if(const auto* node = m_world->find_resource_node(node_id); node != nullptr)
+        {
+            snapshot->add_presence_board("采点｜" + node->name + "｜可采 " +
+                                         item_with_count_label(m_world.get(), node->drop_item_id, node->drop_item_count));
+        }
+    }
+    for(const auto& loot_id : scene->ground_loot_ids)
+    {
+        const auto* loot = m_world->find_ground_loot(loot_id);
+        if(loot == nullptr)
+        {
+            continue;
+        }
+        if(loot->one_time)
+        {
+            const auto one_time_key = "loot:" + loot->loot_id;
+            if(auto flag_iter = player.flags.find(one_time_key); flag_iter != player.flags.end() &&
+               flag_iter->second == "1")
+            {
+                continue;
+            }
+        }
+        snapshot->add_presence_board("遗落｜" + item_display_name(m_world.get(), loot->item_id, "遗落物") +
+                                     "｜可拾取 " + std::to_string(loot->quantity) + " 件");
+    }
+    for(const auto& [direction, target_id] : scene->exits)
+    {
+        const auto* target = m_world->find_scene(target_id);
+        const std::string target_name = target == nullptr ? target_id : target->name;
+        const std::string risk = target == nullptr ? std::string() : target->room_layer;
+        snapshot->add_exit_board(direction_display_name(direction) + "｜" + target_name +
+                                 (risk.empty() ? std::string() : ("｜" + risk)));
     }
 }
 
@@ -1293,6 +1787,13 @@ void MudGameRuntime::add_events_to_response(const std::vector<MudEventEnvelope>&
         output->set_content(event.content);
         output->set_server_time_ms(event.server_time_ms);
         output->set_unread(true);
+        output->set_channel(event_channel_name(event));
+        output->set_tone(event_tone_name(event));
+        output->set_render_mode("log_line");
+        if(!event.title.empty())
+        {
+            output->add_emphasis_keywords(event.title);
+        }
     }
 }
 
@@ -1854,15 +2355,19 @@ void MudGameRuntime::fill_command_catalog(const MudPlayerState&,
         {"reply", "social", "回复私聊", "reply ", "回复最近联系你的道友。", "command", "", false},
         {"emote", "social", "表情动作", "emote ", "向同场景广播动作描述。", "command", "", false},
         {"look", "explore", "观察场景", "look", "重新查看当前房间。", "command", "", true},
+        {"here", "explore", "重述此地", "here", "用更短的方式重看当前房间。", "command", "", true},
+        {"listen", "explore", "凝神细听", "listen", "听一听当前房间的风声和人物动静。", "command", "", true},
         {"map", "explore", "查看地图", "map", "查看当前世界主图。", "command", "", true},
         {"rumor", "explore", "打听传闻", "rumor", "查看当前房间与天地流言。", "command", "", true},
         {"who", "explore", "在线人物", "who", "查看附近与在线玩家。", "command", "", true},
         {"travel", "explore", "路引航路", "travel", "查看已开路引、可走方向与下一站建议。", "command", "", true},
         {"inspect", "tasks", "查看目标", "inspect ", "查看人物、怪物、物件详情。", "command", "", false},
         {"talk", "tasks", "交谈人物", "talk ", "与 NPC 交谈。", "command", "", false},
+        {"ask", "tasks", "追问话题", "ask ", "向当前人物继续追问已显出的风声话题。", "command", "", false},
         {"accept", "tasks", "接取任务", "accept ", "接取指定任务。", "command", "", false},
         {"submit", "tasks", "提交任务", "submit ", "提交已完成任务。", "command", "", false},
         {"tasks", "tasks", "任务列表", "tasks", "查看当前接取的任务。", "command", "", true},
+        {"journal", "tasks", "游历札记", "journal", "把当前线索、待办和去向整理成札记。", "command", "", true},
         {"board", "loops", "公共委托", "board", "查看当前区域可接的循环与委托。", "command", "", true},
         {"wanted", "loops", "悬赏目标", "wanted", "查看当前房间和周边的悬赏目标。", "command", "", true},
         {"fight", "combat", "攻击目标", "fight ", "与妖兽或敌对目标交战。", "command", "", false},
@@ -1875,6 +2380,7 @@ void MudGameRuntime::fill_command_catalog(const MudPlayerState&,
         {"breakthrough", "cultivation", "尝试突破", "breakthrough", "冲击下一层境界。", "command", "", true},
         {"score", "cultivation", "人物总览", "score", "查看属性、境界、称号与成长。", "command", "", true},
         {"skills", "cultivation", "技能总览", "skills", "查看技能熟练度。", "command", "", true},
+        {"bag", "trade", "行囊清单", "bag", "查看背包和随身物件。", "command", "", true},
         {"harvest", "gather", "采集资源", "harvest ", "采集当前房间资源点。", "command", "", false},
         {"loot", "gather", "拾取掉落", "loot ", "拾取地面遗落物。", "command", "", false},
         {"brew", "alchemy", "炼制丹药", "brew ", "按配方炼制丹药。", "command", "", false},
@@ -2906,6 +3412,14 @@ MudCommandExecution MudGameRuntime::execute_command(MudPlayerState* player,
     {
         return execute_look(player);
     }
+    if(parsed.verb == "here")
+    {
+        return execute_look(player);
+    }
+    if(parsed.verb == "listen")
+    {
+        return execute_listen(*player);
+    }
     if(parsed.verb == "map")
     {
         return execute_map(player);
@@ -2946,6 +3460,10 @@ MudCommandExecution MudGameRuntime::execute_command(MudPlayerState* player,
     {
         return execute_tasks(*player);
     }
+    if(parsed.verb == "journal")
+    {
+        return execute_journal(*player);
+    }
     if(parsed.verb == "skills")
     {
         return execute_skills(*player);
@@ -2958,6 +3476,10 @@ MudCommandExecution MudGameRuntime::execute_command(MudPlayerState* player,
     {
         return execute_family(*player);
     }
+    if(parsed.verb == "bag" || parsed.verb == "inventory")
+    {
+        return execute_bag(*player);
+    }
     if(parsed.verb == "inspect")
     {
         return execute_inspect(player, parsed.args);
@@ -2969,6 +3491,10 @@ MudCommandExecution MudGameRuntime::execute_command(MudPlayerState* player,
     if(parsed.verb == "talk")
     {
         return execute_talk(player, parsed.args);
+    }
+    if(parsed.verb == "ask")
+    {
+        return execute_ask(player, parsed.args);
     }
     if(parsed.verb == "accept")
     {
@@ -3085,7 +3611,7 @@ MudCommandExecution MudGameRuntime::execute_command(MudPlayerState* player,
 
     execution.title = "未知指令";
     execution.summary = "这道指令暂时无法识别，请优先使用界面里的功能按钮或中文提示操作。";
-    execution.hints = {"可通过下方功能盘执行观察、地图、查看、移动、交谈、任务、战斗、施法、拾取、采集、使用、调息、修炼、突破、炼制、门派、排行与手册等操作。"};
+    execution.hints = {"可直接输入 look、talk、ask、go、fight、journal、bag、score 等指令继续游历。"};
     return execution;
 }
 
@@ -3161,7 +3687,7 @@ MudCommandExecution MudGameRuntime::execute_go(MudPlayerState* player,
     if(args.empty())
     {
         execution.title = "缺少方向";
-        execution.summary = "请选择一个方向后再移动，或直接点击下方方位盘。";
+        execution.summary = "请选择一个方向后再移动。";
         execution.hints = {"例如：go north", "例如：go east"};
         return execution;
     }
@@ -3186,7 +3712,7 @@ MudCommandExecution MudGameRuntime::execute_go(MudPlayerState* player,
 
     execution.title = "路途不通";
     execution.summary = "当前方位没有道路可走。";
-    execution.hints.push_back("可先打开地图或点击下方方位盘查看出口。");
+    execution.hints.push_back("可先用 travel 或 map 梳理当前出口。");
     return execution;
 }
 
@@ -3206,15 +3732,15 @@ MudCommandExecution MudGameRuntime::execute_talk(MudPlayerState* player,
     {
         execution.title = "无人应答";
         execution.summary = "当前场景找不到这个人物。";
-        execution.hints.push_back("可先点击“重看”查看当前场景人物。");
+        execution.hints.push_back("可先用 look 或 here 重观当前场景人物。");
         return execution;
     }
 
     execution.success = true;
     execution.title = "与" + npc->name + "交谈";
-    execution.summary = npc->dialogue.empty() ? (npc->name + "静静看着你。") : npc->dialogue;
     refresh_quest_progress(player);
     unlock_codex_by_trigger(player, "talk_npc", npc->npc_id, &execution);
+    const bool talked_before = player->flags["talked:" + npc->npc_id] == "1";
     std::vector<std::string> hinted_quest_ids;
     auto push_hint_once = [&](const std::string& quest_id, std::string hint) {
         if(std::find(hinted_quest_ids.begin(), hinted_quest_ids.end(), quest_id) != hinted_quest_ids.end())
@@ -3298,7 +3824,150 @@ MudCommandExecution MudGameRuntime::execute_talk(MudPlayerState* player,
     {
         if(const auto* sect = m_world->find_sect(npc->sect_offer_id); sect != nullptr)
         {
-            execution.hints.push_back("若想拜入" + sect->name + "，可在下方功能盘中选择“加入·" + sect->name + "”。");
+            execution.hints.push_back("若想拜入" + sect->name + "，可输入：join " + sect->sect_id);
+        }
+    }
+    bool has_submit_hint = false;
+    bool has_progress_hint = false;
+    for(const auto& hint : execution.hints)
+    {
+        if(hint.find("可提交任务：") != std::string::npos || hint.find("任务已齐：") != std::string::npos)
+        {
+            has_submit_hint = true;
+        }
+        if(hint.find("任务进行中：") != std::string::npos)
+        {
+            has_progress_hint = true;
+        }
+    }
+    if(has_submit_hint && !npc->submit_talk_text.empty())
+    {
+        execution.summary = npc->submit_talk_text;
+    }
+    else if(has_progress_hint && !npc->progress_talk_text.empty())
+    {
+        execution.summary = npc->progress_talk_text;
+    }
+    else if(!talked_before && !npc->first_talk_text.empty())
+    {
+        execution.summary = npc->first_talk_text;
+    }
+    else if(talked_before && !npc->repeat_talk_text.empty())
+    {
+        execution.summary = npc->repeat_talk_text;
+    }
+    else
+    {
+        execution.summary = npc->dialogue.empty() ? (npc->name + "静静看着你。") : npc->dialogue;
+    }
+    for(const auto& topic : npc->ask_topics)
+    {
+        const auto label = ask_topic_label(topic);
+        if(!label.empty())
+        {
+            execution.hints.push_back("可问：" + label);
+        }
+    }
+    player->flags["talked:" + npc->npc_id] = "1";
+    return execution;
+}
+
+MudCommandExecution MudGameRuntime::execute_ask(MudPlayerState* player,
+                                                const std::vector<std::string>& args) const
+{
+    MudCommandExecution execution;
+    if(player == nullptr)
+    {
+        execution.title = "追问失败";
+        execution.summary = "玩家状态为空。";
+        return execution;
+    }
+    if(args.empty())
+    {
+        execution.title = "问话题";
+        execution.summary = "请先写明要追问的人物，再补上话题。";
+        execution.hints = {"格式：ask 厉飞雨 差事", "格式：ask 辛如音 阵法"};
+        return execution;
+    }
+
+    const auto* npc = match_scene_npc(*player, args.front());
+    if(npc == nullptr)
+    {
+        execution.title = "无人可问";
+        execution.summary = "当前场景找不到这个人物。";
+        execution.hints.push_back("可先用 look、here 或 inspect 重观眼前人物。");
+        return execution;
+    }
+
+    if(args.size() < 2)
+    {
+        execution.success = true;
+        execution.title = "向" + npc->name + "追问";
+        execution.summary = npc->name + "抬眼看了你一下，像是在等你把想问的话题说得更明白。";
+        for(const auto& topic : npc->ask_topics)
+        {
+            const auto label = ask_topic_label(topic);
+            if(!label.empty())
+            {
+                execution.hints.push_back("可问：" + label);
+            }
+        }
+        if(execution.hints.empty())
+        {
+            execution.hints.push_back("此人暂时没有显露更多可追问的话题。");
+        }
+        return execution;
+    }
+
+    const std::string topic_query = mud_trim(join_strings(std::vector<std::string>(args.begin() + 1, args.end()), " "));
+    auto matched = npc->ask_topics.end();
+    for(auto iter = npc->ask_topics.begin(); iter != npc->ask_topics.end(); ++iter)
+    {
+        if(ask_topic_matches(*iter, topic_query))
+        {
+            matched = iter;
+            break;
+        }
+    }
+
+    if(matched == npc->ask_topics.end())
+    {
+        execution.title = "话题未明";
+        execution.summary = npc->name + "没有正面回应这个话题。";
+        for(const auto& topic : npc->ask_topics)
+        {
+            const auto label = ask_topic_label(topic);
+            if(!label.empty())
+            {
+                execution.hints.push_back("可问：" + label);
+            }
+        }
+        if(execution.hints.empty())
+        {
+            execution.hints.push_back("先与此人交谈，等风声露出更多口子。");
+        }
+        return execution;
+    }
+
+    execution.success = true;
+    const auto parsed_topic = parse_ask_topic_entry(*matched);
+    execution.title = "向" + npc->name + "问起「" + parsed_topic.first + "」";
+    execution.summary = parsed_topic.second.empty() ? generic_ask_response(*npc, parsed_topic.first) : parsed_topic.second;
+    unlock_codex_by_trigger(player, "talk_npc", npc->npc_id, &execution);
+    player->flags["talked:" + npc->npc_id] = "1";
+
+    int followup_count = 0;
+    for(const auto& topic : npc->ask_topics)
+    {
+        const auto label = ask_topic_label(topic);
+        if(label.empty() || label == parsed_topic.first)
+        {
+            continue;
+        }
+        execution.hints.push_back("可继续问：" + label);
+        if(++followup_count >= 3)
+        {
+            break;
         }
     }
     return execution;
@@ -3477,7 +4146,7 @@ MudCommandExecution MudGameRuntime::execute_fight(MudPlayerState* player,
     {
         execution.title = "目标不存在";
         execution.summary = "当前场景找不到这个对手。";
-        execution.hints.push_back("可先点击“重看”查看当前场景妖兽。");
+        execution.hints.push_back("可先用 look 或 listen 察看当前场景妖兽。");
         return execution;
     }
 
@@ -4621,17 +5290,57 @@ MudCommandExecution MudGameRuntime::execute_score(const MudPlayerState& player) 
     execution.hints.push_back("气血 " + std::to_string(player.hp) + "/" + std::to_string(player.max_hp) +
                               " · 灵石 " + std::to_string(player.spirit_stone));
     execution.hints.push_back("阶段： " + stage_label_for_player(player) + " · 推荐循环：" + recommended_loop_for_player(player));
-    execution.hints.push_back("神识 " + std::to_string(player.base_attributes.spi) + " · 经脉 " +
-                              std::to_string(player.base_attributes.gin) + " · 炼体 " +
-                              std::to_string(player.base_attributes.str) + " · 灵觉 " +
-                              std::to_string(player.base_attributes.per));
-    execution.hints.push_back("悟性 " + std::to_string(player.base_attributes.int_attr) + " · 魅力 " +
-                              std::to_string(player.base_attributes.cha) + " · 机缘 " +
-                              std::to_string(player.base_attributes.luc));
+
+    MudStructuredPanelState panel;
+    panel.panel_id = "score";
+    panel.title = execution.title;
+    panel.summary = execution.summary;
+    panel.entries.push_back({"realm", "境界", stage_label_for_player(player), player.realm_name, "人物", "breakthrough", "当前境界", ""});
+    panel.entries.push_back({"vitals",
+                             "气机",
+                             "气血 " + std::to_string(player.hp) + "/" + std::to_string(player.max_hp) + " · 法力 " +
+                                 std::to_string(flag_int_value(player, "current_mana", player.status_attributes.mana)) +
+                                 "/" + std::to_string(player.status_attributes.mana),
+                             "稳态",
+                             "人物",
+                             "meditate",
+                             "调息可恢复法力与神念",
+                             ""});
+    panel.entries.push_back({"progress",
+                             "修为",
+                             std::to_string(player.exp) + "/" + std::to_string(player.next_breakthrough_exp) + " · 推荐：" +
+                                 recommended_loop_for_player(player),
+                             stage_label_for_player(player),
+                             "人物",
+                             "journal",
+                             "结合札记可继续推进",
+                             ""});
+    panel.entries.push_back({"attributes",
+                             "根骨",
+                             "神识 " + std::to_string(player.base_attributes.spi) + " · 经脉 " +
+                                 std::to_string(player.base_attributes.gin) + " · 炼体 " +
+                                 std::to_string(player.base_attributes.str) + " · 灵觉 " +
+                                 std::to_string(player.base_attributes.per),
+                             "基础",
+                             "人物",
+                             "skills",
+                             "",
+                             ""});
+    panel.entries.push_back({"temperament",
+                             "心性",
+                             "悟性 " + std::to_string(player.base_attributes.int_attr) + " · 魅力 " +
+                                 std::to_string(player.base_attributes.cha) + " · 机缘 " +
+                                 std::to_string(player.base_attributes.luc),
+                             "潜质",
+                             "人物",
+                             "family",
+                             "",
+                             ""});
     for(const auto& title : titles_for_player(player))
     {
-        execution.hints.push_back("头衔 · " + title);
+        panel.entries.push_back({"title:" + title, "头衔", title, "在身", "人物", "", "", ""});
     }
+    execution.panels.push_back(std::move(panel));
     return execution;
 }
 
@@ -4641,7 +5350,7 @@ MudCommandExecution MudGameRuntime::execute_board(const MudPlayerState& player) 
     const auto* scene = current_scene(player);
     execution.success = true;
     execution.title = "公共委托板";
-    execution.summary = "当前区域为你整理了可接事务、循环和下一步收益入口。";
+    execution.summary = "此地可接事务与循环如下。";
     MudStructuredPanelState panel;
     panel.panel_id = "board";
     panel.title = execution.title;
@@ -4665,8 +5374,8 @@ MudCommandExecution MudGameRuntime::execute_duty(const MudPlayerState& player) c
     const auto* scene = current_scene(player);
     execution.success = true;
     execution.title = player.sect_id.empty() ? "散修事务" : (player.sect_name + "事务");
-    execution.summary = player.sect_id.empty() ? "散修也有完整身份链，可通过公共循环与游历声望一路走到筑基准备。"
-                                               : "门派事务是当前最稳的贡献与身份成长来源。";
+    execution.summary = player.sect_id.empty() ? "散修当前可走的身份事务如下。"
+                                               : "门内当前最稳的身份事务如下。";
     MudStructuredPanelState panel;
     panel.panel_id = "duty";
     panel.title = execution.title;
@@ -4685,7 +5394,7 @@ MudCommandExecution MudGameRuntime::execute_wanted(const MudPlayerState& player)
     const auto* scene = current_scene(player);
     execution.success = true;
     execution.title = "悬赏目标";
-    execution.summary = "当前场景与周边的可战目标、掉落和风险如下。";
+    execution.summary = "此地可战目标、掉落与风险如下。";
     MudStructuredPanelState panel;
     panel.panel_id = "wanted";
     panel.title = execution.title;
@@ -4704,7 +5413,7 @@ MudCommandExecution MudGameRuntime::execute_travel(const MudPlayerState& player)
     const auto* scene = current_scene(player);
     execution.success = true;
     execution.title = "路引与航路";
-    execution.summary = "这里整理了你当前可走的出口、已接触区域与建议前进方向。";
+    execution.summary = "当前出口与已开路引如下。";
     MudStructuredPanelState panel;
     panel.panel_id = "travel";
     panel.title = execution.title;
@@ -4734,7 +5443,7 @@ MudCommandExecution MudGameRuntime::execute_claim(MudPlayerState* player,
     {
         execution.success = true;
         execution.title = "可领奖励";
-        execution.summary = claimable.empty() ? "当前没有可领取的奖励。" : "当前可领取的阶段与身份奖励如下。";
+        execution.summary = claimable.empty() ? "当前没有可领取的奖励。" : "当前可领取补给与阶段支持如下。";
         MudStructuredPanelState panel;
         panel.panel_id = "claim";
         panel.title = execution.title;
@@ -4868,6 +5577,10 @@ MudCommandExecution MudGameRuntime::execute_tasks(const MudPlayerState& player) 
     }
 
     execution.summary = "你当前共有 " + std::to_string(player.quests.size()) + " 条任务记录。";
+    MudStructuredPanelState panel;
+    panel.panel_id = "tasks";
+    panel.title = "游历札记";
+    panel.summary = execution.summary;
     for(const auto& quest_state : player.quests)
     {
         const auto* quest = m_world->find_quest(quest_state.quest_id);
@@ -4875,7 +5588,20 @@ MudCommandExecution MudGameRuntime::execute_tasks(const MudPlayerState& player) 
         const auto target = quest == nullptr ? 0 : quest->required_item_count;
         execution.hints.push_back(title + " · " + quest_state.status + " · " + std::to_string(quest_state.progress) +
                                   "/" + std::to_string(target));
+        panel.entries.push_back({quest_state.quest_id,
+                                 title,
+                                 quest == nullptr ? std::string("这段经历尚无详细注脚。") : quest->description,
+                                 quest_status_display_name(quest_state.status),
+                                 "札记",
+                                 quest_state.status == "active" && quest_state.progress >= target && target > 0
+                                     ? ("submit " + quest_state.quest_id)
+                                     : "",
+                                 quest == nullptr ? "" : quest->chapter,
+                                 quest_state.status == "active" && quest_state.progress >= target && target > 0
+                                     ? "可交付"
+                                     : ""});
     }
+    execution.panels.push_back(std::move(panel));
     return execution;
 }
 
@@ -4943,10 +5669,54 @@ MudCommandExecution MudGameRuntime::execute_family(const MudPlayerState& player)
             }
         }
     }
+    MudStructuredPanelState panel;
+    panel.panel_id = "family";
+    panel.title = execution.title;
+    panel.summary = execution.summary;
+    panel.entries.push_back({"origin",
+                             "出身来历",
+                             player.origin_name + " · " + player.background_name,
+                             player.sect_name.empty() ? "散修" : player.sect_name,
+                             "身份",
+                             "",
+                             "",
+                             ""});
+    if(!player.sect_name.empty())
+    {
+        panel.entries.push_back({"sect",
+                                 "门内阶位",
+                                 player.sect_rank + " · 贡献 " + std::to_string(sect_contribution_for_player(player)),
+                                 "在籍",
+                                 "身份",
+                                 "duty",
+                                 player.sect_name,
+                                 ""});
+    }
+    else
+    {
+        panel.entries.push_back({"loose",
+                                 "散修行脚",
+                                 "游历声望 " + std::to_string(flag_int_value(player, "loose_reputation", 0)) + " · " +
+                                     stage_label_for_player(player),
+                                 "未入门",
+                                 "身份",
+                                 "board",
+                                 "散修路线",
+                                 ""});
+    }
     for(const auto& route : route_summaries_for_player(player))
     {
         execution.hints.push_back(route.title + " · " + route.status + " · " + route.next_step);
+        panel.entries.push_back({route.route_id,
+                                 route.title,
+                                 route.summary,
+                                 route.status,
+                                 "路线",
+                                 "",
+                                 route.next_step,
+                                 ""});
     }
+    execution.panels.push_back(std::move(panel));
     return execution;
 }
 
@@ -4956,6 +5726,10 @@ MudCommandExecution MudGameRuntime::execute_who(const MudPlayerState& player) co
     execution.success = true;
     execution.title = "在线人物";
     execution.summary = "当前在线约 " + std::to_string(m_online_presence.size()) + " 人。";
+    MudStructuredPanelState panel;
+    panel.panel_id = "who";
+    panel.title = execution.title;
+    panel.summary = execution.summary;
     for(const auto& [account, presence] : m_online_presence)
     {
         if(account.empty())
@@ -4965,6 +5739,18 @@ MudCommandExecution MudGameRuntime::execute_who(const MudPlayerState& player) co
         const auto scene_suffix = presence.player.location_scene_id == player.location_scene_id ? " · 同场景" : "";
         execution.hints.push_back(presence.player.character_name + " (" + account + ") · " +
                                   presence.player.realm_name + scene_suffix);
+        panel.entries.push_back({account,
+                                 presence.player.character_name,
+                                 presence.player.realm_name + scene_suffix,
+                                 presence.player.sect_name.empty() ? "散修" : presence.player.sect_name,
+                                 "同道",
+                                 "",
+                                 presence.player.location_scene_id == player.location_scene_id ? "就在眼前" : "在线",
+                                 ""});
+    }
+    if(!panel.entries.empty())
+    {
+        execution.panels.push_back(std::move(panel));
     }
     return execution;
 }
@@ -4993,6 +5779,104 @@ MudCommandExecution MudGameRuntime::execute_rumor(const MudPlayerState& player) 
         ++world_count;
     }
     execution.summary = execution.hints.empty() ? "此地暂时没有新的风声。" : "你整理了周围和天地间的风声。";
+    return execution;
+}
+
+MudCommandExecution MudGameRuntime::execute_listen(const MudPlayerState& player) const
+{
+    MudCommandExecution execution;
+    execution.success = true;
+    execution.title = "凝神细听";
+    const auto* scene = current_scene(player);
+    execution.summary = scene == nullptr ? "你只听见风声从识海边缘掠过。"
+                                         : ("你在「" + scene->name + "」静了静心，听周围动静。");
+
+    MudStructuredPanelState panel;
+    panel.panel_id = "listen";
+    panel.title = execution.title;
+    panel.summary = execution.summary;
+    if(scene != nullptr)
+    {
+        for(const auto& rumor : scene->rumors)
+        {
+            panel.entries.push_back({"rumor:" + rumor, "本地风声", rumor, "耳闻", "风声", "", scene->name, ""});
+            execution.hints.push_back("本地 · " + rumor);
+        }
+        for(const auto& npc_id : scene->npc_ids)
+        {
+            if(const auto* npc = m_world->find_npc(npc_id); npc != nullptr && !npc->dialogue.empty())
+            {
+                panel.entries.push_back({"npc:" + npc->npc_id, npc->name, npc->dialogue, "人物", "风声", "talk " + npc->name, "", ""});
+            }
+        }
+        for(const auto& monster_id : scene->monster_ids)
+        {
+            if(const auto* monster = m_world->find_monster(monster_id); monster != nullptr)
+            {
+                panel.entries.push_back({"monster:" + monster->monster_id,
+                                         "妖兽动静",
+                                         monster->name + "的气息仍在附近徘徊。",
+                                         "警惕",
+                                         "风声",
+                                         "inspect " + monster->name,
+                                         scene->name,
+                                         ""});
+            }
+        }
+    }
+    if(panel.entries.empty())
+    {
+        execution.hints.push_back("此地一时静悄悄的，没有太多额外风声。");
+    }
+    else
+    {
+        execution.panels.push_back(std::move(panel));
+    }
+    return execution;
+}
+
+MudCommandExecution MudGameRuntime::execute_journal(const MudPlayerState& player) const
+{
+    auto execution = execute_tasks(player);
+    execution.title = "游历札记";
+    execution.summary = player.quests.empty() ? "你眼下还没有写下新的游历札记。"
+                                              : "你把当前线索、待办和去向整理成了札记。";
+    for(auto& panel : execution.panels)
+    {
+        panel.panel_id = "journal";
+        panel.title = execution.title;
+        panel.summary = execution.summary;
+    }
+    return execution;
+}
+
+MudCommandExecution MudGameRuntime::execute_bag(const MudPlayerState& player) const
+{
+    MudCommandExecution execution;
+    execution.success = true;
+    execution.title = "行囊清单";
+    execution.summary = player.inventory.empty() ? "囊中空空，只余一身风尘。"
+                                                 : "你翻了翻随身行囊，把常用物件重新理了一遍。";
+    MudStructuredPanelState panel;
+    panel.panel_id = "bag";
+    panel.title = execution.title;
+    panel.summary = execution.summary;
+    for(const auto& item_state : player.inventory)
+    {
+        const auto* item = m_world->find_item(item_state.item_id);
+        panel.entries.push_back({item_state.item_id,
+                                 item == nullptr ? item_state.item_id : item->name,
+                                 item == nullptr ? std::string("一件随身物。") : item->description,
+                                 item_state.equipped ? "已备" : ("x" + std::to_string(item_state.quantity)),
+                                 "行囊",
+                                 (item != nullptr && item->consumable) ? ("use " + item_state.item_id) : ("inspect " + item_state.item_id),
+                                 item == nullptr ? "" : item_type_display_name(item->item_type),
+                                 ""});
+    }
+    if(!panel.entries.empty())
+    {
+        execution.panels.push_back(std::move(panel));
+    }
     return execution;
 }
 
@@ -5032,8 +5916,20 @@ MudCommandExecution MudGameRuntime::execute_inspect(MudPlayerState* player,
     {
         execution.success = true;
         execution.title = npc->name;
-        execution.summary = npc->description.empty() ? npc->hint : npc->description;
-        execution.hints.push_back(npc->dialogue);
+        execution.summary = !npc->look_text.empty() ? npc->look_text :
+                            (npc->description.empty() ? npc->hint : npc->description);
+        if(!npc->dialogue.empty())
+        {
+            execution.hints.push_back(npc->dialogue);
+        }
+        for(const auto& topic : npc->ask_topics)
+        {
+            const auto label = ask_topic_label(topic);
+            if(!label.empty())
+            {
+                execution.hints.push_back("可问：" + label);
+            }
+        }
         if(!npc->codex_entry_id.empty())
         {
             unlock_codex_entry(player, npc->codex_entry_id, &execution);

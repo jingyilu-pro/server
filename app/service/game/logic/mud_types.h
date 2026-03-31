@@ -103,6 +103,11 @@ struct MudStructuredPanelState
     std::string panel_id;
     std::string title;
     std::string summary;
+    std::string render_mode;
+    std::string style_id;
+    std::string compact_title;
+    std::vector<std::string> ascii_lines;
+    std::vector<std::string> inline_commands;
     std::vector<MudSummaryEntry> entries;
 };
 
@@ -221,6 +226,13 @@ struct MudNpcConfig
     std::string scene_id;
     std::string hint;
     std::string dialogue;
+    std::string presence_text;
+    std::string look_text;
+    std::string first_talk_text;
+    std::string repeat_talk_text;
+    std::string progress_talk_text;
+    std::string submit_talk_text;
+    std::vector<std::string> ask_topics;
     std::vector<std::string> quest_ids;
     std::string sect_offer_id;
     std::string role;
@@ -385,6 +397,10 @@ struct MudSceneConfig
     std::string name;
     std::string region_name;
     std::string description;
+    std::string scene_brief;
+    std::string scene_aftertaste;
+    std::string ambient_mood;
+    std::string palette_id;
     std::string room_type;
     std::string risk_level;
     std::string landmark;

@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-03-20T08:11:14.767Z",
+  "generated_at": "2026-03-23T12:31:12.671Z",
   "defaults": {
     "starting_scene_id": "qixuan_square",
     "starter_title": "初入修仙路",
@@ -3831,7 +3831,7 @@
       "npc_id": "li_feiyu",
       "name": "厉飞雨",
       "scene_id": "qixuan_square",
-      "hint": "指点你先从嘉元城差事做起，把命保住再谈修仙。",
+      "hint": "他靠在场边木桩旁，像早把新来的心气和胆怯都看在了眼里。",
       "dialogue": "厉飞雨抱臂而立：先去嘉元城集市跑腿、练胆，别一上来就想做天上人。",
       "quest_ids": [
         "backslope_wolf_skin"
@@ -3839,6 +3839,17 @@
       "sect_offer_id": "",
       "role": "mentor",
       "description": "七玄门里最像江湖人的那一类人，嘴硬心热。",
+      "presence_text": "厉飞雨站得并不端正，却自有一股逼人的利落劲，像一把没入鞘的短刀。",
+      "look_text": "他肩背放松，眼神却始终不散，像是无论你说什么、做什么，他都已经先替你想过最坏的结果。",
+      "first_talk_text": "厉飞雨上下打量了你一眼：山门里不缺会做梦的人，缺的是做完差事还能把命带回来的人。",
+      "repeat_talk_text": "厉飞雨哼了一声：还站在这儿发愣？该跑腿就跑腿，该练胆就练胆。",
+      "progress_talk_text": "厉飞雨瞥了你一眼：事做到一半最容易松劲，真想往前走，就先把手里的血和灰收拾干净。",
+      "submit_talk_text": "厉飞雨接过东西，神色才缓了一线：能把这一步办妥，才算你真肯下场。",
+      "ask_topics": [
+        "嘉元城=>厉飞雨抬了抬下巴：嘉元城最适合磨人，你先去那儿跑几趟，自然知道什么叫把命护住再谈修仙。",
+        "后山=>他冷笑一声：后山那几头灰狼不算什么，怕的是你第一次见血之后，心先乱了。",
+        "修仙=>厉飞雨淡淡道：别把修仙想成天上掉下来的福缘，先学会在泥里站稳，再谈抬头看天。"
+      ],
       "codex_entry_id": "npc_li_feiyu"
     },
     {
@@ -3851,25 +3862,42 @@
       "sect_offer_id": "",
       "role": "companion",
       "description": "质朴直接，是最典型的凡人起点同伴。",
+      "presence_text": "",
+      "look_text": "",
+      "first_talk_text": "",
+      "repeat_talk_text": "",
+      "progress_talk_text": "",
+      "submit_talk_text": "",
+      "ask_topics": [],
       "codex_entry_id": "npc_zhang_tie"
     },
     {
       "npc_id": "han_zhanglao",
       "name": "韩长老",
       "scene_id": "qixuan_hall",
-      "hint": "看重能扛事的人，若你做成几件差事，自会给你一条路。",
+      "hint": "长老立在案前，不多言，却把来人的轻重都看得很清。",
       "dialogue": "韩长老缓缓道：凡人若能把一件小事做稳，才配谈修行。",
       "quest_ids": [],
       "sect_offer_id": "qixuan_gate",
       "role": "sect_master",
       "description": "掌管七玄门外门事务，注重心性与韧劲。",
+      "presence_text": "韩长老衣袍整肃，气息收敛，却让人一进殿就不自觉地把声音放低。",
+      "look_text": "他看人并不凌厉，却有种把人心性从头到尾慢慢称量过一遍的沉稳。",
+      "first_talk_text": "韩长老指尖轻点案角：外门不先问你想得多高，只问你能不能把脚下这一步走稳。",
+      "repeat_talk_text": "韩长老神色未动：修行路不怕走得慢，就怕心里浮得太快。",
+      "progress_talk_text": "",
+      "submit_talk_text": "",
+      "ask_topics": [
+        "七玄门=>韩长老缓声道：七玄门是凡俗门派，也是许多人第一次学着把江湖规矩和修行门槛一并扛在肩上的地方。",
+        "入门=>他看着你道：先做事，再论心性；先守住自己，再谈门里会不会给你更深的路。"
+      ],
       "codex_entry_id": "npc_han_zhanglao"
     },
     {
       "npc_id": "sun_er",
       "name": "孙二",
       "scene_id": "qixuan_dormitory",
-      "hint": "丢了一张要命的药方纸，正急得团团转。",
+      "hint": "孙二在通铺前来回打转，手心都快搓出汗来了。",
       "dialogue": "孙二低声求你：那药方若让莫大夫知道是我弄丢的，我这月杂役工钱都保不住。",
       "quest_ids": [
         "qixuan_stream_note"
@@ -3877,18 +3905,37 @@
       "sect_offer_id": "",
       "role": "junior",
       "description": "常见的外门小人物，却总能把你卷进第一波杂务。",
+      "presence_text": "孙二神色发虚，嘴里念叨个不停，一看便知道是惹了麻烦又不敢自己担。",
+      "look_text": "",
+      "first_talk_text": "孙二一见你就像抓住救命稻草：药方真不是我有意弄丢的，你若肯帮一把，我记你这份情。",
+      "repeat_talk_text": "孙二挠着头：那张纸要是还没找回来，我今晚怕是连觉都睡不着。",
+      "progress_talk_text": "孙二急得直叹气：溪边要是还找不到，我可真不知道该怎么去见莫大夫了。",
+      "submit_talk_text": "孙二接过药方，长出一口气：这回算把命捡回来了，往后你若有事，我也不能装聋作哑。",
+      "ask_topics": [
+        "药方=>孙二压低声音：就是莫大夫配药要用的那张纸，我昨晚打水回来时被风卷走了，多半落去溪边了。"
+      ],
       "codex_entry_id": "npc_sun_er"
     },
     {
       "npc_id": "doctor_mo",
       "name": "墨大夫",
       "scene_id": "qixuan_stream",
-      "hint": "你若肯办事，他也会赏你一张药散方子。",
+      "hint": "墨大夫站在溪边洗盏，像连水声都能听出药性轻重。",
       "dialogue": "墨大夫淡淡道：药理不难，难的是人心与火候。",
       "quest_ids": [],
       "sect_offer_id": "",
       "role": "doctor",
       "description": "懂药、懂人，也懂如何让人欠下人情。",
+      "presence_text": "墨大夫衣袖不沾半点泥水，目光平静，却叫人不敢在他面前胡乱编话。",
+      "look_text": "他神情淡得像溪水，可说起药材和火候时，语气里总藏着一线不肯让步的精细。",
+      "first_talk_text": "",
+      "repeat_talk_text": "",
+      "progress_talk_text": "",
+      "submit_talk_text": "",
+      "ask_topics": [
+        "药理=>墨大夫轻声道：识药只是第一步，更难的是知道什么时候该添、什么时候该减，什么时候该忍住不用。",
+        "孙二=>墨大夫眼皮也不抬：外门弟子犯错不稀奇，稀奇的是犯错之后还肯不肯把事补回来。"
+      ],
       "codex_entry_id": "npc_doctor_mo"
     },
     {
@@ -3901,6 +3948,13 @@
       "sect_offer_id": "",
       "role": "gathering",
       "description": "负责照料药圃，也负责提醒新人别乱来。",
+      "presence_text": "",
+      "look_text": "",
+      "first_talk_text": "",
+      "repeat_talk_text": "",
+      "progress_talk_text": "",
+      "submit_talk_text": "",
+      "ask_topics": [],
       "codex_entry_id": "npc_field_steward"
     },
     {
@@ -3913,13 +3967,20 @@
       "sect_offer_id": "",
       "role": "guard",
       "description": "见惯城门风浪，对各路消息都略知一二。",
+      "presence_text": "",
+      "look_text": "",
+      "first_talk_text": "",
+      "repeat_talk_text": "",
+      "progress_talk_text": "",
+      "submit_talk_text": "",
+      "ask_topics": [],
       "codex_entry_id": "npc_gate_guard_lu"
     },
     {
       "npc_id": "mofu_steward",
       "name": "墨府总管",
       "scene_id": "jiayuan_market",
-      "hint": "最懂得把简单差事变成试炼的人。",
+      "hint": "他站在摊前挑货，像每一句话都顺手在称你的斤两。",
       "dialogue": "墨府总管抬眼道：会跑腿只是开始，跑得稳、跑得活，才算本事。",
       "quest_ids": [
         "qixuan_herb"
@@ -3927,6 +3988,17 @@
       "sect_offer_id": "",
       "role": "quest_giver",
       "description": "嘉元城最适合新手接触任务循环的引路人。",
+      "presence_text": "墨府总管衣着不奢，眼神却极利，仿佛一眼就能看出谁是能办事的人，谁只是会逞口舌。",
+      "look_text": "",
+      "first_talk_text": "墨府总管把你从头到脚看了一遍：腿脚快的人不少，办完事还能把风声一并带回来的人才值钱。",
+      "repeat_talk_text": "墨府总管淡淡道：集市不缺人，缺的是能把一件小事做得没有后患的人。",
+      "progress_talk_text": "墨府总管敲了敲桌沿：黄精草不难找，难的是你别在路上把自己也搭进去。",
+      "submit_talk_text": "墨府总管验过药材，终于点头：跑腿不算本事，能把差事交得利落才算本事。",
+      "ask_topics": [
+        "墨府=>墨府总管压低声音：府里近来风声不稳，来客令、药材和人手都不能出半点差池。",
+        "黄精草=>他指了指城外方向：黄精坡和竹林那边最常见，认得草的人去，是跑腿；不认得的人去，就是送命。",
+        "差事=>墨府总管淡淡道：嘉元城里先把差事做稳，比在酒桌上吹自己会修仙有用得多。"
+      ],
       "codex_entry_id": "npc_mofu_steward"
     },
     {
@@ -3939,6 +4011,13 @@
       "sect_offer_id": "",
       "role": "vendor",
       "description": "看似寻常摊主，实则是嘉元城消息流转的节点。",
+      "presence_text": "",
+      "look_text": "",
+      "first_talk_text": "",
+      "repeat_talk_text": "",
+      "progress_talk_text": "",
+      "submit_talk_text": "",
+      "ask_topics": [],
       "codex_entry_id": "npc_granny_yu"
     },
     {
@@ -3951,6 +4030,13 @@
       "sect_offer_id": "",
       "role": "guard",
       "description": "对外来修士并不信任。",
+      "presence_text": "",
+      "look_text": "",
+      "first_talk_text": "",
+      "repeat_talk_text": "",
+      "progress_talk_text": "",
+      "submit_talk_text": "",
+      "ask_topics": [],
       "codex_entry_id": "npc_mo_guard_captain"
     },
     {
@@ -3965,6 +4051,13 @@
       "sect_offer_id": "",
       "role": "quest_giver",
       "description": "墨府内务的枢纽人物。",
+      "presence_text": "",
+      "look_text": "",
+      "first_talk_text": "",
+      "repeat_talk_text": "",
+      "progress_talk_text": "",
+      "submit_talk_text": "",
+      "ask_topics": [],
       "codex_entry_id": "npc_mofu_elder_housekeeper"
     },
     {
@@ -3977,6 +4070,13 @@
       "sect_offer_id": "",
       "role": "story",
       "description": "墨府线的重要人物，代表嘉元城风波的人情面。",
+      "presence_text": "",
+      "look_text": "",
+      "first_talk_text": "",
+      "repeat_talk_text": "",
+      "progress_talk_text": "",
+      "submit_talk_text": "",
+      "ask_topics": [],
       "codex_entry_id": "npc_mo_caikuan"
     },
     {
@@ -3989,13 +4089,20 @@
       "sect_offer_id": "",
       "role": "story",
       "description": "墨府里的另一种锋利气质。",
+      "presence_text": "",
+      "look_text": "",
+      "first_talk_text": "",
+      "repeat_talk_text": "",
+      "progress_talk_text": "",
+      "submit_talk_text": "",
+      "ask_topics": [],
       "codex_entry_id": "npc_mo_fengwu"
     },
     {
       "npc_id": "wandering_broker",
       "name": "流动牙人",
       "scene_id": "tainan_gate",
-      "hint": "知道小会谁在找货、谁在放话。",
+      "hint": "他袖子里塞满纸片和小账签，像一走动就会抖出半个太南谷的风声。",
       "dialogue": "流动牙人压低声音：太南谷里最值钱的不是货，是谁先知道消息。",
       "quest_ids": [
         "ruins_old_map"
@@ -4003,6 +4110,17 @@
       "sect_offer_id": "",
       "role": "broker",
       "description": "散修市场里的典型中间人。",
+      "presence_text": "流动牙人眼珠转得快，说话却总留半句，显然早把谷里谁缺什么、谁在找什么记在了心里。",
+      "look_text": "",
+      "first_talk_text": "流动牙人凑近一步：你若真想在太南谷里找路，先学会分辨谁在卖货，谁在卖命，谁在卖消息。",
+      "repeat_talk_text": "流动牙人笑得不露齿：风声天天有，就看你舍不舍得为哪一句付钱、付力、付命。",
+      "progress_talk_text": "流动牙人压着嗓子：旧图的下落不远了，关键看你敢不敢顺着血禁那边继续往下摸。",
+      "submit_talk_text": "流动牙人接过线索，眯眼笑道：行，看来你不只是会跑腿，还真能替自己把门路越跑越宽。",
+      "ask_topics": [
+        "太南谷=>流动牙人笑了一声：太南谷最怕你把谁都当骗子，也最怕你把谁都当好人，活下来的人都懂得在这两头之间留点余地。",
+        "旧图=>他把声音压得更低：海港那边有人收一份旧图很久了，可线索一路都埋在血禁残垣那头，敢去捞的人没几个。",
+        "消息=>流动牙人摊了摊手：消息这东西，早半步是门路，晚半步就是替别人收尸。"
+      ],
       "codex_entry_id": "npc_wandering_broker"
     },
     {
@@ -4015,13 +4133,20 @@
       "sect_offer_id": "",
       "role": "host",
       "description": "散修集会规则的维护者。",
+      "presence_text": "",
+      "look_text": "",
+      "first_talk_text": "",
+      "repeat_talk_text": "",
+      "progress_talk_text": "",
+      "submit_talk_text": "",
+      "ask_topics": [],
       "codex_entry_id": "npc_fair_host"
     },
     {
       "npc_id": "old_book_peddler",
       "name": "旧书摊贩",
       "scene_id": "tainan_fair",
-      "hint": "专卖残卷和真假难辨的旧闻。",
+      "hint": "旧书摊前卷轴高低堆着，像总能从废纸里翻出一点别人没看见的路。",
       "dialogue": "旧书摊贩嘿嘿笑道：书里未必有真法门，可真假之间，常有生路。",
       "quest_ids": [
         "fair_rumor_packet"
@@ -4029,13 +4154,23 @@
       "sect_offer_id": "",
       "role": "vendor",
       "description": "散修们接触术法与旧闻的入口。",
+      "presence_text": "旧书摊贩把残卷摊得满满当当，眼神却比纸页更像一件待价而沽的旧货。",
+      "look_text": "",
+      "first_talk_text": "",
+      "repeat_talk_text": "",
+      "progress_talk_text": "",
+      "submit_talk_text": "",
+      "ask_topics": [
+        "旧闻=>旧书摊贩搓了搓手：旧闻真假参半才值钱，全是真的没人信，全是假的也骗不住真正活过几场的人。",
+        "虚天=>他嘿嘿一笑：虚天旧闻我听过不少，可你总得先让我看见你能把命走到那一步。"
+      ],
       "codex_entry_id": "npc_old_book_peddler"
     },
     {
       "npc_id": "xin_ruyin",
       "name": "辛如音",
       "scene_id": "xin_house",
-      "hint": "阵法天赋惊人，对妖蛇之胆和阵旗残片都很上心。",
+      "hint": "她指尖压着阵盘边缘，像正把整座小筑里浮动的灵气都算进下一道纹路。",
       "dialogue": "辛如音推开案上阵盘：想帮我，就把能用的材料带来，别拿废话浪费时间。",
       "quest_ids": [
         "tainan_snake"
@@ -4043,6 +4178,17 @@
       "sect_offer_id": "",
       "role": "array_master",
       "description": "太南谷中最鲜明的阵法天才代表。",
+      "presence_text": "辛如音神情清冷，目光落在阵盘上时像连周围人的呼吸都能暂时忘掉。",
+      "look_text": "她说话不多，却像每一句都已经先在心里演算过利害和后果，旁人很难从她这里讨到空话。",
+      "first_talk_text": "辛如音抬眼看了你一下：若真想帮忙，就先把阵法需要的材料拿回来，阵纹从来不是靠嘴补全的。",
+      "repeat_talk_text": "辛如音指尖点过阵纹：阵法不等人，材料不到，推演也只能卡在这里。",
+      "progress_talk_text": "辛如音微蹙着眉：妖蛇胆和阵旗残片都不是摆设，少一件，阵图便还差一口气。",
+      "submit_talk_text": "辛如音把材料按上阵盘，眸光才稍稍一亮：这下总算能把缺的那一笔补上了。",
+      "ask_topics": [
+        "阵法=>辛如音低声道：阵法不是画几道线就完了，它讲究的是灵气走向、地势承接，还有人心能不能稳住那一瞬间。",
+        "太南谷=>她语气平静：太南谷消息多、机缘多、骗子也多，真正有用的通常只在最吵闹的地方露半句口风。",
+        "妖蛇胆=>辛如音指了指阵盘：我缺的不是一件材料，而是能让整座阵图重新接上气机的那一味关键。"
+      ],
       "codex_entry_id": "npc_xin_ruyin"
     },
     {
@@ -4055,6 +4201,13 @@
       "sect_offer_id": "",
       "role": "support",
       "description": "太南线里少有的直爽角色。",
+      "presence_text": "",
+      "look_text": "",
+      "first_talk_text": "",
+      "repeat_talk_text": "",
+      "progress_talk_text": "",
+      "submit_talk_text": "",
+      "ask_topics": [],
       "codex_entry_id": "npc_qi_yunxiao"
     },
     {
@@ -4067,6 +4220,13 @@
       "sect_offer_id": "",
       "role": "vendor",
       "description": "提供低阶符箓与护身道具。",
+      "presence_text": "",
+      "look_text": "",
+      "first_talk_text": "",
+      "repeat_talk_text": "",
+      "progress_talk_text": "",
+      "submit_talk_text": "",
+      "ask_topics": [],
       "codex_entry_id": "npc_talisman_vendor"
     },
     {
@@ -4081,6 +4241,13 @@
       "sect_offer_id": "",
       "role": "quest_giver",
       "description": "让玩家接触阵禁和手札的桥梁人物。",
+      "presence_text": "",
+      "look_text": "",
+      "first_talk_text": "",
+      "repeat_talk_text": "",
+      "progress_talk_text": "",
+      "submit_talk_text": "",
+      "ask_topics": [],
       "codex_entry_id": "npc_array_apprentice"
     },
     {
@@ -4093,13 +4260,20 @@
       "sect_offer_id": "yanyue_sect",
       "role": "sect_recruiter",
       "description": "掩月宗在太南线的代表人物。",
+      "presence_text": "",
+      "look_text": "",
+      "first_talk_text": "",
+      "repeat_talk_text": "",
+      "progress_talk_text": "",
+      "submit_talk_text": "",
+      "ask_topics": [],
       "codex_entry_id": "npc_fairy_chen"
     },
     {
       "npc_id": "huangfeng_steward",
       "name": "黄枫谷外事执事",
       "scene_id": "huangfeng_outpost",
-      "hint": "审人、收信、发任务，全看他一句话。",
+      "hint": "执事翻着名录，连抬眼的次数都像在算人值不值得收进门里。",
       "dialogue": "外事执事翻着名录：会办事的人，黄枫谷从来不嫌多。",
       "quest_ids": [
         "huangfeng_letter"
@@ -4107,18 +4281,38 @@
       "sect_offer_id": "",
       "role": "quest_giver",
       "description": "黄枫谷正式门径的看门人。",
+      "presence_text": "黄枫谷外事执事衣袖整齐，语气平稳，审人时却像在一页页翻检你的根底和心性。",
+      "look_text": "",
+      "first_talk_text": "外事执事看过你片刻：山门不缺人，缺的是知道什么时候该低头办事、什么时候该稳住心性的弟子。",
+      "repeat_talk_text": "外事执事将名录合上：若真想往里走，就先把交到手上的事情做得像样。",
+      "progress_talk_text": "外事执事抬手指了指外山：风鸦翎羽和药引不算多难，难的是你别把心气先耗在半路。",
+      "submit_talk_text": "外事执事验过信物与材料，神色终于略缓：这一步走得稳，黄枫谷自然会给你下一步门路。",
+      "ask_topics": [
+        "黄枫谷=>外事执事淡淡道：黄枫谷重的是根基与规矩，先守住这两样，才谈得上药理、功法与更深的门内资源。",
+        "入门=>他点了点名录：先在外营把差事办稳，再说你有没有资格让门里的人记住名字。"
+      ],
       "codex_entry_id": "npc_huangfeng_steward"
     },
     {
       "npc_id": "elder_ma",
       "name": "马师伯",
       "scene_id": "huangfeng_hall",
-      "hint": "气息温和却让人不敢怠慢，是黄枫谷一系的引路人。",
+      "hint": "马师伯袖手立在殿中，语气温和，却自有让人不敢怠慢的分量。",
       "dialogue": "马师伯看你片刻：修行路长，先学会按规矩活着。",
       "quest_ids": [],
       "sect_offer_id": "huangfeng_valley",
       "role": "sect_master",
       "description": "黄枫谷支线与入门节点的核心人物。",
+      "presence_text": "马师伯神色温厚，目光落在人身上时却像把心气、根骨和未来能走多远都先看过一遍。",
+      "look_text": "他不靠威压服人，却让人自然想把姿态收正，因为在这位师伯面前，浮躁最先显得可笑。",
+      "first_talk_text": "",
+      "repeat_talk_text": "",
+      "progress_talk_text": "",
+      "submit_talk_text": "",
+      "ask_topics": [
+        "规矩=>马师伯缓声道：宗门规矩不是束手束脚，而是让人知道什么时候该争，什么时候该退，什么时候该把命先保下来。",
+        "血禁=>他看向南边：血色禁地是试炼，也是照人心的一面镜子，进去之前总该先知道自己想拿什么、能丢什么。"
+      ],
       "codex_entry_id": "npc_elder_ma"
     },
     {
@@ -4131,6 +4325,13 @@
       "sect_offer_id": "",
       "role": "senior",
       "description": "典型宗门前辈形象。",
+      "presence_text": "",
+      "look_text": "",
+      "first_talk_text": "",
+      "repeat_talk_text": "",
+      "progress_talk_text": "",
+      "submit_talk_text": "",
+      "ask_topics": [],
       "codex_entry_id": "npc_disciple_lu"
     },
     {
@@ -4145,6 +4346,13 @@
       "sect_offer_id": "",
       "role": "medicine",
       "description": "黄枫谷药理系统的入门导师。",
+      "presence_text": "",
+      "look_text": "",
+      "first_talk_text": "",
+      "repeat_talk_text": "",
+      "progress_talk_text": "",
+      "submit_talk_text": "",
+      "ask_topics": [],
       "codex_entry_id": "npc_medicine_deacon"
     },
     {
@@ -4159,6 +4367,16 @@
       "sect_offer_id": "",
       "role": "scripture",
       "description": "黄枫谷功法与手册线的重要人物。",
+      "presence_text": "守卷人衣袍旧净，站在石廊尽头像一页被岁月翻得发白却始终不肯散乱的旧卷。",
+      "look_text": "",
+      "first_talk_text": "守卷人把目光从石壁旧刻上移开：启蒙口诀人人都会背，真正难的是你肯不肯把最浅的那一句也按年按月练到身上。",
+      "repeat_talk_text": "守卷人声音不高：藏经之地最怕的从来不是卷失，而是人先把心里的根底弄丢了。",
+      "progress_talk_text": "",
+      "submit_talk_text": "",
+      "ask_topics": [
+        "口诀=>守卷人缓声道：启蒙口诀看似浅，其实最能照出人有没有耐性；连这都嫌慢的人，拿到再好的功法也只会先走偏。",
+        "抄卷=>他轻轻点头：抄卷不是为了记字，是让你把法度、心气和次序一起抄进手里。"
+      ],
       "codex_entry_id": "npc_scripture_keeper"
     },
     {
@@ -4171,13 +4389,20 @@
       "sect_offer_id": "",
       "role": "hunter",
       "description": "外山生态与采集线索的民间来源。",
+      "presence_text": "",
+      "look_text": "",
+      "first_talk_text": "",
+      "repeat_talk_text": "",
+      "progress_talk_text": "",
+      "submit_talk_text": "",
+      "ask_topics": [],
       "codex_entry_id": "npc_maple_hunter"
     },
     {
       "npc_id": "blood_warden",
       "name": "血禁执事",
       "scene_id": "blood_gate",
-      "hint": "对禁地规则极严，赏罚也最分明。",
+      "hint": "他立在石门前，像比所有闯禁地的人都更清楚里面埋着多少尸骨。",
       "dialogue": "血禁执事冷声道：进去之前想清楚，里面拿到的每一株灵草都得拿命去换。",
       "quest_ids": [
         "blood_forbidden_token",
@@ -4186,6 +4411,16 @@
       "sect_offer_id": "",
       "role": "quest_giver",
       "description": "血色禁地阶段的强规则人物。",
+      "presence_text": "血禁执事语气不高，却让石门前每个人都把贪念先往回收了一寸。",
+      "look_text": "",
+      "first_talk_text": "血禁执事目光扫过你：想进禁地可以，先想清楚你打算拿什么去换里面的那一点机缘。",
+      "repeat_talk_text": "血禁执事声音极冷：石门每次开合都要收走一些命，别把自己也算漏了。",
+      "progress_talk_text": "血禁执事淡淡道：血兰、样本、虫材都在里头，可进去的人若没有分寸，带出来的往往只剩后悔。",
+      "submit_talk_text": "血禁执事检过材料，神色稍缓：能从里面带东西出来的人，至少已经学会了什么叫不乱伸手。",
+      "ask_topics": [
+        "血禁=>血禁执事冷声道：血禁不只是灵草丰厚，更是人心最容易失守的地方，进去之前先把贪念压住一半。",
+        "血兰=>他看着石门：血兰长得艳，是因为它周围死过太多不肯后退的人。"
+      ],
       "codex_entry_id": "npc_blood_warden"
     },
     {
@@ -4198,6 +4433,16 @@
       "sect_offer_id": "",
       "role": "scout",
       "description": "提醒玩家禁地风险和线路。",
+      "presence_text": "禁地斥候披着沾满雾水的旧披风，脚边木桩上刻着一条条撤路记号，像替后来人把后悔先写在了地上。",
+      "look_text": "",
+      "first_talk_text": "",
+      "repeat_talk_text": "",
+      "progress_talk_text": "",
+      "submit_talk_text": "",
+      "ask_topics": [
+        "退路=>禁地斥候冷声道：真能活着出来的人，进来时多半先把退路记得比机缘还熟。",
+        "外围=>他望着雾林：外围给你的不是安全，只是让你还有机会在犯大错前先醒过来。"
+      ],
       "codex_entry_id": "npc_forbidden_scout"
     },
     {
@@ -4210,6 +4455,13 @@
       "sect_offer_id": "",
       "role": "survivor",
       "description": "禁地危险的活注脚。",
+      "presence_text": "",
+      "look_text": "",
+      "first_talk_text": "",
+      "repeat_talk_text": "",
+      "progress_talk_text": "",
+      "submit_talk_text": "",
+      "ask_topics": [],
       "codex_entry_id": "npc_swamp_survivor"
     },
     {
@@ -4222,13 +4474,20 @@
       "sect_offer_id": "",
       "role": "gatherer",
       "description": "血兰谷的即时氛围人物。",
+      "presence_text": "",
+      "look_text": "",
+      "first_talk_text": "",
+      "repeat_talk_text": "",
+      "progress_talk_text": "",
+      "submit_talk_text": "",
+      "ask_topics": [],
       "codex_entry_id": "npc_orchid_gatherer"
     },
     {
       "npc_id": "seaport_broker",
       "name": "海商牙人",
       "scene_id": "tiannan_harbor",
-      "hint": "掌管船票、货单与海图消息，是海港最重要的中间人。",
+      "hint": "他站在货单和潮图之间，像一条真正的海路也要先从他眼皮底下过一遍。",
       "dialogue": "海商牙人笑道：你若真有货，我也真有路。",
       "quest_ids": [
         "chaos_sea_chart"
@@ -4236,6 +4495,17 @@
       "sect_offer_id": "",
       "role": "broker",
       "description": "天南港向乱星海过渡的关键中介。",
+      "presence_text": "海商牙人袖里总有新的货单与旧的风声，笑意不深，却让人知道他手里确实捏着路。",
+      "look_text": "",
+      "first_talk_text": "海商牙人敲了敲案上的海图：海上路不认空话，你若真能把东西带来，我自然能替你把门路往前推一步。",
+      "repeat_talk_text": "海商牙人眯起眼：想出港的人很多，可真懂得先备路引、备材料、备退路的人不多。",
+      "progress_talk_text": "海商牙人把手按在残图上：灵鳞不到，海图禁制便还差一口气，你急着上船也只会把命送进浪里。",
+      "submit_talk_text": "海商牙人验过材料，笑意才真了几分：成，海路这回算替你开了一线。",
+      "ask_topics": [
+        "海图=>海商牙人压低声音：海图不是画条路那么简单，禁制、潮线和风向差半分，整船人都可能回不来。",
+        "乱星海=>他望向远处：乱星海从不缺机缘，缺的是能把机缘带回岸上的人。",
+        "海港=>海商牙人笑了一下：天南港是门槛，不是谁都能从这里把陆上的胆气一路带去海上。"
+      ],
       "codex_entry_id": "npc_seaport_broker"
     },
     {
@@ -4248,6 +4518,13 @@
       "sect_offer_id": "",
       "role": "guard",
       "description": "港口秩序维护者。",
+      "presence_text": "",
+      "look_text": "",
+      "first_talk_text": "",
+      "repeat_talk_text": "",
+      "progress_talk_text": "",
+      "submit_talk_text": "",
+      "ask_topics": [],
       "codex_entry_id": "npc_harbor_guard"
     },
     {
@@ -4260,6 +4537,13 @@
       "sect_offer_id": "",
       "role": "vendor",
       "description": "乱星海物产的第一层入口。",
+      "presence_text": "",
+      "look_text": "",
+      "first_talk_text": "",
+      "repeat_talk_text": "",
+      "progress_talk_text": "",
+      "submit_talk_text": "",
+      "ask_topics": [],
       "codex_entry_id": "npc_sea_peddler"
     },
     {
@@ -4272,6 +4556,13 @@
       "sect_offer_id": "",
       "role": "vendor",
       "description": "提供航线、秘境与海域传闻。",
+      "presence_text": "",
+      "look_text": "",
+      "first_talk_text": "",
+      "repeat_talk_text": "",
+      "progress_talk_text": "",
+      "submit_talk_text": "",
+      "ask_topics": [],
       "codex_entry_id": "npc_chart_seller"
     },
     {
@@ -4286,6 +4577,13 @@
       "sect_offer_id": "",
       "role": "craftsman",
       "description": "海路与虚天殿入口的老资格人物。",
+      "presence_text": "",
+      "look_text": "",
+      "first_talk_text": "",
+      "repeat_talk_text": "",
+      "progress_talk_text": "",
+      "submit_talk_text": "",
+      "ask_topics": [],
       "codex_entry_id": "npc_old_shipwright"
     },
     {
@@ -4298,6 +4596,13 @@
       "sect_offer_id": "",
       "role": "watcher",
       "description": "风暴航线与异象的情报来源。",
+      "presence_text": "",
+      "look_text": "",
+      "first_talk_text": "",
+      "repeat_talk_text": "",
+      "progress_talk_text": "",
+      "submit_talk_text": "",
+      "ask_topics": [],
       "codex_entry_id": "npc_tower_watch"
     },
     {
@@ -4312,25 +4617,42 @@
       "sect_offer_id": "",
       "role": "broker",
       "description": "灰色交易与偏门消息的入口。",
+      "presence_text": "",
+      "look_text": "",
+      "first_talk_text": "",
+      "repeat_talk_text": "",
+      "progress_talk_text": "",
+      "submit_talk_text": "",
+      "ask_topics": [],
       "codex_entry_id": "npc_shadow_buyer"
     },
     {
       "npc_id": "captain_qu",
       "name": "曲船主",
       "scene_id": "chaos_sea_port",
-      "hint": "在近港混迹多年，知道怎样带新人穿过第一段暗流。",
+      "hint": "曲船主站在近港栈边，看潮不看人，却总能把谁适不适合上船猜个八九不离十。",
       "dialogue": "曲船主啧了一声：海上不看嘴皮子，只看你能不能稳住船。",
       "quest_ids": [],
       "sect_offer_id": "",
       "role": "captain",
       "description": "乱星海航线引导人物。",
+      "presence_text": "曲船主皮肤被海风磨得发暗，站姿极稳，像浪再大也掀不动他心里那杆秤。",
+      "look_text": "",
+      "first_talk_text": "",
+      "repeat_talk_text": "",
+      "progress_talk_text": "",
+      "submit_talk_text": "",
+      "ask_topics": [
+        "近港=>曲船主看着潮线：近港先教人认怂，连这段暗流都看不懂的人，别提更深的海路。",
+        "海路=>他哼了一声：海上最怕你以为自己已经看懂了风，结果下一息风就变了脸。"
+      ],
       "codex_entry_id": "npc_captain_qu"
     },
     {
       "npc_id": "deck_mage",
       "name": "甲板术士",
       "scene_id": "chaos_sea_ship",
-      "hint": "负责船上禁制与风帆法阵，对妖鱼材料很感兴趣。",
+      "hint": "他俯身调阵灯时连袖口都不乱，像把整条航线的安危都压在了手指轻重之间。",
       "dialogue": "甲板术士抬手理了理阵灯：若想进更深的海域，你总得学点真正的法门。",
       "quest_ids": [
         "demon_fish_core"
@@ -4338,13 +4660,24 @@
       "sect_offer_id": "",
       "role": "mage",
       "description": "从近战体系过渡到法术体系的指导角色。",
+      "presence_text": "甲板术士说话不急，手上却从不停，阵灯、风帆和法阵都被他收拾得像随时能迎上下一场风暴。",
+      "look_text": "",
+      "first_talk_text": "甲板术士抬眼看你：海上可不只认刀和胆，法力、阵灯和对材料的判断一样会要命。",
+      "repeat_talk_text": "",
+      "progress_talk_text": "甲板术士把阵灯微微调亮：妖鱼内丹若不到手，深海那层禁制就还少一把能撬开的钥匙。",
+      "submit_talk_text": "甲板术士接过内丹，指尖一点阵灯：好，这才像是能继续往深处探的人。",
+      "ask_topics": [
+        "法术=>甲板术士淡淡道：海上施法最怕急躁，灵力一乱，法门就会先反噬你自己。",
+        "妖鱼=>他瞥向黑潮：黑鳍妖鱼不好杀，可它体内那点东西偏偏正是许多海上禁制最认的钥匙。",
+        "风暴=>甲板术士压低声音：风暴不是墙，是活东西；看懂它怎么转，船才有机会从它牙缝里穿过去。"
+      ],
       "codex_entry_id": "npc_deck_mage"
     },
     {
       "npc_id": "island_hermit",
       "name": "孤岛隐士",
       "scene_id": "chaos_sea_isle",
-      "hint": "独居海岛多年，像是把不少古修秘密都埋在了碑文里。",
+      "hint": "他守着半块残碑，像许多年都没离开过这里，也像从没把真正想说的话一次说尽。",
       "dialogue": "孤岛隐士摩挲着残碑：你若能看懂这上面的裂痕，就离虚天更近一步。",
       "quest_ids": [
         "chaos_relic"
@@ -4352,6 +4685,16 @@
       "sect_offer_id": "",
       "role": "hermit",
       "description": "残碑孤岛与虚天线的重要解谜人物。",
+      "presence_text": "孤岛隐士衣袍旧得发白，指尖却始终停在碑纹上，仿佛那些裂痕比活人更值得他反复揣摩。",
+      "look_text": "",
+      "first_talk_text": "孤岛隐士抬手拂过碑面：海上许多路不是断了，只是被拆得太碎；肯停下来细看的人，才拼得回去。",
+      "repeat_talk_text": "孤岛隐士声音极轻：碑文不会主动告诉你答案，它只会先看你有没有耐心陪它把沉默熬完。",
+      "progress_talk_text": "",
+      "submit_talk_text": "",
+      "ask_topics": [
+        "残碑=>孤岛隐士低声道：碑上裂痕不是坏掉了，而是把一整段路拆成了只肯给懂行人看的几节。",
+        "虚天=>他缓缓摇头：虚天之事，不是知道名字就算知道；没踩过那几层险路的人，只能算在门外听了个响。"
+      ],
       "codex_entry_id": "npc_island_hermit"
     },
     {
@@ -4364,13 +4707,20 @@
       "sect_offer_id": "",
       "role": "gatherer",
       "description": "乱星海采集系统的在地人物。",
+      "presence_text": "",
+      "look_text": "",
+      "first_talk_text": "",
+      "repeat_talk_text": "",
+      "progress_talk_text": "",
+      "submit_talk_text": "",
+      "ask_topics": [],
       "codex_entry_id": "npc_reef_diver"
     },
     {
       "npc_id": "palace_remnant_spirit",
       "name": "守门残灵",
       "scene_id": "xutian_hall",
-      "hint": "半是守卫半是引路，像在审视每一个闯入者够不够资格。",
+      "hint": "残灵立在殿门阴影里，像在替一座早已无人居住的古殿继续守着最后一道规矩。",
       "dialogue": "守门残灵声音空茫：残钥在手者，可入此殿一步。",
       "quest_ids": [
         "xutian_key"
@@ -4378,13 +4728,23 @@
       "sect_offer_id": "",
       "role": "spirit",
       "description": "虚天殿门槛与规则的象征。",
+      "presence_text": "守门残灵并不逼人，却让人一靠近便生出被古老规矩重新丈量一遍的错觉。",
+      "look_text": "",
+      "first_talk_text": "守门残灵的声音像隔着许多年才传到耳边：无钥者止步，有钥者亦未必能走到最后。",
+      "repeat_talk_text": "",
+      "progress_talk_text": "守门残灵空茫低语：残钥未齐，旧门仍只认你是门外之人。",
+      "submit_talk_text": "残灵望着你手中之物，声音终于松动了一线：钥意既成，便许你再向前一步。",
+      "ask_topics": [
+        "虚天=>守门残灵缓缓道：虚天之殿留的从来不是给后人捡现成的宝，而是给敢闯之人一层比一层更重的考验。",
+        "残钥=>残灵声音低沉：残钥不是信物那么简单，它本身就是让旧规矩认得出你的那一缕气机。"
+      ],
       "codex_entry_id": "npc_palace_remnant_spirit"
     },
     {
       "npc_id": "star_tablet_spirit",
       "name": "祭台残灵",
       "scene_id": "xutian_star_platform",
-      "hint": "仍记得当年祭台运转时的星纹轨迹，对演算极为执着。",
+      "hint": "祭台残灵徘徊在星纹之间，像仍在等谁把当年那张未算完的阵图补到最后。",
       "dialogue": "祭台残灵低语：星图不正，玄门便永不开。",
       "quest_ids": [
         "xutian_star_map"
@@ -4392,6 +4752,16 @@
       "sect_offer_id": "",
       "role": "spirit",
       "description": "虚天殿深层阵禁与年历解锁的关键人物。",
+      "presence_text": "祭台残灵的影子总与地上星纹错开半寸，像它自己也只是阵图尚未熄灭的一部分。",
+      "look_text": "",
+      "first_talk_text": "",
+      "repeat_talk_text": "",
+      "progress_talk_text": "",
+      "submit_talk_text": "",
+      "ask_topics": [
+        "星图=>祭台残灵低声道：星图错一纹，整座玄门都会把后来人当成外客。",
+        "玄门=>它的声音像落在石纹上：玄门不认蛮力，只认你能不能看懂它为什么至今还不肯开。"
+      ],
       "codex_entry_id": "npc_star_tablet_spirit"
     },
     {
@@ -5875,15 +6245,19 @@
         "timeline_qixuan_start",
         "codex_shared_world_sect"
       ],
-      "chapter": "七玄门启程",
-      "room_type": "宗门",
-      "risk_level": "安全",
-      "landmark": "七玄门议事堂",
-      "room_layer": "新手安全圈",
-      "pvp_enabled": false,
+      "scene_brief": "",
+      "scene_aftertaste": "",
+      "ambient_mood": "",
+      "palette_id": "",
+      "landmark": "",
       "rumors": [
         "此地常有人提起「七玄门启程」相关的旧闻。"
       ],
+      "chapter": "七玄门启程",
+      "room_type": "宗门",
+      "risk_level": "安全",
+      "room_layer": "新手安全圈",
+      "pvp_enabled": false,
       "loop_tags": [
         "门派事务"
       ],
@@ -5918,15 +6292,19 @@
         "timeline_qixuan_start",
         "setting_human_world"
       ],
+      "scene_brief": "晨鼓余音刚散，外场青石还带着夜露寒意；练拳声、喝骂声和杂役的脚步声交错在一起，像一卷刚刚摊开的江湖入门帖。",
+      "scene_aftertaste": "抬眼往北，是能决定外门去向的议事堂；若往南走，山风里已有松脂和兽腥味慢慢浮上来。",
+      "ambient_mood": "门中晨练未歇，少年心气与山门规矩同在此地翻涌",
+      "palette_id": "qixuan_ink",
+      "landmark": "外场演武石坪",
+      "rumors": [
+        "外门里都说，先在嘉元城把差事办稳的人，才有资格往更深的修行路上走。"
+      ],
       "chapter": "七玄门启程",
       "room_type": "房间",
       "risk_level": "安全",
-      "landmark": "七玄门外场",
       "room_layer": "新手安全圈",
       "pvp_enabled": false,
-      "rumors": [
-        "此地常有人提起「七玄门启程」相关的旧闻。"
-      ],
       "loop_tags": [
         "门派事务"
       ],
@@ -5957,15 +6335,19 @@
         "geo_qixuan_dormitory",
         "npc_sun_er"
       ],
-      "chapter": "七玄门启程",
-      "room_type": "房间",
-      "risk_level": "安全",
-      "landmark": "外门弟子舍",
-      "room_layer": "新手安全圈",
-      "pvp_enabled": false,
+      "scene_brief": "草席和木榻挤在一间低矮屋舍里，少年们的汗味、旧药包味和没睡够的抱怨都堆在这儿。",
+      "scene_aftertaste": "山门里最真切的凡俗日子，大多都在这间屋里先熬出来。",
+      "ambient_mood": "木舍微潮，少年们的倦意和心气都还没有散尽",
+      "palette_id": "qixuan_ink",
+      "landmark": "旧木通铺",
       "rumors": [
         "此地常有人提起「七玄门启程」相关的旧闻。"
       ],
+      "chapter": "七玄门启程",
+      "room_type": "房间",
+      "risk_level": "安全",
+      "room_layer": "新手安全圈",
+      "pvp_enabled": false,
       "loop_tags": [
         "门派事务"
       ],
@@ -5998,17 +6380,21 @@
         "geo_qixuan_backslope",
         "monster_gray_wolf"
       ],
-      "chapter": "散修启途",
-      "room_type": "野外",
-      "risk_level": "历练",
-      "landmark": "后山缓坡",
-      "room_layer": "新手安全圈",
-      "pvp_enabled": false,
+      "scene_brief": "松针铺满山坡，鞋底一踩便发出极轻的碎响；风从林隙间斜斜掠过，把野兽留下的腥气也一并送了过来。",
+      "scene_aftertaste": "再往深处走，便不是练胆，而是真要见血了。",
+      "ambient_mood": "山风清冷，草木气里藏着初学者第一次真正面对生死的味道",
+      "palette_id": "pine_dusk",
+      "landmark": "后山松坡",
       "rumors": [
         "此地常有人提起「散修启途」相关的旧闻。",
         "附近修士常交换妖兽出没与掉落材料的消息。",
         "这里的采集点很受散修与药师关注。"
       ],
+      "chapter": "散修启途",
+      "room_type": "野外",
+      "risk_level": "历练",
+      "room_layer": "新手安全圈",
+      "pvp_enabled": false,
       "loop_tags": [
         "采药炼丹",
         "巡山悬赏",
@@ -6041,16 +6427,20 @@
         "geo_qixuan_stream",
         "npc_doctor_mo"
       ],
-      "chapter": "七玄门启程",
-      "room_type": "房间",
-      "risk_level": "安全",
-      "landmark": "洗剑溪",
-      "room_layer": "新手安全圈",
-      "pvp_enabled": false,
+      "scene_brief": "溪水贴着青石一路压低声势地流，冷气顺着裤脚往上爬；有人在溪边磨刃，有人在水影里悄悄练着呼吸。",
+      "scene_aftertaste": "若只把这里当洗剑之地，便会错过许多外门弟子第一次学会静下来观自己的地方。",
+      "ambient_mood": "溪声清冷，杂念反倒最容易在这点清冷里慢慢沉下去",
+      "palette_id": "pine_dusk",
+      "landmark": "溪畔磨剑石",
       "rumors": [
         "此地常有人提起「七玄门启程」相关的旧闻。",
         "这里的采集点很受散修与药师关注。"
       ],
+      "chapter": "七玄门启程",
+      "room_type": "房间",
+      "risk_level": "安全",
+      "room_layer": "新手安全圈",
+      "pvp_enabled": false,
       "loop_tags": [
         "采药炼丹",
         "门派事务"
@@ -6083,16 +6473,20 @@
         "npc_field_steward",
         "recipe_recover_powder"
       ],
-      "chapter": "七玄门启程",
-      "room_type": "房间",
-      "risk_level": "安全",
-      "landmark": "药圃小院",
-      "room_layer": "新手安全圈",
-      "pvp_enabled": false,
+      "scene_brief": "",
+      "scene_aftertaste": "",
+      "ambient_mood": "",
+      "palette_id": "",
+      "landmark": "",
       "rumors": [
         "此地常有人提起「七玄门启程」相关的旧闻。",
         "这里的采集点很受散修与药师关注。"
       ],
+      "chapter": "七玄门启程",
+      "room_type": "房间",
+      "risk_level": "安全",
+      "room_layer": "新手安全圈",
+      "pvp_enabled": false,
       "loop_tags": [
         "采药炼丹",
         "门派事务"
@@ -6124,15 +6518,19 @@
         "geo_jiayuan_east_gate",
         "npc_gate_guard_lu"
       ],
-      "chapter": "越京官道",
-      "room_type": "宗门",
-      "risk_level": "安全",
-      "landmark": "嘉元城东门",
-      "room_layer": "新手安全圈",
-      "pvp_enabled": false,
+      "scene_brief": "",
+      "scene_aftertaste": "",
+      "ambient_mood": "",
+      "palette_id": "",
+      "landmark": "",
       "rumors": [
         "此地常有人提起「越京官道」相关的旧闻。"
       ],
+      "chapter": "越京官道",
+      "room_type": "宗门",
+      "risk_level": "安全",
+      "room_layer": "新手安全圈",
+      "pvp_enabled": false,
       "loop_tags": [
         "护送跑商"
       ],
@@ -6174,15 +6572,19 @@
         "npc_granny_yu",
         "timeline_qixuan_start"
       ],
+      "scene_brief": "长街两旁幡旗斜卷，药香、汗味、牲口味和铜钱碰撞声混成一团，正是凡俗与修行交错得最厉害的地方。",
+      "scene_aftertaste": "墨府的风声在这条街上传得极快，真正值钱的往往不是摊上的货，而是谁先听懂一句闲话。",
+      "ambient_mood": "市声喧沸，人人都在做买卖，也人人都在互相试探",
+      "palette_id": "market_amber",
+      "landmark": "嘉元长街",
+      "rumors": [
+        "近来墨府风声不静，连卖药的余婆婆都把嘴收紧了三分。"
+      ],
       "chapter": "嘉元城风波",
       "room_type": "坊市",
       "risk_level": "安全",
-      "landmark": "嘉元城集市",
       "room_layer": "新手安全圈",
       "pvp_enabled": false,
-      "rumors": [
-        "此地常有人提起「嘉元城风波」相关的旧闻。"
-      ],
       "loop_tags": [
         "护送跑商"
       ],
@@ -6212,15 +6614,19 @@
         "geo_mofu_gate",
         "npc_mo_guard_captain"
       ],
-      "chapter": "嘉元城风波",
-      "room_type": "宗门",
-      "risk_level": "安全",
-      "landmark": "墨府大门",
-      "room_layer": "新手安全圈",
-      "pvp_enabled": false,
+      "scene_brief": "",
+      "scene_aftertaste": "",
+      "ambient_mood": "",
+      "palette_id": "",
+      "landmark": "",
       "rumors": [
         "此地常有人提起「嘉元城风波」相关的旧闻。"
       ],
+      "chapter": "嘉元城风波",
+      "room_type": "宗门",
+      "risk_level": "安全",
+      "room_layer": "新手安全圈",
+      "pvp_enabled": false,
       "loop_tags": [
         "护送跑商"
       ],
@@ -6251,15 +6657,19 @@
         "geo_mofu_front_hall",
         "npc_mofu_elder_housekeeper"
       ],
-      "chapter": "嘉元城风波",
-      "room_type": "宗门",
-      "risk_level": "安全",
-      "landmark": "墨府前厅",
-      "room_layer": "新手安全圈",
-      "pvp_enabled": false,
+      "scene_brief": "",
+      "scene_aftertaste": "",
+      "ambient_mood": "",
+      "palette_id": "",
+      "landmark": "",
       "rumors": [
         "此地常有人提起「嘉元城风波」相关的旧闻。"
       ],
+      "chapter": "嘉元城风波",
+      "room_type": "宗门",
+      "risk_level": "安全",
+      "room_layer": "新手安全圈",
+      "pvp_enabled": false,
       "loop_tags": [
         "采药炼丹"
       ],
@@ -6291,15 +6701,19 @@
         "npc_mo_caikuan",
         "npc_mo_fengwu"
       ],
-      "chapter": "嘉元城风波",
-      "room_type": "房间",
-      "risk_level": "安全",
-      "landmark": "墨府内院",
-      "room_layer": "新手安全圈",
-      "pvp_enabled": false,
+      "scene_brief": "",
+      "scene_aftertaste": "",
+      "ambient_mood": "",
+      "palette_id": "",
+      "landmark": "",
       "rumors": [
         "此地常有人提起「嘉元城风波」相关的旧闻。"
       ],
+      "chapter": "嘉元城风波",
+      "room_type": "房间",
+      "risk_level": "安全",
+      "room_layer": "新手安全圈",
+      "pvp_enabled": false,
       "loop_tags": [
         "采药炼丹"
       ],
@@ -6329,17 +6743,21 @@
         "geo_bamboo_forest",
         "monster_green_bamboo_snake"
       ],
-      "chapter": "嘉元城风波",
-      "room_type": "野外",
-      "risk_level": "历练",
-      "landmark": "青竹林",
-      "room_layer": "新手安全圈",
-      "pvp_enabled": false,
+      "scene_brief": "",
+      "scene_aftertaste": "",
+      "ambient_mood": "",
+      "palette_id": "",
+      "landmark": "",
       "rumors": [
         "此地常有人提起「嘉元城风波」相关的旧闻。",
         "附近修士常交换妖兽出没与掉落材料的消息。",
         "这里的采集点很受散修与药师关注。"
       ],
+      "chapter": "嘉元城风波",
+      "room_type": "野外",
+      "risk_level": "历练",
+      "room_layer": "新手安全圈",
+      "pvp_enabled": false,
       "loop_tags": [
         "采药炼丹",
         "巡山悬赏"
@@ -6372,17 +6790,21 @@
         "geo_herb_slope",
         "monster_ink_marten"
       ],
-      "chapter": "嘉元城风波",
-      "room_type": "野外",
-      "risk_level": "历练",
-      "landmark": "黄精坡",
-      "room_layer": "新手安全圈",
-      "pvp_enabled": false,
+      "scene_brief": "",
+      "scene_aftertaste": "",
+      "ambient_mood": "",
+      "palette_id": "",
+      "landmark": "",
       "rumors": [
         "此地常有人提起「嘉元城风波」相关的旧闻。",
         "附近修士常交换妖兽出没与掉落材料的消息。",
         "这里的采集点很受散修与药师关注。"
       ],
+      "chapter": "嘉元城风波",
+      "room_type": "野外",
+      "risk_level": "历练",
+      "room_layer": "新手安全圈",
+      "pvp_enabled": false,
       "loop_tags": [
         "采药炼丹",
         "巡山悬赏"
@@ -6416,16 +6838,20 @@
         "monster_ink_scale_snake",
         "monster_stone_bat"
       ],
-      "chapter": "嘉元城风波",
-      "room_type": "房间",
-      "risk_level": "高危",
-      "landmark": "后山洞窟",
-      "room_layer": "成长历练圈",
-      "pvp_enabled": false,
+      "scene_brief": "",
+      "scene_aftertaste": "",
+      "ambient_mood": "",
+      "palette_id": "",
+      "landmark": "",
       "rumors": [
         "此地常有人提起「嘉元城风波」相关的旧闻。",
         "附近修士常交换妖兽出没与掉落材料的消息。"
       ],
+      "chapter": "嘉元城风波",
+      "room_type": "房间",
+      "risk_level": "高危",
+      "room_layer": "成长历练圈",
+      "pvp_enabled": false,
       "loop_tags": [
         "巡山悬赏",
         "残区探禁"
@@ -6458,15 +6884,19 @@
         "geo_tainan_gate",
         "npc_wandering_broker"
       ],
-      "chapter": "太南散修坊",
-      "room_type": "宗门",
-      "risk_level": "安全",
-      "landmark": "太南谷入口",
-      "room_layer": "新手安全圈",
-      "pvp_enabled": false,
+      "scene_brief": "谷口棚市一眼望不到头，散修、牙人和摊贩全在这里试探谁手里有货、谁口中有风声。",
+      "scene_aftertaste": "进了太南谷，话就比刀更容易先伤人，也更容易先救人。",
+      "ambient_mood": "谷口雾气未散，买卖与试探已经先一步热起来了",
+      "palette_id": "tainan_mist",
+      "landmark": "谷口棚市",
       "rumors": [
         "此地常有人提起「太南散修坊」相关的旧闻。"
       ],
+      "chapter": "太南散修坊",
+      "room_type": "宗门",
+      "risk_level": "安全",
+      "room_layer": "新手安全圈",
+      "pvp_enabled": false,
       "loop_tags": [
         "采药炼丹",
         "护送跑商"
@@ -6509,15 +6939,19 @@
         "timeline_tainan_fair",
         "setting_human_world"
       ],
+      "scene_brief": "临时搭起的坊棚层层相接，摊前摊后全是压低嗓子的议价声；每个人都像在卖东西，也像在卖一条命里换来的消息。",
+      "scene_aftertaste": "小会最怕的从来不是价高，而是你分不清哪句话能救命，哪句话会要命。",
+      "ambient_mood": "雾里有符火，火里有人心，散修们的试探与算计在这里无一日停歇",
+      "palette_id": "tainan_mist",
+      "landmark": "小会主棚",
+      "rumors": [
+        "太南谷里最值钱的货不是法器，而是比别人早半步知道风向。"
+      ],
       "chapter": "太南小会",
       "room_type": "房间",
       "risk_level": "安全",
-      "landmark": "太南小会",
       "room_layer": "新手安全圈",
       "pvp_enabled": false,
-      "rumors": [
-        "此地常有人提起「太南小会」相关的旧闻。"
-      ],
       "loop_tags": [
         "采药炼丹"
       ],
@@ -6549,15 +6983,19 @@
         "npc_qi_yunxiao",
         "timeline_tainan_fair"
       ],
-      "chapter": "太南小会",
-      "room_type": "房间",
-      "risk_level": "安全",
-      "landmark": "辛如音小筑",
-      "room_layer": "新手安全圈",
-      "pvp_enabled": false,
+      "scene_brief": "竹楼不大，却被阵盘、骨针、纸札和半成的禁制纹路挤得几乎无处下脚；风吹纸角时，楼中灵光会跟着一闪。",
+      "scene_aftertaste": "这里不像住处，更像有人把一整副心血都堆在了案上，只等一个能补全缺口的人。",
+      "ambient_mood": "纸灯微黄，阵纹冷亮，整间小筑都浸在一种近乎偏执的专注里",
+      "palette_id": "tainan_mist",
+      "landmark": "阵盘案台",
       "rumors": [
         "此地常有人提起「太南小会」相关的旧闻。"
       ],
+      "chapter": "太南小会",
+      "room_type": "房间",
+      "risk_level": "安全",
+      "room_layer": "新手安全圈",
+      "pvp_enabled": false,
       "loop_tags": [
         "采药炼丹"
       ],
@@ -6591,15 +7029,19 @@
         "geo_talisman_street",
         "npc_talisman_vendor"
       ],
-      "chapter": "太南小会",
-      "room_type": "坊市",
-      "risk_level": "安全",
-      "landmark": "符箓长街",
-      "room_layer": "新手安全圈",
-      "pvp_enabled": false,
+      "scene_brief": "",
+      "scene_aftertaste": "",
+      "ambient_mood": "",
+      "palette_id": "",
+      "landmark": "",
       "rumors": [
         "此地常有人提起「太南小会」相关的旧闻。"
       ],
+      "chapter": "太南小会",
+      "room_type": "坊市",
+      "risk_level": "安全",
+      "room_layer": "新手安全圈",
+      "pvp_enabled": false,
       "loop_tags": [
         "采药炼丹"
       ],
@@ -6639,15 +7081,19 @@
         "recipe_thunder_drizzle_pill_recipe",
         "formation_mist_screen_array"
       ],
-      "chapter": "太南小会",
-      "room_type": "房间",
-      "risk_level": "安全",
-      "landmark": "阵旗巷",
-      "room_layer": "新手安全圈",
-      "pvp_enabled": false,
+      "scene_brief": "",
+      "scene_aftertaste": "",
+      "ambient_mood": "",
+      "palette_id": "",
+      "landmark": "",
       "rumors": [
         "此地常有人提起「太南小会」相关的旧闻。"
       ],
+      "chapter": "太南小会",
+      "room_type": "房间",
+      "risk_level": "安全",
+      "room_layer": "新手安全圈",
+      "pvp_enabled": false,
       "loop_tags": [
         "采药炼丹"
       ],
@@ -6677,16 +7123,20 @@
         "geo_mountain_path",
         "monster_dust_mantis"
       ],
-      "chapter": "太南小会",
-      "room_type": "房间",
-      "risk_level": "历练",
-      "landmark": "山隙古道",
-      "room_layer": "新手安全圈",
-      "pvp_enabled": false,
+      "scene_brief": "",
+      "scene_aftertaste": "",
+      "ambient_mood": "",
+      "palette_id": "",
+      "landmark": "",
       "rumors": [
         "此地常有人提起「太南小会」相关的旧闻。",
         "附近修士常交换妖兽出没与掉落材料的消息。"
       ],
+      "chapter": "太南小会",
+      "room_type": "房间",
+      "risk_level": "历练",
+      "room_layer": "新手安全圈",
+      "pvp_enabled": false,
       "loop_tags": [
         "采药炼丹",
         "巡山悬赏"
@@ -6719,15 +7169,19 @@
         "npc_huangfeng_steward",
         "timeline_huangfeng"
       ],
-      "chapter": "黄枫谷门径",
-      "room_type": "房间",
-      "risk_level": "安全",
-      "landmark": "黄枫谷外营",
-      "room_layer": "新手安全圈",
-      "pvp_enabled": false,
+      "scene_brief": "外营篷影整齐如列，进出之人都要先在名录前停步；山门里的规矩，比山门外的风更先扑到脸上。",
+      "scene_aftertaste": "只要再往里一步，散修的野路子就得学着和宗门法度并肩而行。",
+      "ambient_mood": "枯叶翻卷，山门肃静，规矩与机缘都在同一口气里压下来",
+      "palette_id": "huangfeng_olive",
+      "landmark": "外营名录案",
       "rumors": [
         "此地常有人提起「黄枫谷门径」相关的旧闻。"
       ],
+      "chapter": "黄枫谷门径",
+      "room_type": "房间",
+      "risk_level": "安全",
+      "room_layer": "新手安全圈",
+      "pvp_enabled": false,
       "loop_tags": [
         "采药炼丹",
         "护送跑商",
@@ -6765,15 +7219,19 @@
         "setting_human_world",
         "codex_shared_world_sect"
       ],
-      "chapter": "黄枫谷门径",
-      "room_type": "宗门",
-      "risk_level": "安全",
-      "landmark": "黄枫谷偏殿",
-      "room_layer": "新手安全圈",
-      "pvp_enabled": false,
+      "scene_brief": "殿中檀香不重，却把人心神压得极稳；案上的名录、玉简和法度札记排得一丝不乱，像在提醒你宗门修行从来不只靠天赋。",
+      "scene_aftertaste": "若能在这里站稳脚，往后的血禁、丹药与功法，才算真正有了门径。",
+      "ambient_mood": "香气清冷，法度森然，宗门里的稳与重在这里第一次压到肩头",
+      "palette_id": "huangfeng_olive",
+      "landmark": "偏殿法度案",
       "rumors": [
         "此地常有人提起「黄枫谷门径」相关的旧闻。"
       ],
+      "chapter": "黄枫谷门径",
+      "room_type": "宗门",
+      "risk_level": "安全",
+      "room_layer": "新手安全圈",
+      "pvp_enabled": false,
       "loop_tags": [
         "采药炼丹",
         "门派事务"
@@ -6806,16 +7264,20 @@
         "npc_medicine_deacon",
         "recipe_spirit_return_pill_recipe"
       ],
-      "chapter": "黄枫谷门径",
-      "room_type": "房间",
-      "risk_level": "安全",
-      "landmark": "药梯台",
-      "room_layer": "新手安全圈",
-      "pvp_enabled": false,
+      "scene_brief": "",
+      "scene_aftertaste": "",
+      "ambient_mood": "",
+      "palette_id": "",
+      "landmark": "",
       "rumors": [
         "此地常有人提起「黄枫谷门径」相关的旧闻。",
         "这里的采集点很受散修与药师关注。"
       ],
+      "chapter": "黄枫谷门径",
+      "room_type": "房间",
+      "risk_level": "安全",
+      "room_layer": "新手安全圈",
+      "pvp_enabled": false,
       "loop_tags": [
         "采药炼丹",
         "门派事务"
@@ -6848,15 +7310,19 @@
         "geo_huangfeng_scripture",
         "npc_scripture_keeper"
       ],
+      "scene_brief": "石廊比想象中更静，脚步一落便能听见轻微回音；壁上旧刻的启蒙口诀并不华丽，却像一遍遍在提醒后来人别把根基二字看轻。",
+      "scene_aftertaste": "越往里走，越会发现真正能陪人走远的，往往不是抢来的奇功，而是这些看似不耀眼的旧卷旧句。",
+      "ambient_mood": "石壁微凉，卷气沉稳，整条回廊都像把浮躁一点点磨钝",
+      "palette_id": "huangfeng_olive",
+      "landmark": "启蒙刻壁",
+      "rumors": [
+        "谷中老人常说，藏经石廊最值钱的不是哪张残卷，而是肯把一篇口诀真的练到心里去的人。"
+      ],
       "chapter": "黄枫谷门径",
       "room_type": "宗门",
       "risk_level": "安全",
-      "landmark": "藏经石廊",
       "room_layer": "新手安全圈",
       "pvp_enabled": false,
-      "rumors": [
-        "此地常有人提起「黄枫谷门径」相关的旧闻。"
-      ],
       "loop_tags": [
         "采药炼丹",
         "门派事务"
@@ -6895,17 +7361,21 @@
         "monster_horned_boar",
         "recipe_windwalk_powder_recipe"
       ],
-      "chapter": "灵兽山外岭",
-      "room_type": "房间",
-      "risk_level": "历练",
-      "landmark": "枫岭山麓",
-      "room_layer": "新手安全圈",
-      "pvp_enabled": false,
+      "scene_brief": "",
+      "scene_aftertaste": "",
+      "ambient_mood": "",
+      "palette_id": "",
+      "landmark": "",
       "rumors": [
         "此地常有人提起「灵兽山外岭」相关的旧闻。",
         "附近修士常交换妖兽出没与掉落材料的消息。",
         "这里的采集点很受散修与药师关注。"
       ],
+      "chapter": "灵兽山外岭",
+      "room_type": "房间",
+      "risk_level": "历练",
+      "room_layer": "新手安全圈",
+      "pvp_enabled": false,
       "loop_tags": [
         "采药炼丹",
         "巡山悬赏",
@@ -6937,15 +7407,19 @@
         "geo_huangfeng_cloud_bridge",
         "formation_wind_lock_array"
       ],
-      "chapter": "黄枫谷门径",
-      "room_type": "房间",
-      "risk_level": "历练",
-      "landmark": "云桥峰口",
-      "room_layer": "新手安全圈",
-      "pvp_enabled": false,
+      "scene_brief": "",
+      "scene_aftertaste": "",
+      "ambient_mood": "",
+      "palette_id": "",
+      "landmark": "",
       "rumors": [
         "此地常有人提起「黄枫谷门径」相关的旧闻。"
       ],
+      "chapter": "黄枫谷门径",
+      "room_type": "房间",
+      "risk_level": "历练",
+      "room_layer": "新手安全圈",
+      "pvp_enabled": false,
       "loop_tags": [
         "采药炼丹",
         "门派事务"
@@ -6979,15 +7453,19 @@
         "timeline_blood_forbidden",
         "setting_human_world"
       ],
+      "scene_brief": "巨大石门上残留的血纹像是被岁月反复冲刷过，却仍带着一种不肯散去的腥冷；站在门前的人都会下意识压低呼吸。",
+      "scene_aftertaste": "门内是机缘，也是筛掉轻率之人的地方；许多人走进去时还在说笑，出来时便只剩沉默。",
+      "ambient_mood": "禁制低鸣如兽伏石后，连风都像在门前止了一瞬",
+      "palette_id": "blood_mist",
+      "landmark": "血纹石门",
+      "rumors": [
+        "老修士常说，血禁里最可怕的不是妖兽，而是人心开始觉得自己还能再贪一点的时候。"
+      ],
       "chapter": "血色禁地",
       "room_type": "宗门",
       "risk_level": "安全",
-      "landmark": "血禁石门",
       "room_layer": "成长历练圈",
       "pvp_enabled": false,
-      "rumors": [
-        "此地常有人提起「血色禁地」相关的旧闻。"
-      ],
       "loop_tags": [
         "护送跑商",
         "残区探禁"
@@ -7024,17 +7502,19 @@
         "monster_scarlet_wolf",
         "timeline_blood_forbidden"
       ],
+      "scene_brief": "雾色并不浓，却像总贴着人的肩背不肯散去；草叶上带着一层近乎暗红的湿意，连风里都混着药香和血腥气。",
+      "scene_aftertaste": "外围还肯给人一点退路，再往里，禁地便只会逼你在贪念和退意之间自己选一个。",
+      "ambient_mood": "血雾不急不缓地缠在林间，像一直在等谁先露出心里的那点贪意",
+      "palette_id": "blood_mist",
+      "landmark": "雾林边界",
+      "rumors": [
+        "老修士提醒新手时总爱说一句：禁地外围最会骗人，因为它偏偏看起来还像来得及回头。"
+      ],
       "chapter": "血色禁地",
       "room_type": "秘境",
       "risk_level": "历练",
-      "landmark": "血色禁地外围",
       "room_layer": "成长历练圈",
       "pvp_enabled": false,
-      "rumors": [
-        "此地常有人提起「血色禁地」相关的旧闻。",
-        "附近修士常交换妖兽出没与掉落材料的消息。",
-        "这里的采集点很受散修与药师关注。"
-      ],
       "loop_tags": [
         "采药炼丹",
         "巡山悬赏",
@@ -7074,16 +7554,20 @@
         "monster_red_mud_lizard",
         "timeline_blood_forbidden"
       ],
-      "chapter": "血色禁地",
-      "room_type": "秘境",
-      "risk_level": "高危",
-      "landmark": "血雾沼泽",
-      "room_layer": "筑基冲刺圈",
-      "pvp_enabled": false,
+      "scene_brief": "",
+      "scene_aftertaste": "",
+      "ambient_mood": "",
+      "palette_id": "",
+      "landmark": "",
       "rumors": [
         "此地常有人提起「血色禁地」相关的旧闻。",
         "附近修士常交换妖兽出没与掉落材料的消息。"
       ],
+      "chapter": "血色禁地",
+      "room_type": "秘境",
+      "risk_level": "高危",
+      "room_layer": "筑基冲刺圈",
+      "pvp_enabled": false,
       "loop_tags": [
         "巡山悬赏",
         "残区探禁"
@@ -7119,17 +7603,21 @@
         "monster_jade_sting_wasp",
         "recipe_orchid_essence_paste_recipe"
       ],
-      "chapter": "血色禁地",
-      "room_type": "秘境",
-      "risk_level": "历练",
-      "landmark": "血兰谷",
-      "room_layer": "筑基冲刺圈",
-      "pvp_enabled": false,
+      "scene_brief": "",
+      "scene_aftertaste": "",
+      "ambient_mood": "",
+      "palette_id": "",
+      "landmark": "",
       "rumors": [
         "此地常有人提起「血色禁地」相关的旧闻。",
         "附近修士常交换妖兽出没与掉落材料的消息。",
         "这里的采集点很受散修与药师关注。"
       ],
+      "chapter": "血色禁地",
+      "room_type": "秘境",
+      "risk_level": "历练",
+      "room_layer": "筑基冲刺圈",
+      "pvp_enabled": false,
       "loop_tags": [
         "采药炼丹",
         "巡山悬赏",
@@ -7163,16 +7651,20 @@
         "geo_spirit_beast_altar",
         "monster_iron_shell_tortoise"
       ],
-      "chapter": "血色禁地",
-      "room_type": "房间",
-      "risk_level": "历练",
-      "landmark": "灵兽祭坛",
-      "room_layer": "新手安全圈",
-      "pvp_enabled": false,
+      "scene_brief": "",
+      "scene_aftertaste": "",
+      "ambient_mood": "",
+      "palette_id": "",
+      "landmark": "",
       "rumors": [
         "此地常有人提起「血色禁地」相关的旧闻。",
         "附近修士常交换妖兽出没与掉落材料的消息。"
       ],
+      "chapter": "血色禁地",
+      "room_type": "房间",
+      "risk_level": "历练",
+      "room_layer": "新手安全圈",
+      "pvp_enabled": false,
       "loop_tags": [
         "巡山悬赏",
         "门派事务"
@@ -7204,16 +7696,20 @@
         "geo_blood_ruins",
         "monster_ruin_ghost_moth"
       ],
-      "chapter": "血色禁地",
-      "room_type": "秘境",
-      "risk_level": "历练",
-      "landmark": "血禁残垣",
-      "room_layer": "成长历练圈",
-      "pvp_enabled": false,
+      "scene_brief": "",
+      "scene_aftertaste": "",
+      "ambient_mood": "",
+      "palette_id": "",
+      "landmark": "",
       "rumors": [
         "此地常有人提起「血色禁地」相关的旧闻。",
         "附近修士常交换妖兽出没与掉落材料的消息。"
       ],
+      "chapter": "血色禁地",
+      "room_type": "秘境",
+      "risk_level": "历练",
+      "room_layer": "成长历练圈",
+      "pvp_enabled": false,
       "loop_tags": [
         "巡山悬赏",
         "残区探禁"
@@ -7250,15 +7746,19 @@
         "timeline_chaos_sea",
         "setting_human_world"
       ],
+      "scene_brief": "码头桅杆如林，海潮一阵一阵拍上石阶，盐味、鱼腥味和远航修士带来的外海气息搅在一起，让人一站下就知道陆地快到头了。",
+      "scene_aftertaste": "过了这里，许多事便不再有宗门和城池替你兜底，海路会逼着人学会另一种谨慎。",
+      "ambient_mood": "潮声昼夜不绝，港口像一张半开半闭的海图，把更远处的风浪都压进了岸边",
+      "palette_id": "harbor_teal",
+      "landmark": "天南石码头",
+      "rumors": [
+        "近来有人说，乱星海深处的风向变得古怪，像有旧日遗府重新醒过来。"
+      ],
       "chapter": "天南外港",
       "room_type": "港埠",
       "risk_level": "安全",
-      "landmark": "天南港",
       "room_layer": "新手安全圈",
       "pvp_enabled": false,
-      "rumors": [
-        "此地常有人提起「天南外港」相关的旧闻。"
-      ],
       "loop_tags": [
         "护送跑商",
         "海猎采珠"
@@ -7298,15 +7798,19 @@
         "npc_chart_seller",
         "recipe_sea_clear_pill_recipe"
       ],
-      "chapter": "天南港启航",
-      "room_type": "坊市",
-      "risk_level": "安全",
-      "landmark": "海商坊市",
-      "room_layer": "新手安全圈",
-      "pvp_enabled": false,
+      "scene_brief": "海货、鳞片、避水珠和残卷堆在同一条潮湿长街上，买卖声里总夹着几分海上人才听得懂的暗语。",
+      "scene_aftertaste": "在这里买到的不只是货，往往还是一段能不能活着走完的航路。",
+      "ambient_mood": "潮气侵衣，海商的眼神比货摊更难看透",
+      "palette_id": "harbor_teal",
+      "landmark": "海货长街",
       "rumors": [
         "此地常有人提起「天南港启航」相关的旧闻。"
       ],
+      "chapter": "天南港启航",
+      "room_type": "坊市",
+      "risk_level": "安全",
+      "room_layer": "新手安全圈",
+      "pvp_enabled": false,
       "loop_tags": [
         "护送跑商",
         "海猎采珠"
@@ -7340,15 +7844,19 @@
         "npc_old_shipwright",
         "formation_harbor_mooring_array"
       ],
-      "chapter": "天南港启航",
-      "room_type": "港埠",
-      "risk_level": "安全",
-      "landmark": "远航码头",
-      "room_layer": "新手安全圈",
-      "pvp_enabled": false,
+      "scene_brief": "",
+      "scene_aftertaste": "",
+      "ambient_mood": "",
+      "palette_id": "",
+      "landmark": "",
       "rumors": [
         "此地常有人提起「天南港启航」相关的旧闻。"
       ],
+      "chapter": "天南港启航",
+      "room_type": "港埠",
+      "risk_level": "安全",
+      "room_layer": "新手安全圈",
+      "pvp_enabled": false,
       "loop_tags": [
         "护送跑商",
         "海猎采珠"
@@ -7378,15 +7886,19 @@
         "geo_sea_wind_tower",
         "npc_tower_watch"
       ],
-      "chapter": "天南港启航",
-      "room_type": "房间",
-      "risk_level": "安全",
-      "landmark": "望海风塔",
-      "room_layer": "新手安全圈",
-      "pvp_enabled": false,
+      "scene_brief": "",
+      "scene_aftertaste": "",
+      "ambient_mood": "",
+      "palette_id": "",
+      "landmark": "",
       "rumors": [
         "此地常有人提起「天南港启航」相关的旧闻。"
       ],
+      "chapter": "天南港启航",
+      "room_type": "房间",
+      "risk_level": "安全",
+      "room_layer": "新手安全圈",
+      "pvp_enabled": false,
       "loop_tags": [
         "海猎采珠"
       ],
@@ -7418,15 +7930,19 @@
         "geo_smuggler_alley",
         "npc_shadow_buyer"
       ],
-      "chapter": "天南港启航",
-      "room_type": "房间",
-      "risk_level": "安全",
-      "landmark": "暗潮小巷",
-      "room_layer": "新手安全圈",
-      "pvp_enabled": false,
+      "scene_brief": "",
+      "scene_aftertaste": "",
+      "ambient_mood": "",
+      "palette_id": "",
+      "landmark": "",
       "rumors": [
         "此地常有人提起「天南港启航」相关的旧闻。"
       ],
+      "chapter": "天南港启航",
+      "room_type": "房间",
+      "risk_level": "安全",
+      "room_layer": "新手安全圈",
+      "pvp_enabled": false,
       "loop_tags": [
         "海猎采珠"
       ],
@@ -7462,16 +7978,20 @@
         "timeline_chaos_sea",
         "setting_human_world"
       ],
-      "chapter": "乱星近海群岛",
-      "room_type": "港埠",
-      "risk_level": "历练",
-      "landmark": "乱星海近港",
-      "room_layer": "成长历练圈",
-      "pvp_enabled": false,
+      "scene_brief": "港湾里看似平静，水下却隐约能见到暗礁和流线的影子；船只进出都留着三分余地，不敢真把海面当成平地。",
+      "scene_aftertaste": "真正的海路总先从近港开始教人认怂，认不清潮路的人，往往也走不到深海。",
+      "ambient_mood": "水色清亮却不温顺，近海的平静更像一种带着牙齿的试探",
+      "palette_id": "chaos_sea_cold",
+      "landmark": "近港浮栈",
       "rumors": [
         "此地常有人提起「乱星近海群岛」相关的旧闻。",
         "附近修士常交换妖兽出没与掉落材料的消息。"
       ],
+      "chapter": "乱星近海群岛",
+      "room_type": "港埠",
+      "risk_level": "历练",
+      "room_layer": "成长历练圈",
+      "pvp_enabled": false,
       "loop_tags": [
         "海猎采珠"
       ],
@@ -7502,15 +8022,19 @@
         "npc_deck_mage",
         "recipe_storm_ward_recipe"
       ],
-      "chapter": "乱星海漂流",
-      "room_type": "海域",
-      "risk_level": "安全",
-      "landmark": "灵帆海船",
-      "room_layer": "成长历练圈",
-      "pvp_enabled": false,
+      "scene_brief": "船板时不时随浪势微微起伏，阵灯把人影拉得很长；船工说话从不大声，因为真正值命的是风向与禁制，不是嗓门。",
+      "scene_aftertaste": "站在甲板上，陆地的规矩就开始退了，取而代之的是潮路、风暴与能不能活着回船。",
+      "ambient_mood": "灯火微摇，甲板潮冷，远航前那种压住心火的紧绷在此地始终不散",
+      "palette_id": "chaos_sea_cold",
+      "landmark": "灵帆主桅",
       "rumors": [
         "此地常有人提起「乱星海漂流」相关的旧闻。"
       ],
+      "chapter": "乱星海漂流",
+      "room_type": "海域",
+      "risk_level": "安全",
+      "room_layer": "成长历练圈",
+      "pvp_enabled": false,
       "loop_tags": [
         "海猎采珠"
       ],
@@ -7543,15 +8067,19 @@
         "npc_island_hermit",
         "timeline_chaos_sea"
       ],
+      "scene_brief": "孤岛不大，偏偏安静得像把四周潮声都隔远了；半块残碑斜插在礁地里，裂痕里积着风盐，也积着一股说不清年代的旧意。",
+      "scene_aftertaste": "站在碑前久了，会慢慢生出一种错觉，仿佛这片海不是把路冲断了，而是只肯给真正能看懂的人留半截。",
+      "ambient_mood": "潮声被礁石削得发空，岛上像始终停着一口不肯讲明来历的旧气",
+      "palette_id": "reef_cyan",
+      "landmark": "半截古碑",
+      "rumors": [
+        "海上人提到这座孤岛时，总会把声音压低一点，像怕多说一句就把碑里没散的旧事惊醒。"
+      ],
       "chapter": "乱星海漂流",
       "room_type": "房间",
       "risk_level": "安全",
-      "landmark": "残碑孤岛",
       "room_layer": "成长历练圈",
       "pvp_enabled": false,
-      "rumors": [
-        "此地常有人提起「乱星海漂流」相关的旧闻。"
-      ],
       "loop_tags": [
         "海猎采珠"
       ],
@@ -7586,17 +8114,21 @@
         "npc_reef_diver",
         "monster_reef_crab"
       ],
-      "chapter": "乱星海漂流",
-      "room_type": "海域",
-      "risk_level": "历练",
-      "landmark": "礁影浅滩",
-      "room_layer": "成长历练圈",
-      "pvp_enabled": false,
+      "scene_brief": "浅滩上的礁石被潮水反复磨得发亮，退潮时能露出灵鳞、海草和一些不肯轻易给人的小机缘。",
+      "scene_aftertaste": "这里看似只是采珠摸鳞的去处，可再往东一步，海天颜色就要彻底变了。",
+      "ambient_mood": "潮声不急，却一直催着人抓紧在下一轮浪头来前把该拿的东西拿到手",
+      "palette_id": "chaos_sea_cold",
+      "landmark": "礁带浅潮线",
       "rumors": [
         "此地常有人提起「乱星海漂流」相关的旧闻。",
         "附近修士常交换妖兽出没与掉落材料的消息。",
         "这里的采集点很受散修与药师关注。"
       ],
+      "chapter": "乱星海漂流",
+      "room_type": "海域",
+      "risk_level": "历练",
+      "room_layer": "成长历练圈",
+      "pvp_enabled": false,
       "loop_tags": [
         "采药炼丹",
         "海猎采珠"
@@ -7630,16 +8162,20 @@
         "monster_black_fin_demon_fish",
         "monster_silver_jelly_bug"
       ],
-      "chapter": "乱星海漂流",
-      "room_type": "房间",
-      "risk_level": "高危",
-      "landmark": "妖鱼巢湾",
-      "room_layer": "成长历练圈",
-      "pvp_enabled": false,
+      "scene_brief": "黑潮像一口极深的井，海面偶尔掠过的巨影会让所有想猎妖取丹的人先想起自己的退路。",
+      "scene_aftertaste": "在这里贪一下，往往就要拿更久的命来还。",
+      "ambient_mood": "湾心压抑得近乎无声，只有黑潮在水下缓缓换气",
+      "palette_id": "storm_teal",
+      "landmark": "黑潮湾心",
       "rumors": [
         "此地常有人提起「乱星海漂流」相关的旧闻。",
         "附近修士常交换妖兽出没与掉落材料的消息。"
       ],
+      "chapter": "乱星海漂流",
+      "room_type": "房间",
+      "risk_level": "高危",
+      "room_layer": "成长历练圈",
+      "pvp_enabled": false,
       "loop_tags": [
         "巡山悬赏",
         "海猎采珠",
@@ -7674,15 +8210,19 @@
         "monster_storm_eel",
         "formation_storm_route_array"
       ],
-      "chapter": "乱星海漂流",
-      "room_type": "海域",
-      "risk_level": "历练",
-      "landmark": "风暴航道",
-      "room_layer": "筑基冲刺圈",
-      "pvp_enabled": false,
+      "scene_brief": "云层像被什么从中撕开，风暴把海面压出一道道发白的纹路；人一站在这里，耳边便再听不见别的，只剩风和浪在争吵。",
+      "scene_aftertaste": "若无准备，航道会把人连胆气一并剐下来；可若真撑过去，前头便不再只是海。",
+      "ambient_mood": "风雷挤满海天，连呼吸都像在和整片乱星海对赌",
+      "palette_id": "storm_teal",
+      "landmark": "风暴裂潮带",
       "rumors": [
         "此地常有人提起「乱星海漂流」相关的旧闻。"
       ],
+      "chapter": "乱星海漂流",
+      "room_type": "海域",
+      "risk_level": "历练",
+      "room_layer": "筑基冲刺圈",
+      "pvp_enabled": false,
       "loop_tags": [
         "海猎采珠"
       ],
@@ -7714,15 +8254,19 @@
         "timeline_xutian",
         "setting_human_world"
       ],
+      "scene_brief": "青铜殿门斜开一线，殿中寒意不像风，倒像许多年前留下的目光还没有彻底散去；脚步声在这里也会被压得极轻。",
+      "scene_aftertaste": "外殿只是门槛，真正让人动心也让人送命的东西，还在更深处静静等着后来人。",
+      "ambient_mood": "古殿沉冷，残灵未散，连一口气都像会惊动旧时代留下的回声",
+      "palette_id": "xutian_slate",
+      "landmark": "青铜殿门",
+      "rumors": [
+        "有人说虚天殿里最可怕的不是宝物争夺，而是你开始觉得自己配得上更多的时候。"
+      ],
       "chapter": "虚天殿初启",
       "room_type": "宗门",
       "risk_level": "安全",
-      "landmark": "虚天殿外殿",
       "room_layer": "成长历练圈",
       "pvp_enabled": false,
-      "rumors": [
-        "此地常有人提起「虚天殿初启」相关的旧闻。"
-      ],
       "loop_tags": [
         "残区探禁"
       ],
@@ -7753,16 +8297,19 @@
         "monster_hall_guard_puppet",
         "timeline_xutian"
       ],
+      "scene_brief": "回廊石面还留着被术法灼过的纹路，偶尔掠过的幻影并不真切，却总能让人下意识放轻呼吸，像怕踩进谁尚未走完的一步。",
+      "scene_aftertaste": "这里最可怕的不是傀儡本身，而是你会渐渐分不清眼前这点回声，到底是遗府在试你，还是你自己先乱了心。",
+      "ambient_mood": "旧战余影一阵阵贴着回廊起落，连静默都显得太重了些",
+      "palette_id": "xutian_slate",
+      "landmark": "残战回廊",
+      "rumors": [
+        "曾有人说，虚天回廊里的幻影若看久了，会把闯殿者心里最想赢的那一口气先照出来。"
+      ],
       "chapter": "虚天殿初启",
       "room_type": "秘境",
       "risk_level": "历练",
-      "landmark": "虚天回廊",
       "room_layer": "成长历练圈",
       "pvp_enabled": false,
-      "rumors": [
-        "此地常有人提起「虚天殿初启」相关的旧闻。",
-        "附近修士常交换妖兽出没与掉落材料的消息。"
-      ],
       "loop_tags": [
         "巡山悬赏",
         "残区探禁"
@@ -7796,16 +8343,20 @@
         "geo_xutian_pill_room",
         "monster_pill_fire_sprite"
       ],
-      "chapter": "虚天殿初启",
-      "room_type": "秘境",
-      "risk_level": "安全",
-      "landmark": "丹房遗室",
-      "room_layer": "成长历练圈",
-      "pvp_enabled": false,
+      "scene_brief": "",
+      "scene_aftertaste": "",
+      "ambient_mood": "",
+      "palette_id": "",
+      "landmark": "",
       "rumors": [
         "此地常有人提起「虚天殿初启」相关的旧闻。",
         "这里的采集点很受散修与药师关注。"
       ],
+      "chapter": "虚天殿初启",
+      "room_type": "秘境",
+      "risk_level": "安全",
+      "room_layer": "成长历练圈",
+      "pvp_enabled": false,
       "loop_tags": [
         "采药炼丹",
         "残区探禁"
@@ -7839,15 +8390,19 @@
         "geo_xutian_treasure_chamber",
         "monster_seal_shadow"
       ],
-      "chapter": "虚天殿初启",
-      "room_type": "秘境",
-      "risk_level": "历练",
-      "landmark": "秘藏偏库",
-      "room_layer": "成长历练圈",
-      "pvp_enabled": false,
+      "scene_brief": "",
+      "scene_aftertaste": "",
+      "ambient_mood": "",
+      "palette_id": "",
+      "landmark": "",
       "rumors": [
         "此地常有人提起「虚天殿初启」相关的旧闻。"
       ],
+      "chapter": "虚天殿初启",
+      "room_type": "秘境",
+      "risk_level": "历练",
+      "room_layer": "成长历练圈",
+      "pvp_enabled": false,
       "loop_tags": [
         "残区探禁"
       ],
@@ -7881,15 +8436,19 @@
         "formation_xutian_star_array",
         "codex_shared_world_rift"
       ],
-      "chapter": "虚天殿初启",
-      "room_type": "秘境",
-      "risk_level": "安全",
-      "landmark": "星纹祭台",
-      "room_layer": "成长历练圈",
-      "pvp_enabled": false,
+      "scene_brief": "祭台上的星纹还残留着某种极古老的秩序，哪怕许多槽线已经断裂，仍能让人一眼看出当年这座大阵运转时的恢弘。",
+      "scene_aftertaste": "站得越久，越会生出一种错觉，像自己只是晚到了太多年，而不是误闯进来。",
+      "ambient_mood": "冷光沉在石纹里，整座祭台像一页尚未完全熄灭的天书",
+      "palette_id": "xutian_slate",
+      "landmark": "星纹主盘",
       "rumors": [
         "此地常有人提起「虚天殿初启」相关的旧闻。"
       ],
+      "chapter": "虚天殿初启",
+      "room_type": "秘境",
+      "risk_level": "安全",
+      "room_layer": "成长历练圈",
+      "pvp_enabled": false,
       "loop_tags": [
         "残区探禁"
       ],
@@ -7924,15 +8483,19 @@
         "timeline_xutian",
         "codex_shared_world_rift"
       ],
-      "chapter": "虚天残区",
-      "room_type": "宗门",
-      "risk_level": "历练",
-      "landmark": "内殿玄门",
-      "room_layer": "成长历练圈",
-      "pvp_enabled": false,
+      "scene_brief": "",
+      "scene_aftertaste": "",
+      "ambient_mood": "",
+      "palette_id": "",
+      "landmark": "",
       "rumors": [
         "此地常有人提起「虚天残区」相关的旧闻。"
       ],
+      "chapter": "虚天残区",
+      "room_type": "宗门",
+      "risk_level": "历练",
+      "room_layer": "成长历练圈",
+      "pvp_enabled": false,
       "loop_tags": [
         "护送跑商",
         "残区探禁"

@@ -544,10 +544,17 @@ bool MudWorld::load_from_file(const std::string& path, std::string* error_messag
             npc.scene_id = json_string_field(item, "scene_id");
             npc.hint = json_string_field(item, "hint");
             npc.dialogue = json_string_field(item, "dialogue");
+            npc.presence_text = json_string_field(item, "presence_text");
+            npc.look_text = json_string_field(item, "look_text");
+            npc.first_talk_text = json_string_field(item, "first_talk_text");
+            npc.repeat_talk_text = json_string_field(item, "repeat_talk_text");
+            npc.progress_talk_text = json_string_field(item, "progress_talk_text");
+            npc.submit_talk_text = json_string_field(item, "submit_talk_text");
             npc.sect_offer_id = json_string_field(item, "sect_offer_id");
             npc.role = json_string_field(item, "role");
             npc.description = json_string_field(item, "description");
             npc.codex_entry_id = json_string_field(item, "codex_entry_id");
+            load_string_array(json_object_get(item, "ask_topics"), &npc.ask_topics);
             load_string_array(json_object_get(item, "quest_ids"), &npc.quest_ids);
             if(!npc.npc_id.empty())
             {
@@ -605,6 +612,10 @@ bool MudWorld::load_from_file(const std::string& path, std::string* error_messag
             scene.name = json_string_field(item, "name");
             scene.region_name = json_string_field(item, "region_name");
             scene.description = json_string_field(item, "description");
+            scene.scene_brief = json_string_field(item, "scene_brief");
+            scene.scene_aftertaste = json_string_field(item, "scene_aftertaste");
+            scene.ambient_mood = json_string_field(item, "ambient_mood");
+            scene.palette_id = json_string_field(item, "palette_id");
             scene.room_type = json_string_field(item, "room_type");
             scene.risk_level = json_string_field(item, "risk_level");
             scene.landmark = json_string_field(item, "landmark");

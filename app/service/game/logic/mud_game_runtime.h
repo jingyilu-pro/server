@@ -189,6 +189,8 @@ private:
                                    const std::vector<std::string>& args);
     MudCommandExecution execute_talk(MudPlayerState* player,
                                      const std::vector<std::string>& args) const;
+    MudCommandExecution execute_ask(MudPlayerState* player,
+                                    const std::vector<std::string>& args) const;
     MudCommandExecution execute_accept(MudPlayerState* player,
                                        const std::vector<std::string>& args);
     MudCommandExecution execute_submit(MudPlayerState* player,
@@ -244,6 +246,9 @@ private:
     MudCommandExecution execute_family(const MudPlayerState& player) const;
     MudCommandExecution execute_who(const MudPlayerState& player) const;
     MudCommandExecution execute_rumor(const MudPlayerState& player) const;
+    MudCommandExecution execute_listen(const MudPlayerState& player) const;
+    MudCommandExecution execute_journal(const MudPlayerState& player) const;
+    MudCommandExecution execute_bag(const MudPlayerState& player) const;
     MudCommandExecution execute_inspect(MudPlayerState* player,
                                         const std::vector<std::string>& args);
     MudCommandExecution execute_loot(MudPlayerState* player,

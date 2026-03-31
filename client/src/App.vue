@@ -20,9 +20,10 @@ type CommandCategoryId =
   | 'trade'
   | 'group'
   | 'manual'
-type OverlayPanel = 'none' | 'commands' | 'scene' | 'messages' | SideTab
+type OverlayPanel = 'none' | 'commands' | 'scene' | 'messages' | 'settings' | SideTab
 type SceneInteractableKind = 'player' | 'npc' | 'shop' | 'monster' | 'resource' | 'loot' | 'hazard'
 type ScrollPanelKey = 'topChat' | 'mainStory' | 'chatOverlay'
+type PanelRenderMode = 'board_block' | 'dossier_block' | 'roster_block' | 'ascii_map' | 'notice_block'
 
 interface CommandAction {
   key: string
@@ -45,13 +46,43 @@ interface DenseLine {
 }
 
 interface TimelineLine extends DenseLine {
+  entryType: 'line'
   sequence: number
 }
 
-interface DockEntry {
+interface TimelinePanelLine {
+  key: string
+  text: string
+  tone?: 'normal' | 'muted' | 'accent' | 'danger' | 'positive'
+}
+
+interface TimelinePanel {
+  entryType: 'panel'
+  key: string
+  sequence: number
+  panelId: string
+  mark: string
+  title: string
+  compactTitle: string
+  summary: string
+  tone: DenseLine['tone']
+  compact: boolean
+  renderMode: PanelRenderMode
+  styleId: string
+  lines: TimelinePanelLine[]
+  actions: CommandAction[]
+}
+
+type TimelineEntry = TimelineLine | TimelinePanel
+
+interface DockCommandEntry {
   key: string
   label: string
-  overlay: 'commands' | SideTab
+  caption: string
+  command?: string
+  action?: CommandAction
+  panel?: 'map'
+  rankingType?: RankingType
 }
 
 interface SceneInteractable {
@@ -95,7 +126,7 @@ const eventViewport = ref<HTMLElement | null>(null)
 const storyViewport = ref<HTMLElement | null>(null)
 const chatOverlayViewport = ref<HTMLElement | null>(null)
 const overlayChatText = ref('')
-const mainTimeline = ref<TimelineLine[]>([])
+const mainTimeline = ref<TimelineEntry[]>([])
 const scrollPanels = reactive<Record<ScrollPanelKey, { autoFollow: boolean }>>({
   topChat: { autoFollow: true },
   mainStory: { autoFollow: true },
@@ -220,15 +251,6 @@ const sideTabLabels: Array<{ id: SideTab; label: string }> = [
   { id: 'rank', label: '排行' },
 ]
 
-const dockEntries: DockEntry[] = [
-  { key: 'commands', label: '功能', overlay: 'commands' },
-  ...sideTabLabels.map((item) => ({
-    key: item.id,
-    label: item.label,
-    overlay: item.id,
-  })),
-]
-
 const rankingOptions: Array<{ id: RankingType; label: string }> = [
   { id: 'realm', label: '境界榜' },
   { id: 'wealth', label: '财富榜' },
@@ -266,6 +288,13 @@ const latestNonChatEvent = computed(
 )
 const showGameView = computed(() => store.authenticated && store.readyToPlay)
 const showCreateCharacterView = computed(() => store.authenticated && store.needCreateCharacter && !store.readyToPlay)
+const scenePaletteClass = computed(() => {
+  if (!showGameView.value) {
+    return ''
+  }
+  const raw = String(scene.value.paletteId ?? 'warm_ink').trim() || 'warm_ink'
+  return `shell-palette-${raw.replace(/[^a-zA-Z0-9_-]/g, '_')}`
+})
 const currentStatusAttributes = computed(
   () => (player.value.currentStatusAttributes as Record<string, any> | undefined) ?? player.value.statusAttributes ?? {},
 )
@@ -630,7 +659,8 @@ const activeInfoTab = computed<SideTab>(() =>
   activeOverlay.value !== 'none' &&
   activeOverlay.value !== 'commands' &&
   activeOverlay.value !== 'scene' &&
-  activeOverlay.value !== 'messages'
+  activeOverlay.value !== 'messages' &&
+  activeOverlay.value !== 'settings'
     ? activeOverlay.value
     : activeTab.value,
 )
@@ -718,6 +748,14 @@ const sceneInteractables = computed<SceneInteractable[]>(() => {
         label: `交谈·${npcName}`,
         detail: '先与此人交谈，打探消息和后续线索。',
         command: `talk ${npcName}`,
+      },
+      {
+        key: `interactable-ask-${String(npc.npcId ?? npcName)}`,
+        label: `追问·${npcName}`,
+        detail: '把 ask 指令先铺好，再顺着对话继续往深里问。',
+        command: `ask ${npcName} `,
+        execute: false,
+        composer: 'command',
       },
     ]
     const npcQuestOffers = Boolean(npc.hasQuest) ? availableQuestOffers : []
@@ -999,31 +1037,135 @@ const selectedSceneInteractable = computed(
     null,
 )
 
+const statusPromptPrimary = computed(() => {
+  const supplied = String(player.value.statusLineText ?? '').trim()
+  if (supplied) {
+    return supplied
+  }
+  const role = String(player.value.characterName ?? store.account ?? '无名散修') || '无名散修'
+  const realm = String(player.value.cultivation?.realmName ?? player.value.stageLabel ?? '凡躯')
+  const hp = `${String(player.value.hp ?? 0)}/${String(player.value.maxHp ?? 0)}`
+  const mana = `${String(currentStatusAttributes.value.mana ?? player.value.statusAttributes?.mana ?? 0)}/${String(player.value.statusAttributes?.mana ?? 0)}`
+  const sta = `${String(currentStatusAttributes.value.sta ?? player.value.statusAttributes?.sta ?? 0)}/${String(player.value.statusAttributes?.sta ?? 0)}`
+  const location = sceneDisplayTitle.value
+  const sceneCount = Number(scenePlayers.value.length ?? 0)
+  return `${role} | ${realm} | 气血 ${hp} | 法力 ${mana} | 气力 ${sta} | ${location} | 同场 ${sceneCount} 人`
+})
+
+const statusPromptSecondary = computed(() => {
+  const supplied = String(player.value.subpromptText ?? '').trim()
+  if (supplied) {
+    return supplied
+  }
+  const sectName = String(player.value.sect?.sectName ?? '').trim() || '散修'
+  const channelMode =
+    composerMode.value === 'chat'
+      ? chatChannel.value === 'world'
+        ? '世声'
+        : '队声'
+      : '落令'
+  const roomLayer = String(scene.value.roomLayer ?? '').trim()
+  const riskLevel = String(scene.value.riskLevel ?? '').trim()
+  const riskPrompt = player.value.newbieProtected
+    ? '山门庇护'
+    : roomLayerFlavor(roomLayer) || (riskLevel ? `险候 ${riskLevel}` : '风平浪静')
+  const mood = String(scene.value.ambientMood ?? '').trim()
+  return [channelMode, sectName, riskPrompt, mood].filter(Boolean).join(' | ')
+})
+
+const sceneInlineTargets = computed(() => sceneInteractables.value.slice(0, 10))
+
+const sceneExitTargets = computed(() => exits.value.slice(0, 6))
+
+const shortCommandSpec: Record<
+  string,
+  { key: string; label: string; caption: string; command?: string; rankingType?: RankingType; panel?: 'map' }
+> = {
+  look: { key: 'dock-look', label: '看', caption: '重观', command: 'here' },
+  here: { key: 'dock-look', label: '看', caption: '重观', command: 'here' },
+  listen: { key: 'dock-listen', label: '听', caption: '风声', command: 'listen' },
+  talk: { key: 'dock-talk', label: '问', caption: '交谈' },
+  travel: { key: 'dock-travel', label: '行', caption: '路引', command: 'travel' },
+  journal: { key: 'dock-journal', label: '札', caption: '札记', command: 'journal' },
+  bag: { key: 'dock-bag', label: '囊', caption: '行囊', command: 'bag' },
+  score: { key: 'dock-score', label: '我', caption: '内观', command: 'score' },
+  map: { key: 'dock-map', label: '图', caption: '舆图', panel: 'map' },
+}
+
+const dockCommandEntries = computed<DockCommandEntry[]>(() => {
+  const focusedNpcAction =
+    selectedSceneInteractable.value?.kind === 'npc'
+      ? selectedSceneInteractable.value.actions.find((action) => String(action.command ?? '').startsWith('talk '))
+      : undefined
+  const fallbackNpc = sceneInteractables.value.find((item) => item.kind === 'npc')
+  const talkAction =
+    focusedNpcAction ??
+    fallbackNpc?.actions.find((action) => String(action.command ?? '').startsWith('talk ')) ??
+    ({
+      key: 'dock-talk-prefill',
+      label: '问路求教',
+      detail: '切到原始指令，手动填写要交谈的人物。',
+      command: 'talk ',
+      execute: false,
+      composer: 'command',
+    } as CommandAction)
+
+  const shortCommands = ((player.value.availableShortCommands as string[] | undefined) ?? []).map((item) =>
+    String(item ?? '')
+      .trim()
+      .toLowerCase(),
+  )
+  const desired = shortCommands.length > 0 ? shortCommands : ['look', 'listen', 'talk', 'travel', 'journal', 'bag', 'score', 'rank']
+  const entries: DockCommandEntry[] = []
+  desired.forEach((command) => {
+    if (entries.length >= 8) {
+      return
+    }
+    if (command === 'talk') {
+      entries.push({ key: 'dock-talk', label: '问', caption: '交谈', action: talkAction })
+      return
+    }
+    if (command === 'rank') {
+      entries.push({ key: 'dock-rank', label: '榜', caption: '名榜', rankingType: store.rankingType })
+      return
+    }
+
+    const spec = shortCommandSpec[command]
+    if (!spec) {
+      return
+    }
+
+    entries.push({
+      key: spec.key,
+      label: spec.label,
+      caption: spec.caption,
+      command: spec.command,
+      panel: spec.panel,
+      rankingType: spec.rankingType,
+    })
+  })
+  return entries
+})
+
 const activeOverlayTitle = computed(() => {
-  if (activeOverlay.value === 'commands') {
-    return activeCommandCategoryLabel.value
+  if (activeOverlay.value === 'settings') {
+    return '卷末杂记'
   }
-  if (activeOverlay.value === 'messages') {
-    return '聊天消息'
-  }
-  if (activeOverlay.value === 'scene') {
-    return selectedSceneInteractable.value?.title ?? '场景交互'
+  if (activeOverlay.value === 'codex') {
+    return selectedCodexCategory.value || '手册'
   }
   if (activeOverlay.value === 'none') {
     return ''
   }
-  return sideTabLabels.find((item) => item.id === activeInfoTab.value)?.label ?? ''
+  return '手册'
 })
 
 const activeOverlayCorner = computed(() => {
-  if (activeOverlay.value === 'commands') {
-    return '功能盘'
+  if (activeOverlay.value === 'settings') {
+    return store.account || '卷末'
   }
-  if (activeOverlay.value === 'messages') {
-    return chatChannel.value === 'team' ? '队伍频道' : '世界频道'
-  }
-  if (activeOverlay.value === 'scene') {
-    return sceneInteractableKindLabel(selectedSceneInteractable.value?.kind ?? 'npc')
+  if (activeOverlay.value === 'codex') {
+    return '手册长卷'
   }
   return scene.value.sceneName || '修行界'
 })
@@ -1031,16 +1173,16 @@ const activeOverlayCorner = computed(() => {
 const composerTitle = computed(() =>
   composerMode.value === 'chat'
     ? chatChannel.value === 'world'
-      ? '世界聊天'
-      : '队伍聊天'
-    : '指令输入',
+      ? '世界风声'
+      : '队伍风声'
+    : '落笔行令',
 )
 
 const composerPlaceholder = computed(() => {
   if (composerMode.value === 'chat') {
-    return chatChannel.value === 'world' ? '直接输入想说的话，默认发往世界频道' : '输入要发送给队友的话'
+    return chatChannel.value === 'world' ? '此处落字，话会顺着风声传去世界频道' : '写下要传给队伍同伴的话'
   }
-  return '这里输入具体指令，或点击上方页签按钮自动填入'
+  return '直接输入指令，例如 look、talk 厉飞雨、go north'
 })
 
 function narrativeArcOrderForChapter(value: string) {
@@ -1142,7 +1284,7 @@ const trackedQuest = computed(() => {
 const sceneMissionText = computed(() => {
   const activeQuest = trackedQuest.value
   if (activeQuest) {
-    return `当前主线：${String(activeQuest.title)}，进度 ${String(activeQuest.progress ?? 0)} / ${String(activeQuest.target ?? 0)}。`
+    return `行途所系：${String(activeQuest.title)}，眼下火候 ${String(activeQuest.progress ?? 0)} / ${String(activeQuest.target ?? 0)}。`
   }
 
   const localBoardEntries = ((scene.value.localBoardEntries as Record<string, any>[] | undefined) ?? []).filter((entry) =>
@@ -1150,14 +1292,14 @@ const sceneMissionText = computed(() => {
   )
   if (localBoardEntries.length > 0) {
     const firstEntry = localBoardEntries[0]
-    return `当前推荐：${String(firstEntry.title ?? '循环')}。${String(firstEntry.summary ?? '')}`
+    return `此地近来多谈「${String(firstEntry.title ?? '近事')}」：${String(firstEntry.summary ?? '')}`
   }
 
   const questOffer = (sceneQuestOffers[currentSceneId.value] ?? []).find(
     (quest) => !quests.value.some((item) => String(item.questId ?? '') === quest.id),
   )
   if (questOffer) {
-    return `此地有新线索可接：${questOffer.title}。`
+    return `此地似有新事可问：${questOffer.title}。`
   }
 
   const followupHint = sceneFollowupHints[currentSceneId.value]
@@ -1169,7 +1311,7 @@ const sceneMissionText = computed(() => {
     return '先在此地观察局势，再与场景人物交谈梳理后续线索。'
   }
 
-  return `多与场景人物交谈，优先尝试「${String(player.value.recommendedLoop ?? '采药炼丹')}」循环。`
+  return `不妨多与场景人物交谈，先从「${recommendedLoopFlavor(String(player.value.recommendedLoop ?? '采药炼丹'))}」入手。`
 })
 
 const sceneDisplayTitle = computed(() => {
@@ -1189,6 +1331,100 @@ function shortenText(value: string, limit = 4) {
     return normalized
   }
   return `${normalized.slice(0, limit)}…`
+}
+
+function roomLayerFlavor(value: string) {
+  const normalized = value.trim()
+  if (!normalized) {
+    return ''
+  }
+  if (normalized === '新手安全圈') {
+    return '山门庇护'
+  }
+  if (normalized === '成长历练圈') {
+    return '试手历练'
+  }
+  if (normalized === '筑基冲刺圈') {
+    return '险地冲关'
+  }
+  return normalized
+}
+
+function loopTagFlavor(value: string) {
+  const normalized = value.trim()
+  if (!normalized) {
+    return ''
+  }
+  const flavorMap: Record<string, string> = {
+    门派事务: '门中差遣最盛',
+    采药炼丹: '草木药气颇浓',
+    护送跑商: '行脚与商旅频仍',
+    巡山悬赏: '巡山缉猎不断',
+    海猎采珠: '海猎采珠之事正热',
+    残区探禁: '探禁寻残之人颇多',
+  }
+  return flavorMap[normalized] ?? normalized
+}
+
+function recommendedLoopFlavor(value: string) {
+  const normalized = value.trim()
+  if (!normalized) {
+    return '听风看路'
+  }
+  const flavorMap: Record<string, string> = {
+    采药炼丹: '采药试丹',
+    护送跑商: '护送跑商',
+    巡山悬赏: '巡山缉猎',
+    门派事务: '门中差遣',
+    海猎采珠: '海猎采珠',
+    残区探禁: '探禁寻残',
+  }
+  return flavorMap[normalized] ?? normalized
+}
+
+function sceneLayerNarration(roomLayer: string, loopTags: string[]) {
+  const layer = roomLayerFlavor(roomLayer)
+  const loopFlavors = loopTags.map((item) => loopTagFlavor(item)).filter(Boolean)
+  if (layer && loopFlavors.length > 0) {
+    return `${layer}之地，${loopFlavors.join('，')}。`
+  }
+  if (layer) {
+    return `${layer}之地，来往之人尚算有序。`
+  }
+  if (loopFlavors.length > 0) {
+    return loopFlavors.join('，') + '。'
+  }
+  return ''
+}
+
+function boardLayerSuffixFlavor(value: string) {
+  const normalized = value.trim()
+  if (!normalized) {
+    return ''
+  }
+  const flavorMap: Record<string, string> = {
+    山门庇护: '门中庇护',
+    试手历练: '可去试手',
+    险地冲关: '深处凶险',
+  }
+  return flavorMap[normalized] ?? normalized
+}
+
+function flavorSceneBoardLine(value: string) {
+  const normalized = value
+    .replace(/新手安全圈/g, roomLayerFlavor('新手安全圈'))
+    .replace(/成长历练圈/g, roomLayerFlavor('成长历练圈'))
+    .replace(/筑基冲刺圈/g, roomLayerFlavor('筑基冲刺圈'))
+
+  if (normalized.includes('｜')) {
+    const segments = normalized.split('｜').map((item) => item.trim())
+    if (segments.length >= 3) {
+      segments[2] = boardLayerSuffixFlavor(segments[2])
+      return segments.join('｜')
+    }
+  }
+
+  return normalized
 }
 
 function splitDenseText(text: string, limit = 4) {
@@ -1279,7 +1515,7 @@ const orientationLayout = computed(() => {
       slot: 'center',
       label: String(scene.value.sceneName ?? '当前位置'),
       caption: String(scene.value.regionName ?? '当前场景'),
-      command: 'look',
+      command: 'here',
     },
   ]
   const consumedExitKeys = new Set<string>()
@@ -1360,17 +1596,40 @@ function normalizeEventType(value: string) {
 }
 
 function isChatEvent(event: Record<string, any>) {
+  const channel = String(event.channel ?? '').trim().toLowerCase()
+  if (['world', 'team', 'local', 'tell'].includes(channel)) {
+    return true
+  }
   const type = normalizeEventType(String(event.type ?? ''))
   if (type === 'chat') {
     return true
   }
-  return /^\[(world|public|team)\]\s*/iu.test(String(event.title ?? ''))
+  return /^\[(world|public|team|local|tell)/iu.test(String(event.title ?? ''))
 }
 
 function chatChannelLabelFromEvent(event: Record<string, any>) {
+  const channel = String(event.channel ?? '').trim().toLowerCase()
+  if (channel === 'team') {
+    return '队伍'
+  }
+  if (channel === 'local') {
+    return '近聊'
+  }
+  if (channel === 'tell') {
+    return '传音'
+  }
+  if (channel === 'world') {
+    return '世界'
+  }
   const title = String(event.title ?? '')
   if (/^\[team\]\s*/iu.test(title)) {
     return '队伍'
+  }
+  if (/^\[local\]\s*/iu.test(title)) {
+    return '近聊'
+  }
+  if (/^\[tell/iu.test(title)) {
+    return '传音'
   }
   if (/^\[(world|public)\]\s*/iu.test(title)) {
     return '世界'
@@ -1398,6 +1657,10 @@ function formatEventText(event: Record<string, any>) {
 }
 
 function eventTone(event: Record<string, any>) {
+  const suppliedTone = String(event.tone ?? '').trim().toLowerCase()
+  if (['system', 'chat', 'quest', 'combat', 'hint'].includes(suppliedTone)) {
+    return suppliedTone as DenseLine['tone']
+  }
   const type = normalizeEventType(String(event.type ?? ''))
   if (type === 'chat') {
     return 'chat'
@@ -1429,7 +1692,21 @@ function denseToneClass(tone: DenseLine['tone']) {
   return `tone-${tone}`
 }
 
+function panelLineToneClass(tone: TimelinePanelLine['tone'] = 'normal') {
+  return `panel-line--${tone}`
+}
+
 function eventChannelLabel(event: Record<string, any>) {
+  const channel = String(event.channel ?? '').trim().toLowerCase()
+  if (channel === 'quest') {
+    return '任务'
+  }
+  if (channel === 'combat') {
+    return '战报'
+  }
+  if (channel === 'system') {
+    return '系统'
+  }
   const type = normalizeEventType(String(event.type ?? ''))
   if (isChatEvent(event)) {
     return chatChannelLabelFromEvent(event)
@@ -1533,15 +1810,15 @@ function displayResultHint(value: string) {
     return `${questHint.type === 'accept' ? '可接任务' : '可提交任务'}：${questHint.title}`
   }
 
-  const joinMatch = value.match(/^若想拜入(.+)，可使用：join\s+.+$/u)
+  const joinMatch = value.match(/^若想拜入(.+)，可(?:使用：)?join\s+.+$/u)
   if (joinMatch) {
-    return `若想拜入${joinMatch[1]}，可在下方功能盘中选择“加入·${joinMatch[1]}”。`
+    return `若想拜入${joinMatch[1]}，可直接输入 join 对应宗门。`
   }
 
   const replacements: Array<[RegExp, string]> = [
-    [/^先用 look 查看场景人物$/u, '可先点击“重看”查看当前场景人物。'],
-    [/^先用 look 查看场景妖兽$/u, '可先点击“重看”查看当前场景妖兽。'],
-    [/^先用 map 查看当前出口$/u, '可先打开地图或点击方位盘查看去路。'],
+    [/^先用 look 查看场景人物$/u, '可先用 look 或 here 重看当前场景人物。'],
+    [/^先用 look 查看场景妖兽$/u, '可先用 look 或 listen 察看当前场景妖兽。'],
+    [/^先用 map 查看当前出口$/u, '可先用 travel 或 map 梳理当前去路。'],
     [/^继续 practice .+ 或 fight <target>$/u, '继续修炼本命功法，或挑战附近妖兽积累突破火候。'],
     [/^可使用 use .+ 恢复气血$/u, '可在背包或战斗功能里使用回气药物恢复气血。'],
   ]
@@ -1573,6 +1850,12 @@ function latestNonChatEventMatches(text: string) {
   return [formatEventText(event), String(event.content ?? '').trim(), String(event.title ?? '').trim()].includes(normalized)
 }
 
+function trimMainTimeline() {
+  if (mainTimeline.value.length > 400) {
+    mainTimeline.value.splice(0, mainTimeline.value.length - 400)
+  }
+}
+
 function appendMainTimeline(lines: DenseLine[]) {
   const normalizedLines = lines.filter((line) => line.text.trim())
   if (!normalizedLines.length) {
@@ -1582,14 +1865,32 @@ function appendMainTimeline(lines: DenseLine[]) {
   normalizedLines.forEach((line) => {
     mainTimelineSequence += 1
     mainTimeline.value.push({
+      entryType: 'line',
       ...line,
       sequence: mainTimelineSequence,
     })
   })
 
-  if (mainTimeline.value.length > 400) {
-    mainTimeline.value.splice(0, mainTimeline.value.length - 400)
+  trimMainTimeline()
+}
+
+function appendMainPanel(panel: Omit<TimelinePanel, 'entryType' | 'sequence'> | null) {
+  if (!panel) {
+    return
   }
+
+  const hasContent = panel.summary.trim() || panel.lines.some((line) => line.text.trim()) || panel.actions.length > 0
+  if (!hasContent) {
+    return
+  }
+
+  mainTimelineSequence += 1
+  mainTimeline.value.push({
+    entryType: 'panel',
+    sequence: mainTimelineSequence,
+    ...panel,
+  })
+  trimMainTimeline()
 }
 
 function resetMessageTimelines() {
@@ -1601,38 +1902,454 @@ function resetMessageTimelines() {
   scrollPanels.chatOverlay.autoFollow = true
 }
 
-function buildSceneSnapshotLines() {
-  const lines: DenseLine[] = []
-  const regionName = String(scene.value.regionName ?? '').trim()
-  const sceneName = String(scene.value.sceneName ?? '').trim()
-  const sceneDescription = String(scene.value.description ?? '').trim()
-  const roomLayer = String(scene.value.roomLayer ?? '').trim()
-  const loopTags = ((scene.value.loopTags as string[] | undefined) ?? []).map((item) => String(item).trim()).filter(Boolean)
-  const resourceRefreshSummary = String(scene.value.resourceRefreshSummary ?? '').trim()
-  const localBoardEntries = ((scene.value.localBoardEntries as Record<string, any>[] | undefined) ?? []).slice(0, 3)
+function panelToneForId(panelId: string): DenseLine['tone'] {
+  const normalized = panelId.trim().toLowerCase()
+  if (['journal', 'tasks', 'board', 'claim', 'family'].includes(normalized)) {
+    return 'quest'
+  }
+  if (['wanted', 'rank'].includes(normalized)) {
+    return 'combat'
+  }
+  if (['listen', 'travel', 'map', 'scene', 'inspect', 'presence', 'exits'].includes(normalized)) {
+    return 'hint'
+  }
+  if (normalized === 'who') {
+    return 'chat'
+  }
+  return 'system'
+}
 
-  if (regionName || sceneName) {
+function sceneInteractablePanelTone(kind: SceneInteractableKind): DenseLine['tone'] {
+  if (kind === 'monster' || kind === 'hazard') {
+    return 'combat'
+  }
+  if (kind === 'resource' || kind === 'loot') {
+    return 'hint'
+  }
+  if (kind === 'player') {
+    return 'chat'
+  }
+  return 'system'
+}
+
+function panelActionLabelFromCommand(command: string, fallback: string) {
+  const normalized = command.trim().toLowerCase()
+  if (normalized === 'board') {
+    return '看委托'
+  }
+  if (normalized === 'duty') {
+    return '看事务'
+  }
+  if (normalized === 'wanted') {
+    return '看悬赏'
+  }
+  if (normalized === 'travel') {
+    return '看路引'
+  }
+  if (normalized === 'journal') {
+    return '翻札记'
+  }
+  if (normalized === 'bag') {
+    return '开行囊'
+  }
+  if (normalized === 'score') {
+    return '内观'
+  }
+  if (normalized === 'family') {
+    return '看门第'
+  }
+  if (normalized === 'meditate') {
+    return '调息'
+  }
+  if (normalized === 'breakthrough') {
+    return '冲关'
+  }
+  if (normalized.startsWith('fight ')) {
+    return `出手·${shortenText(fallback, 4)}`
+  }
+  if (normalized.startsWith('harvest ')) {
+    return `采集·${shortenText(fallback, 4)}`
+  }
+  if (normalized.startsWith('inspect ')) {
+    return `察看·${shortenText(fallback, 4)}`
+  }
+  if (normalized.startsWith('contribute ')) {
+    return `上交·${shortenText(fallback, 4)}`
+  }
+  if (normalized.startsWith('submit ')) {
+    return `交付·${shortenText(fallback, 4)}`
+  }
+  if (normalized.startsWith('talk ')) {
+    return `交谈·${shortenText(fallback, 4)}`
+  }
+  if (normalized.startsWith('go ')) {
+    return `前往·${shortenText(fallback, 4)}`
+  }
+  if (normalized.startsWith('join ')) {
+    return `拜入·${shortenText(fallback, 4)}`
+  }
+  if (normalized.startsWith('claim')) {
+    return `领取·${shortenText(fallback, 4)}`
+  }
+  if (normalized.startsWith('use ')) {
+    return `使用·${shortenText(fallback, 4)}`
+  }
+  return shortenText(fallback, 6) || '执行'
+}
+
+function buildPanelActionsFromEntries(panelId: string, entries: Record<string, any>[] = []) {
+  const actions: CommandAction[] = []
+  entries.forEach((entry) => {
+    if (actions.length >= 4) {
+      return
+    }
+    const command = String(entry.command ?? '').trim()
+    if (!command) {
+      return
+    }
+    const title = String(entry.title ?? '执行')
+    actions.push({
+      key: `panel-action-${panelId}-${String(entry.entryId ?? title)}`,
+      label: panelActionLabelFromCommand(command, title),
+      detail: String(entry.summary ?? entry.status ?? '继续这一步行动。'),
+      command,
+      execute: !command.endsWith(' '),
+      composer: 'command',
+    })
+  })
+  return actions
+}
+
+function panelRenderProfile(panelId: string) {
+  const normalized = panelId.trim().toLowerCase()
+  switch (normalized) {
+    case 'board':
+      return { mark: '委', compact: true, entryLimit: 4, summaryLimit: 1 }
+    case 'duty':
+      return { mark: '务', compact: true, entryLimit: 3, summaryLimit: 1 }
+    case 'wanted':
+      return { mark: '悬', compact: true, entryLimit: 4, summaryLimit: 1 }
+    case 'travel':
+      return { mark: '途', compact: true, entryLimit: 4, summaryLimit: 1 }
+    case 'claim':
+      return { mark: '赏', compact: true, entryLimit: 3, summaryLimit: 1 }
+    case 'score':
+      return { mark: '我', compact: true, entryLimit: 4, summaryLimit: 1 }
+    case 'family':
+      return { mark: '门', compact: true, entryLimit: 4, summaryLimit: 1 }
+    case 'journal':
+    case 'tasks':
+      return { mark: '札', compact: true, entryLimit: 4, summaryLimit: 1 }
+    case 'bag':
+      return { mark: '囊', compact: true, entryLimit: 4, summaryLimit: 1 }
+    case 'listen':
+      return { mark: '闻', compact: true, entryLimit: 4, summaryLimit: 1 }
+    case 'who':
+      return { mark: '众', compact: true, entryLimit: 4, summaryLimit: 1 }
+    case 'presence':
+      return { mark: '见', compact: true, entryLimit: 6, summaryLimit: 1 }
+    case 'exits':
+      return { mark: '途', compact: true, entryLimit: 6, summaryLimit: 1 }
+    case 'rank':
+      return { mark: '榜', compact: true, entryLimit: 5, summaryLimit: 1 }
+    case 'map':
+      return { mark: '图', compact: true, entryLimit: 6, summaryLimit: 1 }
+    default:
+      return { mark: '札', compact: false, entryLimit: 6, summaryLimit: 2 }
+  }
+}
+
+function panelMetaParts(panelId: string, entry: Record<string, any>) {
+  const normalized = panelId.trim().toLowerCase()
+  const category = String(entry.category ?? '').trim()
+  const locationHint = String(entry.locationHint ?? '').trim()
+  const rewardSummary = String(entry.rewardSummary ?? '').trim()
+
+  if (normalized === 'travel') {
+    return [locationHint, rewardSummary].filter(Boolean)
+  }
+  if (normalized === 'wanted') {
+    return [locationHint, rewardSummary ? `掉落：${rewardSummary}` : ''].filter(Boolean)
+  }
+  if (normalized === 'claim') {
+    return [rewardSummary ? `所得：${rewardSummary}` : '', locationHint].filter(Boolean)
+  }
+  if (['board', 'duty', 'journal', 'tasks'].includes(normalized)) {
+    return [locationHint, rewardSummary ? `所得：${rewardSummary}` : ''].filter(Boolean)
+  }
+  if (normalized === 'who') {
+    return [locationHint, category].filter(Boolean)
+  }
+  if (normalized === 'listen') {
+    return [locationHint, category].filter(Boolean)
+  }
+  if (normalized === 'bag') {
+    return [category, rewardSummary].filter(Boolean)
+  }
+  return [category, locationHint, rewardSummary ? `所得：${rewardSummary}` : ''].filter(Boolean)
+}
+
+function scenePanelMark(kind: SceneInteractableKind) {
+  const marks: Record<SceneInteractableKind, string> = {
+    player: '众',
+    npc: '人',
+    shop: '物',
+    monster: '战',
+    resource: '采',
+    loot: '遗',
+    hazard: '禁',
+  }
+  return marks[kind] ?? '札'
+}
+
+function buildTimelinePanelFromStructuredPanel(panel: Record<string, any>, index: number): Omit<TimelinePanel, 'entryType' | 'sequence'> | null {
+  const panelId = String(panel.panelId ?? panel.panel_id ?? `panel-${index}`).trim() || `panel-${index}`
+  const title = String(panel.title ?? panelId).trim() || '无名札板'
+  const compactTitle = String(panel.compactTitle ?? panel.compact_title ?? title).trim() || title
+  const summary = String(panel.summary ?? '').trim()
+  const profile = panelRenderProfile(panelId)
+  const sourceEntries = (panel.entries as Record<string, any>[] | undefined) ?? []
+  const asciiLines = ((panel.asciiLines as string[] | undefined) ?? (panel.ascii_lines as string[] | undefined) ?? [])
+    .map((line) => String(line ?? '').trim())
+    .filter(Boolean)
+  const entries = sourceEntries.slice(0, profile.entryLimit)
+
+  const lines: TimelinePanelLine[] = []
+  if (asciiLines.length > 0) {
+    asciiLines.slice(0, Math.max(profile.entryLimit + 2, 6)).forEach((text, entryIndex) => {
+      lines.push({
+        key: `${panelId}-ascii-${entryIndex}`,
+        text,
+        tone: entryIndex === 0 ? 'accent' : 'normal',
+      })
+    })
+  } else {
+    entries.forEach((entry, entryIndex) => {
+      const entryTitle = String(entry.title ?? '条目').trim()
+      const entryStatus = String(entry.status ?? '').trim()
+      const entrySummary = String(entry.summary ?? '').trim()
+      lines.push({
+        key: `${panelId}-title-${entryIndex}`,
+        text: `• ${entryTitle}${entryStatus ? `〔${entryStatus}〕` : ''}`,
+        tone: entryIndex === 0 ? 'accent' : 'normal',
+      })
+      if (entrySummary) {
+        splitDenseText(entrySummary, profile.summaryLimit).forEach((text, detailIndex) => {
+          lines.push({
+            key: `${panelId}-summary-${entryIndex}-${detailIndex}`,
+            text: `  ${text}`,
+            tone: 'normal',
+          })
+        })
+      }
+      const meta = panelMetaParts(panelId, entry)
+      if (meta.length > 0) {
+        lines.push({
+          key: `${panelId}-meta-${entryIndex}`,
+          text: `  ${meta.join(' · ')}`,
+          tone: 'muted',
+        })
+      }
+    })
+  }
+  if (asciiLines.length === 0 && sourceEntries.length > entries.length) {
     lines.push({
-      key: `scene-place-${currentSceneId.value}-${mainTimelineSequence + 1}`,
-      tag: '场景',
-      text: [regionName, sceneName].filter(Boolean).join(' · '),
-      tone: 'system',
+      key: `${panelId}-more`,
+      text: `……尚有 ${sourceEntries.length - entries.length} 条，可再行此札细看。`,
+      tone: 'muted',
     })
   }
 
+  const inlineCommands = ((panel.inlineCommands as string[] | undefined) ?? (panel.inline_commands as string[] | undefined) ?? [])
+    .map((command) => String(command ?? '').trim())
+    .filter(Boolean)
+  const actionSeedEntries =
+    inlineCommands.length > 0
+      ? inlineCommands.map((command, actionIndex) => ({
+          entryId: `${panelId}-inline-${actionIndex}`,
+          title: command,
+          summary: '可继续顺着这一札往下行。',
+          command,
+        }))
+      : entries
+
+  return {
+    key: `timeline-panel-${panelId}-${mainTimelineSequence + index + 1}`,
+    panelId,
+    mark: profile.mark,
+    title,
+    compactTitle,
+    summary,
+    tone: panelToneForId(panelId),
+    compact: profile.compact,
+    renderMode: String(panel.renderMode ?? panel.render_mode ?? (panelId === 'map' ? 'ascii_map' : 'board_block')) as PanelRenderMode,
+    styleId: String(panel.styleId ?? panel.style_id ?? 'mud-tablet'),
+    lines,
+    actions: buildPanelActionsFromEntries(panelId, actionSeedEntries),
+  }
+}
+
+function buildSceneInteractablePanel(item: SceneInteractable): Omit<TimelinePanel, 'entryType' | 'sequence'> {
+  const lines: TimelinePanelLine[] = []
+  splitDenseText(item.description, 3).forEach((text, index) => {
+    lines.push({
+      key: `${item.key}-desc-${index}`,
+      text,
+      tone: index === 0 ? 'accent' : 'normal',
+    })
+  })
+  item.meta.slice(0, 4).forEach((meta, index) => {
+    lines.push({
+      key: `${item.key}-meta-${index}`,
+      text: `· ${meta}`,
+      tone: 'muted',
+    })
+  })
+
+  return {
+    key: `scene-panel-${item.key}-${mainTimelineSequence + 1}`,
+    panelId: `scene:${item.kind}`,
+    mark: scenePanelMark(item.kind),
+    title: item.title,
+    compactTitle: item.title,
+    summary: item.subtitle,
+    tone: sceneInteractablePanelTone(item.kind),
+    compact: true,
+    renderMode: 'notice_block',
+    styleId: item.kind === 'monster' ? 'beast-slip' : 'scene-slip',
+    lines,
+    actions: item.actions.slice(0, 3),
+  }
+}
+
+function rankingLabel(kind: RankingType) {
+  return rankingOptions.find((option) => option.id === kind)?.label ?? '名榜'
+}
+
+function buildRankingPanel(kind: RankingType): Omit<TimelinePanel, 'entryType' | 'sequence'> {
+  const lines: TimelinePanelLine[] = store.rankings.slice(0, 5).map((entry, index) => {
+    const name = String(entry.characterName ?? entry.account ?? '无名修士')
+    const title = String(entry.title ?? entry.realmName ?? entry.sectName ?? '散修')
+    const extra = String(entry.extra ?? '').trim()
+    return {
+      key: `rank-${kind}-${index}`,
+      text: `${name} · 第 ${String(entry.rank ?? index + 1)} 名 · ${title}${extra ? ` · ${extra}` : ''} · 分数 ${String(entry.score ?? 0)}`,
+      tone: index === 0 ? 'accent' : 'normal',
+    }
+  })
+
+  return {
+    key: `rank-panel-${kind}-${mainTimelineSequence + 1}`,
+    panelId: 'rank',
+    mark: '榜',
+    title: rankingLabel(kind),
+    compactTitle: '名榜',
+    summary: store.rankings.length > 0 ? `当前可见 ${store.rankings.length} 名修士。` : '此刻还没有名榜记录。',
+    tone: 'combat',
+    compact: true,
+    renderMode: 'roster_block',
+    styleId: 'jianghu-board',
+    lines,
+    actions: [],
+  }
+}
+
+function buildMapPanel(): Omit<TimelinePanel, 'entryType' | 'sequence'> {
+  const lines: TimelinePanelLine[] = [
+    {
+      key: `map-current-${currentSceneId.value}`,
+      text: `此身所在：${sceneDisplayTitle.value}`,
+      tone: 'accent',
+    },
+  ]
+
+  const slots: Array<{ label: string; directions: string[] }> = [
+    { label: '北', directions: ['north', 'up'] },
+    { label: '西', directions: ['west'] },
+    { label: '东', directions: ['east'] },
+    { label: '南', directions: ['south', 'down'] },
+  ]
+
+  slots.forEach((slot, index) => {
+    const exit = slot.directions
+      .map((direction) => exits.value.find((item) => String(item.direction ?? '') === direction))
+      .find((item): item is (typeof exits.value)[number] => Boolean(item))
+    lines.push({
+      key: `map-slot-${index}`,
+      text: `${slot.label}：${exit ? String(exit.targetSceneName ?? exit.targetSceneId ?? '未知去路') : '前路未显'}`,
+      tone: exit ? 'normal' : 'muted',
+    })
+  })
+
+  if (orientationExtraExits.value.length > 0) {
+    lines.push({
+      key: `map-extra-${currentSceneId.value}`,
+      text: `余路：${orientationExtraExits.value
+        .map((exit) => `${directionLabel(String(exit.direction))}往 ${String(exit.targetSceneName ?? exit.targetSceneId ?? '未知之地')}`)
+        .join('；')}`,
+      tone: 'muted',
+    })
+  }
+
+  lines.push({
+    key: `map-tip-${currentSceneId.value}`,
+    text: '舆图只记近路，若想看更远航路与路引，可再行一札 travel。',
+    tone: 'muted',
+  })
+
+  const actions = exits.value.slice(0, 4).map((exit) => ({
+    key: `map-go-${String(exit.direction)}`,
+    label: directionLabel(String(exit.direction)).replace('方', ''),
+    detail: `前往${String(exit.targetSceneName ?? exit.targetSceneId ?? '未知之地')}。`,
+    command: `go ${String(exit.direction)}`,
+  }))
+
+  if (actions.length < 4) {
+    actions.push({
+      key: 'map-travel',
+      label: '路引',
+      detail: '查看更远路线和下一站建议。',
+      command: 'travel',
+    })
+  }
+
+  return {
+    key: `map-panel-${currentSceneId.value}-${mainTimelineSequence + 1}`,
+    panelId: 'map',
+    mark: '图',
+    title: '近身舆图',
+    compactTitle: '舆图',
+    summary: `${String(scene.value.regionName ?? '此地')}一带的去路都记在这里。`,
+    tone: 'hint',
+    compact: true,
+    renderMode: 'ascii_map',
+    styleId: 'scroll-map',
+    lines,
+    actions,
+  }
+}
+
+function buildSceneSnapshotLines() {
+  const lines: DenseLine[] = []
+  const sceneDescription = String(scene.value.sceneBrief ?? scene.value.description ?? '').trim()
+  const sceneAftertaste = String(scene.value.sceneAftertaste ?? '').trim()
+  const roomLayer = String(scene.value.roomLayer ?? '').trim()
+  const loopTags = ((scene.value.loopTags as string[] | undefined) ?? []).map((item) => String(item).trim()).filter(Boolean)
+
   if (roomLayer || loopTags.length > 0) {
+    const layerNarration = sceneLayerNarration(roomLayer, loopTags)
     lines.push({
       key: `scene-layer-${currentSceneId.value}-${mainTimelineSequence + 1}`,
-      tag: '阶段',
-      text: [roomLayer, loopTags.length > 0 ? `循环：${loopTags.join('、')}` : ''].filter(Boolean).join(' · '),
+      tag: '局势',
+      text: layerNarration || [roomLayer, loopTags.join('、')].filter(Boolean).join(' · '),
       tone: 'hint',
     })
   }
 
-  splitDenseText(sceneDescription, 6).forEach((text, index) => {
+  splitDenseText(sceneDescription, 3).forEach((text, index) => {
     lines.push({
       key: `scene-description-${currentSceneId.value}-${mainTimelineSequence + index + 1}`,
-      tag: '场景',
+      tag: index === 0 ? '眼前' : '景语',
       text,
       tone: 'system',
     })
@@ -1641,94 +2358,188 @@ function buildSceneSnapshotLines() {
   if (sceneMissionText.value) {
     lines.push({
       key: `scene-mission-${currentSceneId.value}-${mainTimelineSequence + 1}`,
-      tag: '任务',
+      tag: '线索',
       text: sceneMissionText.value,
       tone: 'quest',
     })
   }
-
-  if (npcs.value.length > 0) {
+  if (sceneAftertaste) {
     lines.push({
-      key: `scene-npcs-${currentSceneId.value}-${mainTimelineSequence + 1}`,
-      tag: '人物',
-      text: `你看见 ${npcs.value.map((npc) => String(npc.name ?? '无名人物')).join('、')}。`,
+      key: `scene-aftertaste-${currentSceneId.value}-${mainTimelineSequence + 1}`,
+      tag: '余韵',
+      text: sceneAftertaste,
       tone: 'hint',
     })
   }
-
-  if (scenePlayers.value.length > 0) {
-    lines.push({
-      key: `scene-players-${currentSceneId.value}-${mainTimelineSequence + 1}`,
-      tag: '玩家',
-      text: `同场景还有 ${scenePlayers.value.map((entry) => String(entry.characterName ?? entry.account ?? '无名修士')).join('、')}。`,
-      tone: 'hint',
-    })
-  }
-
-  if (monsters.value.length > 0) {
-    lines.push({
-      key: `scene-monsters-${currentSceneId.value}-${mainTimelineSequence + 1}`,
-      tag: '战报',
-      text: `附近徘徊着 ${monsters.value.join('、')}。`,
-      tone: 'combat',
-    })
-  }
-
-  if (sceneItems.value.length > 0) {
-    lines.push({
-      key: `scene-items-${currentSceneId.value}-${mainTimelineSequence + 1}`,
-      tag: '物件',
-      text: `视野里可见 ${sceneItems.value.map((entry) => String(entry.name ?? '无名物件')).join('、')}。`,
-      tone: 'system',
-    })
-  }
-
-  if (sceneResourceNodes.value.length > 0) {
-    lines.push({
-      key: `scene-resource-${currentSceneId.value}-${mainTimelineSequence + 1}`,
-      tag: '采集',
-      text: `附近可采集 ${sceneResourceNodes.value.map((entry) => String(entry.name ?? '资源点')).join('、')}。`,
-      tone: 'hint',
-    })
-  }
-
-  if (sceneGroundLoots.value.length > 0) {
-    lines.push({
-      key: `scene-ground-loot-${currentSceneId.value}-${mainTimelineSequence + 1}`,
-      tag: '遗落',
-      text: `地面遗落着 ${sceneGroundLoots.value.map((entry) => String(entry.itemName ?? '遗落物')).join('、')}。`,
-      tone: 'system',
-    })
-  }
-
-  if (sceneHazards.value.length > 0) {
-    lines.push({
-      key: `scene-hazard-${currentSceneId.value}-${mainTimelineSequence + 1}`,
-      tag: '禁制',
-      text: `此地存在 ${sceneHazards.value.map((entry) => String(entry.name ?? '未知禁制')).join('、')}。`,
-      tone: 'quest',
-    })
-  }
-
-  if (resourceRefreshSummary) {
-    lines.push({
-      key: `scene-refresh-${currentSceneId.value}-${mainTimelineSequence + 1}`,
-      tag: '资源',
-      text: resourceRefreshSummary,
-      tone: 'hint',
-    })
-  }
-
-  localBoardEntries.forEach((entry, index) => {
-    lines.push({
-      key: `scene-board-${currentSceneId.value}-${mainTimelineSequence + index + 1}`,
-      tag: '委托',
-      text: `${String(entry.title ?? '事务')}：${String(entry.summary ?? '')}`,
-      tone: 'quest',
-    })
-  })
 
   return lines
+}
+
+function buildSceneSnapshotPanels() {
+  const panels: Array<Omit<TimelinePanel, 'entryType' | 'sequence'>> = []
+
+  const presenceBoard = ((scene.value.presenceBoard as string[] | undefined) ?? [])
+    .map((line) => flavorSceneBoardLine(String(line ?? '').trim()))
+    .filter(Boolean)
+  if (presenceBoard.length > 0) {
+    panels.push({
+      key: `scene-presence-${currentSceneId.value}-${mainTimelineSequence + 1}`,
+      panelId: 'presence',
+      mark: '见',
+      title: '眼前所见',
+      compactTitle: '眼前',
+      summary: '可见人影、物件与异状，都在此札。',
+      tone: 'system',
+      compact: true,
+      renderMode: 'roster_block',
+      styleId: 'scene-presence',
+      lines: presenceBoard.slice(0, 8).map((text, index) => ({
+        key: `scene-presence-line-${index}`,
+        text,
+        tone: index === 0 ? 'accent' : 'normal',
+      })),
+      actions: sceneInteractables.value.slice(0, 6).flatMap((item) => item.actions.slice(0, 1)).slice(0, 3),
+    })
+  }
+
+  const exitBoard = ((scene.value.exitBoard as string[] | undefined) ?? [])
+    .map((line) => flavorSceneBoardLine(String(line ?? '').trim()))
+    .filter(Boolean)
+  if (exitBoard.length > 0) {
+    panels.push({
+      key: `scene-exits-${currentSceneId.value}-${mainTimelineSequence + 1}`,
+      panelId: 'exits',
+      mark: '途',
+      title: '可行去路',
+      compactTitle: '去路',
+      summary: '前后去处与路上缓急，都在这边。',
+      tone: 'hint',
+      compact: true,
+      renderMode: 'ascii_map',
+      styleId: 'exit-slip',
+      lines: exitBoard.slice(0, 6).map((text, index) => ({
+        key: `scene-exit-line-${index}`,
+        text,
+        tone: index === 0 ? 'accent' : 'normal',
+      })),
+      actions: exits.value.slice(0, 3).map((exit) => ({
+        key: `scene-exit-go-${String(exit.direction)}`,
+        label: `去${directionLabel(String(exit.direction)).replace('方', '')}`,
+        detail: `前往${String(exit.targetSceneName ?? exit.targetSceneId ?? '未知之地')}。`,
+        command: `go ${String(exit.direction)}`,
+      })),
+    })
+  }
+
+  const suggestedActionLines: TimelinePanelLine[] = []
+  const suggestedActions: CommandAction[] = []
+  const seenCommands = new Set<string>()
+
+  const sceneActionDisplayText = (action: CommandAction, targetTitle = '') => {
+    const commandText = String(action.command ?? '').trim()
+    const normalized = commandText.toLowerCase()
+    if (normalized.startsWith('talk ') && targetTitle) {
+      return `talk ${targetTitle}`
+    }
+    if (normalized.startsWith('ask ') && targetTitle) {
+      return `ask ${targetTitle}`
+    }
+    if (normalized.startsWith('inspect ') && targetTitle) {
+      return `inspect ${targetTitle}`
+    }
+    if (normalized.startsWith('fight ') && targetTitle) {
+      return `fight ${targetTitle}`
+    }
+    if (normalized.startsWith('harvest ') && targetTitle) {
+      return `harvest ${targetTitle}`
+    }
+    if (normalized.startsWith('loot ') && targetTitle) {
+      return `loot ${targetTitle}`
+    }
+    if (normalized.startsWith('buy ') && targetTitle) {
+      return `buy ${targetTitle}`
+    }
+    return commandText
+  }
+
+  const appendSuggestedAction = (action: CommandAction | undefined, text?: string) => {
+    if (!action) {
+      return
+    }
+    const commandText = String(action.command ?? '').trim()
+    if (!commandText) {
+      return
+    }
+    const signature = `${commandText}:${action.execute === false ? 'prefill' : 'run'}`
+    if (seenCommands.has(signature)) {
+      return
+    }
+    seenCommands.add(signature)
+    suggestedActionLines.push({
+      key: `scene-action-line-${suggestedActionLines.length + 1}`,
+      text: text ?? commandText,
+      tone: suggestedActionLines.length === 0 ? 'accent' : 'normal',
+    })
+    if (suggestedActions.length < 4) {
+      suggestedActions.push(action)
+    }
+  }
+
+  sceneInteractables.value.slice(0, 4).forEach((item) => {
+    const preferredAction =
+      item.actions.find((action) => String(action.command ?? '').startsWith('talk ')) ??
+      item.actions.find((action) => String(action.command ?? '').startsWith('ask ')) ??
+      item.actions.find((action) => String(action.command ?? '').startsWith('inspect ')) ??
+      item.actions.find((action) => String(action.command ?? '').startsWith('fight ')) ??
+      item.actions.find((action) => String(action.command ?? '').startsWith('harvest ')) ??
+      item.actions.find((action) => String(action.command ?? '').startsWith('loot ')) ??
+      item.actions.find((action) => String(action.command ?? '').startsWith('buy ')) ??
+      item.actions[0]
+
+    appendSuggestedAction(preferredAction, preferredAction ? sceneActionDisplayText(preferredAction, item.title) : '')
+  })
+
+  exits.value.slice(0, 3).forEach((exit) => {
+    const direction = String(exit.direction ?? '').trim()
+    if (!direction) {
+      return
+    }
+    appendSuggestedAction(
+      {
+        key: `scene-action-exit-${direction}`,
+        label: `去${directionLabel(direction).replace('方', '')}`,
+        detail: `前往${String(exit.targetSceneName ?? exit.targetSceneId ?? '未知之地')}。`,
+        command: `go ${direction}`,
+      },
+      `go ${direction}`,
+    )
+  })
+
+  appendSuggestedAction({
+    key: 'scene-action-listen',
+    label: '听风声',
+    detail: '收一收此地风声。',
+    command: 'listen',
+  })
+
+  if (suggestedActionLines.length > 0) {
+    panels.push({
+      key: `scene-actions-${currentSceneId.value}-${mainTimelineSequence + 1}`,
+      panelId: 'scene_actions',
+      mark: '行',
+      title: '此刻可做',
+      compactTitle: '可做',
+      summary: '照着这些短字落令，便能顺势前行。',
+      tone: 'hint',
+      compact: true,
+      renderMode: 'notice_block',
+      styleId: 'scene-command',
+      lines: suggestedActionLines.slice(0, 6),
+      actions: suggestedActions.slice(0, 3),
+    })
+  }
+
+  return panels
 }
 
 function buildResultTimelineLines(result: Record<string, any>) {
@@ -1798,39 +2609,14 @@ function buildResultTimelineLines(result: Record<string, any>) {
     })
   })
 
-  ;((result.panels as Record<string, any>[] | undefined) ?? []).slice(0, 2).forEach((panel, panelIndex) => {
-    const panelTitle = String(panel.title ?? panel.panelId ?? '结果面板').trim()
-    const panelSummary = String(panel.summary ?? '').trim()
-    if (panelSummary) {
-      lines.push({
-        key: `result-panel-summary-${panelIndex}-${mainTimelineSequence + 1}`,
-        tag: panelTitle,
-        text: panelSummary,
-        tone: 'system',
-      })
-    }
-
-    ;((panel.entries as Record<string, any>[] | undefined) ?? []).slice(0, 4).forEach((entry, entryIndex) => {
-      const title = String(entry.title ?? '条目').trim()
-      const summary = String(entry.summary ?? '').trim()
-      const status = String(entry.status ?? '').trim()
-      const reward = String(entry.rewardSummary ?? '').trim()
-      const text = [title, status ? `(${status})` : '', summary, reward ? `奖励：${reward}` : '']
-        .filter(Boolean)
-        .join(' ')
-      if (!text) {
-        return
-      }
-      lines.push({
-        key: `result-panel-entry-${panelIndex}-${entryIndex}-${mainTimelineSequence + 1}`,
-        tag: panelTitle,
-        text,
-        tone: 'hint',
-      })
-    })
-  })
-
   return lines
+}
+
+function buildResultTimelinePanels(result: Record<string, any>) {
+  return ((result.panels as Record<string, any>[] | undefined) ?? [])
+    .slice(0, 3)
+    .map((panel, index) => buildTimelinePanelFromStructuredPanel(panel, index))
+    .filter((panel): panel is Omit<TimelinePanel, 'entryType' | 'sequence'> => Boolean(panel))
 }
 
 function viewportFor(panel: ScrollPanelKey) {
@@ -1925,6 +2711,10 @@ async function openCodexOverlay(category = selectedCodexCategory.value) {
   }
 }
 
+function openSettingsOverlay() {
+  activeOverlay.value = 'settings'
+}
+
 async function openCodexEntry(entryId: string, categoryHint = '') {
   activeTab.value = 'codex'
   activeOverlay.value = 'codex'
@@ -1951,26 +2741,20 @@ async function openCodexEntry(entryId: string, categoryHint = '') {
 
 function openSceneInteractable(item: SceneInteractable) {
   selectedSceneInteractableKey.value = item.key
-  activeOverlay.value = 'scene'
+  activeOverlay.value = 'none'
+  appendMainPanel(buildSceneInteractablePanel(item))
+  void maybeFollowPanel('mainStory')
 }
 
 function commandCategoryClass(id: CommandCategoryId) {
   return `command-tone-${id}`
 }
 
-function sideTabClass(id: SideTab) {
-  return `dock-tone-${id}`
-}
-
-function dockEntryClass(entry: DockEntry) {
-  return entry.overlay === 'commands' ? 'dock-tone-commands' : sideTabClass(entry.overlay)
-}
-
 function sceneInteractableClass(item: SceneInteractable) {
   return [
     `rail-button--${item.kind}`,
     {
-      active: activeOverlay.value === 'scene' && selectedSceneInteractable.value?.key === item.key,
+      active: selectedSceneInteractable.value?.key === item.key,
     },
   ]
 }
@@ -1984,7 +2768,7 @@ function sceneInteractableToneClass(kind: SceneInteractableKind) {
 }
 
 function openOverlay(overlay: Exclude<OverlayPanel, 'none'>) {
-  if (overlay !== 'commands' && overlay !== 'scene' && overlay !== 'messages') {
+  if (overlay !== 'commands' && overlay !== 'scene' && overlay !== 'messages' && overlay !== 'settings') {
     activeTab.value = overlay
   }
   activeOverlay.value = overlay
@@ -1992,6 +2776,38 @@ function openOverlay(overlay: Exclude<OverlayPanel, 'none'>) {
 
 function closeOverlay() {
   activeOverlay.value = 'none'
+}
+
+async function openRankingPanel(kind: RankingType = store.rankingType) {
+  try {
+    await store.loadRankings(kind)
+    appendMainPanel(buildRankingPanel(kind))
+    await maybeFollowPanel('mainStory')
+  } catch (error) {
+    setError(error)
+  }
+}
+
+function triggerDockCommand(entry: DockCommandEntry) {
+  if (entry.action) {
+    applyAction(entry.action)
+    return
+  }
+
+  if (entry.command) {
+    void submitComposer(entry.command)
+    return
+  }
+
+  if (entry.panel === 'map') {
+    appendMainPanel(buildMapPanel())
+    void maybeFollowPanel('mainStory')
+    return
+  }
+
+  if (entry.rankingType) {
+    void openRankingPanel(entry.rankingType)
+  }
 }
 
 async function login(autoRegister = false) {
@@ -2192,9 +3008,6 @@ watch(
       if (eventId > 0) {
         processedMainEventIds.add(eventId)
       }
-      if (isChatEvent(event)) {
-        return
-      }
 
       lines.push({
         key: `event-line-${eventId || mainTimelineSequence + lines.length + 1}`,
@@ -2216,6 +3029,7 @@ watch(
       return
     }
     appendMainTimeline(buildSceneSnapshotLines())
+    buildSceneSnapshotPanels().forEach((panel) => appendMainPanel(panel))
   },
   { immediate: true, flush: 'post' },
 )
@@ -2227,6 +3041,7 @@ watch(
       return
     }
     appendMainTimeline(buildResultTimelineLines(result))
+    buildResultTimelinePanels(result).forEach((panel) => appendMainPanel(panel))
   },
   { flush: 'post' },
 )
@@ -2273,26 +3088,19 @@ watch(
 </script>
 
 <template>
-  <div class="shell" :class="{ 'shell--game': showGameView }">
+  <div class="shell" :class="[{ 'shell--game': showGameView }, scenePaletteClass]">
     <header v-if="showGameView" class="top-banner">
-      <div class="brand-copy">
-        <p class="eyebrow">人界修行中</p>
-        <h1>凡人修仙录</h1>
-      </div>
-      <div class="top-banner-actions">
-        <div class="status-chip">
-          <span>账号</span>
-          <strong>{{ store.account }}</strong>
-        </div>
-        <button type="button" class="ghost-button compact-button" @click="store.logout()">退出</button>
+      <div class="prompt-strip">
+        <p class="prompt-line">{{ statusPromptPrimary }}</p>
+        <p class="prompt-subline">{{ statusPromptSecondary }}</p>
       </div>
     </header>
 
     <header v-else class="hero">
       <div class="brand-copy">
-        <p class="eyebrow">网页客户端 · 文字修仙</p>
-        <h1>凡人修仙传 · 人界修行录</h1>
-        <p class="subtitle">从七玄门入世，沿着嘉元城、黄枫谷、乱星海一路修行，完整体验人界主线。</p>
+        <p class="eyebrow">暖墨纸灯 · 纯文字修仙</p>
+        <h1>凡人修仙 MUD</h1>
+        <p class="subtitle">此卷不演大戏，只记你在修行界里亲眼所见、亲耳所闻与亲手走过的路。</p>
       </div>
     </header>
 
@@ -2300,37 +3108,37 @@ watch(
 
     <section v-if="!store.authenticated" class="auth-card">
       <div class="card-heading">
-        <h2>进入凡人世界</h2>
-        <p>沿用现有服务端协议，登录后直接进入移动端主界面。新注册账号仅支持英文字母和数字，老账号不受影响。</p>
+        <h2>启卷入世</h2>
+        <p>写下道号与口令，灯下翻卷，便可再次踏入这片以文字为形的修行界。新注册账号仅支持英文字母和数字。</p>
       </div>
       <div class="form-grid">
         <label>
-          <span>账号名</span>
+          <span>道号</span>
           <input v-model="account" autocomplete="username" placeholder="例如 hanli001" />
         </label>
         <label>
-          <span>登录密码</span>
-          <input v-model="password" type="password" autocomplete="current-password" placeholder="请输入密码" />
+          <span>口令</span>
+          <input v-model="password" type="password" autocomplete="current-password" placeholder="写入口令" />
         </label>
       </div>
       <div class="action-row">
-        <button type="button" class="primary-button" :disabled="store.loading" @click="login(false)">登录</button>
-        <button type="button" class="secondary-button" :disabled="store.loading" @click="login(true)">注册并登录</button>
+        <button type="button" class="primary-button" :disabled="store.loading" @click="login(false)">续上旧卷</button>
+        <button type="button" class="secondary-button" :disabled="store.loading" @click="login(true)">新开一卷</button>
       </div>
     </section>
 
     <section v-else-if="showCreateCharacterView" class="auth-card">
       <div class="card-heading">
-        <h2>塑造新角色</h2>
-        <p>当前账号：{{ store.account }}。先定姓名，再选人界出身与凡俗背景；如果这个账号本来就有角色，也可以先重新检查存档。</p>
+        <h2>立下名帖</h2>
+        <p>当前道号：{{ store.account }}。先立名，再定来处与凡俗旧业。若这卷中本就有人，也可先试着把旧身影唤回来。</p>
       </div>
       <div class="form-grid single-column">
         <label>
-          <span>角色名</span>
+          <span>名帖</span>
           <input v-model="characterName" maxlength="24" placeholder="例如 韩立" @keyup.enter="createCharacter()" />
         </label>
         <div>
-          <span>人界出身</span>
+          <span>来处</span>
           <div class="origin-grid">
             <button
               v-for="origin in availableOrigins"
@@ -2352,7 +3160,7 @@ watch(
           </article>
         </div>
         <div>
-          <span>凡俗背景</span>
+          <span>旧业</span>
           <div class="origin-grid">
             <button
               v-for="background in availableBackgrounds"
@@ -2376,155 +3184,133 @@ watch(
       </div>
       <div class="action-row">
         <button type="button" class="primary-button" :disabled="store.loading || !selectedOriginId || !selectedBackgroundId" @click="createCharacter()">
-          踏入修仙路
+          落笔成名
         </button>
-        <button type="button" class="secondary-button" :disabled="store.loading" @click="retryBootstrap()">重新检查角色</button>
-        <button type="button" class="ghost-button" :disabled="store.loading" @click="store.logout()">返回登录</button>
+        <button type="button" class="secondary-button" :disabled="store.loading" @click="retryBootstrap()">唤回旧身</button>
+        <button type="button" class="ghost-button" :disabled="store.loading" @click="store.logout()">回到卷首</button>
       </div>
     </section>
 
-    <main v-else-if="showGameView" class="mobile-layout">
-      <section
-        class="surface-panel event-panel event-panel--clickable"
-        role="button"
-        tabindex="0"
-        @click="openOverlay('messages')"
-        @keydown.enter.prevent="openOverlay('messages')"
-        @keydown.space.prevent="openOverlay('messages')"
-      >
-        <div class="channel-header">
-          <span class="channel-badge">频道</span>
-          <div class="channel-meta">
-            <span class="channel-chip">{{ scene.regionName || '未知地域' }}</span>
-            <span class="channel-chip">{{ scene.sceneName || '未知场景' }}</span>
-            <span class="channel-chip">{{ player.cultivation?.realmName || '凡躯' }}</span>
-            <span class="channel-chip">点此展开聊天</span>
-          </div>
-        </div>
-        <div ref="eventViewport" class="event-stream dense-log" @scroll.stop="handleViewportScroll('topChat')">
-          <article v-for="event in chatEvents" :key="event.eventId" class="event-item dense-item">
-            <span class="event-tag tone-chat">{{ eventChannelLabel(event) }}</span>
-            <p class="event-line">{{ formatEventText(event) }}</p>
-          </article>
-          <p v-if="chatEvents.length === 0" class="empty-text">当前还没有聊天消息，点这里展开后就能直接发言。</p>
-        </div>
-      </section>
-
+    <main v-else-if="showGameView" class="mobile-layout mobile-layout--terminal">
       <section class="surface-panel scene-panel">
-        <div class="scene-frame">
-          <aside class="scene-side-rail">
-            <p v-if="sceneInteractables.length === 0" class="scene-side-empty">当前视野里暂无明显目标</p>
-            <button
-              v-for="item in sceneInteractables"
-              :key="item.key"
-              type="button"
-              class="rail-button"
-              :class="sceneInteractableClass(item)"
-              @click="openSceneInteractable(item)"
-            >
-              <span class="rail-label">{{ item.railLabel }}</span>
-              <small class="rail-caption">{{ item.railCaption }}</small>
-            </button>
-          </aside>
-
-          <div class="scene-main-board">
-            <div class="scene-board-header">
-              <div class="scene-board-copy">
-                <p class="scene-board-title">{{ sceneDisplayTitle }}</p>
-                <p class="scene-board-subtitle">{{ sceneMissionText }}</p>
-              </div>
-              <div class="scene-board-badges">
-                <span class="scene-board-badge">可见 · {{ sceneInteractables.length }}</span>
-                <span class="scene-board-badge">去路 · {{ exits.length }}</span>
-              </div>
+        <div class="scene-main-board scene-main-board--single">
+          <div class="scene-board-header scene-board-header--terminal">
+            <div class="scene-board-copy">
+              <p class="scene-board-kicker">{{ scene.ambientMood || '灯影微温' }}</p>
+              <p class="scene-board-title">{{ sceneDisplayTitle }}</p>
             </div>
+          </div>
 
-            <div class="story-console">
-              <div ref="storyViewport" class="story-log" @scroll="handleViewportScroll('mainStory')">
+          <div class="story-console story-console--single">
+            <div ref="storyViewport" class="story-log" @scroll="handleViewportScroll('mainStory')">
+              <template v-for="entry in mainTimeline" :key="entry.key">
                 <article
-                  v-for="line in mainTimeline"
-                  :key="line.key"
+                  v-if="entry.entryType === 'line'"
                   class="story-line"
-                  :class="denseToneClass(line.tone)"
+                  :class="denseToneClass(entry.tone)"
                 >
-                  <span class="story-tag">[{{ line.tag }}]</span>
-                  <p class="story-text">{{ line.text }}</p>
+                  <span class="story-tag">{{ entry.tag }}</span>
+                  <p class="story-text">{{ entry.text }}</p>
                 </article>
-                <p v-if="mainTimeline.length === 0" class="empty-text">当前还没有新的场景记录，先试着观察、交谈或移动吧。</p>
-              </div>
+
+                <article
+                  v-else
+                  class="story-panel"
+                  :class="[
+                    denseToneClass(entry.tone),
+                    { 'story-panel--compact': entry.compact },
+                    `story-panel--${entry.renderMode}`,
+                    `story-panel-style--${entry.styleId}`,
+                  ]"
+                >
+                  <header class="story-panel-header">
+                    <div class="story-panel-copy">
+                      <p class="story-panel-title">{{ entry.compact ? entry.compactTitle : entry.title }}</p>
+                      <p v-if="entry.summary" class="story-panel-summary">{{ entry.summary }}</p>
+                    </div>
+                    <span class="story-panel-mark">{{ entry.mark }}</span>
+                  </header>
+                  <div class="story-panel-body">
+                    <p
+                      v-for="line in entry.lines"
+                      :key="line.key"
+                      class="story-panel-line"
+                      :class="panelLineToneClass(line.tone)"
+                    >
+                      {{ line.text }}
+                    </p>
+                  </div>
+                  <div v-if="entry.actions.length > 0" class="story-panel-actions">
+                    <button
+                      v-for="action in entry.actions"
+                      :key="action.key"
+                      type="button"
+                      class="story-panel-action"
+                      @click="applyAction(action)"
+                    >
+                      {{ action.label }}
+                    </button>
+                  </div>
+                </article>
+              </template>
+              <p v-if="mainTimeline.length === 0" class="empty-text">当前还没有新的场景记录，先试着观察、交谈或移动吧。</p>
+            </div>
+          </div>
+
+          <div class="scene-orientation-card scene-orientation-card--restored">
+            <div class="scene-orientation-frame scene-orientation-frame--restored">
+              <button
+                v-for="tile in orientationTiles"
+                :key="tile.key"
+                type="button"
+                class="orientation-node"
+                :class="orientationTileClass(tile)"
+                :disabled="tile.disabled"
+                @click="tile.command ? submitComposer(tile.command) : undefined"
+              >
+                <span class="orientation-label">{{ tile.label }}</span>
+                <span class="orientation-caption">{{ tile.caption }}</span>
+              </button>
             </div>
 
-            <div class="scene-presence-strip">
-              <span class="meta-tag" v-for="entry in scenePlayers" :key="entry.account">玩家 · {{ entry.characterName }}</span>
-              <span class="meta-tag" v-for="npc in npcs" :key="npc.npcId">人物 · {{ npc.name }}</span>
-              <span class="meta-tag" v-for="sceneItem in sceneItems" :key="`${sceneItem.itemId}-${sceneItem.source}`">物件 · {{ sceneItem.name }}</span>
-              <span class="meta-tag" v-for="node in sceneResourceNodes" :key="node.nodeId">采点 · {{ node.name }}</span>
-              <span class="meta-tag" v-for="loot in sceneGroundLoots" :key="loot.lootId">遗落 · {{ loot.itemName }}</span>
-              <span class="meta-tag" v-for="hazard in sceneHazards" :key="hazard.hazardId">禁制 · {{ hazard.name }}</span>
-              <span class="meta-tag" v-for="monster in monsters" :key="monster">妖兽 · {{ monster }}</span>
-            </div>
-
-            <div class="scene-orientation-card">
-              <div class="scene-orientation-frame">
-                <button
-                  v-for="tile in orientationTiles"
-                  :key="tile.key"
-                  type="button"
-                  class="orientation-node"
-                  :class="orientationTileClass(tile)"
-                  :disabled="tile.disabled"
-                  @click="tile.command ? submitComposer(tile.command) : undefined"
-                >
-                  <span class="orientation-label">{{ tile.label }}</span>
-                  <small class="orientation-caption">{{ tile.caption }}</small>
-                </button>
-              </div>
-              <div v-if="orientationExtraExits.length > 0" class="orientation-extra-row">
-                <button
-                  v-for="exit in orientationExtraExits"
-                  :key="`extra-${exit.direction}`"
-                  type="button"
-                  class="orientation-extra-button"
-                  @click="submitComposer(`go ${String(exit.direction)}`)"
-                >
-                  <span>{{ directionLabel(String(exit.direction)) }}方</span>
-                  <strong>{{ exit.targetSceneName }}</strong>
-                </button>
-              </div>
+            <div v-if="orientationExtraExits.length > 0" class="orientation-extra-row orientation-extra-row--restored">
+              <button
+                v-for="exit in orientationExtraExits"
+                :key="`orientation-extra-${String(exit.direction)}-${String(exit.targetSceneId ?? exit.targetSceneName ?? '')}`"
+                type="button"
+                class="orientation-extra-button"
+                @click="submitComposer(`go ${String(exit.direction)}`)"
+              >
+                <span>{{ directionLabel(String(exit.direction)) }}方</span>
+                <strong>{{ String(exit.targetSceneName ?? exit.targetSceneId ?? '未知去路') }}</strong>
+              </button>
             </div>
           </div>
         </div>
       </section>
 
-      <footer class="bottom-dock">
-        <div class="vitals-row">
-          <article v-for="stat in quickStats" :key="stat.key" class="vital-card" :class="stat.key">
-            <span>{{ stat.label }}</span>
-            <strong>{{ stat.value }}</strong>
-          </article>
-        </div>
-
+      <footer class="bottom-dock bottom-dock--terminal">
         <div class="dock-nav-grid">
           <button
-            v-for="entry in dockEntries"
+            v-for="entry in dockCommandEntries"
             :key="entry.key"
             type="button"
             class="dock-nav-button"
-            :class="[dockEntryClass(entry), { active: activeOverlay === entry.overlay }]"
-            @click="openOverlay(entry.overlay)"
+            @click="triggerDockCommand(entry)"
           >
-            {{ entry.label }}
+            <span>{{ entry.label }}</span>
+            <small>{{ entry.caption }}</small>
           </button>
         </div>
 
-        <div class="mode-row">
+        <div class="mode-row mode-row--terminal">
           <button
             type="button"
             class="mode-button"
             :class="{ active: composerMode === 'chat' && chatChannel === 'world' }"
             @click="applyAction({ key: 'chat-world', label: '', detail: '', composer: 'chat', chatChannel: 'world' })"
           >
-            世界聊天
+            世声
           </button>
           <button
             type="button"
@@ -2532,7 +3318,7 @@ watch(
             :class="{ active: composerMode === 'chat' && chatChannel === 'team' }"
             @click="applyAction({ key: 'chat-team', label: '', detail: '', composer: 'chat', chatChannel: 'team' })"
           >
-            队伍聊天
+            队声
           </button>
           <button
             type="button"
@@ -2540,7 +3326,21 @@ watch(
             :class="{ active: composerMode === 'command' }"
             @click="composerMode = 'command'"
           >
-            原始指令
+            落令
+          </button>
+          <button
+            type="button"
+            class="mode-button mode-button--subtle"
+            @click="void openCodexOverlay()"
+          >
+            长卷
+          </button>
+          <button
+            type="button"
+            class="mode-button mode-button--subtle"
+            @click="openSettingsOverlay()"
+          >
+            卷末
           </button>
         </div>
 
@@ -2548,7 +3348,7 @@ watch(
         <form class="command-form" @submit.prevent="submitComposer()">
           <input v-model="composerText" :placeholder="composerPlaceholder" :disabled="store.loading" />
           <button class="primary-button" :disabled="store.loading">
-            {{ composerMode === 'chat' ? '发送' : '执行' }}
+            {{ composerMode === 'chat' ? '传声' : '落令' }}
           </button>
         </form>
       </footer>
@@ -2556,237 +3356,31 @@ watch(
 
     <section v-else-if="store.authenticated" class="auth-card">
       <div class="card-heading">
-        <h2>正在恢复角色</h2>
-        <p>当前账号：{{ store.account }}。登录态还在，但角色数据还没有恢复成可玩的状态；可以重新检查存档，或者退出后重新登录。</p>
+        <h2>寻回旧影</h2>
+        <p>当前道号：{{ store.account }}。登录态仍在，但卷中旧身尚未完整显形；可再试一次唤回，或先回到卷首重整气机。</p>
       </div>
       <div class="action-row">
-        <button type="button" class="primary-button" :disabled="store.loading" @click="retryBootstrap()">重新检查角色</button>
-        <button type="button" class="secondary-button" :disabled="store.loading" @click="store.logout()">返回登录</button>
+        <button type="button" class="primary-button" :disabled="store.loading" @click="retryBootstrap()">再唤一次</button>
+        <button type="button" class="secondary-button" :disabled="store.loading" @click="store.logout()">回到卷首</button>
       </div>
     </section>
 
     <div v-if="store.authenticated && activeOverlay !== 'none'" class="overlay-backdrop" @click.self="closeOverlay()">
-      <section class="overlay-sheet" :class="{ 'overlay-sheet--wide': activeOverlay === 'map' || activeOverlay === 'commands' || activeOverlay === 'codex' }">
+      <section class="overlay-sheet" :class="{ 'overlay-sheet--wide': activeOverlay === 'codex' }">
         <div class="overlay-grabber" aria-hidden="true"></div>
         <header class="overlay-header">
           <div>
-            <p class="section-kicker">弹出界面</p>
+            <p class="section-kicker">{{ activeOverlay === 'codex' ? '长卷' : '卷末' }}</p>
             <h2>{{ activeOverlayTitle }}</h2>
           </div>
           <div class="overlay-header-actions">
             <span class="panel-corner-label">{{ activeOverlayCorner }}</span>
-            <button type="button" class="ghost-button tiny-button" @click="closeOverlay()">关闭</button>
+            <button type="button" class="ghost-button tiny-button" @click="closeOverlay()">收起</button>
           </div>
         </header>
 
-        <div v-if="activeOverlay === 'commands'" class="overlay-body overlay-body--commands">
-          <div class="tray-summary-row overlay-summary-row">
-            <article v-for="item in infoOverview" :key="item.key" class="tray-summary-card">
-              <span>{{ item.label }}</span>
-              <strong>{{ item.value }}</strong>
-            </article>
-          </div>
-          <div class="tab-strip command-tab-strip">
-            <button
-              v-for="category in commandCategories"
-              :key="category.id"
-              type="button"
-              class="tab-button command-tab-button"
-              :class="[commandCategoryClass(category.id), { active: activeCommandCategory === category.id }]"
-              @click="activeCommandCategory = category.id"
-            >
-              {{ category.label }}
-            </button>
-          </div>
-          <div class="command-grid overlay-command-grid">
-            <button
-              v-for="action in activeCommandActions"
-              :key="action.key"
-              type="button"
-              class="command-card"
-              :class="commandCategoryClass(activeCommandCategory)"
-              @click="applyAction(action)"
-            >
-              <span class="command-card-title">{{ action.label }}</span>
-              <span class="command-card-detail">{{ action.detail }}</span>
-            </button>
-            <p v-if="activeCommandActions.length === 0" class="empty-text">这一栏暂时没有可用动作。</p>
-          </div>
-        </div>
-
-        <div v-else-if="activeOverlay === 'messages'" class="overlay-body overlay-body--messages">
-          <div ref="chatOverlayViewport" class="messages-overlay-log" @scroll="handleViewportScroll('chatOverlay')">
-            <article v-for="event in chatEvents" :key="`overlay-${event.eventId}`" class="event-item dense-item">
-              <span class="event-tag tone-chat">{{ eventChannelLabel(event) }}</span>
-              <p class="event-line">{{ formatEventText(event) }}</p>
-            </article>
-            <p v-if="chatEvents.length === 0" class="empty-text">当前还没有聊天消息，发一句话试试看吧。</p>
-          </div>
-
-          <div class="messages-overlay-composer">
-            <div class="mode-row messages-mode-row">
-              <button
-                type="button"
-                class="mode-button"
-                :class="{ active: chatChannel === 'world' }"
-                @click="chatChannel = 'world'"
-              >
-                世界聊天
-              </button>
-              <button
-                type="button"
-                class="mode-button"
-                :class="{ active: chatChannel === 'team' }"
-                @click="chatChannel = 'team'"
-              >
-                队伍聊天
-              </button>
-              <button type="button" class="mode-button" @click="overlayChatText = ''">清空输入</button>
-            </div>
-            <form class="command-form messages-command-form" @submit.prevent="submitOverlayChat()">
-              <input
-                v-model="overlayChatText"
-                :placeholder="chatChannel === 'world' ? '输入要发送到世界频道的话' : '输入要发送给队伍成员的话'"
-                :disabled="store.loading"
-              />
-              <button class="primary-button" :disabled="store.loading">发送</button>
-            </form>
-          </div>
-        </div>
-
-        <div v-else-if="activeOverlay === 'scene'" class="overlay-body overlay-body--scene">
-          <div class="tab-strip scene-entity-tabs">
-            <button
-              v-for="item in sceneInteractables"
-              :key="item.key"
-              type="button"
-              class="tab-button command-tab-button scene-entity-tab-button"
-              :class="[sceneInteractableToneClass(item.kind), { active: selectedSceneInteractable?.key === item.key }]"
-              @click="openSceneInteractable(item)"
-            >
-              {{ item.railCaption }}
-            </button>
-          </div>
-
-          <div v-if="selectedSceneInteractable" class="detail-stack">
-            <article class="detail-card scene-entity-card">
-              <div class="scene-entity-header">
-                <span class="scene-entity-kind" :class="sceneInteractableToneClass(selectedSceneInteractable.kind)">
-                  {{ sceneInteractableKindLabel(selectedSceneInteractable.kind) }}
-                </span>
-                <div class="scene-entity-copy">
-                  <p class="detail-title">{{ selectedSceneInteractable.title }}</p>
-                  <p class="scene-entity-subtitle">{{ selectedSceneInteractable.subtitle }}</p>
-                </div>
-              </div>
-              <p class="scene-entity-description">{{ selectedSceneInteractable.description }}</p>
-              <div class="scene-entity-meta">
-                <span v-for="meta in selectedSceneInteractable.meta" :key="meta" class="meta-tag subtle-tag">{{ meta }}</span>
-              </div>
-            </article>
-
-            <div class="command-grid scene-entity-action-grid">
-              <button
-                v-for="action in selectedSceneInteractable.actions"
-                :key="action.key"
-                type="button"
-                class="command-card scene-entity-action-card"
-                :class="sceneInteractableToneClass(selectedSceneInteractable.kind)"
-                @click="applyAction(action)"
-              >
-                <span class="command-card-title">{{ action.label }}</span>
-                <span class="command-card-detail">{{ action.detail }}</span>
-              </button>
-              <p v-if="selectedSceneInteractable.actions.length === 0" class="empty-text">当前没有可直接执行的操作。</p>
-            </div>
-          </div>
-
-          <p v-else class="empty-text">当前场景暂无明显可见目标。</p>
-        </div>
-
-        <div v-else class="overlay-body">
-          <div class="tab-strip overlay-info-tabs">
-            <button
-              v-for="item in sideTabLabels"
-              :key="item.id"
-              type="button"
-              class="tab-button command-tab-button"
-              :class="{ active: activeInfoTab === item.id }"
-              @click="openOverlay(item.id)"
-            >
-              {{ item.label }}
-            </button>
-          </div>
-
-          <div v-if="activeInfoTab === 'player'" class="detail-stack">
-            <div class="stat-grid">
-              <article class="stat-card">
-                <span>角色</span>
-                <strong>{{ player.characterName }}</strong>
-              </article>
-              <article class="stat-card">
-                <span>气血</span>
-                <strong>{{ player.hp }} / {{ player.maxHp }}</strong>
-              </article>
-              <article class="stat-card">
-                <span>攻击</span>
-                <strong>{{ player.attackPower }}</strong>
-              </article>
-              <article class="stat-card">
-                <span>防御</span>
-                <strong>{{ player.defensePower }}</strong>
-              </article>
-              <article class="stat-card">
-                <span>灵石</span>
-                <strong>{{ player.spiritStone }}</strong>
-              </article>
-              <article class="stat-card">
-                <span>宗门</span>
-                <strong>{{ player.sect?.sectName || '散修' }}</strong>
-              </article>
-            </div>
-            <div class="info-block">
-              <p>出身：{{ player.race?.originName || '未定' }} · {{ player.race?.homeland || '人界' }}</p>
-              <p>本命功法：{{ player.cultivation?.primarySkill || '长春功' }}</p>
-              <p>功法等级：{{ player.cultivation?.skillLevel || 1 }}</p>
-              <p>突破需求：{{ player.cultivation?.exp || 0 }} / {{ player.cultivation?.nextBreakthroughExp || 0 }}</p>
-              <p>章节进度：{{ displayProgressionChapter }}</p>
-              <p>宗门贡献：{{ player.sectContribution || 0 }}</p>
-              <p>已解锁区域：{{ (player.unlockedRegions || []).join('、') || '七玄门' }}</p>
-            </div>
-            <article class="detail-card">
-              <p class="detail-title">基础属性</p>
-              <p>神识 {{ player.baseAttributes?.spi || 0 }} · 经脉 {{ player.baseAttributes?.gin || 0 }} · 炼体 {{ player.baseAttributes?.str || 0 }}</p>
-              <p>灵觉 {{ player.baseAttributes?.per || 0 }} · 悟性 {{ player.baseAttributes?.int || 0 }} · 魅力 {{ player.baseAttributes?.cha || 0 }} · 机缘 {{ player.baseAttributes?.luc || 0 }}</p>
-              <p>法力 {{ currentStatusAttributes.mana || 0 }} / {{ player.statusAttributes?.mana || 0 }} · 神念 {{ currentStatusAttributes.sen || 0 }} / {{ player.statusAttributes?.sen || 0 }} · 气力 {{ currentStatusAttributes.sta || 0 }} / {{ player.statusAttributes?.sta || 0 }}</p>
-            </article>
-            <article class="detail-card">
-              <p class="detail-title">技艺概览</p>
-              <p>技能：{{ ((player.skills || []) as Record<string, any>[]).map((item) => item.name).join('、') || '尚未习得' }}</p>
-              <p>法术：{{ ((player.spells || []) as Record<string, any>[]).filter((item) => item.unlocked).map((item) => item.name).join('、') || '尚未习得' }}</p>
-              <p>配方：{{ ((player.recipes || []) as Record<string, any>[]).filter((item) => item.unlocked).map((item) => item.name).join('、') || '尚未掌握' }}</p>
-            </article>
-          </div>
-
-          <div v-else-if="activeInfoTab === 'quests'" class="detail-stack">
-            <article v-for="quest in quests" :key="quest.questId" class="detail-card">
-              <p class="detail-title">{{ quest.title }}</p>
-              <p>{{ quest.description }}</p>
-              <p>状态：{{ questStatusLabel(String(quest.status ?? '')) }} · 进度：{{ quest.progress }} / {{ quest.target }}</p>
-            </article>
-            <p v-if="quests.length === 0" class="empty-text">当前暂无任务，试着去和场景人物交谈。</p>
-          </div>
-
-          <div v-else-if="activeInfoTab === 'inventory'" class="detail-stack">
-            <article v-for="item in inventory" :key="`${item.itemId}-${item.equipped}`" class="detail-card">
-              <p class="detail-title">{{ item.name }}</p>
-              <p>{{ item.description }}</p>
-              <p>数量：{{ item.quantity }} <span v-if="item.equipped">· 已装备</span></p>
-            </article>
-            <p v-if="inventory.length === 0" class="empty-text">背包空空如也。</p>
-          </div>
-
-          <div v-else-if="activeInfoTab === 'codex'" class="detail-stack">
+        <div v-if="activeOverlay === 'codex'" class="overlay-body">
+          <div class="detail-stack">
             <div class="tab-strip codex-category-strip">
               <button
                 v-for="category in codexCategories"
@@ -2833,78 +3427,29 @@ watch(
 
             <p v-if="codexEntries.length === 0" class="empty-text">这一分类的资料尚未解锁，继续探索、交谈、击败敌手或取得关键物品后会逐步开启。</p>
           </div>
+        </div>
 
-          <div v-else-if="activeInfoTab === 'team'" class="detail-stack">
-            <article class="detail-card">
-              <p class="detail-title">{{ player.team?.teamName || '暂无队伍' }}</p>
-              <p v-if="teamMembers.length === 0">去“功能”里的宗门队伍页签创建队伍，或输入 `team join 账号` 加入他人队伍。</p>
-              <p v-else>队伍编号：{{ player.team?.teamId }}</p>
+        <div v-else-if="activeOverlay === 'settings'" class="overlay-body overlay-body--settings">
+          <div class="detail-stack settings-stack">
+            <article class="detail-card settings-card">
+              <p class="detail-title">此卷在身</p>
+              <p>道号：{{ store.account || '未署名' }}</p>
+              <p>角色：{{ player.characterName || '未显形' }} · 境界：{{ player.cultivation?.realmName || player.stageLabel || '凡躯' }}</p>
+              <p>所在：{{ sceneDisplayTitle }}</p>
             </article>
-            <article v-for="member in teamMembers" :key="member.account" class="detail-card">
-              <p class="detail-title">{{ member.displayName }}</p>
-              <p>{{ member.account }} <span v-if="member.leader">· 队长</span></p>
-            </article>
-          </div>
 
-          <div v-else-if="activeInfoTab === 'rank'" class="detail-stack">
-            <div class="ranking-row">
-              <button
-                v-for="option in rankingOptions"
-                :key="option.id"
-                type="button"
-                class="ghost-button small-button"
-                :class="{ active: store.rankingType === option.id }"
-                @click="loadRanking(option.id)"
-              >
-                {{ option.label }}
-              </button>
+            <article class="detail-card settings-card">
+              <p class="detail-title">卷内近况</p>
+              <p>当前模式：{{ composerTitle }}</p>
+              <p>宗门与来处：{{ player.sect?.sectName || '散修' }} · {{ player.race?.originName || '未定来处' }}</p>
+              <p>主线：{{ sceneMissionText || '此地暂无明示线索，可先听风声、看去路、与人交谈。' }}</p>
+            </article>
+
+            <div class="action-row settings-action-row">
+              <button type="button" class="secondary-button" :disabled="store.loading" @click="void submitComposer('here')">再看此地</button>
+              <button type="button" class="secondary-button" :disabled="store.loading" @click="retryBootstrap()">重整卷页</button>
+              <button type="button" class="primary-button" :disabled="store.loading" @click="store.logout()">离界</button>
             </div>
-            <article v-for="entry in store.rankings" :key="`${store.rankingType}-${entry.rank}`" class="detail-card">
-              <p class="detail-title">第 {{ entry.rank }} 名 · {{ entry.characterName }}</p>
-              <p>{{ entry.account }} · {{ entry.title || entry.realmName || '未定头衔' }}</p>
-              <p>{{ entry.extra || entry.sectName || '散修' }}</p>
-              <p>分数 {{ entry.score }} · 等级 {{ entry.level }} · 灵石 {{ entry.spiritStone }}</p>
-            </article>
-            <p v-if="store.rankings.length === 0" class="empty-text">当前暂无排行数据。</p>
-          </div>
-
-          <div v-else class="detail-stack">
-            <article class="detail-card">
-              <p class="detail-title">当前方位</p>
-              <p>{{ scene.regionName }} / {{ scene.sceneName }}</p>
-            </article>
-            <article class="detail-card">
-              <p class="detail-title">人界连通图</p>
-              <div class="map-board">
-                <svg class="map-svg" viewBox="0 0 100 120" preserveAspectRatio="none" aria-hidden="true">
-                  <line
-                    v-for="edge in mapEdges"
-                    :key="`${edge.from.id}-${edge.to.id}`"
-                    :x1="edge.from.x"
-                    :y1="edge.from.y"
-                    :x2="edge.to.x"
-                    :y2="edge.to.y"
-                    class="map-edge"
-                    :class="{ active: edge.active }"
-                  />
-                </svg>
-                <button
-                  v-for="node in mapNodes"
-                  :key="node.id"
-                  type="button"
-                  class="map-node"
-                  :class="{ active: node.active, linked: node.linked }"
-                  :style="{ left: `${node.x}%`, top: `${node.y}%` }"
-                >
-                  <span>{{ node.name }}</span>
-                  <small>{{ node.region }}</small>
-                </button>
-              </div>
-            </article>
-            <article v-for="exit in exits" :key="exit.direction" class="detail-card">
-              <p class="detail-title">向{{ directionLabel(String(exit.direction)) }}</p>
-              <p>{{ exit.targetSceneName }}</p>
-            </article>
           </div>
         </div>
       </section>

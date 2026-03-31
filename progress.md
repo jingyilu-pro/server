@@ -118,8 +118,35 @@ TODO
 - 新账号 `msgui_0319_1745` / 角色 `消息回归甲` 注册、建角成功。
 - 顶部频道框点击后能打开独立聊天弹层，世界聊天消息会在顶部框与弹层内同步显示为中文格式 `世界 · 角色名：消息`。
 - 主界面消息框已验证“拉离底部超过 1/3 后，新消息不再自动跟随；回到底部 1/3 内后，新消息恢复自动跟随”。
-- 顶部聊天框已验证同样的阈值停跟随 / 恢复跟随逻辑。
-- 聊天弹层在自动化里通过临时缩小消息区高度制造真实溢出后，已验证同样的阈值停跟随 / 恢复跟随逻辑。
+
+- 2026-03-23: 按“沉浸感终版优化计划”完成主界面纯 MUD 化重构。`app/service/game/logic/mud_game_runtime.cpp/.h` 新增 `listen / journal / bag` 命令，并让 `score / tasks / family / who` 返回结构化字符板；同时补齐本地中文状态/物品类型映射，`cmake --build build-wsl-main --target application -j2` 已通过。
+- 2026-03-23: `client/src/App.vue` 把主时间流从“纯日志行”升级成“日志行 + 场景内字符板”混合流。`score / journal / bag / travel / rank / scene interactable` 现都会直接落在主场景区，不再依赖高频 overlay；左侧可见对象点击后改成在场景区追加札板，不再打开人物抽屉。
+- 2026-03-23: `client/src/App.vue` 底部导航已改为短字命令签条：`看 / 听 / 问 / 行 / 札 / 囊 / 我 / 图 / 榜`。高频操作默认走命令或场景内面板；保留的低频弹层收敛为聊天与手册。
+- 2026-03-23: `client/src/style.css` 已统一成“暖墨纸灯”主题，去掉高饱和网页卡片按钮与多块大底；主界面现在收敛为 `prompt 状态行 + 顶部聊天 + 中央场景 + 底部低存在感命令区` 四层，按钮体积、圆角、阴影和配色都已压回更像 MUD 世界器物的风格。
+- 2026-03-23: 实际界面回归使用本机 Chrome + Playwright CLI 会话 `immersive-final`，在 `430x932` 视口下完成：注册新账号 `immersive03231722`、创建角色 `沉浸甲`、进入七玄门外场、查看新主界面截图、点击底部短字命令验证场景内字符板出现；控制台 `error` 为 `0`。截图样例保存在 `.playwright-cli/page-2026-03-23T09-28-25-641Z.png`、`.playwright-cli/page-2026-03-23T09-29-26-033Z.png`。
+- 2026-03-23: 使用 `develop-web-game` 标准脚本做自动回归时，因本机未安装 Playwright 内置 Chromium 浏览器而失败；按用户“本地已有 Chrome、不要再下载”的要求，后续改走 `npx @playwright/cli --browser chrome` 完成真实浏览器验证，未额外下载浏览器。
+- 2026-03-23: 本轮收尾验证已再次通过 `client/npm test -- --run` 与 `client/npm run build`。
+- 2026-03-23: 继续做“中频短札板化”。`client/src/App.vue` 为 `board / duty / wanted / travel / claim / score / family / journal / bag / who / rank / map` 引入 `mark + compact` 渲染语义，不同面板现在会在主场景里显示成 `委 / 务 / 悬 / 途 / 赏 / 我 / 门 / 札 / 囊 / 众 / 榜 / 图` 等不同札板标记。
+- 2026-03-23: `client/src/App.vue` 的 `buildTimelinePanelFromStructuredPanel()` 已改成按面板类型决定条目上限、摘要句数和元信息顺序；`board / wanted / travel / claim` 这类中频札板会优先保留“状态 + 去处 + 所得”，并在超出上限时显示“尚有 N 条”的收束提示，不再把长列表整段灌进主场景。
+- 2026-03-23: `client/src/style.css` 新增 `.story-panel--compact`，把中频札板的 padding、行高、动作区间距再压一档，手机上一屏可容纳的札板信息明显更多。
+- 2026-03-23: `app/service/game/logic/mud_game_runtime.cpp` 进一步缩短了 `board / duty / wanted / travel / claim` 的 `summary` 文案，让这几类面板从源头上就更像“短提示札板”。
+- 2026-03-23: 本轮验证通过 `client/npm test -- --run`、`client/npm run build`、`wsl bash -lc "cd /mnt/c/Work/Projects/server && cmake --build build-wsl-main --target application -j2"`。
+- 2026-03-23: 用本机 Chrome + Playwright CLI 会话 `immersive-compact` 做了真实回归：新账号 `compact03231853`、角色 `紧凑甲` 进入七玄门外场后，分别点了 `我 / 行 / 榜`，确认主场景中出现更短的“我 / 途 / 榜”札板；截图见 `.playwright-cli/page-2026-03-23T10-54-39-746Z.png`，控制台错误为 `0`。
+- 2026-03-23: 继续按“沉浸感再重构计划（极致纯 MUD 版）”做第二轮纯化。`app/protocol/mud.proto` / `client/src/proto/mud.proto` 已新增 `GameEvent.channel/tone/render_mode/emphasis_keywords`、`StructuredPanel.render_mode/style_id/compact_title/ascii_lines/inline_commands`、`SceneSnapshot.ambient_mood/palette_id/scene_brief/scene_aftertaste/presence_board/exit_board`、`PlayerSnapshot.status_line_text/subprompt_text/available_short_commands`，并重新生成了 `app/protocol/protocol/mud.pb.*`。
+- 2026-03-23: `app/service/game/logic/mud_types.h` / `mud_world.cpp` 现已支持场景与 NPC 的沉浸式可选字段：`scene_brief / scene_aftertaste / ambient_mood / palette_id` 与 `presence_text / look_text / first_talk_text / repeat_talk_text / progress_talk_text / submit_talk_text / ask_topics`。当前世界包即使未手写这些字段，也会在运行时从既有 `description / hint / dialogue / rumor` 派生默认值，不会卡加载。
+- 2026-03-23: `app/service/game/logic/mud_game_runtime.cpp` 这一轮重点改成“服务端给成品文本器物”。角色快照现在会下发两行 prompt 文本和 8 个短命令签；场景快照会下发 `眼前所见` 与 `可行去路` 的字符板行；事件响应会自带 `channel/tone/render_mode`；`talk / inspect` 对 NPC 已优先使用新的沉浸式字段和 `ask_topics`，不再只回裸 `dialogue/hint`。
+- 2026-03-23: `client/src/App.vue` 主界面已经从“三段块+左列+方位盘”进一步收成“单主屏 + 单文本流”。顶部频道卡、左侧可见对象按钮列、对象焦点动作条、独立方位盘都已从主屏 DOM 中移除；改成 `prompt 两行`、`眼前/去路文字链接`、`主文本流`、`8 个短命令签 + 输入行`。聊天现在直接并入主文本流，不再默认停在顶部独立消息框里。
+- 2026-03-23: `client/src/style.css` 新增 `Pure terminal immersion pass` 覆盖层，把新结构压成更低对比的终端卷页风格：去掉旧块状大卡与强按钮感，增加 `scene-link-strip / scene-text-link / story-panel--ascii_map / story-panel-style--jianghu-board` 等新器物样式；登录、建角、恢复页文案也一起切入“启卷 / 名帖 / 旧影”这套世界内表达。
+- 2026-03-23: 本轮前端验证已再次通过 `npm --prefix client run build`、`npm --prefix client test -- --run`；后端验证已通过 `wsl bash -lc "cd /mnt/c/Work/Projects/server && cmake --build build-wsl-main --target application -j2"` 与 `wsl bash -lc "cd /mnt/c/Work/Projects/server && cmake --build build-wsl-main --target mud_smoke -j2 && ./build-wsl-main/scripts/mud_smoke"`。`mud_smoke` 仍能跑通 `route/login -> register -> login -> enter -> bootstrap -> create -> inspect -> board/duty/wanted/travel/claim -> codex`。
+- 2026-03-23: 本机 Chrome + Playwright CLI 会话 `puremud-20260323` 已完成真实浏览器回归。新账号 `ink03231939`、角色 `沉墨甲` 能成功注册、建角并进入 `七玄门-七玄门外场`；DOM 检查确认 `.event-panel / .scene-side-rail / .scene-focus-strip / .scene-orientation-card` 都已不存在；主屏存在 `8` 个短命令签和 `8` 个场景文字链接。截图保存在 `.playwright-cli/page-2026-03-23T11-41-13-147Z.png`，控制台错误日志 `.playwright-cli/console-2026-03-23T11-40-57-187Z.log` 为 `Errors: 0`。
+- 2026-03-23: 同一浏览器回归里，直接在底部输入框发送 `测试主文本聊天` 后，`.story-log` 中消息条数从 `131` 增到 `133`，且主文本流包含这条聊天内容，确认“聊天并入主文本流”已经真实生效，不再依赖顶部独立频道框。
+
+TODO
+- 继续把 `presence_board / exit_board` 从“运行时派生默认文案”升级成世界包里手写的重点场景文案，优先覆盖 `七玄门 -> 嘉元城 / 太南 -> 黄枫谷 -> 天南港 -> 乱星海 -> 虚天殿` 主路径。
+- 把 `NPC ask_topics` 真正落进玩法闭环；当前已支持字段和文案展示，但还没有做 `ask <npc> <topic>` 的正式命令闭环。
+- 继续压缩低频 overlay。现在主屏已经纯化，但 `commands / messages / scene` 这些旧 overlay 分支代码还留在 `client/src/App.vue`，后续可继续删到只剩手册与系统页。
+- 继续把 `board / wanted / travel / claim` 这些中频面板进一步压成更短的手机札板格式，避免长板把标题滚出视野。
+- 若继续往“更纯的 MUD 屏幕感”推进，可把关键词着色再细化为词级别，而不是只靠整条消息 tone。
 - 后山缓坡的采点 `松脂草丛` 现已实测显示为中文提示：`可采集：松脂草 x1`，不再泄露内部 id。
 - 2026-03-20: 已按“筑基留存优化计划”补上第一条可玩纵切面。`mud.proto` / `mud_game_runtime` / `world_data.json` / H5 同步新增了：房间圈层 `新手安全圈 / 成长历练圈 / 筑基冲刺圈`、六条循环标签、结构化结果面板、阶段标签、新手保护、路线摘要、每周事件摘要，以及 `board / duty / wanted / travel / claim / contribute` 六个纯 MUD 命令。
 - 2026-03-20: `scripts/build_mud_world.mjs` 现在会自动把现有 121 个房间重排进三层圈和六条循环，不再只靠旧的演示型 `room_type / risk_level`；`SceneSnapshot` 也会下发 `room_layer / loop_tags / local_board_entries / resource_refresh_summary`，H5 主消息流已能直接展示这些内容。
@@ -161,3 +188,33 @@ TODO
 - 2026-03-20: 这条真实链路里，`虚天残钥` 任务会奖励 `筑基散 x1` 与 `修为 420`；随后角色连续突破到 `炼气中期 / 炼气后期`，再通过 5 次 `practice` 累积补齐最终所需的修为与气海稳固，最后成功突破到 `筑基初期`。最终快照见 `.playwright-cli/page-2026-03-20T12-08-57-732Z.yml`，界面显示频道境界为 `筑基初期`、HUD 阶段为 `筑基初成`、修为为 `1949`。
 - 2026-03-20: 冲到 `筑基初期` 后又立刻整页 `reload` 做恢复验证，`.playwright-cli/page-2026-03-20T12-09-44-265Z.yml` 已确认刷新后仍停留在 `虚天殿外殿`，频道境界保持 `筑基初期`，说明 `bootstrap -> feed` 在这个里程碑境界上也能正常恢复。
 - 2026-03-20: 本轮实玩没有撞到新的阻塞 bug；现阶段“从零开号一路玩到筑基初期”的主闭环已经真实跑通，后续可继续沿用账号 `vetfull0320a` 或新建唯一账号，按同一条 `乱星海 -> 虚天殿 -> 筑基` 路线做回归。
+- 2026-03-23: 继续按“沉浸感再重构计划（极致纯 MUD 版）”收主屏骨架。`client/src/App.vue` 已把主界面顶部收成纯两行 prompt，不再在主屏保留 `离界` 按钮；场景标题下方的 `眼前 / 去路` 导航条也已移除，避免主界面继续像网页导航面板。
+- 2026-03-23: 主文本流新增一张真正的 `此刻可做` 札板，数据来自当前场景可见对象与出口；现在进入场景后，会在主消息流中直接看到如 `talk 厉飞雨 / inspect 松脂草丛 / go south / listen` 这类继续动作提示，而不是依赖场景顶部按钮列或独立抽屉。
+- 2026-03-23: 高频 overlay 继续收口到只剩 `手册长卷 + 卷末杂记`。旧的 `commands / messages / scene / player / quests / inventory / map / team / rank` 主屏弹层分支已从模板里退场；`卷末杂记` 新增了低频的 `再看此地 / 重整卷页 / 离界` 入口，用来承接原先还挂在主屏上的账号级操作。
+- 2026-03-23: `client/src/style.css` 同步把主界面再压成更像终端卷面的层级：顶部 prompt 改成纯文本条，登录/建角卡片圆角继续收紧，新增 `story-panel-style--scene-command` 和 `settings` 长卷样式，避免低频页又长回工具面板。
+- 2026-03-23: 内容层继续补手写氛围文案，`doc/mud/source/world_mainline.mjs` 已为 `洗剑溪 / 藏经石廊 / 血色禁地外围 / 残碑孤岛 / 虚天回廊` 增加 `scene_brief / scene_aftertaste / ambient_mood / palette_id / landmark / rumors`；`doc/mud/source/characters_sects.mjs` 已为 `经廊守卷人 / 禁地斥候 / 孤岛隐士` 补了更完整的 `presence_text / first_talk_text / repeat_talk_text / ask_topics`。
+- 2026-03-23: `scripts/chrome_mud_terminal_regression.mjs` 已扩展为检查这轮纯化目标：会记录 `sceneLinkCount / hasSettingsButton / hasSceneActionPanel`。第一次回归时顺手抓到一个新增体验问题：`此刻可做` 札板把资源点内部 id `pine_herb_patch` 直接显示给玩家；现已在 `client/src/App.vue` 把这类提示改为使用场景中文名，例如 `inspect 松脂草丛`。
+- 2026-03-23: 本轮验证链路已通过：
+- `node scripts/build_mud_world.mjs`
+- `npm --prefix client test -- --run`
+- `npm --prefix client run build`
+- `wsl bash -lc "cd /mnt/c/Work/Projects/server && ./build-wsl-main/scripts/mud_smoke"`
+- 2026-03-23: 为了让新世界包生效，本轮已重启 WSL 后端 `./build-wsl-main/app/application/application --mode all --config all.yaml`；随后 `mud_smoke` 再次确认 `route/login -> register -> login -> enter -> bootstrap -> create -> inspect -> board/duty/wanted/travel/claim -> codex` 全部正常。
+- 2026-03-23: 本机 Chrome 实际回归继续使用 `node scripts/chrome_mud_terminal_regression.mjs`。最新结果为：新账号 `mud69330725` 能正常注册建角进入 `七玄门-七玄门外场`；回归 JSON 显示 `sceneLinkCount=0`、`hasSettingsButton=true`、`hasSceneActionPanel=true`，说明主屏导航条已移除、`卷末` 已就位、`此刻可做` 札板已进入主文本流；执行 `ask 厉飞雨 嘉元城` 后返回了手写问答，随后 `go south` 到 `后山缓坡` 时外壳调色已切到 `shell-palette-pine_dusk`，且动作提示里不再泄露内部 id。控制台错误为 `0`，截图仍输出到 `.playwright-cli/page-2026-03-23T12-immersive-recheck-before.png` 与 `.playwright-cli/page-2026-03-23T12-immersive-recheck-after.png`。
+- 2026-03-24: 继续按“查看结果不要像场景里又弹一个框”的方向收口。`client/src/style.css` 已把 `眼前所见 / 可行去路 / 此刻可做 / inspect 查看札片` 统一压成无底色、无圆角、只保留细卷边的场景批注样式；`scene-slip / scene-presence / scene-command / exit-slip / beast-slip` 现在都会在主文本流里更像边注短札，不再像独立卡片。
+- 2026-03-24: `client/src/App.vue` 同步把高频札片再收短一档：场景查看结果改为仅显示目标名，不再带“人物/物件”式卡片标题；描述、元信息和动作数都做了裁剪，`眼前 / 去路 / 可做` 的摘要也缩成更短的卷边提示，减少手机上一屏内的“框感”和占屏。
+- 2026-03-24: 本轮验证已通过 `npm --prefix client test -- --run`、`npm --prefix client run build`、`node scripts/chrome_mud_terminal_regression.mjs`。另外用临时 CDP 脚本补做了“查看后”专项回归：新账号 `mud55753669` 在 `后山缓坡` 执行 `inspect 松脂草丛` 后，结果已作为普通主文本流条目显示，截图保存为 `.playwright-cli/inspect-scene-inline.png`，确认不再出现额外的大框式查看面板。
+- 2026-03-24: 再往“一整张卷面”推进一轮。`client/src/style.css` 已把主消息区 `story-console--single` 从黑色圆角大框改成上下细边的阅读区；`story-tag` 从带边框的小牌子改成纯文本前缀；`scene-orientation-card--restored` 也去掉了独立大卡背景，仅保留原来的方位排布和更淡的器物按钮，因此中段和下段不再像两张独立卡。
+- 2026-03-24: `client/src/App.vue` 里场景日志标签去掉了硬编码方括号，配合新样式后，`场景 / 阶段 / 结果 / 提示` 等会更像正文引首而不是 UI 标签。
+- 2026-03-24: 这轮验证再次通过 `npm --prefix client test -- --run`、`npm --prefix client run build`、`node scripts/chrome_mud_terminal_regression.mjs`。另外补做了新版“查看后”截图回归：新账号执行 `inspect 松脂草丛` 后，结果已显示为 `结果 · ... / 提示 · ...` 这种行文前缀形式，截图保存为 `.playwright-cli/inspect-scene-inline-v2.png`。
+- 2026-03-24: 继续纯化底部交互区。`client/src/style.css` 已把 `dock-nav-button` 从按钮阵列改成更轻的签条样式，把 `mode-row--terminal` 从两排网格改成单排卷边切换，并把输入区收成更像“落笔条”的细边输入位；发送键也改成了更低存在感的线性按钮。
+- 2026-03-24: `client/src/App.vue` 同步把底部模式和提交文案改成更世界内的表达：`世界风声 / 队伍风声 / 落笔行令`，底部切换标签改为 `世声 / 队声 / 落令 / 长卷 / 卷末`，提交按钮改为 `传声 / 落令`。
+- 2026-03-24: 本轮顺手修复了自动回归脚本 `scripts/chrome_mud_terminal_regression.mjs` 对旧文案 `指令` 的硬编码匹配，改成兼容 `落令 / 指令` 两种文本，避免视觉改名后把 `ask/go` 误发到聊天频道。
+- 2026-03-24: 这轮验证已再次通过 `npm --prefix client test -- --run`、`npm --prefix client run build`、`node scripts/chrome_mud_terminal_regression.mjs`，并人工查看了新截图；最新浏览器回归中，底部模式切换已收成单排，输入区不再像网页表单，截图仍覆盖 `.playwright-cli/page-2026-03-23T12-immersive-recheck-before.png` 与 `.playwright-cli/page-2026-03-23T12-immersive-recheck-after.png`。
+- 2026-03-24: 继续处理“系统说明味”。`client/src/App.vue` 已把场景首段里的 `新手安全圈 / 成长历练圈 / 当前主线 / 当前推荐` 等偏系统的字样改写成更像世界内札记的表达，例如 `山门庇护之地，门中差遣最盛。`、`此地近来多谈「后山狼皮」...`、`行途所系 ...`；`statusPromptSecondary` 的 fallback 也改成了 `世声 / 队声 / 落令 / 山门庇护` 这类更内化的用语。
+- 2026-03-24: `client/src/style.css` 同步把场景抬头再收成卷首页眉：`scene-board-header--terminal` 增加了更轻的卷边线，`scene-board-kicker` 更像旁注小题，`scene-board-copy` 加了细小“卷”字标记，`scene-board-title` 稍微加重了字距和微弱光感。
+- 2026-03-24: 顺手把 `presenceBoard / exitBoard` 的圈层词做了前端转写，不改协议，只在主消息流里把 `新手安全圈 / 成长历练圈 / 筑基冲刺圈` 分别显示为 `山门庇护 / 试手历练 / 险地冲关`；因此去路札现在不再露出系统原词。
+- 2026-03-24: 这轮中途曾在 `client` 构建里撞到一次 `String.replaceAll` 与当前 TS target 不兼容的问题，已改为正则 `replace(.../g, ...)` 兼容写法；修复后再次通过 `npm --prefix client test -- --run`、`npm --prefix client run build`、`node scripts/chrome_mud_terminal_regression.mjs`。最新截图已人工确认，后山去路札中圈层词现显示为 `试手历练 / 山门庇护`。
+- 2026-03-24: 继续做“去重复、去说明书化”小修。`client/src/App.vue` 里已经移除了主消息流中重复出现的场景名行，避免标题区和正文首行重复；场景描述前缀从统一的 `场景` 细分成 `眼前 / 景语`，同时把 `眼前 / 去路 / 可做` 三张高频札的摘要改成更口语化的江湖文气。
+- 2026-03-24: 去路线的第三段也继续世界内化了。前端现在会把去路札里的 `山门庇护 / 试手历练 / 险地冲关` 再转写成更像玩家读物的 `门中庇护 / 可去试手 / 深处凶险`，所以出口行不再像策划字段，而更像路上人留下的路感批注。
+- 2026-03-24: 本轮再次通过 `npm --prefix client test -- --run`、`npm --prefix client run build`、`node scripts/chrome_mud_terminal_regression.mjs`。真实截图已人工复核，当前后山缓坡的去路札显示为 `西方｜散修古道｜可去试手`、`南方｜嘉元城东门｜门中庇护`，确认系统味进一步下降。
