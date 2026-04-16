@@ -25,6 +25,7 @@
 #include <stdexcept>
 #include <string>
 #include <string_view>
+#include <thread>
 #include <vector>
 
 namespace
@@ -54,26 +55,43 @@ HttpResponse post_protobuf(const std::string& host,
                            const std::string& body,
                            const std::string& bearer_token)
 {
-    const int fd = ::socket(AF_INET, SOCK_STREAM, 0);
-    if(fd < 0)
-    {
-        throw std::runtime_error("socket() failed");
-    }
-
     sockaddr_in addr{};
     addr.sin_family = AF_INET;
     addr.sin_port = htons(port);
     if(::inet_pton(AF_INET, host.c_str(), &addr.sin_addr) != 1)
     {
-        ::close(fd);
         throw std::runtime_error("inet_pton() failed for host " + host);
     }
 
-    if(::connect(fd, reinterpret_cast<const sockaddr*>(&addr), sizeof(addr)) != 0)
+    int fd = -1;
+    std::string connect_error;
+    constexpr int kConnectAttempts = 20;
+    for(int attempt = 0; attempt < kConnectAttempts; ++attempt)
     {
-        const std::string error = std::strerror(errno);
+        fd = ::socket(AF_INET, SOCK_STREAM, 0);
+        if(fd < 0)
+        {
+            throw std::runtime_error("socket() failed");
+        }
+
+        if(::connect(fd, reinterpret_cast<const sockaddr*>(&addr), sizeof(addr)) == 0)
+        {
+            connect_error.clear();
+            break;
+        }
+
+        connect_error = std::strerror(errno);
         ::close(fd);
-        throw std::runtime_error("connect() failed: " + error);
+        fd = -1;
+        if(errno != ECONNREFUSED && errno != ETIMEDOUT)
+        {
+            throw std::runtime_error("connect() failed: " + connect_error);
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(300));
+    }
+    if(fd < 0)
+    {
+        throw std::runtime_error("connect() failed: " + connect_error);
     }
 
     std::ostringstream request;
@@ -192,6 +210,26 @@ std::string first_unlocked_codex_entry_id(const mud::CodexListResponse& response
     return {};
 }
 
+void require_true(bool condition, const std::string& message)
+{
+    if(!condition)
+    {
+        throw std::runtime_error(message);
+    }
+}
+
+void require_command_success(const mud::CommandExecuteResponse& response,
+                             const std::string& label,
+                             bool require_panel = true)
+{
+    require_true(response.code() == 0, label + " returned code=" + std::to_string(response.code()));
+    require_true(response.result().success(), label + " result.success=false");
+    if(require_panel)
+    {
+        require_true(response.result().panels_size() > 0, label + " returned no structured panels");
+    }
+}
+
 } // namespace
 
 int main()
@@ -206,6 +244,7 @@ int main()
         const std::string suffix = std::to_string(now_ms % 100000000);
         const std::string account = "smoke" + suffix;
         const std::string password = "pass123456";
+        const std::string post_subject = "烟测收药" + suffix.substr(suffix.size() >= 4 ? suffix.size() - 4 : 0);
 
         gateway::RouteLoginRequest route_request;
         route_request.set_client_version("mud_smoke_cpp");
@@ -275,6 +314,50 @@ int main()
         const auto wanted_response = run_command("wanted");
         const auto travel_response = run_command("travel");
         const auto claim_response = run_command("claim");
+        const auto help_response = run_command("help newbie");
+        const auto help_work_response = run_command("help work");
+        const auto commands_response = run_command("commands");
+        const auto work_response = run_command("work");
+        const auto rank_response = run_command("rank");
+        const auto rank_wealth_response = run_command("rank wealth");
+        const auto rumor_response = run_command("ask 厉飞雨 about rumor");
+        const auto post_response = run_command("post " + post_subject + "=七玄门外场长期收灰狼皮与止血草。");
+
+        require_command_success(inspect_response, "inspect");
+        require_command_success(board_response, "board");
+        require_command_success(duty_response, "duty");
+        require_command_success(wanted_response, "wanted");
+        require_command_success(travel_response, "travel");
+        require_true(claim_response.code() == 0, "claim returned code=" + std::to_string(claim_response.code()));
+        require_command_success(help_response, "help newbie");
+        require_command_success(help_work_response, "help work");
+        require_command_success(commands_response, "commands");
+        require_command_success(work_response, "work");
+        require_command_success(rank_response, "rank");
+        require_command_success(rank_wealth_response, "rank wealth");
+        require_command_success(rumor_response, "ask rumor");
+        require_command_success(post_response, "post", false);
+        require_true(post_response.events_size() > 0, "post returned no board_post event");
+        const auto board_post_event_id = post_response.events(post_response.events_size() - 1).event_id();
+        const auto read_response = run_command("read " + post_subject);
+        const auto discard_response = run_command("discard " + post_subject);
+        const auto board_after_discard_response = run_command("board");
+
+        require_command_success(read_response, "read");
+        require_true(read_response.result().panels(0).panel_kind() == "board_post",
+                     "read returned unexpected panel_kind=" + read_response.result().panels(0).panel_kind());
+        require_true(read_response.result().panels(0).document_id().rfind("board_post:", 0) == 0,
+                     "read returned unexpected document_id");
+        require_true(discard_response.code() == 0 && discard_response.result().success(),
+                     "discard returned failure");
+        if(board_after_discard_response.result().panels_size() > 0)
+        {
+            for(const auto& entry : board_after_discard_response.result().panels(0).entries())
+            {
+                require_true(entry.title().find(post_subject) == std::string::npos,
+                             "discarded board post still visible on board");
+            }
+        }
 
         mud::CodexListRequest codex_list_request;
         codex_list_request.set_account(account);
@@ -289,6 +372,19 @@ int main()
         const auto codex_detail_response =
             call_endpoint<mud::CodexDetailRequest, mud::CodexDetailResponse>(
                 "127.0.0.1", 18082, "/v1/game/codex/detail", codex_detail_request, token);
+        const auto bootstrap_restore_response =
+            call_endpoint<mud::BootstrapRequest, mud::BootstrapResponse>(
+                "127.0.0.1", 18082, "/v1/game/bootstrap", bootstrap_request, token);
+
+        std::cout << "restore_bootstrap_code=" << bootstrap_restore_response.code()
+                  << " restore_need_create_character="
+                  << (bootstrap_restore_response.need_create_character() ? "true" : "false")
+                  << " restore_character=" << bootstrap_restore_response.player().character_name()
+                  << "\n";
+
+        require_true(bootstrap_restore_response.code() == 0, "restore bootstrap returned non-zero code");
+        require_true(!bootstrap_restore_response.need_create_character(), "restore bootstrap unexpectedly needs character");
+        require_true(!bootstrap_restore_response.player().character_name().empty(), "restore bootstrap returned empty character");
 
         std::cout << "account=" << account << "\n";
         std::cout << "route_code=" << route_response.code()
@@ -344,6 +440,52 @@ int main()
                   << " claim_success=" << (claim_response.result().success() ? "true" : "false")
                   << " claim_entries=" << (claim_response.result().panels_size() > 0 ? claim_response.result().panels(0).entries_size() : 0)
                   << "\n";
+        std::cout << "help_code=" << help_response.code()
+                  << " help_success=" << (help_response.result().success() ? "true" : "false")
+                  << " help_topic=" << (help_response.result().panels_size() > 0 ? help_response.result().panels(0).document_id() : "")
+                  << "\n";
+        std::cout << "help_work_code=" << help_work_response.code()
+                  << " help_work_success=" << (help_work_response.result().success() ? "true" : "false")
+                  << " help_work_topic="
+                  << (help_work_response.result().panels_size() > 0 ? help_work_response.result().panels(0).document_id() : "")
+                  << "\n";
+        std::cout << "commands_code=" << commands_response.code()
+                  << " commands_success=" << (commands_response.result().success() ? "true" : "false")
+                  << " commands_kind="
+                  << (commands_response.result().panels_size() > 0 ? commands_response.result().panels(0).panel_kind() : "")
+                  << "\n";
+        std::cout << "work_code=" << work_response.code()
+                  << " work_success=" << (work_response.result().success() ? "true" : "false")
+                  << " work_entries=" << (work_response.result().panels_size() > 0 ? work_response.result().panels(0).entries_size() : 0)
+                  << "\n";
+        std::cout << "rank_code=" << rank_response.code()
+                  << " rank_success=" << (rank_response.result().success() ? "true" : "false")
+                  << " rank_lines="
+                  << (rank_response.result().panels_size() > 0 ? rank_response.result().panels(0).ascii_lines_size() : 0)
+                  << "\n";
+        std::cout << "rank_wealth_code=" << rank_wealth_response.code()
+                  << " rank_wealth_success=" << (rank_wealth_response.result().success() ? "true" : "false")
+                  << " rank_wealth_lines="
+                  << (rank_wealth_response.result().panels_size() > 0 ? rank_wealth_response.result().panels(0).ascii_lines_size() : 0)
+                  << "\n";
+        std::cout << "rumor_code=" << rumor_response.code()
+                  << " rumor_success=" << (rumor_response.result().success() ? "true" : "false")
+                  << " rumor_panels=" << rumor_response.result().panels_size()
+                  << "\n";
+        std::cout << "post_code=" << post_response.code()
+                  << " post_success=" << (post_response.result().success() ? "true" : "false")
+                  << " board_post_event_id=" << board_post_event_id
+                  << "\n";
+        std::cout << "read_code=" << read_response.code()
+                  << " read_success=" << (read_response.result().success() ? "true" : "false")
+                  << " read_document="
+                  << (read_response.result().panels_size() > 0 ? read_response.result().panels(0).document_id() : "")
+                  << "\n";
+        std::cout << "discard_code=" << discard_response.code()
+                  << " discard_success=" << (discard_response.result().success() ? "true" : "false")
+                  << " board_after_discard_entries="
+                  << (board_after_discard_response.result().panels_size() > 0 ? board_after_discard_response.result().panels(0).entries_size() : 0)
+                  << "\n";
         for(const auto& unlocked : inspect_response.result().unlocked_codex_entries())
         {
             std::cout << "inspect_unlocked_codex=" << unlocked.title() << "\n";
@@ -363,7 +505,6 @@ int main()
                   << " title=" << codex_detail_response.entry().title()
                   << " unlocked=" << (codex_detail_response.entry().unlocked() ? "true" : "false")
                   << " category=" << codex_detail_response.entry().category() << "\n";
-
         google::protobuf::ShutdownProtobufLibrary();
         return 0;
     }

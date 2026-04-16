@@ -927,31 +927,39 @@ coro_task_t GameService::bootstrap_async(evhttp_request* request)
         }
         else
         {
-            if(load_result->player.has_value())
+            std::optional<MudPlayerState> bootstrap_player = load_result->player;
+            if(bootstrap_player.has_value())
             {
-                if(load_result->player->quests.empty())
+                MudPlayerState normalized_player = *bootstrap_player;
+                bool player_dirty = m_mud_runtime->normalize_player_state(&normalized_player);
+                if(normalized_player.quests.empty())
                 {
-                    MudPlayerState seeded_player = *load_result->player;
                     MudQuestState starter_quest;
                     starter_quest.quest_id = "qixuan_herb";
                     starter_quest.status = "active";
                     starter_quest.progress = 0;
-                    seeded_player.quests.push_back(std::move(starter_quest));
+                    normalized_player.quests.push_back(std::move(starter_quest));
+                    player_dirty = true;
+                }
+                bootstrap_player = normalized_player;
+                if(player_dirty)
+                {
                     auto* save_result = dynamic_cast<MudPlayerRepositoryOpResult*>(
-                        co_await m_mud_player_repository->save_player(seeded_player));
-                    if(save_result != nullptr && save_result->success && save_result->save_ok)
+                        co_await m_mud_player_repository->save_player(normalized_player));
+                    if(save_result == nullptr || !save_result->success || !save_result->save_ok)
                     {
-                        load_result->player = seeded_player;
+                        // Backfill persistence is best-effort on bootstrap; keep the normalized
+                        // player for the current session and let later successful commands persist it.
                     }
                 }
-                if(load_result->player->team_id.empty())
+                if(bootstrap_player->team_id.empty())
                 {
-                    m_mud_runtime->forget_team_state(load_result->player->account);
+                    m_mud_runtime->forget_team_state(bootstrap_player->account);
                 }
                 else
                 {
                     auto* team_result = dynamic_cast<MudPlayerRepositoryOpResult*>(
-                        co_await m_mud_player_repository->list_team_members(load_result->player->team_id));
+                        co_await m_mud_player_repository->list_team_members(bootstrap_player->team_id));
                     if(team_result != nullptr && team_result->success)
                     {
                         std::vector<MudPlayerState> team_members;
@@ -964,17 +972,26 @@ coro_task_t GameService::bootstrap_async(evhttp_request* request)
                     }
                 }
             }
-            m_mud_runtime->build_bootstrap_response(account, load_result->player, &response);
             MudEventStoreOpResult event_result;
+            bool have_recent_events = false;
+            std::vector<MudEventEnvelope> curated_events;
+            uint64_t latest_event_id = 0;
             if(wait_mud_event_store_result(m_mud_event_store.get(),
                                            m_mud_event_store->list_recent(account, m_config.mud.bootstrap_recent_event_limit),
                                            &event_result,
                                            m_config.redis.op_timeout_ms) &&
                event_result.success)
             {
-                attach_mud_events_to_response(curate_bootstrap_events(event_result.events, account),
-                                              event_result.latest_event_id,
-                                              &response);
+                m_mud_runtime->merge_persisted_events(event_result.events);
+                curated_events = curate_bootstrap_events(event_result.events, account);
+                latest_event_id = event_result.latest_event_id;
+                have_recent_events = true;
+            }
+
+            m_mud_runtime->build_bootstrap_response(account, bootstrap_player, &response);
+            if(have_recent_events)
+            {
+                attach_mud_events_to_response(curated_events, latest_event_id, &response);
             }
         }
     }
@@ -1089,6 +1106,7 @@ coro_task_t GameService::create_character_async(evhttp_request* request)
                                                    m_config.redis.op_timeout_ms) &&
                        append_result.success)
                     {
+                        m_mud_runtime->merge_persisted_events(append_result.events);
                         attach_mud_events_to_response(append_result.events,
                                                       append_result.latest_event_id,
                                                       &response);
@@ -1193,6 +1211,11 @@ coro_task_t GameService::execute_command_async(evhttp_request* request)
 
             auto player = *load_result->player;
             const auto trimmed_command = mud_trim(mud_request.command());
+            std::string rate_bucket;
+            int rate_limit = 0;
+            int rate_window_sec = 0;
+            std::string rate_error_label;
+            std::string rate_denied_message;
             if(trimmed_command.rfind("chat ", 0) == 0)
             {
                 const auto raw_channel = mud_trim(trimmed_command.substr(5));
@@ -1200,18 +1223,51 @@ coro_task_t GameService::execute_command_async(evhttp_request* request)
                 const auto channel = mud_to_lower_ascii(split_pos == std::string::npos
                                                             ? raw_channel
                                                             : raw_channel.substr(0, split_pos));
+                rate_bucket = "chat:" + account + ":" + channel;
+                rate_limit = m_config.mud.chat_rate_limit_count;
+                rate_window_sec = m_config.mud.chat_rate_limit_window_sec;
+                rate_error_label = "chat rate limit unavailable";
+                rate_denied_message = "chat rate limited";
+            }
+            else if(trimmed_command.rfind("say ", 0) == 0 || trimmed_command.rfind("emote ", 0) == 0)
+            {
+                rate_bucket = "chat:" + account + ":local";
+                rate_limit = m_config.mud.chat_rate_limit_count;
+                rate_window_sec = m_config.mud.chat_rate_limit_window_sec;
+                rate_error_label = "local chat rate limit unavailable";
+                rate_denied_message = "chat rate limited";
+            }
+            else if(trimmed_command.rfind("tell ", 0) == 0 || trimmed_command.rfind("reply ", 0) == 0)
+            {
+                rate_bucket = "chat:" + account + ":tell";
+                rate_limit = m_config.mud.chat_rate_limit_count;
+                rate_window_sec = m_config.mud.chat_rate_limit_window_sec;
+                rate_error_label = "tell rate limit unavailable";
+                rate_denied_message = "chat rate limited";
+            }
+            else if(trimmed_command.rfind("post ", 0) == 0)
+            {
+                rate_bucket = "board:" + account;
+                rate_limit = m_config.mud.board_post_rate_limit_count;
+                rate_window_sec = m_config.mud.board_post_rate_limit_window_sec;
+                rate_error_label = "board rate limit unavailable";
+                rate_denied_message = "board post rate limited";
+            }
+
+            if(!rate_bucket.empty())
+            {
                 MudEventStoreOpResult rate_result;
                 if(!wait_mud_event_store_result(m_mud_event_store.get(),
-                                                m_mud_event_store->check_rate_limit("chat:" + account + ":" + channel,
-                                                                                   m_config.mud.chat_rate_limit_count,
-                                                                                   m_config.mud.chat_rate_limit_window_sec),
+                                                m_mud_event_store->check_rate_limit(rate_bucket,
+                                                                                   rate_limit,
+                                                                                   rate_window_sec),
                                                 &rate_result,
                                                 m_config.redis.op_timeout_ms) ||
                    !rate_result.success)
                 {
                     http_code_message::gateway::set_code_message(&response,
                                                                  http_code_message::gateway::code::kMudPlayerRepositoryUnavailable,
-                                                                 "chat rate limit unavailable");
+                                                                 rate_error_label);
                     write_protobuf_response(request, response, 200);
                     release_request(request);
                     co_return;
@@ -1220,7 +1276,7 @@ coro_task_t GameService::execute_command_async(evhttp_request* request)
                 {
                     http_code_message::gateway::set_code_message(&response,
                                                                  http_code_message::gateway::code::kInvalidMudCommand,
-                                                                 "chat rate limited");
+                                                                 rate_denied_message);
                     write_protobuf_response(request, response, 200);
                     release_request(request);
                     co_return;
@@ -1272,6 +1328,7 @@ coro_task_t GameService::execute_command_async(evhttp_request* request)
                     co_return;
                 }
                 execution.events = append_result.events;
+                m_mud_runtime->merge_persisted_events(execution.events);
             }
             m_mud_runtime->build_command_response(player, mud_request.command(), execution, &response);
         }
@@ -1348,6 +1405,7 @@ coro_task_t GameService::pull_feed_async(evhttp_request* request)
         }
         else
         {
+            m_mud_runtime->merge_persisted_events(event_result.events);
             auto* load_result = dynamic_cast<MudPlayerRepositoryOpResult*>(co_await m_mud_player_repository->load_player(account));
             if(load_result == nullptr || !load_result->success)
             {

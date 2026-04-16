@@ -132,6 +132,8 @@ struct MudConfig
     int world_event_interval_sec = 45;
     int chat_rate_limit_count = 8;
     int chat_rate_limit_window_sec = 10;
+    int board_post_rate_limit_count = 3;
+    int board_post_rate_limit_window_sec = 60;
     std::vector<std::string> gm_accounts;
 };
 

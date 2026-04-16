@@ -1,5 +1,21 @@
 Original prompt: 主界面参考这个图，分辨率为 1080*1920，适配移动端
 
+- 2026-04-16: 已按 `凡人修仙 MUD 对齐 oiuv-mud 实施补遗.md` 把当前阶段 5 类缺口全部收口到 `P0` 交付面：补齐了 `版本范围表.md`、`阶段验收定义表.md`、`兼容与回退说明.md`、`频道与留言板治理规则.md`、`烟测回归手册.md`，并把这些根目录文档挂回 `凡人修仙 MUD 长线运营任务骨架.md`，让范围切片、DoD、兼容策略、治理规则、自动化回归矩阵都有固定落点。
+- 2026-04-16: 世界包构建链路继续收紧为 `P0` 可验收版本。新增 `doc/mud/source/mud_help_manual.mjs`、`doc/mud/source/mud_jobs_rumors.mjs`、`doc/mud/source/mud_titles_factions.mjs` 后，`scripts/build_mud_world.mjs` 已强制校验：帮助主题不少于 `8` 个、四条身份线必须存在、工作覆盖场景不少于 `7` 个、嘉元城/太南谷/天南港必须具备 rumor 覆盖；缺项会在构建期直接失败，不再留到运行期默默空掉。
+- 2026-04-16: 服务端已把 `help / commands / newbie / work / board / duty / wanted / travel / claim / ask <npc> about rumor` 收成稳定的 MUD 文本命令闭环。`mud.proto`、`mud_world`、`mud_game_runtime`、`client/src/App.vue` 和 `client/src/style.css` 已共同承接帮助主题、工作/风声、身份摘要、结构化字符板与单终端主文本流表现。
+- 2026-04-16: 频道与留言板治理已落到服务端。`all.yaml` 和 `application_config` 新增 `mud.board_post_rate_limit_count/window_sec`；`game_service.cpp` 现对 `chat / say / tell / reply / emote / post` 做统一限流；`mud_game_runtime.cpp` 已限制板帖标题 `24` 字节、正文 `240` 字节，并保证 `discard` 只对当前玩家生效。
+- 2026-04-16: 修掉了一条会影响“恢复后可继续玩”的关键链路问题。`bootstrap` 现在会先把角色复制到本地 `bootstrap_player`、完成懒初始化与默认任务回填、再构建响应，避免出现“数据库里有角色，但 bootstrap 仍返回 need_create_character”的恢复错判。
+- 2026-04-16: 这轮又补了一层事件一致性修复。运行时新增 `merge_persisted_events()`，`bootstrap / feed / create_character / command/execute` 在读写事件仓后都会把持久化事件回灌到 `MudGameRuntime`；这样 `board/read/discard` 不再只依赖进程内临时事件，重登甚至服务重启后重新拉取到的板帖，也能继续进入板面、未读计数和读帖逻辑。
+- 2026-04-16: 顺手补掉两个 review 级细节：`normalize_player_state()` 现在会正确追踪属性/状态/争斗/任务等懒回填脏数据并触发保存；`is_about_keyword()` / `is_rumor_keyword()` 改成按 trim 后的中文关键字判断，避免 `about/风声` 两侧带空格时误判。
+- 2026-04-16: `scripts/mud_smoke.cpp` 已扩展为当前阶段的固定烟测矩阵，覆盖 `help newbie`、`help work`、`commands`、`work`、`rank`、`rank wealth`、`ask <npc> about rumor`、`board -> post -> read -> discard`、`codex/list -> codex/detail` 与二次 `bootstrap` 恢复检查。
+- 2026-04-16: 本轮收尾验证以根目录手册固化，已通过：
+- `node scripts/build_mud_world.mjs`
+- `npm --prefix client test -- --run`
+- `npm --prefix client run build`
+- `wsl bash -lc "cd /mnt/c/Work/Projects/server && cmake --build build-wsl-main --target application mud_smoke -j1"`
+- `wsl bash -lc "cd /mnt/c/Work/Projects/server && ./build-wsl-main/scripts/mud_smoke"`
+- 2026-04-16: 最新烟测结果已确认：`help_topic=newbie`、`help_work_topic=work`、`commands_kind=command_manual`、`rank_success=true`、`rank_wealth_success=true`、`rumor_success=true`、`read_success=true`、`discard_success=true`、`restore_need_create_character=false`。至此，补遗里要求的 5 类缺口已从“计划项”落成“文档 + 服务端 + 世界包 + 客户端 + 烟测”的一组可回归交付物。
+
 - 2026-03-18: 将主界面从桌面三栏重构为移动端纵向单列布局，方向改为微信小游戏风格。
 - 2026-03-18: `client/src/App.vue` 改成顶部紧凑头部、事件流、剧情区、指令页签、角色信息面板、底部聊天输入与状态栏。
 - 2026-03-18: `client/src/style.css` 改成深棕修仙主题，加入安全区、触控按钮、底部停靠输入区和移动端滚动布局。

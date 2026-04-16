@@ -319,6 +319,10 @@ bool MudWorld::load_from_file(const std::string& path, std::string* error_messag
     m_hazards.clear();
     m_codex_entries.clear();
     m_codex_unlock_index.clear();
+    m_help_topics.clear();
+    m_jobs.clear();
+    m_identity_tracks.clear();
+    m_rumor_sources.clear();
 
     json_error_t error{};
     json_t* root = json_load_file(path.c_str(), 0, &error);
@@ -509,8 +513,10 @@ bool MudWorld::load_from_file(const std::string& path, std::string* error_messag
             quest.quest_id = json_string_field(item, "quest_id");
             quest.title = json_string_field(item, "title");
             quest.description = json_string_field(item, "description");
+            quest.quest_kind = json_string_field(item, "quest_kind");
             quest.issuer_npc_id = json_string_field(item, "issuer_npc_id");
             quest.submit_npc_id = json_string_field(item, "submit_npc_id");
+            quest.issuer_hint = json_string_field(item, "issuer_hint");
             quest.required_item_id = json_string_field(item, "required_item_id");
             quest.required_item_count = json_int_value(item, "required_item_count", 0);
             quest.reward_spirit_stone = json_int_value(item, "reward_spirit_stone", 0);
@@ -518,6 +524,7 @@ bool MudWorld::load_from_file(const std::string& path, std::string* error_messag
             quest.reward_item_id = json_string_field(item, "reward_item_id");
             quest.reward_item_count = json_int_value(item, "reward_item_count", 0);
             quest.reward_sect_id = json_string_field(item, "reward_sect_id");
+            quest.repeatable = json_bool_value(item, "repeatable", false);
             quest.chapter = json_string_field(item, "chapter");
             load_unlock_rules(json_object_get(item, "unlock_rules"), &quest.unlock_rules);
             if(!quest.quest_id.empty())
@@ -621,6 +628,7 @@ bool MudWorld::load_from_file(const std::string& path, std::string* error_messag
             scene.landmark = json_string_field(item, "landmark");
             scene.room_layer = json_string_field(item, "room_layer");
             scene.pvp_enabled = json_bool_value(item, "pvp_enabled", false);
+            scene.board_available = json_bool_value(item, "board_available", false);
             scene.map_x = json_int_value(item, "map_x", 0);
             scene.map_y = json_int_value(item, "map_y", 0);
             scene.chapter = json_string_field(item, "chapter");
@@ -628,6 +636,9 @@ bool MudWorld::load_from_file(const std::string& path, std::string* error_messag
             load_string_map(json_object_get(item, "exits"), &scene.exits);
             load_string_array(json_object_get(item, "rumors"), &scene.rumors);
             load_string_array(json_object_get(item, "loop_tags"), &scene.loop_tags);
+            load_string_array(json_object_get(item, "service_tags"), &scene.service_tags);
+            load_string_array(json_object_get(item, "rumor_topics"), &scene.rumor_topics);
+            load_string_array(json_object_get(item, "mentor_ids"), &scene.mentor_ids);
             load_string_array(json_object_get(item, "npc_ids"), &scene.npc_ids);
             load_string_array(json_object_get(item, "monster_ids"), &scene.monster_ids);
             load_string_array(json_object_get(item, "shop_item_ids"), &scene.shop_item_ids);
@@ -918,6 +929,123 @@ bool MudWorld::load_from_file(const std::string& path, std::string* error_messag
         }
     }
 
+    if(auto* help_topics = json_object_get(root, "help_topics"); help_topics != nullptr && json_is_array(help_topics))
+    {
+        const size_t count = json_array_size(help_topics);
+        for(size_t index = 0; index < count; ++index)
+        {
+            auto* item = json_array_get(help_topics, index);
+            if(item == nullptr || !json_is_object(item))
+            {
+                continue;
+            }
+
+            MudHelpTopicConfig topic;
+            topic.topic_id = json_string_field(item, "topic_id");
+            topic.title = json_string_field(item, "title");
+            topic.summary = json_string_field(item, "summary");
+            topic.category = json_string_field(item, "category");
+            load_string_array(json_object_get(item, "body_lines"), &topic.body_lines);
+            load_string_array(json_object_get(item, "keywords"), &topic.keywords);
+            load_string_array(json_object_get(item, "related_commands"), &topic.related_commands);
+            load_string_array(json_object_get(item, "inline_commands"), &topic.inline_commands);
+            if(!topic.topic_id.empty())
+            {
+                m_help_topics.insert_or_assign(topic.topic_id, std::move(topic));
+            }
+        }
+    }
+
+    if(auto* jobs = json_object_get(root, "jobs"); jobs != nullptr && json_is_array(jobs))
+    {
+        const size_t count = json_array_size(jobs);
+        for(size_t index = 0; index < count; ++index)
+        {
+            auto* item = json_array_get(jobs, index);
+            if(item == nullptr || !json_is_object(item))
+            {
+                continue;
+            }
+
+            MudJobConfig job;
+            job.job_id = json_string_field(item, "job_id");
+            job.title = json_string_field(item, "title");
+            job.kind = json_string_field(item, "kind");
+            job.scene_id = json_string_field(item, "scene_id");
+            job.issuer_npc_id = json_string_field(item, "issuer_npc_id");
+            job.submit_npc_id = json_string_field(item, "submit_npc_id");
+            job.summary = json_string_field(item, "summary");
+            job.description = json_string_field(item, "description");
+            job.requirements = json_string_field(item, "requirements");
+            job.reward_summary = json_string_field(item, "reward_summary");
+            job.command_hint = json_string_field(item, "command_hint");
+            job.repeatable = json_bool_value(item, "repeatable", false);
+            job.route_tag = json_string_field(item, "route_tag");
+            job.service_tag = json_string_field(item, "service_tag");
+            job.related_quest_id = json_string_field(item, "related_quest_id");
+            if(!job.job_id.empty())
+            {
+                m_jobs.insert_or_assign(job.job_id, std::move(job));
+            }
+        }
+    }
+
+    if(auto* identity_tracks = json_object_get(root, "identity_tracks");
+       identity_tracks != nullptr && json_is_array(identity_tracks))
+    {
+        const size_t count = json_array_size(identity_tracks);
+        for(size_t index = 0; index < count; ++index)
+        {
+            auto* item = json_array_get(identity_tracks, index);
+            if(item == nullptr || !json_is_object(item))
+            {
+                continue;
+            }
+
+            MudIdentityTrackConfig track;
+            track.track_id = json_string_field(item, "track_id");
+            track.name = json_string_field(item, "name");
+            track.kind = json_string_field(item, "kind");
+            track.description = json_string_field(item, "description");
+            load_string_array(json_object_get(item, "ranks"), &track.ranks);
+            load_string_array(json_object_get(item, "mentor_ids"), &track.mentor_ids);
+            load_string_array(json_object_get(item, "service_unlocks"), &track.service_unlocks);
+            if(!track.track_id.empty())
+            {
+                m_identity_tracks.insert_or_assign(track.track_id, std::move(track));
+            }
+        }
+    }
+
+    if(auto* rumor_sources = json_object_get(root, "rumor_sources");
+       rumor_sources != nullptr && json_is_array(rumor_sources))
+    {
+        const size_t count = json_array_size(rumor_sources);
+        for(size_t index = 0; index < count; ++index)
+        {
+            auto* item = json_array_get(rumor_sources, index);
+            if(item == nullptr || !json_is_object(item))
+            {
+                continue;
+            }
+
+            MudRumorSourceConfig rumor;
+            rumor.source_id = json_string_field(item, "source_id");
+            rumor.scene_id = json_string_field(item, "scene_id");
+            rumor.npc_id = json_string_field(item, "npc_id");
+            rumor.topic = json_string_field(item, "topic");
+            rumor.summary = json_string_field(item, "summary");
+            load_string_array(json_object_get(item, "body_lines"), &rumor.body_lines);
+            load_string_array(json_object_get(item, "job_ids"), &rumor.job_ids);
+            load_string_array(json_object_get(item, "quest_ids"), &rumor.quest_ids);
+            load_string_array(json_object_get(item, "unlock_flags"), &rumor.unlock_flags);
+            if(!rumor.source_id.empty())
+            {
+                m_rumor_sources.insert_or_assign(rumor.source_id, std::move(rumor));
+            }
+        }
+    }
+
     cleanup();
 
     if(m_defaults.starting_scene_id.empty() || m_scenes.find(m_defaults.starting_scene_id) == m_scenes.end())
@@ -1003,6 +1131,20 @@ std::vector<MudCodexEntryConfig> MudWorld::codex_entries_for_category(const std:
             return lhs.title < rhs.title;
         }
         return lhs.category < rhs.category;
+    });
+    return result;
+}
+
+std::vector<MudHelpTopicConfig> MudWorld::help_topics() const
+{
+    std::vector<MudHelpTopicConfig> result;
+    result.reserve(m_help_topics.size());
+    for(const auto& [id, topic] : m_help_topics)
+    {
+        result.push_back(topic);
+    }
+    std::sort(result.begin(), result.end(), [](const MudHelpTopicConfig& lhs, const MudHelpTopicConfig& rhs) {
+        return lhs.title < rhs.title;
     });
     return result;
 }
@@ -1109,4 +1251,84 @@ const MudHazardConfig* MudWorld::find_hazard(const std::string& hazard_id) const
 const MudCodexEntryConfig* MudWorld::find_codex_entry(const std::string& entry_id) const
 {
     return find_in_map(m_codex_entries, entry_id);
+}
+
+const MudHelpTopicConfig* MudWorld::find_help_topic(const std::string& topic_id) const
+{
+    return find_in_map(m_help_topics, topic_id);
+}
+
+const MudJobConfig* MudWorld::find_job(const std::string& job_id) const
+{
+    return find_in_map(m_jobs, job_id);
+}
+
+const MudIdentityTrackConfig* MudWorld::find_identity_track(const std::string& track_id) const
+{
+    return find_in_map(m_identity_tracks, track_id);
+}
+
+const MudRumorSourceConfig* MudWorld::find_rumor_source(const std::string& source_id) const
+{
+    return find_in_map(m_rumor_sources, source_id);
+}
+
+std::vector<const MudJobConfig*> MudWorld::jobs_for_scene(const std::string& scene_id) const
+{
+    std::vector<const MudJobConfig*> result;
+    for(const auto& [id, job] : m_jobs)
+    {
+        if(job.scene_id == scene_id)
+        {
+            result.push_back(&job);
+        }
+    }
+    std::sort(result.begin(), result.end(), [](const MudJobConfig* lhs, const MudJobConfig* rhs) {
+        if(lhs == nullptr || rhs == nullptr)
+        {
+            return lhs != nullptr;
+        }
+        return lhs->title < rhs->title;
+    });
+    return result;
+}
+
+std::vector<const MudRumorSourceConfig*> MudWorld::rumor_sources_for_scene(const std::string& scene_id) const
+{
+    std::vector<const MudRumorSourceConfig*> result;
+    for(const auto& [id, rumor] : m_rumor_sources)
+    {
+        if(rumor.scene_id == scene_id)
+        {
+            result.push_back(&rumor);
+        }
+    }
+    std::sort(result.begin(), result.end(), [](const MudRumorSourceConfig* lhs, const MudRumorSourceConfig* rhs) {
+        if(lhs == nullptr || rhs == nullptr)
+        {
+            return lhs != nullptr;
+        }
+        return lhs->topic < rhs->topic;
+    });
+    return result;
+}
+
+std::vector<const MudRumorSourceConfig*> MudWorld::rumor_sources_for_npc(const std::string& npc_id) const
+{
+    std::vector<const MudRumorSourceConfig*> result;
+    for(const auto& [id, rumor] : m_rumor_sources)
+    {
+        if(rumor.npc_id == npc_id)
+        {
+            result.push_back(&rumor);
+        }
+    }
+    std::sort(result.begin(), result.end(), [](const MudRumorSourceConfig* lhs, const MudRumorSourceConfig* rhs) {
+        if(lhs == nullptr || rhs == nullptr)
+        {
+            return lhs != nullptr;
+        }
+        return lhs->topic < rhs->topic;
+    });
+    return result;
 }

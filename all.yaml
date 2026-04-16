@@ -47,6 +47,16 @@ jwt:
   secret: ""
   expire_sec: 7200
 
+mud:
+  event_ttl_sec: 86400
+  event_index_max: 2000
+  bootstrap_recent_event_limit: 50
+  world_event_interval_sec: 45
+  chat_rate_limit_count: 8
+  chat_rate_limit_window_sec: 10
+  board_post_rate_limit_count: 3
+  board_post_rate_limit_window_sec: 60
+
 client_pressure:
   enabled: false
   target:

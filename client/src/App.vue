@@ -360,10 +360,23 @@ function buildCatalogCommandAction(definition: Record<string, any>): CommandActi
   const command = String(definition.command ?? '')
   const composerMode = String(definition.composerMode ?? 'command')
   const chat = String(definition.chatChannel ?? '')
+  const aliases = ((definition.aliases as string[] | undefined) ?? [])
+    .map((item) => String(item ?? '').trim())
+    .filter(Boolean)
+  const usage = String(definition.usage ?? '').trim()
+  const targetHint = String(definition.targetHint ?? '').trim()
+  const visibilityScope = String(definition.visibilityScope ?? '').trim()
+  const detailParts = [
+    String(definition.summary ?? '通过底层命令目录提供的操作。'),
+    usage ? `用法 ${usage}` : '',
+    aliases.length > 0 ? `别名 ${aliases.join('/')}` : '',
+    targetHint ? `目标 ${targetHint}` : '',
+    visibilityScope === 'scene' ? '同场可用' : visibilityScope === 'global' ? '行走天下皆可用' : '',
+  ].filter(Boolean)
   return {
     key: `catalog-${String(definition.commandId ?? definition.label ?? command)}`,
     label: String(definition.label ?? command ?? '指令'),
-    detail: String(definition.summary ?? '通过底层命令目录提供的操作。'),
+    detail: detailParts.join(' · '),
     command,
     execute: Boolean(definition.executeImmediately),
     composer: composerMode === 'chat' ? 'chat' : 'command',
@@ -1284,7 +1297,17 @@ const trackedQuest = computed(() => {
 const sceneMissionText = computed(() => {
   const activeQuest = trackedQuest.value
   if (activeQuest) {
-    return `行途所系：${String(activeQuest.title)}，眼下火候 ${String(activeQuest.progress ?? 0)} / ${String(activeQuest.target ?? 0)}。`
+    const questKind = String(activeQuest.questKind ?? '').trim()
+    const issuerHint = String(activeQuest.issuerHint ?? '').trim()
+    const repeatable = Boolean(activeQuest.repeatable)
+    const flavorParts = [
+      `行途所系：${String(activeQuest.title)}`,
+      questKind ? `此事属${questKind}` : '',
+      issuerHint ? `源头在${issuerHint}` : '',
+      `眼下火候 ${String(activeQuest.progress ?? 0)} / ${String(activeQuest.target ?? 0)}`,
+      repeatable ? '日后仍可再走一轮' : '',
+    ].filter(Boolean)
+    return flavorParts.join('，') + '。'
   }
 
   const localBoardEntries = ((scene.value.localBoardEntries as Record<string, any>[] | undefined) ?? []).filter((entry) =>
@@ -1378,6 +1401,26 @@ function recommendedLoopFlavor(value: string) {
     门派事务: '门中差遣',
     海猎采珠: '海猎采珠',
     残区探禁: '探禁寻残',
+  }
+  return flavorMap[normalized] ?? normalized
+}
+
+function serviceTagFlavor(value: string) {
+  const normalized = value.trim()
+  if (!normalized) {
+    return ''
+  }
+  const flavorMap: Record<string, string> = {
+    mentor: '有前辈看路',
+    rumor: '风声易得',
+    board: '设有板面',
+    trade: '可做买卖',
+    sect: '门中差遣可接',
+    gather: '采点在侧',
+    travel: '可问路引',
+    work: '手边有营生',
+    sea: '海路营生正旺',
+    danger: '近处多禁险',
   }
   return flavorMap[normalized] ?? normalized
 }
@@ -2034,6 +2077,7 @@ function panelRenderProfile(panelId: string) {
     case 'claim':
       return { mark: '赏', compact: true, entryLimit: 3, summaryLimit: 1 }
     case 'score':
+    case 'hp':
       return { mark: '我', compact: true, entryLimit: 4, summaryLimit: 1 }
     case 'family':
       return { mark: '门', compact: true, entryLimit: 4, summaryLimit: 1 }
@@ -2052,6 +2096,14 @@ function panelRenderProfile(panelId: string) {
       return { mark: '途', compact: true, entryLimit: 6, summaryLimit: 1 }
     case 'rank':
       return { mark: '榜', compact: true, entryLimit: 5, summaryLimit: 1 }
+    case 'work':
+      return { mark: '工', compact: true, entryLimit: 4, summaryLimit: 1 }
+    case 'help':
+      return { mark: '助', compact: false, entryLimit: 8, summaryLimit: 2 }
+    case 'commands':
+      return { mark: '令', compact: false, entryLimit: 10, summaryLimit: 2 }
+    case 'read':
+      return { mark: '帖', compact: false, entryLimit: 8, summaryLimit: 2 }
     case 'map':
       return { mark: '图', compact: true, entryLimit: 6, summaryLimit: 1 }
     default:
@@ -2107,9 +2159,13 @@ function buildTimelinePanelFromStructuredPanel(panel: Record<string, any>, index
   const title = String(panel.title ?? panelId).trim() || '无名札板'
   const compactTitle = String(panel.compactTitle ?? panel.compact_title ?? title).trim() || title
   const summary = String(panel.summary ?? '').trim()
+  const panelKind = String(panel.panelKind ?? panel.panel_kind ?? '').trim()
   const profile = panelRenderProfile(panelId)
   const sourceEntries = (panel.entries as Record<string, any>[] | undefined) ?? []
   const asciiLines = ((panel.asciiLines as string[] | undefined) ?? (panel.ascii_lines as string[] | undefined) ?? [])
+    .map((line) => String(line ?? '').trim())
+    .filter(Boolean)
+  const bodyLines = ((panel.bodyLines as string[] | undefined) ?? (panel.body_lines as string[] | undefined) ?? [])
     .map((line) => String(line ?? '').trim())
     .filter(Boolean)
   const entries = sourceEntries.slice(0, profile.entryLimit)
@@ -2121,6 +2177,21 @@ function buildTimelinePanelFromStructuredPanel(panel: Record<string, any>, index
         key: `${panelId}-ascii-${entryIndex}`,
         text,
         tone: entryIndex === 0 ? 'accent' : 'normal',
+      })
+    })
+  } else if (bodyLines.length > 0) {
+    bodyLines.slice(0, Math.max(profile.entryLimit + 2, 8)).forEach((text, entryIndex) => {
+      lines.push({
+        key: `${panelId}-body-${entryIndex}`,
+        text,
+        tone:
+          panelKind === 'help_topic' || panelKind === 'command_manual'
+            ? entryIndex === 0
+              ? 'accent'
+              : 'normal'
+            : entryIndex === 0
+              ? 'accent'
+              : 'normal',
       })
     })
   } else {
@@ -2159,6 +2230,13 @@ function buildTimelinePanelFromStructuredPanel(panel: Record<string, any>, index
       tone: 'muted',
     })
   }
+  if (bodyLines.length > Math.max(profile.entryLimit + 2, 8)) {
+    lines.push({
+      key: `${panelId}-body-more`,
+      text: `……尚有 ${bodyLines.length - Math.max(profile.entryLimit + 2, 8)} 段，可再翻后文。`,
+      tone: 'muted',
+    })
+  }
 
   const inlineCommands = ((panel.inlineCommands as string[] | undefined) ?? (panel.inline_commands as string[] | undefined) ?? [])
     .map((command) => String(command ?? '').trim())
@@ -2176,7 +2254,18 @@ function buildTimelinePanelFromStructuredPanel(panel: Record<string, any>, index
   return {
     key: `timeline-panel-${panelId}-${mainTimelineSequence + index + 1}`,
     panelId,
-    mark: profile.mark,
+    mark:
+      panelKind === 'help_topic'
+        ? '助'
+        : panelKind === 'command_manual'
+          ? '令'
+          : panelKind === 'board_post'
+            ? '帖'
+            : panelKind === 'job_board'
+              ? '工'
+              : panelKind === 'leaderboard'
+                ? '榜'
+                : profile.mark,
     title,
     compactTitle,
     summary,
@@ -2335,6 +2424,21 @@ function buildSceneSnapshotLines() {
   const sceneAftertaste = String(scene.value.sceneAftertaste ?? '').trim()
   const roomLayer = String(scene.value.roomLayer ?? '').trim()
   const loopTags = ((scene.value.loopTags as string[] | undefined) ?? []).map((item) => String(item).trim()).filter(Boolean)
+  const serviceTags = ((scene.value.serviceTags as string[] | undefined) ?? [])
+    .map((item) => serviceTagFlavor(String(item ?? '')))
+    .filter(Boolean)
+  const rumorTopics = ((scene.value.rumorTopics as string[] | undefined) ?? [])
+    .map((item) => String(item ?? '').trim())
+    .filter(Boolean)
+  const mentorIds = ((scene.value.mentorIds as string[] | undefined) ?? [])
+    .map((item) => String(item ?? '').trim())
+    .filter(Boolean)
+  const boardAvailable = Boolean(scene.value.boardAvailable)
+  const identityTrack = String(player.value.identityTrack ?? '').trim()
+  const rankLevel = Number(player.value.rankLevel ?? 0)
+  const contributionState = String(player.value.contributionState ?? '').trim()
+  const reputationState = String(player.value.reputationState ?? '').trim()
+  const unreadBoardCount = Number(player.value.unreadBoardCount ?? 0)
 
   if (roomLayer || loopTags.length > 0) {
     const layerNarration = sceneLayerNarration(roomLayer, loopTags)
@@ -2342,6 +2446,36 @@ function buildSceneSnapshotLines() {
       key: `scene-layer-${currentSceneId.value}-${mainTimelineSequence + 1}`,
       tag: '局势',
       text: layerNarration || [roomLayer, loopTags.join('、')].filter(Boolean).join(' · '),
+      tone: 'hint',
+    })
+  }
+
+  const serviceParts = [
+    boardAvailable ? '此地设有板面' : '',
+    rumorTopics.length > 0 ? `风声多绕「${rumorTopics.slice(0, 2).join('、')}」` : '',
+    mentorIds.length > 0 || serviceTags.some((item) => item.includes('前辈')) ? '有前辈可指路' : '',
+    ...serviceTags.slice(0, 2),
+  ].filter(Boolean)
+  if (serviceParts.length > 0) {
+    lines.push({
+      key: `scene-services-${currentSceneId.value}-${mainTimelineSequence + 1}`,
+      tag: '门径',
+      text: serviceParts.join('，') + '。',
+      tone: 'hint',
+    })
+  }
+
+  const identityParts = [
+    identityTrack ? `${identityTrack}${rankLevel > 0 ? `·${rankLevel}阶` : ''}` : '',
+    reputationState,
+    contributionState,
+    unreadBoardCount > 0 ? `尚有 ${unreadBoardCount} 张板帖未曾细看` : '',
+  ].filter(Boolean)
+  if (identityParts.length > 0) {
+    lines.push({
+      key: `scene-identity-${currentSceneId.value}-${mainTimelineSequence + 1}`,
+      tag: '身分',
+      text: identityParts.join('；') + '。',
       tone: 'hint',
     })
   }

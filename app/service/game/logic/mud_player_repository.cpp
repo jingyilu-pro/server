@@ -24,7 +24,9 @@
 
 #include <algorithm>
 #include <array>
+#include <chrono>
 #include <cstring>
+#include <thread>
 #include <unordered_set>
 
 namespace
@@ -174,6 +176,30 @@ bool leaderboard_should_keep(MudLeaderboardType leaderboard_type, const MudPlaye
     default:
         return true;
     }
+}
+
+struct MudPlayerRepositoryWaitState
+{
+    bool done = false;
+    bool has_result = false;
+    MudPlayerRepositoryOpResult snapshot;
+};
+
+coro_task_t capture_mud_player_repository_result(CoroAwaitable awaitable,
+                                                 std::shared_ptr<MudPlayerRepositoryWaitState> state)
+{
+    auto* result = dynamic_cast<MudPlayerRepositoryOpResult*>(co_await awaitable);
+    if(!state)
+    {
+        co_return;
+    }
+
+    if(result != nullptr)
+    {
+        state->snapshot = *result;
+        state->has_result = true;
+    }
+    state->done = true;
 }
 
 std::string encode_inventory_json(const std::vector<MudInventoryItemState>& inventory)
@@ -1074,6 +1100,50 @@ public:
 };
 
 } // namespace
+
+bool wait_mud_player_repository_result(IMudPlayerRepository* repository,
+                                       CoroAwaitable awaitable,
+                                       MudPlayerRepositoryOpResult* out_result,
+                                       int timeout_ms)
+{
+    if(out_result == nullptr)
+    {
+        return false;
+    }
+    out_result->clear();
+
+    auto state = std::make_shared<MudPlayerRepositoryWaitState>();
+    capture_mud_player_repository_result(awaitable, state);
+
+    if(timeout_ms <= 0)
+    {
+        timeout_ms = 1000;
+    }
+
+    auto begin = std::chrono::steady_clock::now();
+    while(std::chrono::duration_cast<std::chrono::milliseconds>(
+              std::chrono::steady_clock::now() - begin)
+              .count() <= timeout_ms)
+    {
+        if(repository != nullptr)
+        {
+            repository->poll();
+        }
+
+        if(state->done)
+        {
+            if(state->has_result)
+            {
+                *out_result = state->snapshot;
+            }
+            return state->has_result;
+        }
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    }
+
+    return false;
+}
 
 class MySqlMudPlayerRepository::MySqlMudPlayerCoroManager : public ::MySqlMudPlayerCoroManager
 {

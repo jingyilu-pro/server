@@ -106,7 +106,10 @@ struct MudStructuredPanelState
     std::string render_mode;
     std::string style_id;
     std::string compact_title;
+    std::string document_id;
+    std::string panel_kind;
     std::vector<std::string> ascii_lines;
+    std::vector<std::string> body_lines;
     std::vector<std::string> inline_commands;
     std::vector<MudSummaryEntry> entries;
 };
@@ -206,8 +209,10 @@ struct MudQuestConfig
     std::string quest_id;
     std::string title;
     std::string description;
+    std::string quest_kind;
     std::string issuer_npc_id;
     std::string submit_npc_id;
+    std::string issuer_hint;
     std::string required_item_id;
     int required_item_count = 0;
     int reward_spirit_stone = 0;
@@ -215,6 +220,7 @@ struct MudQuestConfig
     std::string reward_item_id;
     int reward_item_count = 0;
     std::string reward_sect_id;
+    bool repeatable = false;
     std::vector<MudUnlockRule> unlock_rules;
     std::string chapter;
 };
@@ -391,6 +397,61 @@ struct MudCodexEntryConfig
     std::vector<MudUnlockRule> unlock_rules;
 };
 
+struct MudHelpTopicConfig
+{
+    std::string topic_id;
+    std::string title;
+    std::string summary;
+    std::vector<std::string> body_lines;
+    std::vector<std::string> keywords;
+    std::vector<std::string> related_commands;
+    std::vector<std::string> inline_commands;
+    std::string category;
+};
+
+struct MudJobConfig
+{
+    std::string job_id;
+    std::string title;
+    std::string kind;
+    std::string scene_id;
+    std::string issuer_npc_id;
+    std::string submit_npc_id;
+    std::string summary;
+    std::string description;
+    std::string requirements;
+    std::string reward_summary;
+    std::string command_hint;
+    bool repeatable = false;
+    std::string route_tag;
+    std::string service_tag;
+    std::string related_quest_id;
+};
+
+struct MudRumorSourceConfig
+{
+    std::string source_id;
+    std::string scene_id;
+    std::string npc_id;
+    std::string topic;
+    std::string summary;
+    std::vector<std::string> body_lines;
+    std::vector<std::string> job_ids;
+    std::vector<std::string> quest_ids;
+    std::vector<std::string> unlock_flags;
+};
+
+struct MudIdentityTrackConfig
+{
+    std::string track_id;
+    std::string name;
+    std::string kind;
+    std::vector<std::string> ranks;
+    std::vector<std::string> mentor_ids;
+    std::string description;
+    std::vector<std::string> service_unlocks;
+};
+
 struct MudSceneConfig
 {
     std::string scene_id;
@@ -408,6 +469,10 @@ struct MudSceneConfig
     bool pvp_enabled = false;
     std::vector<std::string> rumors;
     std::vector<std::string> loop_tags;
+    std::vector<std::string> service_tags;
+    std::vector<std::string> rumor_topics;
+    bool board_available = false;
+    std::vector<std::string> mentor_ids;
     std::unordered_map<std::string, std::string> exits;
     std::vector<std::string> npc_ids;
     std::vector<std::string> monster_ids;

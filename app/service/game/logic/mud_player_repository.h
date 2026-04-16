@@ -132,6 +132,11 @@ public:
     virtual CoroAwaitable list_team_members(const std::string& team_id) = 0;
 };
 
+bool wait_mud_player_repository_result(IMudPlayerRepository* repository,
+                                       CoroAwaitable awaitable,
+                                       MudPlayerRepositoryOpResult* out_result,
+                                       int timeout_ms);
+
 class MySqlMudPlayerRepository : public IMudPlayerRepository
 {
 public:

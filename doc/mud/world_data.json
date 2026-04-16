@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-03-23T12:31:12.671Z",
+  "generated_at": "2026-04-16T07:53:26.970Z",
   "defaults": {
     "starting_scene_id": "qixuan_square",
     "starter_title": "初入修仙路",
@@ -6261,6 +6261,10 @@
       "loop_tags": [
         "门派事务"
       ],
+      "service_tags": [],
+      "rumor_topics": [],
+      "board_available": false,
+      "mentor_ids": [],
       "codex_entry_id": "geo_qixuan_hall"
     },
     {
@@ -6301,6 +6305,19 @@
         "外门里都说，先在嘉元城把差事办稳的人，才有资格往更深的修行路上走。"
       ],
       "chapter": "七玄门启程",
+      "service_tags": [
+        "mentor",
+        "rumor",
+        "board"
+      ],
+      "rumor_topics": [
+        "山门风声",
+        "外场差事"
+      ],
+      "board_available": true,
+      "mentor_ids": [
+        "li_feiyu"
+      ],
       "room_type": "房间",
       "risk_level": "安全",
       "room_layer": "新手安全圈",
@@ -6351,6 +6368,10 @@
       "loop_tags": [
         "门派事务"
       ],
+      "service_tags": [],
+      "rumor_topics": [],
+      "board_available": false,
+      "mentor_ids": [],
       "codex_entry_id": "geo_qixuan_dormitory"
     },
     {
@@ -6400,6 +6421,10 @@
         "巡山悬赏",
         "门派事务"
       ],
+      "service_tags": [],
+      "rumor_topics": [],
+      "board_available": false,
+      "mentor_ids": [],
       "codex_entry_id": "geo_qixuan_backslope"
     },
     {
@@ -6445,6 +6470,10 @@
         "采药炼丹",
         "门派事务"
       ],
+      "service_tags": [],
+      "rumor_topics": [],
+      "board_available": false,
+      "mentor_ids": [],
       "codex_entry_id": "geo_qixuan_stream"
     },
     {
@@ -6491,6 +6520,10 @@
         "采药炼丹",
         "门派事务"
       ],
+      "service_tags": [],
+      "rumor_topics": [],
+      "board_available": false,
+      "mentor_ids": [],
       "codex_entry_id": "geo_qixuan_medicine_garden"
     },
     {
@@ -6534,6 +6567,10 @@
       "loop_tags": [
         "护送跑商"
       ],
+      "service_tags": [],
+      "rumor_topics": [],
+      "board_available": false,
+      "mentor_ids": [],
       "codex_entry_id": "geo_jiayuan_east_gate"
     },
     {
@@ -6581,6 +6618,19 @@
         "近来墨府风声不静，连卖药的余婆婆都把嘴收紧了三分。"
       ],
       "chapter": "嘉元城风波",
+      "service_tags": [
+        "board",
+        "trade",
+        "rumor"
+      ],
+      "rumor_topics": [
+        "嘉元城风声",
+        "坊市采办"
+      ],
+      "board_available": true,
+      "mentor_ids": [
+        "mofu_steward"
+      ],
       "room_type": "坊市",
       "risk_level": "安全",
       "room_layer": "新手安全圈",
@@ -6630,6 +6680,10 @@
       "loop_tags": [
         "护送跑商"
       ],
+      "service_tags": [],
+      "rumor_topics": [],
+      "board_available": false,
+      "mentor_ids": [],
       "codex_entry_id": "geo_mofu_gate"
     },
     {
@@ -6673,6 +6727,10 @@
       "loop_tags": [
         "采药炼丹"
       ],
+      "service_tags": [],
+      "rumor_topics": [],
+      "board_available": false,
+      "mentor_ids": [],
       "codex_entry_id": "geo_mofu_front_hall"
     },
     {
@@ -6717,6 +6775,10 @@
       "loop_tags": [
         "采药炼丹"
       ],
+      "service_tags": [],
+      "rumor_topics": [],
+      "board_available": false,
+      "mentor_ids": [],
       "codex_entry_id": "geo_mofu_courtyard"
     },
     {
@@ -6762,6 +6824,10 @@
         "采药炼丹",
         "巡山悬赏"
       ],
+      "service_tags": [],
+      "rumor_topics": [],
+      "board_available": false,
+      "mentor_ids": [],
       "codex_entry_id": "geo_bamboo_forest"
     },
     {
@@ -6809,6 +6875,10 @@
         "采药炼丹",
         "巡山悬赏"
       ],
+      "service_tags": [],
+      "rumor_topics": [],
+      "board_available": false,
+      "mentor_ids": [],
       "codex_entry_id": "geo_herb_slope"
     },
     {
@@ -6856,6 +6926,10 @@
         "巡山悬赏",
         "残区探禁"
       ],
+      "service_tags": [],
+      "rumor_topics": [],
+      "board_available": false,
+      "mentor_ids": [],
       "codex_entry_id": "geo_backhill_cave"
     },
     {
@@ -6901,6 +6975,10 @@
         "采药炼丹",
         "护送跑商"
       ],
+      "service_tags": [],
+      "rumor_topics": [],
+      "board_available": false,
+      "mentor_ids": [],
       "codex_entry_id": "geo_tainan_gate"
     },
     {
@@ -6948,6 +7026,20 @@
         "太南谷里最值钱的货不是法器，而是比别人早半步知道风向。"
       ],
       "chapter": "太南小会",
+      "service_tags": [
+        "board",
+        "rumor",
+        "trade"
+      ],
+      "rumor_topics": [
+        "小会密闻",
+        "散修消息"
+      ],
+      "board_available": true,
+      "mentor_ids": [
+        "old_book_peddler",
+        "xin_ruyin"
+      ],
       "room_type": "房间",
       "risk_level": "安全",
       "room_layer": "新手安全圈",
@@ -6992,6 +7084,18 @@
         "此地常有人提起「太南小会」相关的旧闻。"
       ],
       "chapter": "太南小会",
+      "service_tags": [
+        "mentor",
+        "rumor"
+      ],
+      "rumor_topics": [
+        "阵法风声"
+      ],
+      "board_available": false,
+      "mentor_ids": [
+        "xin_ruyin",
+        "qi_yunxiao"
+      ],
       "room_type": "房间",
       "risk_level": "安全",
       "room_layer": "新手安全圈",
@@ -7045,6 +7149,10 @@
       "loop_tags": [
         "采药炼丹"
       ],
+      "service_tags": [],
+      "rumor_topics": [],
+      "board_available": false,
+      "mentor_ids": [],
       "codex_entry_id": "geo_talisman_street"
     },
     {
@@ -7097,6 +7205,10 @@
       "loop_tags": [
         "采药炼丹"
       ],
+      "service_tags": [],
+      "rumor_topics": [],
+      "board_available": false,
+      "mentor_ids": [],
       "codex_entry_id": "geo_array_lane"
     },
     {
@@ -7141,6 +7253,10 @@
         "采药炼丹",
         "巡山悬赏"
       ],
+      "service_tags": [],
+      "rumor_topics": [],
+      "board_available": false,
+      "mentor_ids": [],
       "codex_entry_id": "geo_mountain_path"
     },
     {
@@ -7178,6 +7294,20 @@
         "此地常有人提起「黄枫谷门径」相关的旧闻。"
       ],
       "chapter": "黄枫谷门径",
+      "service_tags": [
+        "board",
+        "sect",
+        "mentor"
+      ],
+      "rumor_topics": [
+        "外营事务",
+        "黄枫谷门径"
+      ],
+      "board_available": true,
+      "mentor_ids": [
+        "huangfeng_steward",
+        "elder_ma"
+      ],
       "room_type": "房间",
       "risk_level": "安全",
       "room_layer": "新手安全圈",
@@ -7236,6 +7366,10 @@
         "采药炼丹",
         "门派事务"
       ],
+      "service_tags": [],
+      "rumor_topics": [],
+      "board_available": false,
+      "mentor_ids": [],
       "codex_entry_id": "geo_huangfeng_hall"
     },
     {
@@ -7282,6 +7416,10 @@
         "采药炼丹",
         "门派事务"
       ],
+      "service_tags": [],
+      "rumor_topics": [],
+      "board_available": false,
+      "mentor_ids": [],
       "codex_entry_id": "geo_huangfeng_medicine_terrace"
     },
     {
@@ -7327,6 +7465,10 @@
         "采药炼丹",
         "门派事务"
       ],
+      "service_tags": [],
+      "rumor_topics": [],
+      "board_available": false,
+      "mentor_ids": [],
       "codex_entry_id": "geo_huangfeng_scripture"
     },
     {
@@ -7381,6 +7523,10 @@
         "巡山悬赏",
         "门派事务"
       ],
+      "service_tags": [],
+      "rumor_topics": [],
+      "board_available": false,
+      "mentor_ids": [],
       "codex_entry_id": "geo_huangfeng_foothill"
     },
     {
@@ -7424,6 +7570,10 @@
         "采药炼丹",
         "门派事务"
       ],
+      "service_tags": [],
+      "rumor_topics": [],
+      "board_available": false,
+      "mentor_ids": [],
       "codex_entry_id": "geo_huangfeng_cloud_bridge"
     },
     {
@@ -7470,6 +7620,10 @@
         "护送跑商",
         "残区探禁"
       ],
+      "service_tags": [],
+      "rumor_topics": [],
+      "board_available": false,
+      "mentor_ids": [],
       "codex_entry_id": "geo_blood_gate"
     },
     {
@@ -7520,6 +7674,10 @@
         "巡山悬赏",
         "残区探禁"
       ],
+      "service_tags": [],
+      "rumor_topics": [],
+      "board_available": false,
+      "mentor_ids": [],
       "codex_entry_id": "geo_blood_forbidden_outer"
     },
     {
@@ -7572,6 +7730,10 @@
         "巡山悬赏",
         "残区探禁"
       ],
+      "service_tags": [],
+      "rumor_topics": [],
+      "board_available": false,
+      "mentor_ids": [],
       "codex_entry_id": "geo_blood_swamp"
     },
     {
@@ -7623,6 +7785,10 @@
         "巡山悬赏",
         "残区探禁"
       ],
+      "service_tags": [],
+      "rumor_topics": [],
+      "board_available": false,
+      "mentor_ids": [],
       "codex_entry_id": "geo_blood_orchid_vale"
     },
     {
@@ -7669,6 +7835,10 @@
         "巡山悬赏",
         "门派事务"
       ],
+      "service_tags": [],
+      "rumor_topics": [],
+      "board_available": false,
+      "mentor_ids": [],
       "codex_entry_id": "geo_spirit_beast_altar"
     },
     {
@@ -7714,6 +7884,10 @@
         "巡山悬赏",
         "残区探禁"
       ],
+      "service_tags": [],
+      "rumor_topics": [],
+      "board_available": false,
+      "mentor_ids": [],
       "codex_entry_id": "geo_blood_ruins"
     },
     {
@@ -7755,6 +7929,20 @@
         "近来有人说，乱星海深处的风向变得古怪，像有旧日遗府重新醒过来。"
       ],
       "chapter": "天南外港",
+      "service_tags": [
+        "board",
+        "travel",
+        "trade",
+        "rumor"
+      ],
+      "rumor_topics": [
+        "港口风声",
+        "远航门路"
+      ],
+      "board_available": true,
+      "mentor_ids": [
+        "seaport_broker"
+      ],
       "room_type": "港埠",
       "risk_level": "安全",
       "room_layer": "新手安全圈",
@@ -7815,6 +8003,10 @@
         "护送跑商",
         "海猎采珠"
       ],
+      "service_tags": [],
+      "rumor_topics": [],
+      "board_available": false,
+      "mentor_ids": [],
       "codex_entry_id": "geo_tiannan_market"
     },
     {
@@ -7861,6 +8053,10 @@
         "护送跑商",
         "海猎采珠"
       ],
+      "service_tags": [],
+      "rumor_topics": [],
+      "board_available": false,
+      "mentor_ids": [],
       "codex_entry_id": "geo_tiannan_dock"
     },
     {
@@ -7902,6 +8098,10 @@
       "loop_tags": [
         "海猎采珠"
       ],
+      "service_tags": [],
+      "rumor_topics": [],
+      "board_available": false,
+      "mentor_ids": [],
       "codex_entry_id": "geo_sea_wind_tower"
     },
     {
@@ -7946,6 +8146,10 @@
       "loop_tags": [
         "海猎采珠"
       ],
+      "service_tags": [],
+      "rumor_topics": [],
+      "board_available": false,
+      "mentor_ids": [],
       "codex_entry_id": "geo_smuggler_alley"
     },
     {
@@ -7988,6 +8192,20 @@
         "附近修士常交换妖兽出没与掉落材料的消息。"
       ],
       "chapter": "乱星近海群岛",
+      "service_tags": [
+        "board",
+        "travel",
+        "sea",
+        "rumor"
+      ],
+      "rumor_topics": [
+        "近港海路",
+        "近海海猎"
+      ],
+      "board_available": true,
+      "mentor_ids": [
+        "captain_qu"
+      ],
       "room_type": "港埠",
       "risk_level": "历练",
       "room_layer": "成长历练圈",
@@ -8038,6 +8256,10 @@
       "loop_tags": [
         "海猎采珠"
       ],
+      "service_tags": [],
+      "rumor_topics": [],
+      "board_available": false,
+      "mentor_ids": [],
       "codex_entry_id": "geo_chaos_sea_ship"
     },
     {
@@ -8083,6 +8305,10 @@
       "loop_tags": [
         "海猎采珠"
       ],
+      "service_tags": [],
+      "rumor_topics": [],
+      "board_available": false,
+      "mentor_ids": [],
       "codex_entry_id": "geo_chaos_sea_isle"
     },
     {
@@ -8133,6 +8359,10 @@
         "采药炼丹",
         "海猎采珠"
       ],
+      "service_tags": [],
+      "rumor_topics": [],
+      "board_available": false,
+      "mentor_ids": [],
       "codex_entry_id": "geo_reef_shore"
     },
     {
@@ -8181,6 +8411,10 @@
         "海猎采珠",
         "残区探禁"
       ],
+      "service_tags": [],
+      "rumor_topics": [],
+      "board_available": false,
+      "mentor_ids": [],
       "codex_entry_id": "geo_demon_fish_nest"
     },
     {
@@ -8226,6 +8460,10 @@
       "loop_tags": [
         "海猎采珠"
       ],
+      "service_tags": [],
+      "rumor_topics": [],
+      "board_available": false,
+      "mentor_ids": [],
       "codex_entry_id": "geo_storm_route"
     },
     {
@@ -8263,6 +8501,19 @@
         "有人说虚天殿里最可怕的不是宝物争夺，而是你开始觉得自己配得上更多的时候。"
       ],
       "chapter": "虚天殿初启",
+      "service_tags": [
+        "board",
+        "danger",
+        "rumor"
+      ],
+      "rumor_topics": [
+        "残殿旧闻",
+        "探禁提示"
+      ],
+      "board_available": true,
+      "mentor_ids": [
+        "palace_remnant_spirit"
+      ],
       "room_type": "宗门",
       "risk_level": "安全",
       "room_layer": "成长历练圈",
@@ -8314,6 +8565,10 @@
         "巡山悬赏",
         "残区探禁"
       ],
+      "service_tags": [],
+      "rumor_topics": [],
+      "board_available": false,
+      "mentor_ids": [],
       "codex_entry_id": "geo_xutian_corridor"
     },
     {
@@ -8361,6 +8616,10 @@
         "采药炼丹",
         "残区探禁"
       ],
+      "service_tags": [],
+      "rumor_topics": [],
+      "board_available": false,
+      "mentor_ids": [],
       "codex_entry_id": "geo_xutian_pill_room"
     },
     {
@@ -8406,6 +8665,10 @@
       "loop_tags": [
         "残区探禁"
       ],
+      "service_tags": [],
+      "rumor_topics": [],
+      "board_available": false,
+      "mentor_ids": [],
       "codex_entry_id": "geo_xutian_treasure_chamber"
     },
     {
@@ -8452,6 +8715,10 @@
       "loop_tags": [
         "残区探禁"
       ],
+      "service_tags": [],
+      "rumor_topics": [],
+      "board_available": false,
+      "mentor_ids": [],
       "codex_entry_id": "geo_xutian_star_platform"
     },
     {
@@ -8500,6 +8767,10 @@
         "护送跑商",
         "残区探禁"
       ],
+      "service_tags": [],
+      "rumor_topics": [],
+      "board_available": false,
+      "mentor_ids": [],
       "codex_entry_id": "geo_xutian_inner_gate"
     },
     {
@@ -8535,6 +8806,10 @@
       "loop_tags": [
         "采药炼丹"
       ],
+      "service_tags": [],
+      "rumor_topics": [],
+      "board_available": false,
+      "mentor_ids": [],
       "codex_entry_id": "geo_wanderer_trail"
     },
     {
@@ -8577,6 +8852,10 @@
       "loop_tags": [
         "采药炼丹"
       ],
+      "service_tags": [],
+      "rumor_topics": [],
+      "board_available": false,
+      "mentor_ids": [],
       "codex_entry_id": "geo_wanderer_camp"
     },
     {
@@ -8616,6 +8895,10 @@
       "loop_tags": [
         "采药炼丹"
       ],
+      "service_tags": [],
+      "rumor_topics": [],
+      "board_available": false,
+      "mentor_ids": [],
       "codex_entry_id": "geo_wanderer_creek"
     },
     {
@@ -8655,6 +8938,10 @@
       "loop_tags": [
         "采药炼丹"
       ],
+      "service_tags": [],
+      "rumor_topics": [],
+      "board_available": false,
+      "mentor_ids": [],
       "codex_entry_id": "geo_wanderer_brush"
     },
     {
@@ -8694,6 +8981,10 @@
       "loop_tags": [
         "采药炼丹"
       ],
+      "service_tags": [],
+      "rumor_topics": [],
+      "board_available": false,
+      "mentor_ids": [],
       "codex_entry_id": "geo_wanderer_stone_slope"
     },
     {
@@ -8733,6 +9024,10 @@
       "loop_tags": [
         "采药炼丹"
       ],
+      "service_tags": [],
+      "rumor_topics": [],
+      "board_available": false,
+      "mentor_ids": [],
       "codex_entry_id": "geo_wanderer_old_temple"
     },
     {
@@ -8775,6 +9070,10 @@
       "loop_tags": [
         "采药炼丹"
       ],
+      "service_tags": [],
+      "rumor_topics": [],
+      "board_available": false,
+      "mentor_ids": [],
       "codex_entry_id": "geo_wanderer_firefield"
     },
     {
@@ -8813,6 +9112,10 @@
       "loop_tags": [
         "残区探禁"
       ],
+      "service_tags": [],
+      "rumor_topics": [],
+      "board_available": false,
+      "mentor_ids": [],
       "codex_entry_id": "geo_wanderer_fox_den"
     },
     {
@@ -8850,6 +9153,10 @@
       "loop_tags": [
         "采药炼丹"
       ],
+      "service_tags": [],
+      "rumor_topics": [],
+      "board_available": false,
+      "mentor_ids": [],
       "codex_entry_id": "geo_wanderer_watch_tower"
     },
     {
@@ -8888,6 +9195,10 @@
       "loop_tags": [
         "采药炼丹"
       ],
+      "service_tags": [],
+      "rumor_topics": [],
+      "board_available": false,
+      "mentor_ids": [],
       "codex_entry_id": "geo_wanderer_cold_pool"
     },
     {
@@ -8925,6 +9236,10 @@
       "loop_tags": [
         "护送跑商"
       ],
+      "service_tags": [],
+      "rumor_topics": [],
+      "board_available": false,
+      "mentor_ids": [],
       "codex_entry_id": "geo_escort_post"
     },
     {
@@ -8964,6 +9279,10 @@
       "loop_tags": [
         "护送跑商"
       ],
+      "service_tags": [],
+      "rumor_topics": [],
+      "board_available": false,
+      "mentor_ids": [],
       "codex_entry_id": "geo_escort_road"
     },
     {
@@ -9001,6 +9320,10 @@
       "loop_tags": [
         "护送跑商"
       ],
+      "service_tags": [],
+      "rumor_topics": [],
+      "board_available": false,
+      "mentor_ids": [],
       "codex_entry_id": "geo_escort_wayside"
     },
     {
@@ -9041,6 +9364,10 @@
       "loop_tags": [
         "残区探禁"
       ],
+      "service_tags": [],
+      "rumor_topics": [],
+      "board_available": false,
+      "mentor_ids": [],
       "codex_entry_id": "geo_bandit_gully"
     },
     {
@@ -9080,6 +9407,10 @@
       "loop_tags": [
         "采药炼丹"
       ],
+      "service_tags": [],
+      "rumor_topics": [],
+      "board_available": false,
+      "mentor_ids": [],
       "codex_entry_id": "geo_broken_bridge"
     },
     {
@@ -9125,6 +9456,10 @@
       "loop_tags": [
         "护送跑商"
       ],
+      "service_tags": [],
+      "rumor_topics": [],
+      "board_available": false,
+      "mentor_ids": [],
       "codex_entry_id": "geo_relay_station"
     },
     {
@@ -9161,6 +9496,10 @@
       "loop_tags": [
         "采药炼丹"
       ],
+      "service_tags": [],
+      "rumor_topics": [],
+      "board_available": false,
+      "mentor_ids": [],
       "codex_entry_id": "geo_granary_yard"
     },
     {
@@ -9198,6 +9537,10 @@
       "loop_tags": [
         "采药炼丹"
       ],
+      "service_tags": [],
+      "rumor_topics": [],
+      "board_available": false,
+      "mentor_ids": [],
       "codex_entry_id": "geo_night_inn"
     },
     {
@@ -9238,6 +9581,10 @@
       "loop_tags": [
         "残区探禁"
       ],
+      "service_tags": [],
+      "rumor_topics": [],
+      "board_available": false,
+      "mentor_ids": [],
       "codex_entry_id": "geo_border_field"
     },
     {
@@ -9277,6 +9624,10 @@
       "loop_tags": [
         "采药炼丹"
       ],
+      "service_tags": [],
+      "rumor_topics": [],
+      "board_available": false,
+      "mentor_ids": [],
       "codex_entry_id": "geo_yue_watch_pass"
     },
     {
@@ -9312,6 +9663,10 @@
         "采药炼丹",
         "护送跑商"
       ],
+      "service_tags": [],
+      "rumor_topics": [],
+      "board_available": false,
+      "mentor_ids": [],
       "codex_entry_id": "geo_loose_camp_gate"
     },
     {
@@ -9354,6 +9709,10 @@
       "loop_tags": [
         "采药炼丹"
       ],
+      "service_tags": [],
+      "rumor_topics": [],
+      "board_available": false,
+      "mentor_ids": [],
       "codex_entry_id": "geo_loose_camp_square"
     },
     {
@@ -9392,6 +9751,10 @@
         "采药炼丹",
         "护送跑商"
       ],
+      "service_tags": [],
+      "rumor_topics": [],
+      "board_available": false,
+      "mentor_ids": [],
       "codex_entry_id": "geo_loose_market_lane"
     },
     {
@@ -9431,6 +9794,10 @@
       "loop_tags": [
         "采药炼丹"
       ],
+      "service_tags": [],
+      "rumor_topics": [],
+      "board_available": false,
+      "mentor_ids": [],
       "codex_entry_id": "geo_loose_medicine_tent"
     },
     {
@@ -9468,6 +9835,10 @@
       "loop_tags": [
         "采药炼丹"
       ],
+      "service_tags": [],
+      "rumor_topics": [],
+      "board_available": false,
+      "mentor_ids": [],
       "codex_entry_id": "geo_loose_diviner_mat"
     },
     {
@@ -9507,6 +9878,10 @@
         "采药炼丹",
         "残区探禁"
       ],
+      "service_tags": [],
+      "rumor_topics": [],
+      "board_available": false,
+      "mentor_ids": [],
       "codex_entry_id": "geo_loose_training_ground"
     },
     {
@@ -9548,6 +9923,10 @@
       "loop_tags": [
         "采药炼丹"
       ],
+      "service_tags": [],
+      "rumor_topics": [],
+      "board_available": false,
+      "mentor_ids": [],
       "codex_entry_id": "geo_loose_stone_forest"
     },
     {
@@ -9587,6 +9966,10 @@
       "loop_tags": [
         "采药炼丹"
       ],
+      "service_tags": [],
+      "rumor_topics": [],
+      "board_available": false,
+      "mentor_ids": [],
       "codex_entry_id": "geo_loose_hidden_pool"
     },
     {
@@ -9629,6 +10012,10 @@
       "loop_tags": [
         "采药炼丹"
       ],
+      "service_tags": [],
+      "rumor_topics": [],
+      "board_available": false,
+      "mentor_ids": [],
       "codex_entry_id": "geo_loose_guest_hall"
     },
     {
@@ -9669,6 +10056,10 @@
         "采药炼丹",
         "残区探禁"
       ],
+      "service_tags": [],
+      "rumor_topics": [],
+      "board_available": false,
+      "mentor_ids": [],
       "codex_entry_id": "geo_loose_bamboo_stage"
     },
     {
@@ -9704,6 +10095,20 @@
       "room_type": "宗门",
       "risk_level": "安全",
       "landmark": "灵兽山外门",
+      "service_tags": [
+        "board",
+        "sect",
+        "mentor",
+        "gather"
+      ],
+      "rumor_topics": [
+        "兽栏照料",
+        "灵虫差遣"
+      ],
+      "board_available": true,
+      "mentor_ids": [
+        "spirit_beast_steward"
+      ],
       "room_layer": "新手安全圈",
       "loop_tags": [
         "护送跑商",
@@ -9750,6 +10155,10 @@
       "loop_tags": [
         "门派事务"
       ],
+      "service_tags": [],
+      "rumor_topics": [],
+      "board_available": false,
+      "mentor_ids": [],
       "codex_entry_id": "geo_spirit_beast_broker_lane"
     },
     {
@@ -9791,6 +10200,10 @@
       "loop_tags": [
         "门派事务"
       ],
+      "service_tags": [],
+      "rumor_topics": [],
+      "board_available": false,
+      "mentor_ids": [],
       "codex_entry_id": "geo_spirit_beast_beast_pen"
     },
     {
@@ -9833,6 +10246,10 @@
       "loop_tags": [
         "门派事务"
       ],
+      "service_tags": [],
+      "rumor_topics": [],
+      "board_available": false,
+      "mentor_ids": [],
       "codex_entry_id": "geo_spirit_beast_insect_garden"
     },
     {
@@ -9872,6 +10289,10 @@
       "loop_tags": [
         "门派事务"
       ],
+      "service_tags": [],
+      "rumor_topics": [],
+      "board_available": false,
+      "mentor_ids": [],
       "codex_entry_id": "geo_spirit_beast_herb_ridge"
     },
     {
@@ -9916,6 +10337,10 @@
         "门派事务",
         "残区探禁"
       ],
+      "service_tags": [],
+      "rumor_topics": [],
+      "board_available": false,
+      "mentor_ids": [],
       "codex_entry_id": "geo_spirit_beast_worm_marsh"
     },
     {
@@ -9953,6 +10378,10 @@
       "loop_tags": [
         "门派事务"
       ],
+      "service_tags": [],
+      "rumor_topics": [],
+      "board_available": false,
+      "mentor_ids": [],
       "codex_entry_id": "geo_spirit_beast_taming_yard"
     },
     {
@@ -9989,6 +10418,10 @@
       "loop_tags": [
         "门派事务"
       ],
+      "service_tags": [],
+      "rumor_topics": [],
+      "board_available": false,
+      "mentor_ids": [],
       "codex_entry_id": "geo_spirit_beast_inner_path"
     },
     {
@@ -10028,6 +10461,10 @@
       "loop_tags": [
         "门派事务"
       ],
+      "service_tags": [],
+      "rumor_topics": [],
+      "board_available": false,
+      "mentor_ids": [],
       "codex_entry_id": "geo_spirit_beast_bone_cave"
     },
     {
@@ -10067,6 +10504,10 @@
       "loop_tags": [
         "门派事务"
       ],
+      "service_tags": [],
+      "rumor_topics": [],
+      "board_available": false,
+      "mentor_ids": [],
       "codex_entry_id": "geo_spirit_beast_cliff_nest"
     },
     {
@@ -10106,6 +10547,10 @@
       "loop_tags": [
         "门派事务"
       ],
+      "service_tags": [],
+      "rumor_topics": [],
+      "board_available": false,
+      "mentor_ids": [],
       "codex_entry_id": "geo_spirit_beast_stream"
     },
     {
@@ -10142,6 +10587,10 @@
       "loop_tags": [
         "门派事务"
       ],
+      "service_tags": [],
+      "rumor_topics": [],
+      "board_available": false,
+      "mentor_ids": [],
       "codex_entry_id": "geo_spirit_beast_hall"
     },
     {
@@ -10178,6 +10627,19 @@
       "room_type": "港埠",
       "risk_level": "安全",
       "landmark": "后湾口",
+      "service_tags": [
+        "work",
+        "sea",
+        "rumor"
+      ],
+      "rumor_topics": [
+        "后湾潮路",
+        "浅滩海猎"
+      ],
+      "board_available": false,
+      "mentor_ids": [
+        "backbay_fisher_wu"
+      ],
       "room_layer": "新手安全圈",
       "loop_tags": [
         "护送跑商",
@@ -10222,6 +10684,10 @@
         "护送跑商",
         "海猎采珠"
       ],
+      "service_tags": [],
+      "rumor_topics": [],
+      "board_available": false,
+      "mentor_ids": [],
       "codex_entry_id": "geo_harbor_fish_lane"
     },
     {
@@ -10265,6 +10731,10 @@
         "护送跑商",
         "海猎采珠"
       ],
+      "service_tags": [],
+      "rumor_topics": [],
+      "board_available": false,
+      "mentor_ids": [],
       "codex_entry_id": "geo_harbor_salt_house"
     },
     {
@@ -10303,6 +10773,10 @@
         "护送跑商",
         "海猎采珠"
       ],
+      "service_tags": [],
+      "rumor_topics": [],
+      "board_available": false,
+      "mentor_ids": [],
       "codex_entry_id": "geo_harbor_net_field"
     },
     {
@@ -10343,6 +10817,10 @@
         "护送跑商",
         "海猎采珠"
       ],
+      "service_tags": [],
+      "rumor_topics": [],
+      "board_available": false,
+      "mentor_ids": [],
       "codex_entry_id": "geo_harbor_cliff_ladder"
     },
     {
@@ -10380,6 +10858,10 @@
         "护送跑商",
         "海猎采珠"
       ],
+      "service_tags": [],
+      "rumor_topics": [],
+      "board_available": false,
+      "mentor_ids": [],
       "codex_entry_id": "geo_harbor_drift_shore"
     },
     {
@@ -10418,6 +10900,10 @@
         "护送跑商",
         "海猎采珠"
       ],
+      "service_tags": [],
+      "rumor_topics": [],
+      "board_available": false,
+      "mentor_ids": [],
       "codex_entry_id": "geo_harbor_tide_pool"
     },
     {
@@ -10460,6 +10946,10 @@
         "海猎采珠",
         "残区探禁"
       ],
+      "service_tags": [],
+      "rumor_topics": [],
+      "board_available": false,
+      "mentor_ids": [],
       "codex_entry_id": "geo_harbor_reef_steps"
     },
     {
@@ -10498,6 +10988,10 @@
         "护送跑商",
         "海猎采珠"
       ],
+      "service_tags": [],
+      "rumor_topics": [],
+      "board_available": false,
+      "mentor_ids": [],
       "codex_entry_id": "geo_harbor_lamp_tower"
     },
     {
@@ -10542,6 +11036,10 @@
         "海猎采珠",
         "残区探禁"
       ],
+      "service_tags": [],
+      "rumor_topics": [],
+      "board_available": false,
+      "mentor_ids": [],
       "codex_entry_id": "geo_harbor_hidden_cove"
     },
     {
@@ -10581,6 +11079,10 @@
         "护送跑商",
         "海猎采珠"
       ],
+      "service_tags": [],
+      "rumor_topics": [],
+      "board_available": false,
+      "mentor_ids": [],
       "codex_entry_id": "geo_outer_isles_wharf"
     },
     {
@@ -10624,6 +11126,10 @@
         "护送跑商",
         "海猎采珠"
       ],
+      "service_tags": [],
+      "rumor_topics": [],
+      "board_available": false,
+      "mentor_ids": [],
       "codex_entry_id": "geo_outer_isles_market"
     },
     {
@@ -10663,6 +11169,10 @@
       "loop_tags": [
         "海猎采珠"
       ],
+      "service_tags": [],
+      "rumor_topics": [],
+      "board_available": false,
+      "mentor_ids": [],
       "codex_entry_id": "geo_outer_isles_shell_beach"
     },
     {
@@ -10697,6 +11207,10 @@
       "loop_tags": [
         "海猎采珠"
       ],
+      "service_tags": [],
+      "rumor_topics": [],
+      "board_available": false,
+      "mentor_ids": [],
       "codex_entry_id": "geo_outer_isles_palm_ridge"
     },
     {
@@ -10737,6 +11251,10 @@
       "loop_tags": [
         "海猎采珠"
       ],
+      "service_tags": [],
+      "rumor_topics": [],
+      "board_available": false,
+      "mentor_ids": [],
       "codex_entry_id": "geo_outer_isles_storm_tree"
     },
     {
@@ -10774,6 +11292,10 @@
       "loop_tags": [
         "海猎采珠"
       ],
+      "service_tags": [],
+      "rumor_topics": [],
+      "board_available": false,
+      "mentor_ids": [],
       "codex_entry_id": "geo_outer_isles_lagoon"
     },
     {
@@ -10810,6 +11332,10 @@
       "loop_tags": [
         "海猎采珠"
       ],
+      "service_tags": [],
+      "rumor_topics": [],
+      "board_available": false,
+      "mentor_ids": [],
       "codex_entry_id": "geo_outer_isles_coral_path"
     },
     {
@@ -10856,6 +11382,10 @@
         "海猎采珠",
         "残区探禁"
       ],
+      "service_tags": [],
+      "rumor_topics": [],
+      "board_available": false,
+      "mentor_ids": [],
       "codex_entry_id": "geo_outer_isles_black_reef"
     },
     {
@@ -10894,6 +11424,10 @@
         "海猎采珠",
         "残区探禁"
       ],
+      "service_tags": [],
+      "rumor_topics": [],
+      "board_available": false,
+      "mentor_ids": [],
       "codex_entry_id": "geo_outer_isles_moon_cove"
     },
     {
@@ -10938,6 +11472,10 @@
       "loop_tags": [
         "海猎采珠"
       ],
+      "service_tags": [],
+      "rumor_topics": [],
+      "board_available": false,
+      "mentor_ids": [],
       "codex_entry_id": "geo_outer_isles_watch_altar"
     },
     {
@@ -10978,6 +11516,10 @@
       "loop_tags": [
         "残区探禁"
       ],
+      "service_tags": [],
+      "rumor_topics": [],
+      "board_available": false,
+      "mentor_ids": [],
       "codex_entry_id": "geo_xutian_void_rift"
     },
     {
@@ -11015,6 +11557,10 @@
       "loop_tags": [
         "残区探禁"
       ],
+      "service_tags": [],
+      "rumor_topics": [],
+      "board_available": false,
+      "mentor_ids": [],
       "codex_entry_id": "geo_xutian_ash_corridor"
     },
     {
@@ -11052,6 +11598,10 @@
       "loop_tags": [
         "残区探禁"
       ],
+      "service_tags": [],
+      "rumor_topics": [],
+      "board_available": false,
+      "mentor_ids": [],
       "codex_entry_id": "geo_xutian_shard_steps"
     },
     {
@@ -11095,6 +11645,10 @@
       "loop_tags": [
         "残区探禁"
       ],
+      "service_tags": [],
+      "rumor_topics": [],
+      "board_available": false,
+      "mentor_ids": [],
       "codex_entry_id": "geo_xutian_rune_garden"
     },
     {
@@ -11129,6 +11683,10 @@
       "loop_tags": [
         "残区探禁"
       ],
+      "service_tags": [],
+      "rumor_topics": [],
+      "board_available": false,
+      "mentor_ids": [],
       "codex_entry_id": "geo_xutian_broken_stair"
     },
     {
@@ -11166,6 +11724,10 @@
       "loop_tags": [
         "残区探禁"
       ],
+      "service_tags": [],
+      "rumor_topics": [],
+      "board_available": false,
+      "mentor_ids": [],
       "codex_entry_id": "geo_xutian_shadow_pool"
     },
     {
@@ -11205,6 +11767,10 @@
       "loop_tags": [
         "残区探禁"
       ],
+      "service_tags": [],
+      "rumor_topics": [],
+      "board_available": false,
+      "mentor_ids": [],
       "codex_entry_id": "geo_xutian_silent_vault"
     },
     {
@@ -11243,6 +11809,10 @@
       "loop_tags": [
         "残区探禁"
       ],
+      "service_tags": [],
+      "rumor_topics": [],
+      "board_available": false,
+      "mentor_ids": [],
       "codex_entry_id": "geo_xutian_crystal_bridge"
     },
     {
@@ -11283,6 +11853,10 @@
       "loop_tags": [
         "残区探禁"
       ],
+      "service_tags": [],
+      "rumor_topics": [],
+      "board_available": false,
+      "mentor_ids": [],
       "codex_entry_id": "geo_xutian_star_pit"
     },
     {
@@ -11326,6 +11900,10 @@
       "loop_tags": [
         "残区探禁"
       ],
+      "service_tags": [],
+      "rumor_topics": [],
+      "board_available": false,
+      "mentor_ids": [],
       "codex_entry_id": "geo_xutian_endless_wall"
     }
   ],
@@ -12105,6 +12683,733 @@
       "scene_id": "xutian_void_rift",
       "effect_summary": "降低裂隙场景的持续损耗。",
       "codex_entry_id": "formation_void_rift_array"
+    }
+  ],
+  "help_topics": [
+    {
+      "topic_id": "newbie",
+      "title": "新手入世",
+      "summary": "从开号到站稳脚跟，先学会看、听、问、走。",
+      "body_lines": [
+        "你现在玩的是共享世界修仙 MUD，不是单线剧情闯关。",
+        "先做三件事：look 看场景、listen 听风声、talk/ask 找人问路。",
+        "看不懂时先输入 help commands 或 help work。",
+        "初期最稳的节奏是：看 -> 问 -> 接差事 -> 跑一圈 -> 回来交事。"
+      ],
+      "keywords": [
+        "新手",
+        "入门",
+        "上手"
+      ],
+      "related_commands": [
+        "look",
+        "listen",
+        "talk",
+        "ask",
+        "board",
+        "work",
+        "journal"
+      ],
+      "inline_commands": [
+        "look",
+        "listen",
+        "help commands",
+        "board",
+        "work"
+      ],
+      "category": "基础"
+    },
+    {
+      "topic_id": "commands",
+      "title": "常用命令",
+      "summary": "高频命令以观察、问讯、事务、修炼四组为核心。",
+      "body_lines": [
+        "观察：look / here / listen / map / rumor / who",
+        "问讯：talk <人物> / ask <人物> about rumor / inspect <目标>",
+        "事务：board / work / duty / tasks / journal / claim",
+        "修炼：score / hp / skills / spells / practice <技能> / meditate / breakthrough",
+        "社交：say / chat / tell / reply / emote / team",
+        "行动：go <方向> / fight <目标> / cast <法术> <目标> / loot <物品> / harvest <资源>"
+      ],
+      "keywords": [
+        "命令",
+        "commands",
+        "指令"
+      ],
+      "related_commands": [
+        "help",
+        "commands",
+        "look",
+        "talk",
+        "board",
+        "work",
+        "score"
+      ],
+      "inline_commands": [
+        "look",
+        "talk 厉飞雨",
+        "ask 厉飞雨 about rumor",
+        "board",
+        "work"
+      ],
+      "category": "基础"
+    },
+    {
+      "topic_id": "channels",
+      "title": "频道与说话",
+      "summary": "世界、当地、队伍、门派和私聊分开走，别把所有话都扔到一个口子里。",
+      "body_lines": [
+        "say：只让同场景听见，适合眼前交谈。",
+        "chat world：发到世界频道，适合问路、喊人、收消息。",
+        "chat team：发到队伍频道，适合组队协作。",
+        "tell <玩家> <内容>：私聊。",
+        "reply <内容>：回复最近联系你的玩家。"
+      ],
+      "keywords": [
+        "频道",
+        "聊天",
+        "chat",
+        "say",
+        "tell"
+      ],
+      "related_commands": [
+        "say",
+        "chat",
+        "tell",
+        "reply",
+        "team"
+      ],
+      "inline_commands": [
+        "chat world 有人在太南谷吗",
+        "say 在下初来乍到",
+        "tell hanli 道友可在"
+      ],
+      "category": "社交"
+    },
+    {
+      "topic_id": "work",
+      "title": "工作与营生",
+      "summary": "工作是稳定收入线，不一定华丽，但能让你稳稳活到筑基准备期。",
+      "body_lines": [
+        "先用 work 看当前场景可做的工作。",
+        "工作通常绑定一个发起人、一段路和一类产出。",
+        "低风险工作适合积累灵石、药材、熟练度和人情。",
+        "如果 board 更像公开委托，那么 work 更像你此刻手边就能开的营生。"
+      ],
+      "keywords": [
+        "工作",
+        "营生",
+        "活路"
+      ],
+      "related_commands": [
+        "work",
+        "board",
+        "travel",
+        "journal"
+      ],
+      "inline_commands": [
+        "work",
+        "board",
+        "travel"
+      ],
+      "category": "循环"
+    },
+    {
+      "topic_id": "freequest",
+      "title": "公众任务",
+      "summary": "公众任务靠风声和板子驱动，不是只有主线才算任务。",
+      "body_lines": [
+        "先找有风声的人 talk，然后 ask <人物> about rumor。",
+        "有些任务会直接挂在 board 上，有些则藏在 NPC 话里。",
+        "公众任务讲究一轮一轮跑：问讯 -> 接线 -> 执行 -> 提交 -> 听后续风声。"
+      ],
+      "keywords": [
+        "公众任务",
+        "委托",
+        "风声"
+      ],
+      "related_commands": [
+        "ask",
+        "board",
+        "journal",
+        "tasks"
+      ],
+      "inline_commands": [
+        "ask 墨府总管 about rumor",
+        "board",
+        "journal"
+      ],
+      "category": "循环"
+    },
+    {
+      "topic_id": "board",
+      "title": "留言板",
+      "summary": "有板子的地方不仅能看差事，也能看房间里留下的帖子。",
+      "body_lines": [
+        "board：看当前房间的公开委托和近帖。",
+        "read <编号>：读一条帖子。",
+        "post <题目>=<正文>：在当前板子留言。",
+        "discard <编号>：把某条帖子从你自己的视野里收起。"
+      ],
+      "keywords": [
+        "留言板",
+        "board",
+        "read",
+        "post"
+      ],
+      "related_commands": [
+        "board",
+        "read",
+        "post",
+        "discard"
+      ],
+      "inline_commands": [
+        "board",
+        "post 收药=后湾收一批盐壳与海灵藻",
+        "read 1"
+      ],
+      "category": "社交"
+    },
+    {
+      "topic_id": "rank",
+      "title": "排行与头衔",
+      "summary": "排行榜不是摆设，它会告诉你这个服现在最值钱的路数是什么。",
+      "body_lines": [
+        "rank：查看当前默认榜单。",
+        "rank wealth / rank alchemy / rank travel：查看指定榜。",
+        "首席榜只取各门派当前最强一人，偏身份荣誉。",
+        "财富榜、丹道榜、游历榜更适合观察服内生态。"
+      ],
+      "keywords": [
+        "榜",
+        "排行",
+        "rank"
+      ],
+      "related_commands": [
+        "rank",
+        "family",
+        "duty"
+      ],
+      "inline_commands": [
+        "rank",
+        "rank wealth",
+        "rank travel"
+      ],
+      "category": "成长"
+    },
+    {
+      "topic_id": "sects",
+      "title": "散修与门派",
+      "summary": "这服不是强制门派服，散修也能长期玩。",
+      "body_lines": [
+        "散修线更自由，靠坊市、风声、采药、跑商、海猎慢慢起势。",
+        "七玄门偏凡俗起步与江湖过渡。",
+        "黄枫谷偏药园、法修和宗门规矩。",
+        "灵兽山偏灵兽、灵虫、采药和照料工作。"
+      ],
+      "keywords": [
+        "门派",
+        "散修",
+        "宗门"
+      ],
+      "related_commands": [
+        "family",
+        "duty",
+        "join",
+        "contribute"
+      ],
+      "inline_commands": [
+        "family",
+        "duty",
+        "join huangfeng_valley"
+      ],
+      "category": "身份"
+    },
+    {
+      "topic_id": "map_tiannan",
+      "title": "天南舆图",
+      "summary": "天南一线是从凡俗走向宗门和海路的主交通带。",
+      "body_lines": [
+        "七玄门与嘉元城适合起步和熟悉命令。",
+        "太南谷适合换消息、接风声、学阵法。",
+        "黄枫谷和灵兽山开始把你推向正式身份线。",
+        "血禁和天南港则把你往更高风险的世界推过去。"
+      ],
+      "keywords": [
+        "天南",
+        "地图",
+        "舆图"
+      ],
+      "related_commands": [
+        "map",
+        "travel",
+        "rumor"
+      ],
+      "inline_commands": [
+        "map",
+        "travel",
+        "rumor"
+      ],
+      "category": "地理"
+    },
+    {
+      "topic_id": "map_chaos_sea",
+      "title": "乱星海舆图",
+      "summary": "乱星海不是一张图走到底，而是要学会认潮、认礁、认风暴。",
+      "body_lines": [
+        "先从天南港和近港开始，别一上来就往深海闯。",
+        "礁影浅滩和群岛小埠是海猎、采珠与跑货的基础盘。",
+        "风暴航道和残碑孤岛则开始把人拉向虚天殿线。"
+      ],
+      "keywords": [
+        "乱星海",
+        "海路",
+        "航道"
+      ],
+      "related_commands": [
+        "map",
+        "travel",
+        "work",
+        "board"
+      ],
+      "inline_commands": [
+        "travel",
+        "work",
+        "board"
+      ],
+      "category": "地理"
+    }
+  ],
+  "jobs": [
+    {
+      "job_id": "qixuan_runner",
+      "title": "外场跑腿",
+      "kind": "工作任务",
+      "scene_id": "qixuan_square",
+      "issuer_npc_id": "li_feiyu",
+      "submit_npc_id": "li_feiyu",
+      "summary": "先替外场弟子跑几趟腿，熟悉山门和嘉元城之间的脚程。",
+      "description": "先替外场弟子跑几趟腿，熟悉山门和嘉元城之间的脚程。",
+      "requirements": "会看路、会找人、会交东西。",
+      "reward_summary": "少量灵石、江湖人情、七玄门熟路。",
+      "command_hint": "talk 厉飞雨 / go east / journal",
+      "repeatable": true,
+      "route_tag": "qixuan_gate",
+      "service_tag": "mentor",
+      "related_quest_id": "backslope_wolf_skin"
+    },
+    {
+      "job_id": "market_errand",
+      "title": "坊市采办",
+      "kind": "公众任务",
+      "scene_id": "jiayuan_market",
+      "issuer_npc_id": "mofu_steward",
+      "submit_npc_id": "mofu_steward",
+      "summary": "嘉元城集市里最不缺的就是跑腿、采买和顺手捎消息的人。",
+      "description": "嘉元城集市里最不缺的就是跑腿、采买和顺手捎消息的人。",
+      "requirements": "认得摊位、认得药材、认得谁说话算数。",
+      "reward_summary": "灵石、基础药材、集市门路。",
+      "command_hint": "ask 墨府总管 about rumor / board / buy",
+      "repeatable": true,
+      "route_tag": "loose_cultivator",
+      "service_tag": "board",
+      "related_quest_id": "qixuan_herb"
+    },
+    {
+      "job_id": "fair_copying",
+      "title": "小会抄录",
+      "kind": "工作任务",
+      "scene_id": "tainan_fair",
+      "issuer_npc_id": "old_book_peddler",
+      "submit_npc_id": "old_book_peddler",
+      "summary": "太南小会里总有人愿花钱买一份抄录得清楚的消息。",
+      "description": "太南小会里总有人愿花钱买一份抄录得清楚的消息。",
+      "requirements": "肯听、肯记、肯来回跑。",
+      "reward_summary": "灵石、散修声望、更多风声入口。",
+      "command_hint": "ask 旧书摊 about rumor / work / journal",
+      "repeatable": true,
+      "route_tag": "loose_cultivator",
+      "service_tag": "rumor",
+      "related_quest_id": "fair_rumor_packet"
+    },
+    {
+      "job_id": "huangfeng_patrol",
+      "title": "外营巡查",
+      "kind": "门派事务",
+      "scene_id": "huangfeng_outpost",
+      "issuer_npc_id": "huangfeng_steward",
+      "submit_npc_id": "huangfeng_steward",
+      "summary": "黄枫谷外营最看重稳字，巡查、送信、验货都算事务。",
+      "description": "黄枫谷外营最看重稳字，巡查、送信、验货都算事务。",
+      "requirements": "先把差事办稳，再谈更深的宗门机缘。",
+      "reward_summary": "贡献、外营信任、药园与藏经线入口。",
+      "command_hint": "duty / talk 黄枫谷执事 / submit huangfeng_letter",
+      "repeatable": true,
+      "route_tag": "huangfeng_valley",
+      "service_tag": "sect",
+      "related_quest_id": "huangfeng_letter"
+    },
+    {
+      "job_id": "spirit_feed_duty",
+      "title": "兽栏照料",
+      "kind": "门派事务",
+      "scene_id": "spirit_beast_outer_gate",
+      "issuer_npc_id": "spirit_beast_steward",
+      "submit_npc_id": "spirit_beast_steward",
+      "summary": "灵兽山最基本也最实在的活，就是先把灵兽和虫圃照看好。",
+      "description": "灵兽山最基本也最实在的活，就是先把灵兽和虫圃照看好。",
+      "requirements": "会送草料、会看灵兽脾气、愿意重复做。",
+      "reward_summary": "贡献、驭兽好感、灵虫与采药线入口。",
+      "command_hint": "work / duty / talk 灵兽山管事",
+      "repeatable": true,
+      "route_tag": "spirit_beast_mountain",
+      "service_tag": "sect",
+      "related_quest_id": "spirit_feed_task"
+    },
+    {
+      "job_id": "harbor_portage",
+      "title": "港口跑货",
+      "kind": "工作任务",
+      "scene_id": "tiannan_harbor",
+      "issuer_npc_id": "seaport_broker",
+      "submit_npc_id": "seaport_broker",
+      "summary": "港口跑货最讲究认人认船认潮水，做熟了就是一条稳收入线。",
+      "description": "港口跑货最讲究认人认船认潮水，做熟了就是一条稳收入线。",
+      "requirements": "能跑港区、认海货、不怕和船家打交道。",
+      "reward_summary": "灵石、海路门路、远航前置信用。",
+      "command_hint": "ask 海商牙人 about rumor / work / travel",
+      "repeatable": true,
+      "route_tag": "chaos_sea_route",
+      "service_tag": "trade",
+      "related_quest_id": "chaos_sea_chart"
+    },
+    {
+      "job_id": "backbay_shellwork",
+      "title": "后湾摸壳",
+      "kind": "工作任务",
+      "scene_id": "harbor_backbay",
+      "issuer_npc_id": "backbay_fisher_wu",
+      "submit_npc_id": "backbay_fisher_wu",
+      "summary": "后湾潮线是海猎新手最稳的练手区，摸壳、拣藻、看潮都算活。",
+      "description": "后湾潮线是海猎新手最稳的练手区，摸壳、拣藻、看潮都算活。",
+      "requirements": "懂得见好就收，别一头扎进暗流里。",
+      "reward_summary": "海材、后湾声望、采珠入门。",
+      "command_hint": "work / harvest / submit harbor_shell_task",
+      "repeatable": true,
+      "route_tag": "chaos_sea_route",
+      "service_tag": "sea",
+      "related_quest_id": "harbor_shell_task"
+    },
+    {
+      "job_id": "sea_hunt_contract",
+      "title": "近海海猎",
+      "kind": "工作任务",
+      "scene_id": "chaos_sea_port",
+      "issuer_npc_id": "captain_qu",
+      "submit_npc_id": "captain_qu",
+      "summary": "近港和群岛之间总有人缺会下水、会看潮、会收货的人。",
+      "description": "近港和群岛之间总有人缺会下水、会看潮、会收货的人。",
+      "requirements": "有一点战斗力，也有一点收手的分寸。",
+      "reward_summary": "海材、灵石、远航好感。",
+      "command_hint": "work / wanted / travel",
+      "repeatable": true,
+      "route_tag": "chaos_sea_route",
+      "service_tag": "sea",
+      "related_quest_id": "captain_supply"
+    },
+    {
+      "job_id": "xutian_probe",
+      "title": "残殿探线",
+      "kind": "高风险机会任务",
+      "scene_id": "xutian_hall",
+      "issuer_npc_id": "palace_remnant_spirit",
+      "submit_npc_id": "palace_remnant_spirit",
+      "summary": "虚天殿不缺想进去的人，缺的是能活着把线索带出来的人。",
+      "description": "虚天殿不缺想进去的人，缺的是能活着把线索带出来的人。",
+      "requirements": "肯冒险，也肯先读懂禁制提示。",
+      "reward_summary": "筑基前置材料、残钥线索、深层入口。",
+      "command_hint": "help board / board / read 1 / inspect 守门残灵",
+      "repeatable": true,
+      "route_tag": "xutian_arc",
+      "service_tag": "danger",
+      "related_quest_id": "xutian_key"
+    }
+  ],
+  "identity_tracks": [
+    {
+      "track_id": "loose_cultivator",
+      "name": "散修路",
+      "kind": "loose",
+      "ranks": [
+        "行脚散修",
+        "游方散人",
+        "采真客",
+        "洞府之主"
+      ],
+      "description": "散修不靠山门，也能靠风声、坊市、海路和手艺慢慢起势。",
+      "mentor_ids": [
+        "xu_wanderer",
+        "loose_master_wen",
+        "seaport_broker"
+      ],
+      "service_unlocks": [
+        "rumor",
+        "board",
+        "trade",
+        "travel"
+      ]
+    },
+    {
+      "track_id": "qixuan_gate",
+      "name": "七玄门",
+      "kind": "sect",
+      "ranks": [
+        "记名",
+        "外门",
+        "内门",
+        "执事"
+      ],
+      "description": "七玄门适合作为凡俗江湖与修行世界之间的稳妥起步点。",
+      "mentor_ids": [
+        "li_feiyu",
+        "han_zhanglao"
+      ],
+      "service_unlocks": [
+        "mentor",
+        "board",
+        "duty"
+      ]
+    },
+    {
+      "track_id": "huangfeng_valley",
+      "name": "黄枫谷",
+      "kind": "sect",
+      "ranks": [
+        "记名",
+        "外门",
+        "内门",
+        "执事"
+      ],
+      "description": "黄枫谷重规矩、药园与基础功法，是炼气到筑基准备的重要正道路线。",
+      "mentor_ids": [
+        "huangfeng_steward",
+        "elder_ma",
+        "medicine_deacon"
+      ],
+      "service_unlocks": [
+        "mentor",
+        "sect",
+        "alchemy",
+        "board"
+      ]
+    },
+    {
+      "track_id": "spirit_beast_mountain",
+      "name": "灵兽山",
+      "kind": "sect",
+      "ranks": [
+        "记名",
+        "外门",
+        "内门",
+        "执事"
+      ],
+      "description": "灵兽山偏向灵兽、灵虫、照料和采药，是资源循环感最强的一条门派线。",
+      "mentor_ids": [
+        "spirit_beast_steward",
+        "beast_feeder_zhou"
+      ],
+      "service_unlocks": [
+        "mentor",
+        "sect",
+        "gather",
+        "board"
+      ]
+    }
+  ],
+  "rumor_sources": [
+    {
+      "source_id": "qixuan_li_rumor",
+      "scene_id": "qixuan_square",
+      "npc_id": "li_feiyu",
+      "topic": "rumor",
+      "summary": "厉飞雨知道哪些人只是嘴上说想修行，哪些人是真的敢把脚迈出去。",
+      "body_lines": [
+        "厉飞雨低声道：先别急着想着拜山入谷，先把山门外这一圈腿跑熟，才知道自己算不算真能吃这口饭。",
+        "他说得很直白：嘉元城那边常有差事，办稳了，七玄门里看你的人自然会多。"
+      ],
+      "job_ids": [
+        "qixuan_runner"
+      ],
+      "quest_ids": [
+        "backslope_wolf_skin"
+      ],
+      "unlock_flags": []
+    },
+    {
+      "source_id": "jiayuan_market_rumor",
+      "scene_id": "jiayuan_market",
+      "npc_id": "mofu_steward",
+      "topic": "rumor",
+      "summary": "嘉元城的风声从来不只在嘴上，也在货、在人情和谁先跑到位里。",
+      "body_lines": [
+        "墨府总管抬眼道：会跑腿的人到处都有，可会把药、信、消息都送准的人不多。",
+        "他指了指集市深处：你若想在城里混熟，先把眼前这几桩小事办利索。"
+      ],
+      "job_ids": [
+        "market_errand"
+      ],
+      "quest_ids": [
+        "qixuan_herb",
+        "mofu_guest_token"
+      ],
+      "unlock_flags": []
+    },
+    {
+      "source_id": "tainan_book_rumor",
+      "scene_id": "tainan_fair",
+      "npc_id": "old_book_peddler",
+      "topic": "rumor",
+      "summary": "太南小会最值钱的不是货，而是谁先把一条风声记牢。",
+      "body_lines": [
+        "旧书摊贩咳了一声：小会里人人都说自己消息灵，可真正值钱的，是你肯不肯把零碎话拼成一条路。",
+        "他说若你愿意帮他抄、帮他记，他自然愿让你更早看到下一层风向。"
+      ],
+      "job_ids": [
+        "fair_copying"
+      ],
+      "quest_ids": [
+        "fair_rumor_packet"
+      ],
+      "unlock_flags": []
+    },
+    {
+      "source_id": "tainan_xin_rumor",
+      "scene_id": "xin_house",
+      "npc_id": "xin_ruyin",
+      "topic": "阵法风声",
+      "summary": "辛如音愿意讲阵法，但只对肯做事的人讲。",
+      "body_lines": [
+        "辛如音轻声道：阵法不是听几句就会的，你若愿意替我找材料、送阵旗，我自然会把该讲的口子打开。",
+        "她提到太南谷外与血禁边上最近都不太安稳，阵禁和异物的需求都在变。"
+      ],
+      "job_ids": [],
+      "quest_ids": [
+        "tainan_snake",
+        "tainan_array_flag"
+      ],
+      "unlock_flags": []
+    },
+    {
+      "source_id": "huangfeng_steward_rumor",
+      "scene_id": "huangfeng_outpost",
+      "npc_id": "huangfeng_steward",
+      "topic": "rumor",
+      "summary": "黄枫谷外营的路，不是靠嘴说进去的。",
+      "body_lines": [
+        "黄枫谷执事淡淡道：外营先看你办事稳不稳，再看你心性定不定。",
+        "若想继续往药台和石廊走，先把外营手头的差事做干净。"
+      ],
+      "job_ids": [
+        "huangfeng_patrol"
+      ],
+      "quest_ids": [
+        "huangfeng_letter",
+        "medicine_moss"
+      ],
+      "unlock_flags": []
+    },
+    {
+      "source_id": "spirit_steward_rumor",
+      "scene_id": "spirit_beast_outer_gate",
+      "npc_id": "spirit_beast_steward",
+      "topic": "rumor",
+      "summary": "灵兽山外门先看你会不会照看活物，再决定值不值得教你更深的法子。",
+      "body_lines": [
+        "灵兽山管事道：灵兽、灵虫、药圃都是活东西，心一急就全乱。",
+        "想在山里站稳，先从最细碎的照料活做起。"
+      ],
+      "job_ids": [
+        "spirit_feed_duty"
+      ],
+      "quest_ids": [
+        "spirit_feed_task",
+        "spirit_bug_task"
+      ],
+      "unlock_flags": []
+    },
+    {
+      "source_id": "tiannan_broker_rumor",
+      "scene_id": "tiannan_harbor",
+      "npc_id": "seaport_broker",
+      "topic": "rumor",
+      "summary": "天南港的真正门路，不在码头喧闹处，而在谁肯把活先做出来。",
+      "body_lines": [
+        "海商牙人压低声音：想上远船，先把港口这几条小线跑熟，别让人觉得你连潮水都认不清。",
+        "他说近来乱星海风向古怪，能提前一步补齐物资的人，总能多活一程。"
+      ],
+      "job_ids": [
+        "harbor_portage"
+      ],
+      "quest_ids": [
+        "chaos_sea_chart",
+        "ruins_old_map"
+      ],
+      "unlock_flags": []
+    },
+    {
+      "source_id": "backbay_wu_rumor",
+      "scene_id": "harbor_backbay",
+      "npc_id": "backbay_fisher_wu",
+      "topic": "rumor",
+      "summary": "后湾是新手海猎的试手地，也是最容易让人轻敌的地方。",
+      "body_lines": [
+        "吴老渔道：后湾看着不深，可暗流、礁缝、壳妖都在等人粗心那一下。",
+        "先从摸壳、拣藻和看潮练起，别急着把自己当老海手。"
+      ],
+      "job_ids": [
+        "backbay_shellwork"
+      ],
+      "quest_ids": [
+        "harbor_shell_task"
+      ],
+      "unlock_flags": []
+    },
+    {
+      "source_id": "chaos_captain_rumor",
+      "scene_id": "chaos_sea_port",
+      "npc_id": "captain_qu",
+      "topic": "rumor",
+      "summary": "曲船主对谁能在海上活下来这件事，看得比谁都明白。",
+      "body_lines": [
+        "曲船主只说了一句：近海不教人长本事，只教人先别死。",
+        "若你真想往更深处去，就先把近港、群岛和补给活干稳。"
+      ],
+      "job_ids": [
+        "sea_hunt_contract"
+      ],
+      "quest_ids": [
+        "captain_supply",
+        "demon_fish_core"
+      ],
+      "unlock_flags": []
+    },
+    {
+      "source_id": "xutian_spirit_rumor",
+      "scene_id": "xutian_hall",
+      "npc_id": "palace_remnant_spirit",
+      "topic": "rumor",
+      "summary": "虚天殿里的残灵不会白白给路，但会给肯看懂提示的人留缝。",
+      "body_lines": [
+        "守门残灵的声音像从铜门后慢慢渗出来：贪者止于门外，识禁者方能再前。",
+        "它提醒你，这里不只是打怪取物，更要学会读板子、看残纹、认哪一步是真的在给你路。"
+      ],
+      "job_ids": [
+        "xutian_probe"
+      ],
+      "quest_ids": [
+        "xutian_key"
+      ],
+      "unlock_flags": []
     }
   ],
   "resource_nodes": [

@@ -39,6 +39,10 @@ public:
     std::vector<MudCodexEntryConfig> codex_entries_for_category(const std::string& category) const;
     std::vector<const MudCodexEntryConfig*> codex_entries_for_unlock(const std::string& trigger,
                                                                      const std::string& target_id) const;
+    std::vector<MudHelpTopicConfig> help_topics() const;
+    std::vector<const MudJobConfig*> jobs_for_scene(const std::string& scene_id) const;
+    std::vector<const MudRumorSourceConfig*> rumor_sources_for_scene(const std::string& scene_id) const;
+    std::vector<const MudRumorSourceConfig*> rumor_sources_for_npc(const std::string& npc_id) const;
 
     const MudOriginConfig* find_origin(const std::string& origin_id) const;
     const MudBackgroundConfig* find_background(const std::string& background_id) const;
@@ -57,6 +61,10 @@ public:
     const MudGroundLootConfig* find_ground_loot(const std::string& loot_id) const;
     const MudHazardConfig* find_hazard(const std::string& hazard_id) const;
     const MudCodexEntryConfig* find_codex_entry(const std::string& entry_id) const;
+    const MudHelpTopicConfig* find_help_topic(const std::string& topic_id) const;
+    const MudJobConfig* find_job(const std::string& job_id) const;
+    const MudIdentityTrackConfig* find_identity_track(const std::string& track_id) const;
+    const MudRumorSourceConfig* find_rumor_source(const std::string& source_id) const;
 
 private:
     MudWorldDefaults m_defaults;
@@ -81,5 +89,9 @@ private:
     std::unordered_map<std::string, MudHazardConfig> m_hazards;
     std::unordered_map<std::string, MudCodexEntryConfig> m_codex_entries;
     std::unordered_map<std::string, std::vector<std::string>> m_codex_unlock_index;
+    std::unordered_map<std::string, MudHelpTopicConfig> m_help_topics;
+    std::unordered_map<std::string, MudJobConfig> m_jobs;
+    std::unordered_map<std::string, MudIdentityTrackConfig> m_identity_tracks;
+    std::unordered_map<std::string, MudRumorSourceConfig> m_rumor_sources;
     bool m_ready = false;
 };

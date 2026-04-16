@@ -18,6 +18,9 @@ message QuestSummary {
   int32 progress = 4;
   int32 target = 5;
   string description = 6;
+  string quest_kind = 7;
+  bool repeatable = 8;
+  string issuer_hint = 9;
 }
 
 message CultivationState {
@@ -115,6 +118,10 @@ message CommandDefinition {
   string composer_mode = 6;
   string chat_channel = 7;
   bool execute_immediately = 8;
+  repeated string aliases = 9;
+  string usage = 10;
+  string target_hint = 11;
+  string visibility_scope = 12;
 }
 
 message SummaryEntry {
@@ -138,6 +145,9 @@ message StructuredPanel {
   string compact_title = 7;
   repeated string ascii_lines = 8;
   repeated string inline_commands = 9;
+  string document_id = 10;
+  repeated string body_lines = 11;
+  string panel_kind = 12;
 }
 
 message RouteSummary {
@@ -311,6 +321,10 @@ message SceneSnapshot {
   string scene_aftertaste = 27;
   repeated string presence_board = 28;
   repeated string exit_board = 29;
+  repeated string service_tags = 30;
+  repeated string rumor_topics = 31;
+  bool board_available = 32;
+  repeated string mentor_ids = 33;
 }
 
 message PlayerSnapshot {
@@ -357,6 +371,11 @@ message PlayerSnapshot {
   string status_line_text = 41;
   string subprompt_text = 42;
   repeated string available_short_commands = 43;
+  string identity_track = 44;
+  int32 rank_level = 45;
+  string contribution_state = 46;
+  string reputation_state = 47;
+  int32 unread_board_count = 48;
 }
 
 message GameEvent {

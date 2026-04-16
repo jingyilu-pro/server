@@ -7,6 +7,9 @@ import charactersSects from '../doc/mud/source/characters_sects.mjs';
 import creaturesResources from '../doc/mud/source/creatures_resources.mjs';
 import itemsSystems from '../doc/mud/source/items_systems.mjs';
 import pureMudExpansion from '../doc/mud/source/pure_mud_shared_world.mjs';
+import mudHelpManual from '../doc/mud/source/mud_help_manual.mjs';
+import mudJobsRumors from '../doc/mud/source/mud_jobs_rumors.mjs';
+import mudTitlesFactions from '../doc/mud/source/mud_titles_factions.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -224,6 +227,10 @@ function normalizeSceneMetadata(scenes) {
     scene.pvp_enabled = Boolean(scene.pvp_enabled);
     scene.rumors = defaultRumors(scene);
     scene.loop_tags = defaultLoopTags(scene);
+    scene.service_tags = uniqueStrings((scene.service_tags ?? []).map((item) => String(item ?? '').trim()));
+    scene.rumor_topics = uniqueStrings((scene.rumor_topics ?? []).map((item) => String(item ?? '').trim()));
+    scene.board_available = Boolean(scene.board_available);
+    scene.mentor_ids = uniqueStrings((scene.mentor_ids ?? []).map((item) => String(item ?? '').trim()));
   }
 }
 
@@ -278,6 +285,38 @@ function applyScenePatches(scenes, patches) {
     }
     if (Array.isArray(patch.loop_tags) && patch.loop_tags.length > 0) {
       scene.loop_tags = uniqueStrings([...(scene.loop_tags ?? []), ...patch.loop_tags]);
+    }
+  }
+}
+
+function applySceneServices(scenes, services) {
+  if (!Array.isArray(services) || services.length === 0) {
+    return;
+  }
+
+  const sceneMap = buildIdMap(scenes, 'scene_id', 'scenes')
+  for (const patch of services) {
+    const sceneId = String(patch?.scene_id ?? '')
+    if (!sceneId) {
+      throw new Error('scene_services contains patch without scene_id')
+    }
+
+    const scene = sceneMap.get(sceneId)
+    if (!scene) {
+      throw new Error(`scene_services references missing scene: ${sceneId}`)
+    }
+
+    if (Array.isArray(patch.service_tags)) {
+      scene.service_tags = uniqueStrings([...(scene.service_tags ?? []), ...patch.service_tags])
+    }
+    if (Array.isArray(patch.rumor_topics)) {
+      scene.rumor_topics = uniqueStrings([...(scene.rumor_topics ?? []), ...patch.rumor_topics])
+    }
+    if (typeof patch.board_available === 'boolean') {
+      scene.board_available = patch.board_available
+    }
+    if (Array.isArray(patch.mentor_ids)) {
+      scene.mentor_ids = uniqueStrings([...(scene.mentor_ids ?? []), ...patch.mentor_ids])
     }
   }
 }
@@ -561,6 +600,10 @@ function validateRefs({
   recipes,
   formations,
   manualCodexEntries,
+  helpTopics,
+  jobs,
+  rumorSources,
+  identityTracks,
 }) {
   const sceneMap = buildIdMap(scenes, 'scene_id', 'scenes');
   const itemMap = buildIdMap(items, 'item_id', 'items');
@@ -576,6 +619,8 @@ function validateRefs({
   const originMap = buildIdMap(origins, 'origin_id', 'origins');
   const backgroundMap = buildIdMap(backgrounds, 'background_id', 'backgrounds');
   const formationMap = buildIdMap(formations, 'formation_id', 'formations');
+  const questMap = buildIdMap(quests, 'quest_id', 'quests');
+  const jobMap = buildIdMap(jobs, 'job_id', 'jobs');
 
   for (const scene of scenes) {
     for (const targetSceneId of Object.values(scene.exits ?? {})) {
@@ -583,6 +628,9 @@ function validateRefs({
     }
     for (const shopItemId of scene.shop_item_ids ?? []) {
       mustExist(itemMap, shopItemId, 'shop item');
+    }
+    for (const mentorId of scene.mentor_ids ?? []) {
+      mustExist(npcMap, mentorId, 'scene mentor');
     }
   }
 
@@ -614,7 +662,7 @@ function validateRefs({
       mustExist(sectMap, npc.sect_offer_id, 'npc sect offer');
     }
     for (const questId of npc.quest_ids ?? []) {
-      mustExist(buildIdMap(quests, 'quest_id', 'quests'), questId, 'npc quest');
+      mustExist(questMap, questId, 'npc quest');
     }
   }
 
@@ -698,6 +746,46 @@ function validateRefs({
     }
   }
 
+  for (const job of jobs) {
+    mustExist(sceneMap, job.scene_id, 'job scene');
+    if (job.issuer_npc_id) {
+      mustExist(npcMap, job.issuer_npc_id, 'job issuer');
+    }
+    if (job.submit_npc_id) {
+      mustExist(npcMap, job.submit_npc_id, 'job submit npc');
+    }
+    if (job.related_quest_id) {
+      mustExist(questMap, job.related_quest_id, 'job related quest');
+    }
+  }
+
+  for (const rumorSource of rumorSources) {
+    mustExist(sceneMap, rumorSource.scene_id, 'rumor scene');
+    if (rumorSource.npc_id) {
+      mustExist(npcMap, rumorSource.npc_id, 'rumor npc');
+    }
+    for (const jobId of rumorSource.job_ids ?? []) {
+      mustExist(jobMap, jobId, 'rumor job');
+    }
+    for (const questId of rumorSource.quest_ids ?? []) {
+      mustExist(questMap, questId, 'rumor quest');
+    }
+  }
+
+  for (const track of identityTracks) {
+    for (const mentorId of track.mentor_ids ?? []) {
+      mustExist(npcMap, mentorId, 'identity mentor');
+    }
+  }
+
+  for (const topic of helpTopics) {
+    for (const relatedCommand of topic.related_commands ?? []) {
+      if (!String(relatedCommand ?? '').trim()) {
+        throw new Error(`help topic ${topic.topic_id} contains empty related command`);
+      }
+    }
+  }
+
   return {
     sceneMap,
     itemMap,
@@ -713,6 +801,8 @@ function validateRefs({
     originMap,
     backgroundMap,
     formationMap,
+    questMap,
+    jobMap,
   };
 }
 
@@ -751,6 +841,41 @@ function buildMapPayload(scenes) {
     }
   }
   return { nodes, edges };
+}
+
+function validateP0Coverage({ scenes, helpTopics, jobs, rumorSources, identityTracks }) {
+  if ((helpTopics ?? []).length < 8) {
+    throw new Error(`P0 validation failed: expected at least 8 help topics, got ${helpTopics.length}`);
+  }
+
+  const requiredTrackIds = ['loose_cultivator', 'qixuan_gate', 'huangfeng_valley', 'spirit_beast_mountain'];
+  const presentTrackIds = new Set((identityTracks ?? []).map((track) => String(track.track_id ?? '').trim()));
+  for (const trackId of requiredTrackIds) {
+    if (!presentTrackIds.has(trackId)) {
+      throw new Error(`P0 validation failed: missing identity track ${trackId}`);
+    }
+  }
+
+  const workSceneIds = new Set(
+    (jobs ?? [])
+      .filter((job) => String(job.scene_id ?? '').trim())
+      .map((job) => String(job.scene_id ?? '').trim()),
+  );
+  if (workSceneIds.size < 7) {
+    throw new Error(`P0 validation failed: expected jobs in at least 7 scenes, got ${workSceneIds.size}`);
+  }
+
+  const rumorSceneIds = new Set((rumorSources ?? []).map((source) => String(source.scene_id ?? '').trim()).filter(Boolean));
+  const requiredRumorScenes = [
+    ['嘉元城', 'jiayuan_market'],
+    ['太南谷', 'tainan_fair'],
+    ['天南港', 'tiannan_harbor'],
+  ];
+  for (const [label, sceneId] of requiredRumorScenes) {
+    if (!rumorSceneIds.has(sceneId)) {
+      throw new Error(`P0 validation failed: missing rumor coverage for ${label} (${sceneId})`);
+    }
+  }
 }
 
 function renderWorldMapTs(mapPayload) {
@@ -847,8 +972,13 @@ async function main() {
     structuredClone(pureMudExpansion.formations ?? []),
   );
   const attributeDefaults = structuredClone(itemsSystems.attribute_defaults);
+  const helpTopics = structuredClone(mudHelpManual.help_topics ?? []);
+  const jobs = structuredClone(mudJobsRumors.jobs ?? []);
+  const rumorSources = structuredClone(mudJobsRumors.rumor_sources ?? []);
+  const identityTracks = structuredClone(mudTitlesFactions.identity_tracks ?? []);
 
   applyScenePatches(scenes, structuredClone(pureMudExpansion.scene_patches ?? []));
+  applySceneServices(scenes, structuredClone(mudTitlesFactions.scene_services ?? []));
   normalizeSceneMetadata(scenes);
 
   validateRefs({
@@ -868,6 +998,17 @@ async function main() {
     recipes,
     formations,
     manualCodexEntries,
+    helpTopics,
+    jobs,
+    rumorSources,
+    identityTracks,
+  });
+  validateP0Coverage({
+    scenes,
+    helpTopics,
+    jobs,
+    rumorSources,
+    identityTracks,
   });
 
   buildSceneRelations(scenes, npcs, 'npc_id', 'npc_ids', 'npcs');
@@ -909,6 +1050,10 @@ async function main() {
     recipes,
     treasures,
     formations,
+    help_topics: helpTopics,
+    jobs,
+    identity_tracks: identityTracks,
+    rumor_sources: rumorSources,
     resource_nodes: resourceNodes,
     ground_loots: groundLoots,
     hazards,
