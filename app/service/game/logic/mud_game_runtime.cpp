@@ -3717,6 +3717,9 @@ std::vector<std::string> MudGameRuntime::unlocked_regions_for_player(const MudPl
 
 std::string MudGameRuntime::progression_chapter_for_player(const MudPlayerState& player) const
 {
+    bool has_nascent_soul_gate = false;
+    bool has_core_ruin = false;
+    bool has_gold_core_gate = false;
     bool has_xutian = false;
     bool has_chaos_sea = false;
     bool has_blood = false;
@@ -3728,6 +3731,10 @@ std::string MudGameRuntime::progression_chapter_for_player(const MudPlayerState&
         {
             continue;
         }
+        has_nascent_soul_gate = has_nascent_soul_gate || quest.quest_id == "nascent_soul_gate";
+        has_core_ruin = has_core_ruin || quest.quest_id == "core_ruin_heart";
+        has_gold_core_gate = has_gold_core_gate || quest.quest_id == "outer_sea_trail" ||
+                             quest.quest_id == "gold_core_gate";
         has_tainan = has_tainan || quest.quest_id == "tainan_snake";
         has_huangfeng = has_huangfeng || quest.quest_id == "huangfeng_letter";
         has_blood = has_blood || quest.quest_id == "blood_forbidden_token";
@@ -3735,6 +3742,18 @@ std::string MudGameRuntime::progression_chapter_for_player(const MudPlayerState&
         has_xutian = has_xutian || quest.quest_id == "xutian_key";
     }
 
+    if(has_nascent_soul_gate)
+    {
+        return "凝婴前夜";
+    }
+    if(has_core_ruin)
+    {
+        return "古修残环";
+    }
+    if(has_gold_core_gate)
+    {
+        return "结丹之门";
+    }
     if(has_xutian)
     {
         return "虚天殿风云";

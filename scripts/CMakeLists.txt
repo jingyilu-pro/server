@@ -3,6 +3,7 @@ Project(mud_smoke)
 add_executable(mud_smoke mud_smoke.cpp)
 
 target_link_libraries(mud_smoke PRIVATE
+    server_service
     ${COMMON_LIB}
     ${PROTOCOL_LIB}
     ${DEPENDENCIES_LIBS}

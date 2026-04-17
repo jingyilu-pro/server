@@ -6,6 +6,7 @@
 
 #include "protocol/gateway.pb.h"
 #include "protocol/mud.pb.h"
+#include "mud_game_runtime.h"
 
 #include <arpa/inet.h>
 #include <netinet/in.h>
@@ -20,6 +21,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
+#include <memory>
 #include <optional>
 #include <sstream>
 #include <stdexcept>
@@ -246,6 +248,93 @@ bool panel_body_contains_all(const mud::StructuredPanel& panel,
                        [&](const std::string& needle) { return panel_body_contains(panel, needle); });
 }
 
+bool string_contains(std::string_view haystack, std::string_view needle)
+{
+    return haystack.find(needle) != std::string::npos;
+}
+
+bool hint_list_contains(const MudCommandExecution& execution, std::string_view needle)
+{
+    return std::any_of(execution.hints.begin(),
+                       execution.hints.end(),
+                       [&](const std::string& hint) { return string_contains(hint, needle); });
+}
+
+class SmokeMudPlayerRepository final : public IMudPlayerRepository
+{
+public:
+    bool ready() const override
+    {
+        return true;
+    }
+
+    void poll() override {}
+
+    CoroAwaitable load_player(const std::string& /*account*/) override
+    {
+        return CoroAwaitable{nullptr, nullptr};
+    }
+
+    CoroAwaitable create_player(const MudPlayerState& /*player*/) override
+    {
+        return CoroAwaitable{nullptr, nullptr};
+    }
+
+    CoroAwaitable save_player(const MudPlayerState& /*player*/) override
+    {
+        return CoroAwaitable{nullptr, nullptr};
+    }
+
+    CoroAwaitable list_top_players(MudLeaderboardType /*leaderboard_type*/, int /*limit*/) override
+    {
+        return CoroAwaitable{nullptr, nullptr};
+    }
+
+    CoroAwaitable list_team_members(const std::string& /*team_id*/) override
+    {
+        return CoroAwaitable{nullptr, nullptr};
+    }
+};
+
+std::shared_ptr<MudWorld> load_local_world_or_throw()
+{
+    auto world = std::make_shared<MudWorld>();
+    std::string world_error;
+    for(const auto& candidate : {std::string("doc/mud/world_data.json"),
+                                 std::string("../doc/mud/world_data.json"),
+                                 std::string("../../doc/mud/world_data.json"),
+                                 std::string("../../../doc/mud/world_data.json")})
+    {
+        if(world->load_from_file(candidate, &world_error))
+        {
+            return world;
+        }
+    }
+
+    throw std::runtime_error("load local mud world failed: " + world_error);
+}
+
+MudPlayerState make_local_story_player(MudGameRuntime* runtime,
+                                       const std::string& account,
+                                       int realm_stage,
+                                       const std::string& realm_name)
+{
+    auto player = runtime->build_default_player(account, account);
+    player.realm_stage = realm_stage;
+    player.realm_name = realm_name;
+    player.exp = player.next_breakthrough_exp;
+    runtime->normalize_player_state(&player);
+    return player;
+}
+
+std::string snapshot_progression_chapter(MudGameRuntime* runtime, MudPlayerState player)
+{
+    const auto execution = runtime->run_command(&player, "look");
+    mud::CommandExecuteResponse response;
+    runtime->build_command_response(player, "look", execution, &response);
+    return response.player().progression_chapter();
+}
+
 } // namespace
 
 int main()
@@ -427,6 +516,65 @@ int main()
         require_true(!bootstrap_restore_response.need_create_character(), "restore bootstrap unexpectedly needs character");
         require_true(!bootstrap_restore_response.player().character_name().empty(), "restore bootstrap returned empty character");
 
+        const auto local_world = load_local_world_or_throw();
+        auto local_repository = std::make_shared<SmokeMudPlayerRepository>();
+        MudGameRuntime local_runtime(local_world, local_repository);
+        require_true(local_runtime.ready(), "local mud runtime not ready: " + local_runtime.ready_error());
+
+        auto gold_core_chapter_player =
+            make_local_story_player(&local_runtime, "gold-core-chapter", 8, "筑基后期");
+        gold_core_chapter_player.quests.push_back({"gold_core_gate", "completed", 1});
+        const auto gold_core_progression_chapter =
+            snapshot_progression_chapter(&local_runtime, gold_core_chapter_player);
+        const bool progression_gold_core_gate_ok = gold_core_progression_chapter == "结丹之门";
+        require_true(progression_gold_core_gate_ok,
+                     "gold_core_gate should advance progression chapter to 结丹之门, got " +
+                         gold_core_progression_chapter);
+
+        auto core_ruin_chapter_player =
+            make_local_story_player(&local_runtime, "core-ruin-chapter", 10, "结丹中期");
+        core_ruin_chapter_player.quests.push_back({"core_ruin_heart", "completed", 1});
+        const auto core_ruin_progression_chapter =
+            snapshot_progression_chapter(&local_runtime, core_ruin_chapter_player);
+        const bool progression_core_ruin_gate_ok = core_ruin_progression_chapter == "古修残环";
+        require_true(progression_core_ruin_gate_ok,
+                     "core_ruin_heart should advance progression chapter to 古修残环, got " +
+                         core_ruin_progression_chapter);
+
+        auto nascent_soul_chapter_player =
+            make_local_story_player(&local_runtime, "nascent-soul-chapter", 11, "结丹后期");
+        nascent_soul_chapter_player.quests.push_back({"nascent_soul_gate", "completed", 1});
+        const auto nascent_soul_progression_chapter =
+            snapshot_progression_chapter(&local_runtime, nascent_soul_chapter_player);
+        const bool progression_nascent_soul_gate_ok = nascent_soul_progression_chapter == "凝婴前夜";
+        require_true(progression_nascent_soul_gate_ok,
+                     "nascent_soul_gate should advance progression chapter to 凝婴前夜, got " +
+                         nascent_soul_progression_chapter);
+
+        auto gold_core_breakthrough_player =
+            make_local_story_player(&local_runtime, "gold-core-breakthrough", 8, "筑基后期");
+        const auto direct_gold_core_breakthrough = local_runtime.run_command(&gold_core_breakthrough_player, "breakthrough");
+        const bool direct_gold_core_breakthrough_ok =
+            direct_gold_core_breakthrough.title == "结丹未备" &&
+            string_contains(direct_gold_core_breakthrough.summary, "结丹") &&
+            hint_list_contains(direct_gold_core_breakthrough, "结丹灵丸") &&
+            hint_list_contains(direct_gold_core_breakthrough, "青焰晶髓");
+        require_true(direct_gold_core_breakthrough_ok,
+                     "direct breakthrough should expose the gold-core gate requirements");
+
+        auto nascent_soul_breakthrough_player =
+            make_local_story_player(&local_runtime, "nascent-soul-breakthrough", 11, "结丹后期");
+        const auto direct_nascent_soul_breakthrough =
+            local_runtime.run_command(&nascent_soul_breakthrough_player, "breakthrough");
+        const bool direct_nascent_soul_breakthrough_ok =
+            direct_nascent_soul_breakthrough.title == "凝婴未备" &&
+            string_contains(direct_nascent_soul_breakthrough.summary, "元婴") &&
+            hint_list_contains(direct_nascent_soul_breakthrough, "凝婴灵丹") &&
+            hint_list_contains(direct_nascent_soul_breakthrough, "星海心珀") &&
+            hint_list_contains(direct_nascent_soul_breakthrough, "世界见闻");
+        require_true(direct_nascent_soul_breakthrough_ok,
+                     "direct breakthrough should expose the nascent-soul gate requirements");
+
         std::cout << "account=" << account << "\n";
         std::cout << "route_code=" << route_response.code()
                   << " login_endpoint=" << route_response.login_endpoint().host() << ":"
@@ -504,6 +652,12 @@ int main()
                   << " breakthrough_gold_core_hint=" << (breakthrough_gold_core_hint ? "true" : "false")
                   << " breakthrough_nascent_soul_hint=" << (breakthrough_nascent_soul_hint ? "true" : "false")
                   << "\n";
+        std::cout << "progression_gold_core_gate_ok=" << (progression_gold_core_gate_ok ? "true" : "false")
+                  << " progression_core_ruin_gate_ok=" << (progression_core_ruin_gate_ok ? "true" : "false")
+                  << " progression_nascent_soul_gate_ok=" << (progression_nascent_soul_gate_ok ? "true" : "false")
+                  << " direct_gold_core_breakthrough_ok=" << (direct_gold_core_breakthrough_ok ? "true" : "false")
+                  << " direct_nascent_soul_breakthrough_ok="
+                  << (direct_nascent_soul_breakthrough_ok ? "true" : "false") << "\n";
         std::cout << "commands_code=" << commands_response.code()
                   << " commands_success=" << (commands_response.result().success() ? "true" : "false")
                   << " commands_kind="
