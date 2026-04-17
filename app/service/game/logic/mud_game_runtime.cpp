@@ -2018,22 +2018,23 @@ void MudGameRuntime::merge_persisted_events(const std::vector<MudEventEnvelope>&
             continue;
         }
 
-        auto exact_iter = std::find_if(m_events.begin(), m_events.end(), [&](const MudEventEnvelope& current) {
-            return current.event_id == event.event_id;
-        });
-        if(exact_iter != m_events.end())
+        auto transient_iter =
+            std::find_if(m_events.begin(), m_events.end(), [&](const MudEventEnvelope& current) {
+                return (current.event_id == 0 || current.event_id > event.event_id) &&
+                       same_event_payload(current, event);
+            });
+        if(transient_iter != m_events.end())
         {
-            *exact_iter = event;
+            *transient_iter = event;
         }
         else
         {
-            auto payload_iter =
-                std::find_if(m_events.begin(), m_events.end(), [&](const MudEventEnvelope& current) {
-                    return current.event_id != event.event_id && same_event_payload(current, event);
-                });
-            if(payload_iter != m_events.end())
+            auto exact_iter = std::find_if(m_events.begin(), m_events.end(), [&](const MudEventEnvelope& current) {
+                return current.event_id == event.event_id;
+            });
+            if(exact_iter != m_events.end())
             {
-                *payload_iter = event;
+                *exact_iter = event;
             }
             else
             {

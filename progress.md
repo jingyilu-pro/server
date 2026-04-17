@@ -2,6 +2,7 @@ Original prompt: 主界面参考这个图，分辨率为 1080*1920，适配移�
 
 - 2026-04-17: 已把“元婴初期可完整到达”的第一条主路径补到共享世界与主线任务里。`world_mainline.mjs` 新增 `outer_sea_trail / gold_core_gate / core_ruin_heart / nascent_soul_gate` 四段主任务；`pure_mud_shared_world.mjs` 新增 `outer_sea_mid / core_flame_vein / ancient_ruin_ring / star_abyss` 四个中后期区域，并补上对应敌对目标、材料点、掉落与危险节点。
 - 2026-04-17: 构建链路已把中后期扩展收成硬校验。`scripts/build_mud_world.mjs` 现在会强制检查上述 4 个关键场景与 4 个主线任务是否存在；缺任何一个都会在 world build 阶段直接失败，不再等到运行期才发现元婴路线断头。
+- 2026-04-17: `core_dan / nascent_soul` 帮助主题现已写实为可执行的晚期路标与突破清单。builder 会强制校验 `外海见闻 / 结丹之门 / 凝婴前夜` 等路标，以及 `结丹灵丸 / 青焰晶髓 / 紫丹灵砂 / 凝婴灵丹 / 星海心珀 / 养魂古玉 / 世界见闻` 等关键提示；`mud_smoke` 也会在运行时直接验证这些内容对玩家可见。
 - 2026-04-17: 服务端突破链已接上新的中后期路径。`mud_game_runtime.cpp` 现在会在 `outer_sea_trail / core_ruin_heart / nascent_soul_gate` 提交后累积 `major_world_witness`，让凝婴门槛真正可达；同时把 `recommended_loop_for_player()` 扩到结丹/凝婴阶段，优先指向外海采集与残区探禁。
 - 2026-04-17: `characters_sects.mjs`、`mud_jobs_rumors.mjs`、`mud_titles_factions.mjs` 已同步补齐中后期任务口、rumor、scene service 与身份线说明；现有 `ask ... about rumor / work / board / travel` 命令可以把玩家从乱星海、虚天殿继续引到结丹与凝婴准备阶段。
 - 2026-04-17: 前端 `client/src/App.vue` 新增了结丹/元婴阶段的剧情锚点与 follow-up hints，`client/src/lib/progression.ts` 统一承接中后期阶段文案压缩与帮助主题标题映射；`client/src/lib/progression.test.ts` 已覆盖 `元婴初期 -> 元婴初成`、`结丹中期 -> 金丹凝练`、`core_dan -> 结丹`、`nascent_soul -> 凝婴` 等关键显示规则。

@@ -230,6 +230,22 @@ void require_command_success(const mud::CommandExecuteResponse& response,
     }
 }
 
+bool panel_body_contains(const mud::StructuredPanel& panel,
+                         std::string_view needle)
+{
+    return std::any_of(panel.body_lines().begin(),
+                       panel.body_lines().end(),
+                       [&](const std::string& line) { return line.find(needle) != std::string::npos; });
+}
+
+bool panel_body_contains_all(const mud::StructuredPanel& panel,
+                             const std::vector<std::string>& needles)
+{
+    return std::all_of(needles.begin(),
+                       needles.end(),
+                       [&](const std::string& needle) { return panel_body_contains(panel, needle); });
+}
+
 } // namespace
 
 int main()
@@ -244,7 +260,7 @@ int main()
         const std::string suffix = std::to_string(now_ms % 100000000);
         const std::string account = "smoke" + suffix;
         const std::string password = "pass123456";
-        const std::string post_subject = "烟测收药" + suffix.substr(suffix.size() >= 4 ? suffix.size() - 4 : 0);
+        const std::string post_subject = "烟测收药" + suffix;
 
         gateway::RouteLoginRequest route_request;
         route_request.set_client_version("mud_smoke_cpp");
@@ -341,25 +357,46 @@ int main()
         require_command_success(rank_wealth_response, "rank wealth");
         require_command_success(rumor_response, "ask rumor");
         require_command_success(post_response, "post", false);
+        const auto& help_core_dan_panel = help_core_dan_response.result().panels(0);
+        const auto& help_nascent_soul_panel = help_nascent_soul_response.result().panels(0);
+        const bool mainline_outer_sea_present = panel_body_contains(help_core_dan_panel, "外海见闻") &&
+                                                panel_body_contains(help_core_dan_panel, "结丹之门");
+        const bool breakthrough_gold_core_hint = panel_body_contains_all(
+            help_core_dan_panel,
+            {"结丹灵丸", "青焰晶髓", "紫丹灵砂"});
+        const bool breakthrough_nascent_soul_hint = panel_body_contains_all(
+            help_nascent_soul_panel,
+            {"凝婴前夜", "凝婴灵丹", "星海心珀", "养魂古玉", "世界见闻"});
+        require_true(mainline_outer_sea_present, "help core_dan is missing late-game route anchors");
+        require_true(breakthrough_gold_core_hint, "help core_dan is missing gold-core breakthrough checklist");
+        require_true(breakthrough_nascent_soul_hint,
+                     "help nascent_soul is missing nascent-soul breakthrough checklist");
         require_true(post_response.events_size() > 0, "post returned no board_post event");
         const auto board_post_event_id = post_response.events(post_response.events_size() - 1).event_id();
-        const auto read_response = run_command("read " + post_subject);
-        const auto discard_response = run_command("discard " + post_subject);
+        const auto board_post_event_id_text = std::to_string(board_post_event_id);
+        const auto read_response = run_command("read " + board_post_event_id_text);
+        const auto discard_response = run_command("discard " + board_post_event_id_text);
         const auto board_after_discard_response = run_command("board");
 
         require_command_success(read_response, "read");
         require_true(read_response.result().panels(0).panel_kind() == "board_post",
                      "read returned unexpected panel_kind=" + read_response.result().panels(0).panel_kind());
-        require_true(read_response.result().panels(0).document_id().rfind("board_post:", 0) == 0,
-                     "read returned unexpected document_id");
+        require_true(read_response.result().panels(0).document_id() == ("board_post:" + board_post_event_id_text),
+                     "read returned unexpected document_id=" + read_response.result().panels(0).document_id());
         require_true(discard_response.code() == 0 && discard_response.result().success(),
                      "discard returned failure");
         if(board_after_discard_response.result().panels_size() > 0)
         {
+            std::ostringstream board_titles_after_discard;
             for(const auto& entry : board_after_discard_response.result().panels(0).entries())
             {
+                if(!board_titles_after_discard.str().empty())
+                {
+                    board_titles_after_discard << " | ";
+                }
+                board_titles_after_discard << entry.entry_id() << ":" << entry.title();
                 require_true(entry.title().find(post_subject) == std::string::npos,
-                             "discarded board post still visible on board");
+                             "discarded board post still visible on board: " + board_titles_after_discard.str());
             }
         }
 
@@ -462,6 +499,10 @@ int main()
                   << " help_nascent_soul_success=" << (help_nascent_soul_response.result().success() ? "true" : "false")
                   << " help_nascent_soul_topic="
                   << (help_nascent_soul_response.result().panels_size() > 0 ? help_nascent_soul_response.result().panels(0).document_id() : "")
+                  << "\n";
+        std::cout << "mainline_outer_sea_present=" << (mainline_outer_sea_present ? "true" : "false")
+                  << " breakthrough_gold_core_hint=" << (breakthrough_gold_core_hint ? "true" : "false")
+                  << " breakthrough_nascent_soul_hint=" << (breakthrough_nascent_soul_hint ? "true" : "false")
                   << "\n";
         std::cout << "commands_code=" << commands_response.code()
                   << " commands_success=" << (commands_response.result().success() ? "true" : "false")

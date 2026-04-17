@@ -899,6 +899,24 @@ function validateNascentSoulSkeleton({ defaults, items, helpTopics }) {
   }
 }
 
+function validateNascentSoulHelpCoverage({ helpTopics }) {
+  const topicMap = buildIdMap(helpTopics, 'topic_id', 'nascent_soul_help_topics');
+  const coreDanBody = ensureArray(topicMap.get('core_dan')?.body_lines ?? [], 'core_dan.body_lines').join('\n');
+  const nascentSoulBody = ensureArray(topicMap.get('nascent_soul')?.body_lines ?? [], 'nascent_soul.body_lines').join('\n');
+
+  for (const keyword of ['外海见闻', '结丹之门', '结丹灵丸', '青焰晶髓', '紫丹灵砂']) {
+    if (!coreDanBody.includes(keyword)) {
+      throw new Error(`Nascent soul validation failed: core_dan help is missing ${keyword}`);
+    }
+  }
+
+  for (const keyword of ['凝婴前夜', '凝婴灵丹', '星海心珀', '养魂古玉', '世界见闻']) {
+    if (!nascentSoulBody.includes(keyword)) {
+      throw new Error(`Nascent soul validation failed: nascent_soul help is missing ${keyword}`);
+    }
+  }
+}
+
 function validateNascentSoulMainline({ scenes, quests }) {
   const sceneMap = buildIdMap(scenes, 'scene_id', 'nascent_soul_scenes');
   const questMap = buildIdMap(quests, 'quest_id', 'nascent_soul_quests');
@@ -1051,6 +1069,9 @@ async function main() {
   validateNascentSoulSkeleton({
     defaults,
     items,
+    helpTopics,
+  });
+  validateNascentSoulHelpCoverage({
     helpTopics,
   });
   validateNascentSoulMainline({
