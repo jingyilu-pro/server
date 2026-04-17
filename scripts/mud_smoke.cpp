@@ -260,6 +260,73 @@ bool hint_list_contains(const MudCommandExecution& execution, std::string_view n
                        [&](const std::string& hint) { return string_contains(hint, needle); });
 }
 
+int local_inventory_count(const MudPlayerState& player, const std::string& item_id)
+{
+    int count = 0;
+    for(const auto& item : player.inventory)
+    {
+        if(item.item_id == item_id)
+        {
+            count += std::max(0, item.quantity);
+        }
+    }
+    return count;
+}
+
+void local_add_inventory_item(MudPlayerState* player, const std::string& item_id, int quantity)
+{
+    if(player == nullptr || item_id.empty() || quantity <= 0)
+    {
+        return;
+    }
+
+    for(auto& item : player->inventory)
+    {
+        if(item.item_id == item_id)
+        {
+            item.quantity += quantity;
+            return;
+        }
+    }
+
+    player->inventory.push_back({item_id, quantity, false});
+}
+
+void local_set_flag_int(MudPlayerState* player, const std::string& key, int value)
+{
+    if(player == nullptr || key.empty())
+    {
+        return;
+    }
+    player->flags[key] = std::to_string(value);
+}
+
+int local_flag_int(const MudPlayerState& player, const std::string& key, int fallback = 0)
+{
+    const auto found = player.flags.find(key);
+    if(found == player.flags.end() || found->second.empty())
+    {
+        return fallback;
+    }
+    try
+    {
+        return std::stoi(found->second);
+    }
+    catch(const std::exception&)
+    {
+        return fallback;
+    }
+}
+
+bool local_quest_completed(const MudPlayerState& player, const std::string& quest_id)
+{
+    return std::any_of(player.quests.begin(),
+                       player.quests.end(),
+                       [&](const MudQuestState& quest) {
+                           return quest.quest_id == quest_id && quest.status == "completed";
+                       });
+}
+
 class SmokeMudPlayerRepository final : public IMudPlayerRepository
 {
 public:
@@ -575,6 +642,108 @@ int main()
         require_true(direct_nascent_soul_breakthrough_ok,
                      "direct breakthrough should expose the nascent-soul gate requirements");
 
+        auto late_route_player = make_local_story_player(&local_runtime, "late-route-replay", 8, "筑基后期");
+        late_route_player.exp = 999999;
+        late_route_player.next_breakthrough_exp = 0;
+
+        late_route_player.location_scene_id = "chaos_sea_port";
+        local_add_inventory_item(&late_route_player, "storm_route_chart", 1);
+        const auto accept_outer_sea = local_runtime.run_command(&late_route_player, "accept outer_sea_trail");
+        const auto submit_outer_sea = local_runtime.run_command(&late_route_player, "submit outer_sea_trail");
+        require_true(accept_outer_sea.success && submit_outer_sea.success,
+                     "late route replay could not finish outer_sea_trail: accept=" + accept_outer_sea.title +
+                         "/" + accept_outer_sea.summary + ", submit=" + submit_outer_sea.title + "/" +
+                         submit_outer_sea.summary + ", storm_route_chart=" +
+                         std::to_string(local_inventory_count(late_route_player, "storm_route_chart")));
+        require_true(local_quest_completed(late_route_player, "outer_sea_trail"),
+                     "outer_sea_trail should be completed during the late route replay");
+        require_true(local_inventory_count(late_route_player, "azure_flame_crystal") > 0,
+                     "outer_sea_trail should award azure_flame_crystal");
+
+        late_route_player.location_scene_id = "xutian_star_platform";
+        local_add_inventory_item(&late_route_player, "xutian_tablet_rubbing", 1);
+        const auto accept_xutian_star_map = local_runtime.run_command(&late_route_player, "accept xutian_star_map");
+        const auto submit_xutian_star_map = local_runtime.run_command(&late_route_player, "submit xutian_star_map");
+        require_true(accept_xutian_star_map.success && submit_xutian_star_map.success,
+                     "late route replay could not finish xutian_star_map");
+        require_true(local_quest_completed(late_route_player, "xutian_star_map"),
+                     "xutian_star_map should be completed during the late route replay");
+        require_true(local_inventory_count(late_route_player, "star_platform_notes") > 0,
+                     "xutian_star_map should award star_platform_notes");
+
+        late_route_player.location_scene_id = "chaos_sea_ship";
+        const auto accept_gold_core_gate = local_runtime.run_command(&late_route_player, "accept gold_core_gate");
+        const auto submit_gold_core_gate = local_runtime.run_command(&late_route_player, "submit gold_core_gate");
+        require_true(accept_gold_core_gate.success && submit_gold_core_gate.success,
+                     "late route replay could not finish gold_core_gate");
+        require_true(local_quest_completed(late_route_player, "gold_core_gate"),
+                     "gold_core_gate should be completed during the late route replay");
+        require_true(local_inventory_count(late_route_player, "gold_core_pill") > 0,
+                     "gold_core_gate should award gold_core_pill");
+
+        late_route_player.location_scene_id = "xutian_hall";
+        local_add_inventory_item(&late_route_player, "xutian_key_fragment", 1);
+        const auto accept_xutian_key = local_runtime.run_command(&late_route_player, "accept xutian_key");
+        const auto submit_xutian_key = local_runtime.run_command(&late_route_player, "submit xutian_key");
+        require_true(accept_xutian_key.success && submit_xutian_key.success,
+                     "late route replay could not finish xutian_key");
+        require_true(local_quest_completed(late_route_player, "xutian_key"),
+                     "xutian_key should be completed during the late route replay");
+
+        local_add_inventory_item(&late_route_player, "treasure_cache_token", 1);
+        const auto accept_core_ruin_heart = local_runtime.run_command(&late_route_player, "accept core_ruin_heart");
+        const auto submit_core_ruin_heart = local_runtime.run_command(&late_route_player, "submit core_ruin_heart");
+        require_true(accept_core_ruin_heart.success && submit_core_ruin_heart.success,
+                     "late route replay could not finish core_ruin_heart");
+        require_true(local_quest_completed(late_route_player, "core_ruin_heart"),
+                     "core_ruin_heart should be completed during the late route replay");
+        require_true(local_inventory_count(late_route_player, "purple_core_sand") > 0,
+                     "core_ruin_heart should award purple_core_sand");
+        require_true(local_flag_int(late_route_player, "major_world_witness", 0) >= 2,
+                     "late route replay should accumulate the first two major world witnesses");
+        require_true(local_flag_int(late_route_player, "loose_reputation", 0) >= 980,
+                     "late route replay should accumulate enough loose reputation for gold-core breakthrough, got " +
+                         std::to_string(local_flag_int(late_route_player, "loose_reputation", 0)) + " with sect_id=" +
+                         late_route_player.sect_id);
+
+        local_set_flag_int(&late_route_player, "gold_core_prep", 240);
+        const auto gold_core_success = local_runtime.run_command(&late_route_player, "breakthrough");
+        require_true(gold_core_success.success && late_route_player.realm_stage == 9,
+                     "late route replay should break through to 结丹初期");
+
+        local_add_inventory_item(&late_route_player, "gold_core_pill", 2);
+        const auto stage_ten_success = local_runtime.run_command(&late_route_player, "breakthrough");
+        require_true(stage_ten_success.success && late_route_player.realm_stage == 10,
+                     "late route replay should advance from 结丹初期 to 结丹中期");
+        const auto stage_eleven_success = local_runtime.run_command(&late_route_player, "breakthrough");
+        require_true(stage_eleven_success.success && late_route_player.realm_stage == 11,
+                     "late route replay should advance from 结丹中期 to 结丹后期");
+
+        late_route_player.location_scene_id = "xutian_star_platform";
+        local_add_inventory_item(&late_route_player, "void_guard_charm", 1);
+        const auto accept_nascent_soul_gate =
+            local_runtime.run_command(&late_route_player, "accept nascent_soul_gate");
+        const auto submit_nascent_soul_gate =
+            local_runtime.run_command(&late_route_player, "submit nascent_soul_gate");
+        require_true(accept_nascent_soul_gate.success && submit_nascent_soul_gate.success,
+                     "late route replay could not finish nascent_soul_gate");
+        require_true(local_quest_completed(late_route_player, "nascent_soul_gate"),
+                     "nascent_soul_gate should be completed during the late route replay");
+        require_true(local_inventory_count(late_route_player, "nascent_soul_pill") > 0,
+                     "nascent_soul_gate should award nascent_soul_pill");
+        require_true(local_flag_int(late_route_player, "major_world_witness", 0) >= 3,
+                     "late route replay should accumulate the third major world witness");
+
+        local_add_inventory_item(&late_route_player, "star_sea_heart", 1);
+        local_add_inventory_item(&late_route_player, "soul_warming_jade", 1);
+        local_set_flag_int(&late_route_player, "nascent_soul_prep", 360);
+        const auto nascent_soul_success = local_runtime.run_command(&late_route_player, "breakthrough");
+        const bool late_route_replay_ok =
+            nascent_soul_success.success && late_route_player.realm_stage == 12 &&
+            string_contains(nascent_soul_success.summary, "元婴初期");
+        require_true(late_route_replay_ok,
+                     "late route replay should carry a 筑基后期 player through to 元婴初期");
+
         std::cout << "account=" << account << "\n";
         std::cout << "route_code=" << route_response.code()
                   << " login_endpoint=" << route_response.login_endpoint().host() << ":"
@@ -657,7 +826,8 @@ int main()
                   << " progression_nascent_soul_gate_ok=" << (progression_nascent_soul_gate_ok ? "true" : "false")
                   << " direct_gold_core_breakthrough_ok=" << (direct_gold_core_breakthrough_ok ? "true" : "false")
                   << " direct_nascent_soul_breakthrough_ok="
-                  << (direct_nascent_soul_breakthrough_ok ? "true" : "false") << "\n";
+                  << (direct_nascent_soul_breakthrough_ok ? "true" : "false")
+                  << " late_route_replay_ok=" << (late_route_replay_ok ? "true" : "false") << "\n";
         std::cout << "commands_code=" << commands_response.code()
                   << " commands_success=" << (commands_response.result().success() ? "true" : "false")
                   << " commands_kind="
