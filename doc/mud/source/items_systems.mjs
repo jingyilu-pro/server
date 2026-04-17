@@ -172,6 +172,33 @@ export default {
     item('azure_bamboo_blade', '青竹灵刃', 'weapon', '比外门短剑更像真正法器的竹质灵刃。', 196, { attack_bonus: 9, equipable: true, tags: ['weapon', 'treasure'] }),
     item('gale_boots', '御风履', 'armor', '鞋底嵌着细小风纹，行走时轻若落叶。', 156, { defense_bonus: 3, spell_haste_bonus: 3, equipable: true, tags: ['armor', 'wind'] }),
     item('frost_robe', '凝霜袍', 'armor', '布面隐有寒意，适合施展冰系法术时稳定气海。', 166, { defense_bonus: 6, spell_damage_bonus: 3, equipable: true, tags: ['armor', 'ice'] }),
+    item('gold_core_pill', '结丹灵丸', 'consumable', '专为筑基后期修士准备的主丹药，可助修士凝丹定火。', 520, {
+      hp_restore: 120,
+      mana_restore: 90,
+      exp_gain: 260,
+      consumable: true,
+      tags: ['medicine', 'gold_core'],
+    }),
+    item('azure_flame_crystal', '青焰晶髓', 'material', '自地火灵脉深处凝出的晶髓，最适合作为稳固丹火的主材。', 260, {
+      tags: ['material', 'gold_core_material', 'fire'],
+    }),
+    item('purple_core_sand', '紫丹灵砂', 'material', '古修丹室里残留下来的灵砂，常用于辅助凝丹。', 210, {
+      tags: ['material', 'gold_core_material'],
+    }),
+    item('nascent_soul_pill', '凝婴灵丹', 'consumable', '结丹后期修士冲击元婴前最看重的主丹，药力绵长而霸道。', 980, {
+      hp_restore: 180,
+      mana_restore: 180,
+      sen_restore: 120,
+      exp_gain: 420,
+      consumable: true,
+      tags: ['medicine', 'nascent_soul'],
+    }),
+    item('star_sea_heart', '星海心珀', 'material', '深海星渊中才会出没的灵物之一，可护持神魂凝婴。', 880, {
+      tags: ['material', 'nascent_soul_material', 'sea'],
+    }),
+    item('soul_warming_jade', '养魂古玉', 'material', '古修遗址里流出的养魂玉片，适合凝婴前温养神识。', 760, {
+      tags: ['material', 'nascent_soul_material'],
+    }),
   ],
   skills: [
     skill('long_spring_art', '长春功', '争斗', '最稳妥也最常见的入门吐纳法，胜在根基扎实。', { governing_attribute: 'gin', starter: true, chapter: '七玄门启程' }),
@@ -196,6 +223,16 @@ export default {
     spell('poison_fog', '蚀毒雾', '毒', '让毒雾缠附目标，缓慢侵蚀其神念与护体。', 16, { power: 21, required_realm_stage: 1, chapter: '血色禁地' }),
     spell('water_mirror', '水镜术', '冰', '以水镜映出虚影，自保同时反噬来敌。', 18, { power: 26, required_realm_stage: 2, granted_by_item_id: 'water_mirror_manual', chapter: '乱星海漂流' }),
     spell('eclipse_needle', '蚀月针', '蚀', '将阴蚀之力压成细针，一击穿入经脉空隙。', 20, { power: 28, required_realm_stage: 2, chapter: '虚天殿初启' }),
+    spell('core_fire_seal', '丹火印', '火', '将地火之力收于掌间，专用于稳固金丹前的气海与丹火。', 28, {
+      power: 42,
+      required_realm_stage: 7,
+      chapter: '结丹之门',
+    }),
+    spell('nascent_soul_glow', '婴光护神术', '风', '以柔和灵光护住神识，在凝婴前夜守住神魂不散。', 46, {
+      power: 66,
+      required_realm_stage: 11,
+      chapter: '凝婴前夜',
+    }),
   ],
   recipes: [
     recipe('recover_powder', '回气散配制', '以黄精草、松脂草与溪灵沙调成最基础疗伤散。', 'small_recover_pill', 2, [{ item_id: 'yellow_essence_grass', quantity: 1 }, { item_id: 'pine_resin', quantity: 1 }, { item_id: 'stream_spirit_sand', quantity: 1 }], { station_scene_id: 'qixuan_medicine_garden', npc_id: 'doctor_mo', chapter: '七玄门启程' }),
@@ -205,6 +242,16 @@ export default {
     recipe('sea_clear_pill_recipe', '清海丸炼制', '海货、灵苔与礁壳粉最适合炼制抗风浪药丸。', 'sea_clear_pill', 1, [{ item_id: 'spirit_scale', quantity: 1 }, { item_id: 'blood_coral_leaf', quantity: 1 }, { item_id: 'reef_shell', quantity: 1 }], { station_scene_id: 'tiannan_market', npc_id: 'sea_peddler', chapter: '天南港启航' }),
     recipe('orchid_essence_paste_recipe', '血兰膏炼制', '血兰与玉蜇蜂尾针一同炼化，可制成烈性恢复膏。', 'orchid_essence_paste', 1, [{ item_id: 'blood_orchid', quantity: 1 }, { item_id: 'jade_sting_stinger', quantity: 1 }], { station_scene_id: 'blood_orchid_vale', npc_id: 'orchid_gatherer', chapter: '血色禁地' }),
     recipe('storm_ward_recipe', '避风符压灵', '利用妖鱼核珠与风纹图把避风符灵线压得更稳。', 'storm_ward_charm', 1, [{ item_id: 'demon_fish_core', quantity: 1 }, { item_id: 'storm_route_chart', quantity: 1 }], { station_scene_id: 'chaos_sea_ship', npc_id: 'deck_mage', chapter: '乱星海漂流', success_rate: 0.7 }),
+    recipe('gold_core_pill_recipe', '结丹灵丸炼制', '以青焰晶髓与紫丹灵砂为主材，炼出助修士冲击结丹的主丹。', 'gold_core_pill', 1, [
+      { item_id: 'azure_flame_crystal', quantity: 1 },
+      { item_id: 'purple_core_sand', quantity: 2 },
+      { item_id: 'pill_room_ash', quantity: 1 },
+    ], { station_scene_id: 'xutian_pill_room', chapter: '结丹之门', success_rate: 0.68 }),
+    recipe('nascent_soul_pill_recipe', '凝婴灵丹炼制', '以星海心珀、养魂古玉等灵物合炼，是元婴前最凶险的一炉丹。', 'nascent_soul_pill', 1, [
+      { item_id: 'star_sea_heart', quantity: 1 },
+      { item_id: 'soul_warming_jade', quantity: 1 },
+      { item_id: 'xutian_key_fragment', quantity: 1 },
+    ], { station_scene_id: 'xutian_star_platform', npc_id: 'star_tablet_spirit', chapter: '凝婴前夜', success_rate: 0.52 }),
   ],
   treasures: [
     treasure('wind_bead', '风珠', '能在关键时刻帮修士卸去部分风阻与迟滞。', '提升法术加速与探索手感。'),

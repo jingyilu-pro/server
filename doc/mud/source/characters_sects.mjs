@@ -258,7 +258,7 @@ export default {
     npc('tower_watch', '望海守塔人', 'sea_wind_tower', '日日观风辨潮，对乱星海近来变化感受最深。', '守塔人望向海面：风向变了，说明远处又有东西醒了。', [], { role: 'watcher', description: '风暴航线与异象的情报来源。' }),
     npc('shadow_buyer', '暗巷买主', 'smuggler_alley', '出手干脆，绝不多问货物来处。', '暗巷买主一摊手：我只认东西，不认故事。', ['harbor_signal'], { role: 'broker', description: '灰色交易与偏门消息的入口。' }),
 
-    npc('captain_qu', '曲船主', 'chaos_sea_port', '曲船主站在近港栈边，看潮不看人，却总能把谁适不适合上船猜个八九不离十。', '曲船主啧了一声：海上不看嘴皮子，只看你能不能稳住船。', [], {
+    npc('captain_qu', '曲船主', 'chaos_sea_port', '曲船主站在近港栈边，看潮不看人，却总能把谁适不适合上船猜个八九不离十。', '曲船主啧了一声：海上不看嘴皮子，只看你能不能稳住船。', ['outer_sea_trail'], {
       role: 'captain',
       description: '乱星海航线引导人物。',
       presence_text: '曲船主皮肤被海风磨得发暗，站姿极稳，像浪再大也掀不动他心里那杆秤。',
@@ -267,7 +267,7 @@ export default {
         '海路=>他哼了一声：海上最怕你以为自己已经看懂了风，结果下一息风就变了脸。',
       ],
     }),
-    npc('deck_mage', '甲板术士', 'chaos_sea_ship', '他俯身调阵灯时连袖口都不乱，像把整条航线的安危都压在了手指轻重之间。', '甲板术士抬手理了理阵灯：若想进更深的海域，你总得学点真正的法门。', ['demon_fish_core'], {
+    npc('deck_mage', '甲板术士', 'chaos_sea_ship', '他俯身调阵灯时连袖口都不乱，像把整条航线的安危都压在了手指轻重之间。', '甲板术士抬手理了理阵灯：若想进更深的海域，你总得学点真正的法门。', ['demon_fish_core', 'gold_core_gate'], {
       role: 'mage',
       description: '从近战体系过渡到法术体系的指导角色。',
       presence_text: '甲板术士说话不急，手上却从不停，阵灯、风帆和法阵都被他收拾得像随时能迎上下一场风暴。',
@@ -293,7 +293,7 @@ export default {
     }),
     npc('reef_diver', '礁海潜修', 'reef_shore', '在浅滩和礁缝间摸索资源，最清楚灵鳞什么时候最容易采到。', '潜修拍了拍湿漉漉的袋子：海里的资源从不等人。', [], { role: 'gatherer', description: '乱星海采集系统的在地人物。' }),
 
-    npc('palace_remnant_spirit', '守门残灵', 'xutian_hall', '残灵立在殿门阴影里，像在替一座早已无人居住的古殿继续守着最后一道规矩。', '守门残灵声音空茫：残钥在手者，可入此殿一步。', ['xutian_key'], {
+    npc('palace_remnant_spirit', '守门残灵', 'xutian_hall', '残灵立在殿门阴影里，像在替一座早已无人居住的古殿继续守着最后一道规矩。', '守门残灵声音空茫：残钥在手者，可入此殿一步。', ['xutian_key', 'core_ruin_heart'], {
       role: 'spirit',
       description: '虚天殿门槛与规则的象征。',
       presence_text: '守门残灵并不逼人，却让人一靠近便生出被古老规矩重新丈量一遍的错觉。',
@@ -305,7 +305,7 @@ export default {
         '残钥=>残灵声音低沉：残钥不是信物那么简单，它本身就是让旧规矩认得出你的那一缕气机。',
       ],
     }),
-    npc('star_tablet_spirit', '祭台残灵', 'xutian_star_platform', '祭台残灵徘徊在星纹之间，像仍在等谁把当年那张未算完的阵图补到最后。', '祭台残灵低语：星图不正，玄门便永不开。', ['xutian_star_map'], {
+    npc('star_tablet_spirit', '祭台残灵', 'xutian_star_platform', '祭台残灵徘徊在星纹之间，像仍在等谁把当年那张未算完的阵图补到最后。', '祭台残灵低语：星图不正，玄门便永不开。', ['xutian_star_map', 'nascent_soul_gate'], {
       role: 'spirit',
       description: '虚天殿深层阵禁与年历解锁的关键人物。',
       presence_text: '祭台残灵的影子总与地上星纹错开半寸，像它自己也只是阵图尚未熄灭的一部分。',

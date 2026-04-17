@@ -1,5 +1,18 @@
 Original prompt: 主界面参考这个图，分辨率为 1080*1920，适配移动端
 
+- 2026-04-17: 已把“元婴初期可完整到达”的第一条主路径补到共享世界与主线任务里。`world_mainline.mjs` 新增 `outer_sea_trail / gold_core_gate / core_ruin_heart / nascent_soul_gate` 四段主任务；`pure_mud_shared_world.mjs` 新增 `outer_sea_mid / core_flame_vein / ancient_ruin_ring / star_abyss` 四个中后期区域，并补上对应敌对目标、材料点、掉落与危险节点。
+- 2026-04-17: 构建链路已把中后期扩展收成硬校验。`scripts/build_mud_world.mjs` 现在会强制检查上述 4 个关键场景与 4 个主线任务是否存在；缺任何一个都会在 world build 阶段直接失败，不再等到运行期才发现元婴路线断头。
+- 2026-04-17: 服务端突破链已接上新的中后期路径。`mud_game_runtime.cpp` 现在会在 `outer_sea_trail / core_ruin_heart / nascent_soul_gate` 提交后累积 `major_world_witness`，让凝婴门槛真正可达；同时把 `recommended_loop_for_player()` 扩到结丹/凝婴阶段，优先指向外海采集与残区探禁。
+- 2026-04-17: `characters_sects.mjs`、`mud_jobs_rumors.mjs`、`mud_titles_factions.mjs` 已同步补齐中后期任务口、rumor、scene service 与身份线说明；现有 `ask ... about rumor / work / board / travel` 命令可以把玩家从乱星海、虚天殿继续引到结丹与凝婴准备阶段。
+- 2026-04-17: 前端 `client/src/App.vue` 新增了结丹/元婴阶段的剧情锚点与 follow-up hints，`client/src/lib/progression.ts` 统一承接中后期阶段文案压缩与帮助主题标题映射；`client/src/lib/progression.test.ts` 已覆盖 `元婴初期 -> 元婴初成`、`结丹中期 -> 金丹凝练`、`core_dan -> 结丹`、`nascent_soul -> 凝婴` 等关键显示规则。
+- 2026-04-17: 本轮验证已通过：
+- `node scripts/build_mud_world.mjs`
+- `npm --prefix client test -- --run`
+- `npm --prefix client run build`
+- `wsl bash -lc "cd /mnt/c/Work/Projects/server && cmake --build build-wsl-main --target application mud_smoke -j1"`
+- `wsl sh -lc "cd /mnt/c/Work/Projects/server && ./build-wsl-main/scripts/mud_smoke"`
+- 2026-04-17: 最新烟测结果已确认：`help_core_dan_success=true`、`help_nascent_soul_success=true`、`travel_success=true`、`board_success=true`、`rumor_success=true`、`discard_success=true`、`restore_need_create_character=false`。说明新帮助主题、中后期命令面板和恢复链路都与现有纯 MUD 主流程兼容。
+
 - 2026-04-16: 已按 `凡人修仙 MUD 对齐 oiuv-mud 实施补遗.md` 把当前阶段 5 类缺口全部收口到 `P0` 交付面：补齐了 `版本范围表.md`、`阶段验收定义表.md`、`兼容与回退说明.md`、`频道与留言板治理规则.md`、`烟测回归手册.md`，并把这些根目录文档挂回 `凡人修仙 MUD 长线运营任务骨架.md`，让范围切片、DoD、兼容策略、治理规则、自动化回归矩阵都有固定落点。
 - 2026-04-16: 世界包构建链路继续收紧为 `P0` 可验收版本。新增 `doc/mud/source/mud_help_manual.mjs`、`doc/mud/source/mud_jobs_rumors.mjs`、`doc/mud/source/mud_titles_factions.mjs` 后，`scripts/build_mud_world.mjs` 已强制校验：帮助主题不少于 `8` 个、四条身份线必须存在、工作覆盖场景不少于 `7` 个、嘉元城/太南谷/天南港必须具备 rumor 覆盖；缺项会在构建期直接失败，不再留到运行期默默空掉。
 - 2026-04-16: 服务端已把 `help / commands / newbie / work / board / duty / wanted / travel / claim / ask <npc> about rumor` 收成稳定的 MUD 文本命令闭环。`mud.proto`、`mud_world`、`mud_game_runtime`、`client/src/App.vue` 和 `client/src/style.css` 已共同承接帮助主题、工作/风声、身份摘要、结构化字符板与单终端主文本流表现。

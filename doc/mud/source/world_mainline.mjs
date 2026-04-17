@@ -75,7 +75,21 @@ export default {
     starter_defense: 12,
     starter_spirit_stone: 90,
     starter_next_breakthrough_exp: 120,
-    realm_names: ['凡躯', '炼气一层', '炼气二层', '炼气三层', '炼气中期', '炼气后期', '筑基初期'],
+    realm_names: [
+      '凡躯',
+      '炼气一层',
+      '炼气二层',
+      '炼气三层',
+      '炼气中期',
+      '炼气后期',
+      '筑基初期',
+      '筑基中期',
+      '筑基后期',
+      '结丹初期',
+      '结丹中期',
+      '结丹后期',
+      '元婴初期',
+    ],
     starter_inventory: [
       { item_id: 'rust_sword', quantity: 1, equipped: true },
       { item_id: 'small_recover_pill', quantity: 2, equipped: false },
@@ -429,6 +443,10 @@ export default {
     quest('demon_fish_core', '妖鱼内丹', '船上术士说黑鳍妖鱼体内有内丹碎屑，可用于打开虚天殿外围禁制。', 'deck_mage', 'deck_mage', 'demon_fish_core', 1, 250, 380, 'storm_ward_charm', 1, { chapter: '乱星海漂流' }),
     quest('xutian_key', '虚天残钥', '古修遗府的守门残灵正在收集残钥，若你肯带回一枚，他会透露虚天殿入口。', 'palace_remnant_spirit', 'palace_remnant_spirit', 'xutian_key_fragment', 1, 280, 420, 'foundation_pill', 1, { chapter: '虚天殿初启' }),
     quest('xutian_star_map', '星纹演算', '祭台残灵需要一张星纹拓片来校正阵图，这会是你逼近内殿玄门的最后一步。', 'star_tablet_spirit', 'star_tablet_spirit', 'xutian_tablet_rubbing', 1, 320, 460, 'star_platform_notes', 1, { chapter: '虚天殿初启' }),
+    quest('outer_sea_trail', '外海见闻', '曲船主要你带着风暴航线留下的旧图去探一趟外海中层，把那里的潮路与灵压真正看明白。', 'captain_qu', 'captain_qu', 'storm_route_chart', 1, 340, 520, 'azure_flame_crystal', 1, { chapter: '结丹之门' }),
+    quest('gold_core_gate', '结丹之门', '甲板术士要你把祭台推演出的星纹心得重新走一遍海路，再借此炼出真正能撑住结丹的主丹。', 'deck_mage', 'deck_mage', 'star_platform_notes', 1, 420, 620, 'gold_core_pill', 1, { chapter: '结丹之门' }),
+    quest('core_ruin_heart', '古修残环', '守门残灵让你带着古库令牌深入残环，取回那枚仍留着古修余温的残环心核。', 'palace_remnant_spirit', 'palace_remnant_spirit', 'treasure_cache_token', 1, 460, 680, 'purple_core_sand', 1, { chapter: '古修残环' }),
+    quest('nascent_soul_gate', '凝婴前夜', '祭台残灵要你拿着裂隙护符去过星渊潮眼，再把真正够格的凝婴主丹带回祭台前。', 'star_tablet_spirit', 'star_tablet_spirit', 'void_guard_charm', 1, 560, 820, 'nascent_soul_pill', 1, { chapter: '凝婴前夜' }),
   ],
   manual_codex_entries: [
     {

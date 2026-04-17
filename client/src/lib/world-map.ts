@@ -799,6 +799,20 @@ export const worldMapNodes: WorldMapNode[] = [
     "y": 98
   },
   {
+    "id": "outer_sea_mid",
+    "name": "外海中层",
+    "region": "外海深线",
+    "x": 28,
+    "y": 106
+  },
+  {
+    "id": "star_abyss",
+    "name": "星渊裂海",
+    "region": "外海深线",
+    "x": 28,
+    "y": 114
+  },
+  {
     "id": "xutian_void_rift",
     "name": "裂隙口",
     "region": "虚天残区",
@@ -867,6 +881,20 @@ export const worldMapNodes: WorldMapNode[] = [
     "region": "虚天残区",
     "x": 78,
     "y": 198
+  },
+  {
+    "id": "core_flame_vein",
+    "name": "丹火灵脉",
+    "region": "虚天后脉",
+    "x": 62,
+    "y": 126
+  },
+  {
+    "id": "ancient_ruin_ring",
+    "name": "古修残环",
+    "region": "虚天后脉",
+    "x": 62,
+    "y": 134
   }
 ]
 
@@ -1136,6 +1164,10 @@ export const worldMapEdges: WorldMapEdge[] = [
     "to": "chaos_sea_isle"
   },
   {
+    "from": "chaos_sea_ship",
+    "to": "outer_sea_mid"
+  },
+  {
     "from": "chaos_sea_isle",
     "to": "reef_shore"
   },
@@ -1182,6 +1214,10 @@ export const worldMapEdges: WorldMapEdge[] = [
   {
     "from": "xutian_star_platform",
     "to": "xutian_inner_gate"
+  },
+  {
+    "from": "xutian_star_platform",
+    "to": "core_flame_vein"
   },
   {
     "from": "xutian_inner_gate",
@@ -1412,6 +1448,10 @@ export const worldMapEdges: WorldMapEdge[] = [
     "to": "outer_isles_watch_altar"
   },
   {
+    "from": "outer_sea_mid",
+    "to": "star_abyss"
+  },
+  {
     "from": "xutian_void_rift",
     "to": "xutian_ash_corridor"
   },
@@ -1446,5 +1486,9 @@ export const worldMapEdges: WorldMapEdge[] = [
   {
     "from": "xutian_star_pit",
     "to": "xutian_endless_wall"
+  },
+  {
+    "from": "core_flame_vein",
+    "to": "ancient_ruin_ring"
   }
 ]

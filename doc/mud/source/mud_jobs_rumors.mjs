@@ -94,6 +94,14 @@ export default {
       service_tag: 'sea',
       related_quest_id: 'captain_supply',
     }),
+    job('outer_sea_watch', '外海探潮', '高风险机会任务', 'chaos_sea_port', 'captain_qu', 'captain_qu', '曲船主开始让真正能活着回来的修士去外海中层认潮、认压、认退路。', {
+      requirements: '最好已走通乱星海与虚天殿前置，不然多半连第一轮外海灵压都撑不过。',
+      reward_summary: '结丹线索、外海主材、深海见闻。',
+      command_hint: 'ask 曲船主 about rumor / travel / board',
+      route_tag: 'outer_sea',
+      service_tag: 'gold_core',
+      related_quest_id: 'outer_sea_trail',
+    }),
     job('xutian_probe', '残殿探线', '高风险机会任务', 'xutian_hall', 'palace_remnant_spirit', 'palace_remnant_spirit', '虚天殿不缺想进去的人，缺的是能活着把线索带出来的人。', {
       requirements: '肯冒险，也肯先读懂禁制提示。',
       reward_summary: '筑基前置材料、残钥线索、深层入口。',
@@ -101,6 +109,22 @@ export default {
       route_tag: 'xutian_arc',
       service_tag: 'danger',
       related_quest_id: 'xutian_key',
+    }),
+    job('core_flame_watch', '残环探火', '高风险机会任务', 'xutian_hall', 'palace_remnant_spirit', 'palace_remnant_spirit', '守门残灵开始把后来人往残环与丹火灵脉更深处引，像是在挑还敢不敢继续赌命的人。', {
+      requirements: '最好已摸清虚天残区的基本节律，否则很容易在古禁深处先乱了神。',
+      reward_summary: '结丹辅材、古修见闻、残环门径。',
+      command_hint: 'ask 守门残灵 about rumor / board / travel',
+      route_tag: 'xutian_arc',
+      service_tag: 'gold_core',
+      related_quest_id: 'core_ruin_heart',
+    }),
+    job('star_abyss_collect', '星渊采心', '高风险机会任务', 'xutian_star_platform', 'star_tablet_spirit', 'star_tablet_spirit', '祭台残灵开始让人把路走到星渊潮眼，只为取那一枚真正够格的凝婴灵物。', {
+      requirements: '结丹后段的修士才会认真考虑这条差事，太早去多半只会把命交给深海。',
+      reward_summary: '凝婴线索、深海灵物、关键见闻。',
+      command_hint: 'ask 祭台残灵 about rumor / travel / board',
+      route_tag: 'star_abyss',
+      service_tag: 'nascent_soul',
+      related_quest_id: 'nascent_soul_gate',
     }),
   ],
   rumor_sources: [
@@ -166,12 +190,33 @@ export default {
       job_ids: ['sea_hunt_contract'],
       quest_ids: ['captain_supply', 'demon_fish_core'],
     }),
+    rumor('outer_sea_rumor', 'chaos_sea_port', 'captain_qu', '结丹', '曲船主近来谈得更多的已不是近海生意，而是谁敢真正把船压进外海中层。', [
+      '曲船主望着更深处的海色：到了外海，胆子、法力和退路都得一起备齐，缺一样都不够你活着回来。',
+      '他提到最近有人在外海中层见到青焰般的潮下碎光，那东西正适合拿来稳住丹火。'
+    ], {
+      job_ids: ['outer_sea_watch'],
+      quest_ids: ['outer_sea_trail', 'gold_core_gate'],
+    }),
     rumor('xutian_spirit_rumor', 'xutian_hall', 'palace_remnant_spirit', 'rumor', '虚天殿里的残灵不会白白给路，但会给肯看懂提示的人留缝。', [
       '守门残灵的声音像从铜门后慢慢渗出来：贪者止于门外，识禁者方能再前。',
       '它提醒你，这里不只是打怪取物，更要学会读板子、看残纹、认哪一步是真的在给你路。'
     ], {
       job_ids: ['xutian_probe'],
       quest_ids: ['xutian_key'],
+    }),
+    rumor('core_flame_rumor', 'xutian_hall', 'palace_remnant_spirit', '古修残环', '守门残灵开始反复提起残环与丹火灵脉，像是默认你已经能往更深处走了。', [
+      '守门残灵缓缓道：外殿之火只够照路，真正会试人心性的，是残环里那口还没散尽的古修余温。',
+      '它提醒你，若手里仍握着旧库令牌，不妨试着把它带去残环深处，看古禁到底认不认你。'
+    ], {
+      job_ids: ['core_flame_watch'],
+      quest_ids: ['core_ruin_heart'],
+    }),
+    rumor('star_abyss_rumor', 'xutian_star_platform', 'star_tablet_spirit', '凝婴', '祭台残灵近来把话题越提越远，已经不再只谈玄门，而是在谈更深海里的那口婴火。', [
+      '祭台残灵低语：凝婴所缺的从不是一味丹，而是你有没有走到那一步、见到那一步、护住那一步。',
+      '它提到星渊潮眼里偶有灵物流成心形，真正敢下去的人，通常已不再把结丹当终点。'
+    ], {
+      job_ids: ['star_abyss_collect'],
+      quest_ids: ['nascent_soul_gate'],
     }),
   ],
 };

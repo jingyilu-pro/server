@@ -316,6 +316,8 @@ int main()
         const auto claim_response = run_command("claim");
         const auto help_response = run_command("help newbie");
         const auto help_work_response = run_command("help work");
+        const auto help_core_dan_response = run_command("help core_dan");
+        const auto help_nascent_soul_response = run_command("help nascent_soul");
         const auto commands_response = run_command("commands");
         const auto work_response = run_command("work");
         const auto rank_response = run_command("rank");
@@ -331,6 +333,8 @@ int main()
         require_true(claim_response.code() == 0, "claim returned code=" + std::to_string(claim_response.code()));
         require_command_success(help_response, "help newbie");
         require_command_success(help_work_response, "help work");
+        require_command_success(help_core_dan_response, "help core_dan");
+        require_command_success(help_nascent_soul_response, "help nascent_soul");
         require_command_success(commands_response, "commands");
         require_command_success(work_response, "work");
         require_command_success(rank_response, "rank");
@@ -448,6 +452,16 @@ int main()
                   << " help_work_success=" << (help_work_response.result().success() ? "true" : "false")
                   << " help_work_topic="
                   << (help_work_response.result().panels_size() > 0 ? help_work_response.result().panels(0).document_id() : "")
+                  << "\n";
+        std::cout << "help_core_dan_code=" << help_core_dan_response.code()
+                  << " help_core_dan_success=" << (help_core_dan_response.result().success() ? "true" : "false")
+                  << " help_core_dan_topic="
+                  << (help_core_dan_response.result().panels_size() > 0 ? help_core_dan_response.result().panels(0).document_id() : "")
+                  << "\n";
+        std::cout << "help_nascent_soul_code=" << help_nascent_soul_response.code()
+                  << " help_nascent_soul_success=" << (help_nascent_soul_response.result().success() ? "true" : "false")
+                  << " help_nascent_soul_topic="
+                  << (help_nascent_soul_response.result().panels_size() > 0 ? help_nascent_soul_response.result().panels(0).document_id() : "")
                   << "\n";
         std::cout << "commands_code=" << commands_response.code()
                   << " commands_success=" << (commands_response.result().success() ? "true" : "false")

@@ -878,6 +878,44 @@ function validateP0Coverage({ scenes, helpTopics, jobs, rumorSources, identityTr
   }
 }
 
+function validateNascentSoulSkeleton({ defaults, items, helpTopics }) {
+  const realmNames = Array.isArray(defaults?.realm_names) ? defaults.realm_names : [];
+  if (!realmNames.includes('元婴初期')) {
+    throw new Error('Nascent soul validation failed: defaults.realm_names is missing 元婴初期');
+  }
+
+  const itemIds = new Set((items ?? []).map((item) => String(item.item_id ?? '').trim()).filter(Boolean));
+  for (const itemId of ['gold_core_pill', 'nascent_soul_pill']) {
+    if (!itemIds.has(itemId)) {
+      throw new Error(`Nascent soul validation failed: missing item ${itemId}`);
+    }
+  }
+
+  const helpTopicIds = new Set((helpTopics ?? []).map((topic) => String(topic.topic_id ?? '').trim()).filter(Boolean));
+  for (const topicId of ['core_dan', 'nascent_soul']) {
+    if (!helpTopicIds.has(topicId)) {
+      throw new Error(`Nascent soul validation failed: missing help topic ${topicId}`);
+    }
+  }
+}
+
+function validateNascentSoulMainline({ scenes, quests }) {
+  const sceneMap = buildIdMap(scenes, 'scene_id', 'nascent_soul_scenes');
+  const questMap = buildIdMap(quests, 'quest_id', 'nascent_soul_quests');
+
+  for (const sceneId of ['outer_sea_mid', 'core_flame_vein', 'ancient_ruin_ring', 'star_abyss']) {
+    if (!sceneMap.has(sceneId)) {
+      throw new Error(`Nascent soul validation failed: missing scene ${sceneId}`);
+    }
+  }
+
+  for (const questId of ['outer_sea_trail', 'gold_core_gate', 'core_ruin_heart', 'nascent_soul_gate']) {
+    if (!questMap.has(questId)) {
+      throw new Error(`Nascent soul validation failed: missing quest ${questId}`);
+    }
+  }
+}
+
 function renderWorldMapTs(mapPayload) {
   return `export interface WorldMapNode {
   id: string
@@ -1009,6 +1047,15 @@ async function main() {
     jobs,
     rumorSources,
     identityTracks,
+  });
+  validateNascentSoulSkeleton({
+    defaults,
+    items,
+    helpTopics,
+  });
+  validateNascentSoulMainline({
+    scenes,
+    quests,
   });
 
   buildSceneRelations(scenes, npcs, 'npc_id', 'npc_ids', 'npcs');

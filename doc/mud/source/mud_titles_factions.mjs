@@ -18,7 +18,7 @@ const sceneService = (scene_id, service_tags, rumor_topics, extras = {}) => ({
 
 export default {
   identity_tracks: [
-    identityTrack('loose_cultivator', '散修路', 'loose', ['行脚散修', '游方散人', '采真客', '洞府之主'], '散修不靠山门，也能靠风声、坊市、海路和手艺慢慢起势。', {
+    identityTrack('loose_cultivator', '散修路', 'loose', ['行脚散修', '游方散人', '采真客', '洞府之主'], '散修不靠山门，也能靠风声、坊市、海路和手艺慢慢起势；走到结丹与凝婴前夜时，外海、残环与星渊便会成为新的试胆场。', {
       mentor_ids: ['xu_wanderer', 'loose_master_wen', 'seaport_broker'],
       service_unlocks: ['rumor', 'board', 'trade', 'travel'],
     }),
@@ -26,11 +26,11 @@ export default {
       mentor_ids: ['li_feiyu', 'han_zhanglao'],
       service_unlocks: ['mentor', 'board', 'duty'],
     }),
-    identityTrack('huangfeng_valley', '黄枫谷', 'sect', ['记名', '外门', '内门', '执事'], '黄枫谷重规矩、药园与基础功法，是炼气到筑基准备的重要正道路线。', {
+    identityTrack('huangfeng_valley', '黄枫谷', 'sect', ['记名', '外门', '内门', '执事'], '黄枫谷重规矩、药园与基础功法，是炼气到筑基准备的重要正道路线；到了筑基后段，门内贡献与见闻会直接影响你能否继续摸到结丹门槛。', {
       mentor_ids: ['huangfeng_steward', 'elder_ma', 'medicine_deacon'],
       service_unlocks: ['mentor', 'sect', 'alchemy', 'board'],
     }),
-    identityTrack('spirit_beast_mountain', '灵兽山', 'sect', ['记名', '外门', '内门', '执事'], '灵兽山偏向灵兽、灵虫、照料和采药，是资源循环感最强的一条门派线。', {
+    identityTrack('spirit_beast_mountain', '灵兽山', 'sect', ['记名', '外门', '内门', '执事'], '灵兽山偏向灵兽、灵虫、照料和采药，是资源循环感最强的一条门派线；中后期仍能通过高阶材料差事与外海采集维持稳定积累。', {
       mentor_ids: ['spirit_beast_steward', 'beast_feeder_zhou'],
       service_unlocks: ['mentor', 'sect', 'gather', 'board'],
     }),
@@ -74,5 +74,15 @@ export default {
       board_available: true,
       mentor_ids: ['palace_remnant_spirit'],
     }),
+    sceneService('xutian_star_platform', ['board', 'danger', 'rumor'], ['星纹旧闻', '凝婴线索'], {
+      board_available: true,
+      mentor_ids: ['star_tablet_spirit'],
+    }),
+    sceneService('outer_sea_mid', ['travel', 'sea', 'rumor'], ['外海潮路', '结丹线索']),
+    sceneService('core_flame_vein', ['danger', 'gather', 'rumor'], ['丹火灵脉', '结丹辅材']),
+    sceneService('ancient_ruin_ring', ['danger', 'board', 'rumor'], ['古修残环', '残殿回响'], {
+      board_available: true,
+    }),
+    sceneService('star_abyss', ['travel', 'danger', 'rumor'], ['星渊潮眼', '凝婴灵物']),
   ],
 };

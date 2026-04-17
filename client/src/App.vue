@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue'
 
+import { formatHelpTopicTitle, formatProgressStageLabel } from '@/lib/progression'
 import { useGameStore } from '@/stores/game'
 import { directionLabelMap, worldMapEdges, worldMapNodes } from '@/lib/world-map'
 
@@ -170,13 +171,25 @@ const sceneQuestOffers: Record<string, Array<{ id: string; title: string; summar
   harbor_backbay: [{ id: 'harbor_shell_task', title: '后湾盐壳', summary: '吴老渔想先看看你会不会做最基础的后湾海猎活。' }],
   harbor_net_field: [{ id: 'harbor_chart_task', title: '后湾海图', summary: '彭网师正在整理后湾潮路，正缺一个能跑腿也能下水的人。' }],
   smuggler_alley: [{ id: 'harbor_signal', title: '暗巷接头', summary: '暗潮小巷有人在收接头暗号，适合补足港口支线。' }],
-  chaos_sea_port: [{ id: 'captain_supply', title: '远航补给', summary: '曲船主还缺远航物资，这条线会把你送上真正的海路。' }],
+  chaos_sea_port: [
+    { id: 'captain_supply', title: '远航补给', summary: '曲船主还缺远航物资，这条线会把你送上真正的海路。' },
+    { id: 'outer_sea_trail', title: '外海见闻', summary: '近港只是门槛，真正往结丹门前摸去，要从外海中层开始学会认潮与认压。' },
+  ],
   outer_isles_wharf: [{ id: 'outer_pearl_task', title: '群岛采珠', summary: '群岛小埠的人先看你会不会摸珠、会不会识潮，再决定值不值得带你出海。' }],
   outer_isles_market: [{ id: 'outer_coral_task', title: '风暴珊瑚', summary: '蓝采珠缺一截风暴珊瑚，这会让你更早接触群岛高价值采集点。' }],
-  chaos_sea_ship: [{ id: 'demon_fish_core', title: '妖鱼内丹', summary: '船上术士正在收妖鱼内丹，可顺手把海战与法术线串起来。' }],
+  chaos_sea_ship: [
+    { id: 'demon_fish_core', title: '妖鱼内丹', summary: '船上术士正在收妖鱼内丹，可顺手把海战与法术线串起来。' },
+    { id: 'gold_core_gate', title: '结丹之门', summary: '若已把虚天祭台那条线走通，甲板术士会开始把你往真正的结丹主丹上带。' },
+  ],
   chaos_sea_isle: [{ id: 'chaos_relic', title: '孤岛残碑', summary: '残碑孤岛的隐士需要残钥碎片，这会引出虚天殿前置线。' }],
-  xutian_hall: [{ id: 'xutian_key', title: '虚天残钥', summary: '守门残灵在等残钥，交齐后才能真正逼近虚天殿内层。' }],
-  xutian_star_platform: [{ id: 'xutian_star_map', title: '星纹演算', summary: '祭台残灵正在收星纹拓片，这是逼近内殿玄门的最后一步。' }],
+  xutian_hall: [
+    { id: 'xutian_key', title: '虚天残钥', summary: '守门残灵在等残钥，交齐后才能真正逼近虚天殿内层。' },
+    { id: 'core_ruin_heart', title: '古修残环', summary: '守门残灵若开始提残环，说明你已被默认能往更深处赌一轮结丹线。' },
+  ],
+  xutian_star_platform: [
+    { id: 'xutian_star_map', title: '星纹演算', summary: '祭台残灵正在收星纹拓片，这是逼近内殿玄门的最后一步。' },
+    { id: 'nascent_soul_gate', title: '凝婴前夜', summary: '当祭台残灵开始谈星渊与婴火时，这条线就已经不再是普通结丹后段的准备了。' },
+  ],
   xutian_rune_garden: [{ id: 'void_crystal_task', title: '裂隙晶砂', summary: '记纹残灵只认裂隙晶砂，这条线会把你带进虚天残区的炼制与高危循环。' }],
   xutian_shard_steps: [{ id: 'void_rune_task', title: '残纹归位', summary: '拾屑傀还在执行古老命令，你可以顺着它的需求继续深探残区。' }],
 }
@@ -195,6 +208,9 @@ const narrativeArcLabels: Record<number, string> = {
   4: '血色禁地试炼',
   5: '乱星海漂流',
   6: '虚天殿初启',
+  7: '结丹之门',
+  8: '古修残环',
+  9: '凝婴前夜',
 }
 
 const narrativeQuestOrder: Record<string, number> = {
@@ -218,12 +234,20 @@ const narrativeQuestOrder: Record<string, number> = {
   chaos_relic: 5,
   xutian_key: 6,
   xutian_star_map: 6,
+  outer_sea_trail: 7,
+  gold_core_gate: 7,
+  core_ruin_heart: 8,
+  nascent_soul_gate: 9,
 }
 
 const sceneFollowupHints: Record<string, string> = {
   chaos_sea_ship: '当前章节：乱星海漂流。甲板术士更像是在替你梳理后续海路与虚天线索，可继续交谈后再向深海推进。',
   chaos_sea_isle: '残碑孤岛的碑文与钥片都和虚天殿有关，别忘了查看遗迹、人物与地面线索。',
   storm_route: '当前章节：乱星海漂流。先稳住法力与气力，再沿风暴航道继续向东探路。',
+  outer_sea_mid: '当前章节：结丹之门。外海会先逼你认清自身火候，再决定是否把真正的稳丹主材交到你手里。',
+  core_flame_vein: '当前章节：古修残环。这里真正考的是你能不能在古修余火里稳住心神与经脉，而不只是扛住伤害。',
+  ancient_ruin_ring: '当前章节：古修残环。残环主殿里的东西不会白给，先把旧令牌、残环与守门残灵的话连起来看。',
+  star_abyss: '当前章节：凝婴前夜。星渊不是单纯的采集点，更像在确认你有没有资格把凝婴这一步真正扛到身上。',
 }
 
 const categoryLabels: Record<CommandCategoryId, string> = {
@@ -739,7 +763,7 @@ const sceneInteractables = computed<SceneInteractable[]>(() => {
       description: `${displayName}也在此地行动，与你共享这一片场景视野。`,
       meta: [
         `账号：${playerAccount || '未知'}`,
-        `境界：${String(scenePlayer.realmName ?? '凡躯')}`,
+        `境界：${formatProgressStageLabel(String(scenePlayer.realmName ?? '凡躯'))}`,
         `宗门：${String(scenePlayer.sectName ?? '散修')}`,
         String(scenePlayer.title ?? '') ? `称号：${String(scenePlayer.title)}` : '',
       ].filter(Boolean) as string[],
@@ -1056,7 +1080,7 @@ const statusPromptPrimary = computed(() => {
     return supplied
   }
   const role = String(player.value.characterName ?? store.account ?? '无名散修') || '无名散修'
-  const realm = String(player.value.cultivation?.realmName ?? player.value.stageLabel ?? '凡躯')
+  const realm = formatProgressStageLabel(String(player.value.cultivation?.realmName ?? player.value.stageLabel ?? '凡躯'))
   const hp = `${String(player.value.hp ?? 0)}/${String(player.value.maxHp ?? 0)}`
   const mana = `${String(currentStatusAttributes.value.mana ?? player.value.statusAttributes?.mana ?? 0)}/${String(player.value.statusAttributes?.mana ?? 0)}`
   const sta = `${String(currentStatusAttributes.value.sta ?? player.value.statusAttributes?.sta ?? 0)}/${String(player.value.statusAttributes?.sta ?? 0)}`
@@ -1508,7 +1532,7 @@ const quickStats = computed(() => [
   {
     key: 'stage',
     label: '阶段',
-    value: String(player.value.stageLabel ?? '启程'),
+    value: formatProgressStageLabel(String(player.value.stageLabel ?? '启程')),
   },
 ])
 
@@ -2156,10 +2180,14 @@ function scenePanelMark(kind: SceneInteractableKind) {
 
 function buildTimelinePanelFromStructuredPanel(panel: Record<string, any>, index: number): Omit<TimelinePanel, 'entryType' | 'sequence'> | null {
   const panelId = String(panel.panelId ?? panel.panel_id ?? `panel-${index}`).trim() || `panel-${index}`
-  const title = String(panel.title ?? panelId).trim() || '无名札板'
+  const panelDocumentId = String(panel.documentId ?? panel.document_id ?? '').trim()
+  const panelKind = String(panel.panelKind ?? panel.panel_kind ?? '').trim()
+  const title =
+    panelKind === 'help_topic'
+      ? formatHelpTopicTitle(panelDocumentId, String(panel.title ?? panelId).trim() || '无名札板')
+      : String(panel.title ?? panelId).trim() || '无名札板'
   const compactTitle = String(panel.compactTitle ?? panel.compact_title ?? title).trim() || title
   const summary = String(panel.summary ?? '').trim()
-  const panelKind = String(panel.panelKind ?? panel.panel_kind ?? '').trim()
   const profile = panelRenderProfile(panelId)
   const sourceEntries = (panel.entries as Record<string, any>[] | undefined) ?? []
   const asciiLines = ((panel.asciiLines as string[] | undefined) ?? (panel.ascii_lines as string[] | undefined) ?? [])
@@ -3568,7 +3596,7 @@ watch(
             <article class="detail-card settings-card">
               <p class="detail-title">此卷在身</p>
               <p>道号：{{ store.account || '未署名' }}</p>
-              <p>角色：{{ player.characterName || '未显形' }} · 境界：{{ player.cultivation?.realmName || player.stageLabel || '凡躯' }}</p>
+              <p>角色：{{ player.characterName || '未显形' }} · 境界：{{ formatProgressStageLabel(String(player.cultivation?.realmName || player.stageLabel || '凡躯')) }}</p>
               <p>所在：{{ sceneDisplayTitle }}</p>
             </article>
 

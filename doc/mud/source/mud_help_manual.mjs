@@ -180,5 +180,39 @@ export default {
         category: '地理',
       },
     ),
+    topic(
+      'core_dan',
+      '结丹',
+      '结丹不是只看修为，而是要把丹火、主材与资历一并备齐。',
+      [
+        '从筑基后期开始，结丹准备会变成真正的大关口。',
+        '至少要关心三件事：结丹主丹、稳丹主材、身份或世界见闻。',
+        '先问 rumor，再跑 work/board，把丹火灵脉、古修残环和外海中层的线索串起来。',
+        '如果只会闷头修炼，往往会在最后一关发现自己少一味主材。',
+      ],
+      {
+        keywords: ['结丹', '金丹', 'core_dan'],
+        related_commands: ['help', 'rumor', 'work', 'board', 'breakthrough'],
+        inline_commands: ['help core_dan', 'work', 'board', 'breakthrough'],
+        category: '成长',
+      },
+    ),
+    topic(
+      'nascent_soul',
+      '凝婴',
+      '元婴初期之前，真正困难的不是修为，而是护住神识与凑齐灵物。',
+      [
+        '凝婴前夜需要神识圆满、主丹主材齐备，以及足够的世界见闻。',
+        '深海灵物、古修遗迹和高风险 rumor 会在这一阶段同时指向你。',
+        '先把星海灵物、养魂古玉与关键见闻准备好，再去尝试突破。',
+        '若仍停留在筑基/结丹期的旧循环，往往看得见路，却进不了门。',
+      ],
+      {
+        keywords: ['凝婴', '元婴', 'nascent_soul'],
+        related_commands: ['help', 'rumor', 'board', 'travel', 'breakthrough'],
+        inline_commands: ['help nascent_soul', 'travel', 'board', 'breakthrough'],
+        category: '成长',
+      },
+    ),
   ],
 };

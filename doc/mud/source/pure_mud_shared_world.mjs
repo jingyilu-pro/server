@@ -570,6 +570,37 @@ pushLinearArea(scenes, scene_patches, {
 });
 
 pushLinearArea(scenes, scene_patches, {
+  anchor_scene_id: 'chaos_sea_ship',
+  anchor_direction: 'south',
+  region_name: '外海深线',
+  chapter: '结丹之门',
+  base_x: 28,
+  base_y: 106,
+  rooms: [
+    {
+      scene_id: 'outer_sea_mid',
+      name: '外海中层',
+      description: '海雾渐沉，灵压已不是近海可比，潮下偶有青焰般的碎光一闪而过。',
+      room_type: '海域',
+      risk_level: '高危',
+      pvp_enabled: true,
+      landmark: '外海灵潮线',
+      rumors: ['能在外海中层稳住船与神识的人，才算真正摸到了结丹前的海路门槛。'],
+    },
+    {
+      scene_id: 'star_abyss',
+      name: '星渊裂海',
+      description: '深海灵流在此翻卷成裂，潮底像埋着碎星，许多凝婴灵物都只肯在这片黑水里现身。',
+      room_type: '海域',
+      risk_level: '高危',
+      pvp_enabled: true,
+      landmark: '星渊潮眼',
+      rumors: ['若非已经摸到结丹后段的门槛，大多数人连星渊边上的第一道暗潮都过不去。'],
+    },
+  ],
+});
+
+pushLinearArea(scenes, scene_patches, {
   anchor_scene_id: 'xutian_inner_gate',
   anchor_direction: 'south',
   region_name: '虚天残区',
@@ -587,6 +618,36 @@ pushLinearArea(scenes, scene_patches, {
     { scene_id: 'xutian_crystal_bridge', name: '晶桥', description: '桥身裂着一道道细纹，桥下则是翻滚不定的幽暗虚流。', room_type: '秘境', risk_level: '高危', pvp_enabled: true },
     { scene_id: 'xutian_star_pit', name: '星坑', description: '坑底像埋着无数未熄的微光，又像有东西正盯着抬头的人。', room_type: '秘境', risk_level: '高危', pvp_enabled: true },
     { scene_id: 'xutian_endless_wall', name: '无尽壁', description: '一道看不到尽头的古壁横在最深处，许多残纹在其表面像活物般缓慢游走。', room_type: '秘境', risk_level: '高危' },
+  ],
+});
+
+pushLinearArea(scenes, scene_patches, {
+  anchor_scene_id: 'xutian_star_platform',
+  anchor_direction: 'south',
+  region_name: '虚天后脉',
+  chapter: '古修残环',
+  base_x: 62,
+  base_y: 126,
+  rooms: [
+    {
+      scene_id: 'core_flame_vein',
+      name: '丹火灵脉',
+      description: '地火暗涌，许多断裂槽线仍在吐出灼热灵息，是稳固金丹丹火最危险也最有效的地方。',
+      room_type: '秘境',
+      risk_level: '高危',
+      landmark: '丹火裂槽',
+      rumors: ['古修丹火不认侥幸，敢在这里取材的人，通常已经准备拿更高境界去赌命。'],
+    },
+    {
+      scene_id: 'ancient_ruin_ring',
+      name: '古修残环',
+      description: '一圈残殿围着旧日禁制慢慢沉在暗光里，中央像还压着某种没散尽的古修意志。',
+      room_type: '秘境',
+      risk_level: '高危',
+      pvp_enabled: true,
+      landmark: '残环主殿',
+      rumors: ['越靠近残环中央，越会觉得这里留下的并非死物，而是仍在挑选后来人的某种旧规矩。'],
+    },
   ],
 });
 
@@ -672,6 +733,8 @@ const monsters = [
   monster('reef_sharkling', '黑礁幼鲨', 'outer_isles_black_reef', 212, 42, 18, 70, 154, 'black_reef_tooth', 1, { description: '虽然还不算真正可怕的大妖，却足够让采集的人手忙脚乱。', element: '水' }),
   monster('lagoon_bug', '潟湖月蜉', 'outer_isles_lagoon', 188, 36, 14, 54, 128, 'moon_salt', 1, { description: '月夜活跃得最厉害，翅光像碎月一样晃眼。', kind: '奇虫', element: '冰' }),
   monster('altar_jelly', '坛影水母', 'outer_isles_watch_altar', 204, 40, 16, 66, 148, 'sea_kelp_bundle', 1, { description: '半透明的灵体总在听潮坛附近飘来荡去，偶尔会突然贴近。', kind: '奇虫', element: '雷' }),
+  monster('outer_sea_ray', '外海裂鲼', 'outer_sea_mid', 248, 48, 24, 112, 224, 'azure_flame_crystal', 1, { description: '它总借外海暗流突然翻身，鳍边像擦出一层青焰般的寒光。', kind: '海妖', element: '水' }),
+  monster('star_abyss_eel', '星渊鳗皇', 'star_abyss', 304, 60, 28, 144, 276, 'star_sea_heart', 1, { description: '深海电光顺着它的骨脊一路闪灭，看久了连神识都会被那节律牵着走。', kind: '海妖', element: '雷' }),
 
   monster('ash_guard', '灰甲守影', 'xutian_ash_corridor', 236, 46, 24, 96, 196, 'void_crystal', 1, { description: '像由古殿落灰和残甲拼起来的守卫，脚步沉得让地面都发闷。', element: '蚀' }),
   monster('rune_mite', '纹蚀', 'xutian_rune_garden', 220, 43, 20, 88, 186, 'rift_rune', 1, { description: '专吃残纹边缘的灵屑，小归小，却总成群结队。', kind: '奇虫', element: '蚀' }),
@@ -679,6 +742,8 @@ const monsters = [
   monster('crystal_hound', '晶裂犬', 'xutian_crystal_bridge', 244, 48, 24, 102, 202, 'star_shard', 1, { description: '踩过晶桥时会拖出一串刺耳刮擦声，让人根本不敢分心。', element: '冰' }),
   monster('bridge_wisp', '桥灵火', 'xutian_star_pit', 230, 45, 18, 94, 192, 'void_dust', 1, { description: '飘忽不定的一团灵火，总爱在人刚准备稳住时贴上来。', element: '火' }),
   monster('pit_spider', '坑渊蛛', 'xutian_endless_wall', 252, 49, 24, 108, 208, 'ash_silk', 1, { description: '在无尽壁附近结网，像是在替古禁收走最后一点活气。', kind: '奇虫', element: '毒' }),
+  monster('flame_vein_wisp', '丹火流萤', 'core_flame_vein', 262, 52, 22, 118, 232, 'purple_core_sand', 1, { description: '它像被地火吹起来的一簇活焰，扑近时会把经脉都烫得微微发麻。', kind: '异灵', element: '火' }),
+  monster('ruin_ring_guard', '残环守影', 'ancient_ruin_ring', 278, 56, 26, 132, 248, 'soul_warming_jade', 1, { description: '像古修残念与石甲捏在一起的守卫，只要踏进残环中央便会慢慢朝你合围。', element: '蚀' }),
 ];
 
 const resource_nodes = [
@@ -713,11 +778,15 @@ const resource_nodes = [
   resourceNode('outer_black_tooth', '黑礁齿痕', 'outer_isles_black_reef', '黑礁边常能翻到猎物或海妖遗落的硬齿。', 'black_reef_tooth', 1),
   resourceNode('outer_moon_salt', '月盐滩', 'outer_isles_moon_cove', '月夜后海风一干，最容易留下细细一层月盐。', 'moon_salt', 1),
   resourceNode('outer_tide_kelp', '潮藻槽', 'outer_isles_watch_altar', '听潮坛下方的一片水槽里总能摸到海藻。', 'sea_kelp_bundle', 1),
+  resourceNode('outer_sea_crystal_reef', '青焰礁髓', 'outer_sea_mid', '外海中层偶有礁髓在潮下亮起青焰般的碎光，正适合作为稳丹主材。', 'azure_flame_crystal', 1),
+  resourceNode('star_abyss_tide_eye', '星心潮眼', 'star_abyss', '只有潮眼最短暂张开的一刻，才来得及摸出那一枚真正像活着的心珀。', 'star_sea_heart', 1),
 
   resourceNode('void_crystal_sand', '裂隙晶砂', 'xutian_void_rift', '裂隙边不断掉落的细小晶砂。', 'void_crystal', 1),
   resourceNode('void_rune_shards', '残纹碎片', 'xutian_rune_garden', '庭中每一道残纹边缘都可能剥下细碎片。', 'rift_rune', 1),
   resourceNode('void_star_shard', '星屑裂片', 'xutian_star_pit', '从坑底微光中剥离出来的小片星屑。', 'star_shard', 1),
   resourceNode('void_ash_silk', '灰丝网', 'xutian_endless_wall', '贴着古壁结出的细密灰丝，拉扯时总像会发出低鸣。', 'ash_silk', 1),
+  resourceNode('core_flame_sandfall', '丹砂涌脉', 'core_flame_vein', '断裂火脉里不断有细砂般的丹火残屑涌上来，捞取时最怕火息反扑。', 'purple_core_sand', 1),
+  resourceNode('ruin_ring_jade_seat', '养魂玉座', 'ancient_ruin_ring', '残环偏殿的玉座里仍残留温养神魂的旧意，偶尔能剥下几片古玉。', 'soul_warming_jade', 1),
 ];
 
 const ground_loots = [
@@ -728,6 +797,8 @@ const ground_loots = [
   groundLoot('harbor_drift_fin_loot', 'harbor_drift_shore', 'drift_fin', 1, '漂木间卡着一片薄薄的妖鱼鳍。'),
   groundLoot('outer_altar_pearl', 'outer_isles_watch_altar', 'moon_pearl', 1, '石坛凹槽里躺着一枚被潮水冲亮的珠子。'),
   groundLoot('void_vault_dust', 'xutian_silent_vault', 'void_dust', 1, '静库角落里积着一小团异常细密的灰。'),
+  groundLoot('outer_sea_route_trace', 'outer_sea_mid', 'storm_route_chart', 1, '一片被海水反复打湿的航纹残页卡在礁缝里，仍能看出深海方向的旧注记。'),
+  groundLoot('ruin_ring_cache_token', 'ancient_ruin_ring', 'treasure_cache_token', 1, '残环主殿石台下压着一枚古库令牌，像是替后来人留下的一次试探。'),
 ];
 
 const hazards = [
@@ -738,8 +809,12 @@ const hazards = [
   hazard('spirit_beast_wild_roar', 'spirit_beast_inner_path', '兽压余波', '偶尔从内山深处传来的兽吼会让人心神一震。', { sen_cost: 12, resist_key: 'resist_wind' }),
   hazard('harbor_dark_tide', 'harbor_hidden_cove', '暗湾回潮', '暗湾里的暗流不像表面那样平静，失神就会吃一嘴苦水。', { hp_cost: 10, mana_cost: 10, resist_key: 'resist_water' }),
   hazard('outer_black_reef_surge', 'outer_isles_black_reef', '黑礁浪涌', '浪头会突然更换方向，逼得人不得不临时改步。', { hp_cost: 12, mana_cost: 12, resist_key: 'resist_water' }),
+  hazard('outer_sea_pressure', 'outer_sea_mid', '外海灵压', '外海中层的灵压会顺着潮路一阵阵压来，稍不留神便连呼吸都乱掉。', { mana_cost: 14, sta_cost: 12, resist_key: 'resist_water' }),
+  hazard('star_abyss_backflow', 'star_abyss', '星渊回潮', '潮底灵流会突然倒卷，像要把站得太深的人整个拖回深渊里。', { hp_cost: 16, mana_cost: 16, resist_key: 'resist_water' }),
   hazard('void_rift_pressure', 'xutian_void_rift', '裂隙灵压', '裂隙口的灵压会持续把人往后推，也持续磨掉护体。', { hp_cost: 14, mana_cost: 14, resist_key: 'resist_corrosion' }),
   hazard('void_wall_whisper', 'xutian_endless_wall', '古壁低鸣', '无尽壁上传来的低鸣会一点点侵蚀心神。', { sen_cost: 16, mana_cost: 10, resist_key: 'resist_ice' }),
+  hazard('core_flame_burst', 'core_flame_vein', '丹火逆涌', '一旦踩错火脉节律，地火便会沿残槽猛地回喷，把经脉都烫得发颤。', { hp_cost: 14, mana_cost: 12, resist_key: 'resist_fire' }),
+  hazard('ruin_ring_whisper', 'ancient_ruin_ring', '残环回啸', '残环里回荡的旧日咒声会一点点啃咬神识，让人分不清哪里是出口。', { sen_cost: 18, mana_cost: 8, resist_key: 'resist_corrosion' }),
 ];
 
 const quests = [

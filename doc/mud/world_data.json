@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-16T07:53:26.970Z",
+  "generated_at": "2026-04-17T05:50:54.207Z",
   "defaults": {
     "starting_scene_id": "qixuan_square",
     "starter_title": "初入修仙路",
@@ -24,7 +24,13 @@
       "炼气三层",
       "炼气中期",
       "炼气后期",
-      "筑基初期"
+      "筑基初期",
+      "筑基中期",
+      "筑基后期",
+      "结丹初期",
+      "结丹中期",
+      "结丹后期",
+      "元婴初期"
     ],
     "starter_inventory": [
       {
@@ -1865,6 +1871,152 @@
       "codex_entry_id": "item_frost_robe"
     },
     {
+      "item_id": "gold_core_pill",
+      "name": "结丹灵丸",
+      "item_type": "consumable",
+      "description": "专为筑基后期修士准备的主丹药，可助修士凝丹定火。",
+      "price": 520,
+      "hp_restore": 120,
+      "mana_restore": 90,
+      "sen_restore": 0,
+      "sta_restore": 0,
+      "exp_gain": 260,
+      "skill_level_gain": 0,
+      "attack_bonus": 0,
+      "defense_bonus": 0,
+      "spell_damage_bonus": 0,
+      "spell_haste_bonus": 0,
+      "consumable": true,
+      "equipable": false,
+      "tags": [
+        "medicine",
+        "gold_core"
+      ],
+      "codex_entry_id": "item_gold_core_pill"
+    },
+    {
+      "item_id": "azure_flame_crystal",
+      "name": "青焰晶髓",
+      "item_type": "material",
+      "description": "自地火灵脉深处凝出的晶髓，最适合作为稳固丹火的主材。",
+      "price": 260,
+      "hp_restore": 0,
+      "mana_restore": 0,
+      "sen_restore": 0,
+      "sta_restore": 0,
+      "exp_gain": 0,
+      "skill_level_gain": 0,
+      "attack_bonus": 0,
+      "defense_bonus": 0,
+      "spell_damage_bonus": 0,
+      "spell_haste_bonus": 0,
+      "consumable": false,
+      "equipable": false,
+      "tags": [
+        "material",
+        "gold_core_material",
+        "fire"
+      ],
+      "codex_entry_id": "item_azure_flame_crystal"
+    },
+    {
+      "item_id": "purple_core_sand",
+      "name": "紫丹灵砂",
+      "item_type": "material",
+      "description": "古修丹室里残留下来的灵砂，常用于辅助凝丹。",
+      "price": 210,
+      "hp_restore": 0,
+      "mana_restore": 0,
+      "sen_restore": 0,
+      "sta_restore": 0,
+      "exp_gain": 0,
+      "skill_level_gain": 0,
+      "attack_bonus": 0,
+      "defense_bonus": 0,
+      "spell_damage_bonus": 0,
+      "spell_haste_bonus": 0,
+      "consumable": false,
+      "equipable": false,
+      "tags": [
+        "material",
+        "gold_core_material"
+      ],
+      "codex_entry_id": "item_purple_core_sand"
+    },
+    {
+      "item_id": "nascent_soul_pill",
+      "name": "凝婴灵丹",
+      "item_type": "consumable",
+      "description": "结丹后期修士冲击元婴前最看重的主丹，药力绵长而霸道。",
+      "price": 980,
+      "hp_restore": 180,
+      "mana_restore": 180,
+      "sen_restore": 120,
+      "sta_restore": 0,
+      "exp_gain": 420,
+      "skill_level_gain": 0,
+      "attack_bonus": 0,
+      "defense_bonus": 0,
+      "spell_damage_bonus": 0,
+      "spell_haste_bonus": 0,
+      "consumable": true,
+      "equipable": false,
+      "tags": [
+        "medicine",
+        "nascent_soul"
+      ],
+      "codex_entry_id": "item_nascent_soul_pill"
+    },
+    {
+      "item_id": "star_sea_heart",
+      "name": "星海心珀",
+      "item_type": "material",
+      "description": "深海星渊中才会出没的灵物之一，可护持神魂凝婴。",
+      "price": 880,
+      "hp_restore": 0,
+      "mana_restore": 0,
+      "sen_restore": 0,
+      "sta_restore": 0,
+      "exp_gain": 0,
+      "skill_level_gain": 0,
+      "attack_bonus": 0,
+      "defense_bonus": 0,
+      "spell_damage_bonus": 0,
+      "spell_haste_bonus": 0,
+      "consumable": false,
+      "equipable": false,
+      "tags": [
+        "material",
+        "nascent_soul_material",
+        "sea"
+      ],
+      "codex_entry_id": "item_star_sea_heart"
+    },
+    {
+      "item_id": "soul_warming_jade",
+      "name": "养魂古玉",
+      "item_type": "material",
+      "description": "古修遗址里流出的养魂玉片，适合凝婴前温养神识。",
+      "price": 760,
+      "hp_restore": 0,
+      "mana_restore": 0,
+      "sen_restore": 0,
+      "sta_restore": 0,
+      "exp_gain": 0,
+      "skill_level_gain": 0,
+      "attack_bonus": 0,
+      "defense_bonus": 0,
+      "spell_damage_bonus": 0,
+      "spell_haste_bonus": 0,
+      "consumable": false,
+      "equipable": false,
+      "tags": [
+        "material",
+        "nascent_soul_material"
+      ],
+      "codex_entry_id": "item_soul_warming_jade"
+    },
+    {
       "item_id": "herbal_hoe",
       "name": "药锄",
       "item_type": "tool",
@@ -3602,6 +3754,70 @@
       "chapter": "虚天殿初启"
     },
     {
+      "quest_id": "outer_sea_trail",
+      "title": "外海见闻",
+      "description": "曲船主要你带着风暴航线留下的旧图去探一趟外海中层，把那里的潮路与灵压真正看明白。",
+      "issuer_npc_id": "captain_qu",
+      "submit_npc_id": "captain_qu",
+      "required_item_id": "storm_route_chart",
+      "required_item_count": 1,
+      "reward_spirit_stone": 340,
+      "reward_exp": 520,
+      "reward_item_id": "azure_flame_crystal",
+      "reward_item_count": 1,
+      "reward_sect_id": "",
+      "unlock_rules": [],
+      "chapter": "结丹之门"
+    },
+    {
+      "quest_id": "gold_core_gate",
+      "title": "结丹之门",
+      "description": "甲板术士要你把祭台推演出的星纹心得重新走一遍海路，再借此炼出真正能撑住结丹的主丹。",
+      "issuer_npc_id": "deck_mage",
+      "submit_npc_id": "deck_mage",
+      "required_item_id": "star_platform_notes",
+      "required_item_count": 1,
+      "reward_spirit_stone": 420,
+      "reward_exp": 620,
+      "reward_item_id": "gold_core_pill",
+      "reward_item_count": 1,
+      "reward_sect_id": "",
+      "unlock_rules": [],
+      "chapter": "结丹之门"
+    },
+    {
+      "quest_id": "core_ruin_heart",
+      "title": "古修残环",
+      "description": "守门残灵让你带着古库令牌深入残环，取回那枚仍留着古修余温的残环心核。",
+      "issuer_npc_id": "palace_remnant_spirit",
+      "submit_npc_id": "palace_remnant_spirit",
+      "required_item_id": "treasure_cache_token",
+      "required_item_count": 1,
+      "reward_spirit_stone": 460,
+      "reward_exp": 680,
+      "reward_item_id": "purple_core_sand",
+      "reward_item_count": 1,
+      "reward_sect_id": "",
+      "unlock_rules": [],
+      "chapter": "古修残环"
+    },
+    {
+      "quest_id": "nascent_soul_gate",
+      "title": "凝婴前夜",
+      "description": "祭台残灵要你拿着裂隙护符去过星渊潮眼，再把真正够格的凝婴主丹带回祭台前。",
+      "issuer_npc_id": "star_tablet_spirit",
+      "submit_npc_id": "star_tablet_spirit",
+      "required_item_id": "void_guard_charm",
+      "required_item_count": 1,
+      "reward_spirit_stone": 560,
+      "reward_exp": 820,
+      "reward_item_id": "nascent_soul_pill",
+      "reward_item_count": 1,
+      "reward_sect_id": "",
+      "unlock_rules": [],
+      "chapter": "凝婴前夜"
+    },
+    {
       "quest_id": "wanderer_dewleaf_task",
       "title": "露叶试手",
       "description": "许游方想看看你会不会做最基础的采药活，把一株露叶草带回去再说。",
@@ -4632,7 +4848,9 @@
       "scene_id": "chaos_sea_port",
       "hint": "曲船主站在近港栈边，看潮不看人，却总能把谁适不适合上船猜个八九不离十。",
       "dialogue": "曲船主啧了一声：海上不看嘴皮子，只看你能不能稳住船。",
-      "quest_ids": [],
+      "quest_ids": [
+        "outer_sea_trail"
+      ],
       "sect_offer_id": "",
       "role": "captain",
       "description": "乱星海航线引导人物。",
@@ -4655,7 +4873,8 @@
       "hint": "他俯身调阵灯时连袖口都不乱，像把整条航线的安危都压在了手指轻重之间。",
       "dialogue": "甲板术士抬手理了理阵灯：若想进更深的海域，你总得学点真正的法门。",
       "quest_ids": [
-        "demon_fish_core"
+        "demon_fish_core",
+        "gold_core_gate"
       ],
       "sect_offer_id": "",
       "role": "mage",
@@ -4723,7 +4942,8 @@
       "hint": "残灵立在殿门阴影里，像在替一座早已无人居住的古殿继续守着最后一道规矩。",
       "dialogue": "守门残灵声音空茫：残钥在手者，可入此殿一步。",
       "quest_ids": [
-        "xutian_key"
+        "xutian_key",
+        "core_ruin_heart"
       ],
       "sect_offer_id": "",
       "role": "spirit",
@@ -4747,7 +4967,8 @@
       "hint": "祭台残灵徘徊在星纹之间，像仍在等谁把当年那张未算完的阵图补到最后。",
       "dialogue": "祭台残灵低语：星图不正，玄门便永不开。",
       "quest_ids": [
-        "xutian_star_map"
+        "xutian_star_map",
+        "nascent_soul_gate"
       ],
       "sect_offer_id": "",
       "role": "spirit",
@@ -6123,6 +6344,38 @@
       "codex_entry_id": "monster_altar_jelly"
     },
     {
+      "monster_id": "outer_sea_ray",
+      "name": "外海裂鲼",
+      "scene_id": "outer_sea_mid",
+      "hp": 248,
+      "attack": 48,
+      "defense": 24,
+      "reward_spirit_stone": 112,
+      "reward_exp": 224,
+      "drop_item_id": "azure_flame_crystal",
+      "drop_item_count": 1,
+      "description": "它总借外海暗流突然翻身，鳍边像擦出一层青焰般的寒光。",
+      "kind": "海妖",
+      "element": "水",
+      "codex_entry_id": "monster_outer_sea_ray"
+    },
+    {
+      "monster_id": "star_abyss_eel",
+      "name": "星渊鳗皇",
+      "scene_id": "star_abyss",
+      "hp": 304,
+      "attack": 60,
+      "defense": 28,
+      "reward_spirit_stone": 144,
+      "reward_exp": 276,
+      "drop_item_id": "star_sea_heart",
+      "drop_item_count": 1,
+      "description": "深海电光顺着它的骨脊一路闪灭，看久了连神识都会被那节律牵着走。",
+      "kind": "海妖",
+      "element": "雷",
+      "codex_entry_id": "monster_star_abyss_eel"
+    },
+    {
       "monster_id": "ash_guard",
       "name": "灰甲守影",
       "scene_id": "xutian_ash_corridor",
@@ -6217,6 +6470,38 @@
       "kind": "奇虫",
       "element": "毒",
       "codex_entry_id": "monster_pit_spider"
+    },
+    {
+      "monster_id": "flame_vein_wisp",
+      "name": "丹火流萤",
+      "scene_id": "core_flame_vein",
+      "hp": 262,
+      "attack": 52,
+      "defense": 22,
+      "reward_spirit_stone": 118,
+      "reward_exp": 232,
+      "drop_item_id": "purple_core_sand",
+      "drop_item_count": 1,
+      "description": "它像被地火吹起来的一簇活焰，扑近时会把经脉都烫得微微发麻。",
+      "kind": "异灵",
+      "element": "火",
+      "codex_entry_id": "monster_flame_vein_wisp"
+    },
+    {
+      "monster_id": "ruin_ring_guard",
+      "name": "残环守影",
+      "scene_id": "ancient_ruin_ring",
+      "hp": 278,
+      "attack": 56,
+      "defense": 26,
+      "reward_spirit_stone": 132,
+      "reward_exp": 248,
+      "drop_item_id": "soul_warming_jade",
+      "drop_item_count": 1,
+      "description": "像古修残念与石甲捏在一起的守卫，只要踏进残环中央便会慢慢朝你合围。",
+      "kind": "妖兽",
+      "element": "蚀",
+      "codex_entry_id": "monster_ruin_ring_guard"
     }
   ],
   "scenes": [
@@ -8225,7 +8510,8 @@
       "exits": {
         "north": "tiannan_market",
         "west": "chaos_sea_port",
-        "east": "chaos_sea_isle"
+        "east": "chaos_sea_isle",
+        "south": "outer_sea_mid"
       },
       "npc_ids": [
         "deck_mage"
@@ -8246,9 +8532,9 @@
       "palette_id": "chaos_sea_cold",
       "landmark": "灵帆主桅",
       "rumors": [
-        "此地常有人提起「乱星海漂流」相关的旧闻。"
+        "此地常有人提起「结丹之门」相关的旧闻。"
       ],
-      "chapter": "乱星海漂流",
+      "chapter": "结丹之门",
       "room_type": "海域",
       "risk_level": "安全",
       "room_layer": "成长历练圈",
@@ -8596,7 +8882,8 @@
       "hazard_ids": [],
       "codex_entry_ids": [
         "geo_xutian_pill_room",
-        "monster_pill_fire_sprite"
+        "monster_pill_fire_sprite",
+        "recipe_gold_core_pill_recipe"
       ],
       "scene_brief": "",
       "scene_aftertaste": "",
@@ -8680,7 +8967,8 @@
       "description": "祭台地面满是星纹与禁制槽线，每走一步都像踩在古修留下的目光里。",
       "exits": {
         "north": "xutian_hall",
-        "east": "xutian_inner_gate"
+        "east": "xutian_inner_gate",
+        "south": "core_flame_vein"
       },
       "npc_ids": [
         "star_tablet_spirit"
@@ -8696,6 +8984,7 @@
         "geo_xutian_star_platform",
         "npc_star_tablet_spirit",
         "monster_star_lotus_mote",
+        "recipe_nascent_soul_pill_recipe",
         "formation_xutian_star_array",
         "codex_shared_world_rift"
       ],
@@ -8705,9 +8994,22 @@
       "palette_id": "xutian_slate",
       "landmark": "星纹主盘",
       "rumors": [
-        "此地常有人提起「虚天殿初启」相关的旧闻。"
+        "此地常有人提起「古修残环」相关的旧闻。"
       ],
-      "chapter": "虚天殿初启",
+      "chapter": "古修残环",
+      "service_tags": [
+        "board",
+        "danger",
+        "rumor"
+      ],
+      "rumor_topics": [
+        "星纹旧闻",
+        "凝婴线索"
+      ],
+      "board_available": true,
+      "mentor_ids": [
+        "star_tablet_spirit"
+      ],
       "room_type": "秘境",
       "risk_level": "安全",
       "room_layer": "成长历练圈",
@@ -8715,10 +9017,6 @@
       "loop_tags": [
         "残区探禁"
       ],
-      "service_tags": [],
-      "rumor_topics": [],
-      "board_available": false,
-      "mentor_ids": [],
       "codex_entry_id": "geo_xutian_star_platform"
     },
     {
@@ -11479,6 +11777,113 @@
       "codex_entry_id": "geo_outer_isles_watch_altar"
     },
     {
+      "scene_id": "outer_sea_mid",
+      "name": "外海中层",
+      "region_name": "外海深线",
+      "map_x": 28,
+      "map_y": 106,
+      "description": "海雾渐沉，灵压已不是近海可比，潮下偶有青焰般的碎光一闪而过。",
+      "exits": {
+        "north": "chaos_sea_ship",
+        "south": "star_abyss"
+      },
+      "npc_ids": [],
+      "monster_ids": [
+        "outer_sea_ray"
+      ],
+      "shop_item_ids": [],
+      "resource_node_ids": [
+        "outer_sea_crystal_reef"
+      ],
+      "ground_loot_ids": [
+        "outer_sea_route_trace"
+      ],
+      "hazard_ids": [
+        "outer_sea_pressure"
+      ],
+      "codex_entry_ids": [
+        "geo_outer_sea_mid",
+        "monster_outer_sea_ray"
+      ],
+      "chapter": "结丹之门",
+      "pvp_enabled": true,
+      "rumors": [
+        "能在外海中层稳住船与神识的人，才算真正摸到了结丹前的海路门槛。"
+      ],
+      "room_type": "海域",
+      "risk_level": "高危",
+      "landmark": "外海灵潮线",
+      "service_tags": [
+        "travel",
+        "sea",
+        "rumor"
+      ],
+      "rumor_topics": [
+        "外海潮路",
+        "结丹线索"
+      ],
+      "board_available": false,
+      "mentor_ids": [],
+      "room_layer": "成长历练圈",
+      "loop_tags": [
+        "海猎采珠",
+        "残区探禁"
+      ],
+      "codex_entry_id": "geo_outer_sea_mid"
+    },
+    {
+      "scene_id": "star_abyss",
+      "name": "星渊裂海",
+      "region_name": "外海深线",
+      "map_x": 28,
+      "map_y": 114,
+      "description": "深海灵流在此翻卷成裂，潮底像埋着碎星，许多凝婴灵物都只肯在这片黑水里现身。",
+      "exits": {
+        "north": "outer_sea_mid"
+      },
+      "npc_ids": [],
+      "monster_ids": [
+        "star_abyss_eel"
+      ],
+      "shop_item_ids": [],
+      "resource_node_ids": [
+        "star_abyss_tide_eye"
+      ],
+      "ground_loot_ids": [],
+      "hazard_ids": [
+        "star_abyss_backflow"
+      ],
+      "codex_entry_ids": [
+        "geo_star_abyss",
+        "monster_star_abyss_eel"
+      ],
+      "chapter": "结丹之门",
+      "pvp_enabled": true,
+      "rumors": [
+        "若非已经摸到结丹后段的门槛，大多数人连星渊边上的第一道暗潮都过不去。"
+      ],
+      "room_type": "海域",
+      "risk_level": "高危",
+      "landmark": "星渊潮眼",
+      "service_tags": [
+        "travel",
+        "danger",
+        "rumor"
+      ],
+      "rumor_topics": [
+        "星渊潮眼",
+        "凝婴灵物"
+      ],
+      "board_available": false,
+      "mentor_ids": [],
+      "room_layer": "成长历练圈",
+      "loop_tags": [
+        "海猎采珠",
+        "残区探禁"
+      ],
+      "codex_entry_id": "geo_star_abyss"
+    },
+    {
       "scene_id": "xutian_void_rift",
       "name": "裂隙口",
       "region_name": "虚天残区",
@@ -11905,6 +12310,111 @@
       "board_available": false,
       "mentor_ids": [],
       "codex_entry_id": "geo_xutian_endless_wall"
+    },
+    {
+      "scene_id": "core_flame_vein",
+      "name": "丹火灵脉",
+      "region_name": "虚天后脉",
+      "map_x": 62,
+      "map_y": 126,
+      "description": "地火暗涌，许多断裂槽线仍在吐出灼热灵息，是稳固金丹丹火最危险也最有效的地方。",
+      "exits": {
+        "north": "xutian_star_platform",
+        "south": "ancient_ruin_ring"
+      },
+      "npc_ids": [],
+      "monster_ids": [
+        "flame_vein_wisp"
+      ],
+      "shop_item_ids": [],
+      "resource_node_ids": [
+        "core_flame_sandfall"
+      ],
+      "ground_loot_ids": [],
+      "hazard_ids": [
+        "core_flame_burst"
+      ],
+      "codex_entry_ids": [
+        "geo_core_flame_vein",
+        "monster_flame_vein_wisp"
+      ],
+      "chapter": "古修残环",
+      "pvp_enabled": false,
+      "rumors": [
+        "古修丹火不认侥幸，敢在这里取材的人，通常已经准备拿更高境界去赌命。"
+      ],
+      "room_type": "秘境",
+      "risk_level": "高危",
+      "landmark": "丹火裂槽",
+      "service_tags": [
+        "danger",
+        "gather",
+        "rumor"
+      ],
+      "rumor_topics": [
+        "丹火灵脉",
+        "结丹辅材"
+      ],
+      "board_available": false,
+      "mentor_ids": [],
+      "room_layer": "成长历练圈",
+      "loop_tags": [
+        "残区探禁"
+      ],
+      "codex_entry_id": "geo_core_flame_vein"
+    },
+    {
+      "scene_id": "ancient_ruin_ring",
+      "name": "古修残环",
+      "region_name": "虚天后脉",
+      "map_x": 62,
+      "map_y": 134,
+      "description": "一圈残殿围着旧日禁制慢慢沉在暗光里，中央像还压着某种没散尽的古修意志。",
+      "exits": {
+        "north": "core_flame_vein"
+      },
+      "npc_ids": [],
+      "monster_ids": [
+        "ruin_ring_guard"
+      ],
+      "shop_item_ids": [],
+      "resource_node_ids": [
+        "ruin_ring_jade_seat"
+      ],
+      "ground_loot_ids": [
+        "ruin_ring_cache_token"
+      ],
+      "hazard_ids": [
+        "ruin_ring_whisper"
+      ],
+      "codex_entry_ids": [
+        "geo_ancient_ruin_ring",
+        "monster_ruin_ring_guard"
+      ],
+      "chapter": "古修残环",
+      "pvp_enabled": true,
+      "rumors": [
+        "越靠近残环中央，越会觉得这里留下的并非死物，而是仍在挑选后来人的某种旧规矩。"
+      ],
+      "room_type": "秘境",
+      "risk_level": "高危",
+      "landmark": "残环主殿",
+      "service_tags": [
+        "danger",
+        "board",
+        "rumor"
+      ],
+      "rumor_topics": [
+        "古修残环",
+        "残殿回响"
+      ],
+      "board_available": true,
+      "mentor_ids": [],
+      "room_layer": "成长历练圈",
+      "loop_tags": [
+        "残区探禁"
+      ],
+      "codex_entry_id": "geo_ancient_ruin_ring"
     }
   ],
   "skills": [
@@ -12187,6 +12697,30 @@
       "codex_entry_id": "spell_eclipse_needle"
     },
     {
+      "spell_id": "core_fire_seal",
+      "name": "丹火印",
+      "element": "火",
+      "description": "将地火之力收于掌间，专用于稳固金丹前的气海与丹火。",
+      "mana_cost": 28,
+      "power": 42,
+      "required_realm_stage": 7,
+      "granted_by_item_id": "",
+      "chapter": "结丹之门",
+      "codex_entry_id": "spell_core_fire_seal"
+    },
+    {
+      "spell_id": "nascent_soul_glow",
+      "name": "婴光护神术",
+      "element": "风",
+      "description": "以柔和灵光护住神识，在凝婴前夜守住神魂不散。",
+      "mana_cost": 46,
+      "power": 66,
+      "required_realm_stage": 11,
+      "granted_by_item_id": "",
+      "chapter": "凝婴前夜",
+      "codex_entry_id": "spell_nascent_soul_glow"
+    },
+    {
       "spell_id": "blazing_ring",
       "name": "烈环术",
       "element": "火",
@@ -12428,6 +12962,60 @@
       "required_skill_id": "spirit_brew",
       "chapter": "乱星海漂流",
       "codex_entry_id": "recipe_storm_ward_recipe"
+    },
+    {
+      "recipe_id": "gold_core_pill_recipe",
+      "name": "结丹灵丸炼制",
+      "description": "以青焰晶髓与紫丹灵砂为主材，炼出助修士冲击结丹的主丹。",
+      "result_item_id": "gold_core_pill",
+      "result_quantity": 1,
+      "ingredient_items": [
+        {
+          "item_id": "azure_flame_crystal",
+          "quantity": 1
+        },
+        {
+          "item_id": "purple_core_sand",
+          "quantity": 2
+        },
+        {
+          "item_id": "pill_room_ash",
+          "quantity": 1
+        }
+      ],
+      "station_scene_id": "xutian_pill_room",
+      "npc_id": "",
+      "success_rate": 0.68,
+      "required_skill_id": "spirit_brew",
+      "chapter": "结丹之门",
+      "codex_entry_id": "recipe_gold_core_pill_recipe"
+    },
+    {
+      "recipe_id": "nascent_soul_pill_recipe",
+      "name": "凝婴灵丹炼制",
+      "description": "以星海心珀、养魂古玉等灵物合炼，是元婴前最凶险的一炉丹。",
+      "result_item_id": "nascent_soul_pill",
+      "result_quantity": 1,
+      "ingredient_items": [
+        {
+          "item_id": "star_sea_heart",
+          "quantity": 1
+        },
+        {
+          "item_id": "soul_warming_jade",
+          "quantity": 1
+        },
+        {
+          "item_id": "xutian_key_fragment",
+          "quantity": 1
+        }
+      ],
+      "station_scene_id": "xutian_star_platform",
+      "npc_id": "star_tablet_spirit",
+      "success_rate": 0.52,
+      "required_skill_id": "spirit_brew",
+      "chapter": "凝婴前夜",
+      "codex_entry_id": "recipe_nascent_soul_pill_recipe"
     },
     {
       "recipe_id": "wanderer_powder_recipe",
@@ -12978,6 +13566,66 @@
         "board"
       ],
       "category": "地理"
+    },
+    {
+      "topic_id": "core_dan",
+      "title": "结丹",
+      "summary": "结丹不是只看修为，而是要把丹火、主材与资历一并备齐。",
+      "body_lines": [
+        "从筑基后期开始，结丹准备会变成真正的大关口。",
+        "至少要关心三件事：结丹主丹、稳丹主材、身份或世界见闻。",
+        "先问 rumor，再跑 work/board，把丹火灵脉、古修残环和外海中层的线索串起来。",
+        "如果只会闷头修炼，往往会在最后一关发现自己少一味主材。"
+      ],
+      "keywords": [
+        "结丹",
+        "金丹",
+        "core_dan"
+      ],
+      "related_commands": [
+        "help",
+        "rumor",
+        "work",
+        "board",
+        "breakthrough"
+      ],
+      "inline_commands": [
+        "help core_dan",
+        "work",
+        "board",
+        "breakthrough"
+      ],
+      "category": "成长"
+    },
+    {
+      "topic_id": "nascent_soul",
+      "title": "凝婴",
+      "summary": "元婴初期之前，真正困难的不是修为，而是护住神识与凑齐灵物。",
+      "body_lines": [
+        "凝婴前夜需要神识圆满、主丹主材齐备，以及足够的世界见闻。",
+        "深海灵物、古修遗迹和高风险 rumor 会在这一阶段同时指向你。",
+        "先把星海灵物、养魂古玉与关键见闻准备好，再去尝试突破。",
+        "若仍停留在筑基/结丹期的旧循环，往往看得见路，却进不了门。"
+      ],
+      "keywords": [
+        "凝婴",
+        "元婴",
+        "nascent_soul"
+      ],
+      "related_commands": [
+        "help",
+        "rumor",
+        "board",
+        "travel",
+        "breakthrough"
+      ],
+      "inline_commands": [
+        "help nascent_soul",
+        "travel",
+        "board",
+        "breakthrough"
+      ],
+      "category": "成长"
     }
   ],
   "jobs": [
@@ -13118,6 +13766,23 @@
       "related_quest_id": "captain_supply"
     },
     {
+      "job_id": "outer_sea_watch",
+      "title": "外海探潮",
+      "kind": "高风险机会任务",
+      "scene_id": "chaos_sea_port",
+      "issuer_npc_id": "captain_qu",
+      "submit_npc_id": "captain_qu",
+      "summary": "曲船主开始让真正能活着回来的修士去外海中层认潮、认压、认退路。",
+      "description": "曲船主开始让真正能活着回来的修士去外海中层认潮、认压、认退路。",
+      "requirements": "最好已走通乱星海与虚天殿前置，不然多半连第一轮外海灵压都撑不过。",
+      "reward_summary": "结丹线索、外海主材、深海见闻。",
+      "command_hint": "ask 曲船主 about rumor / travel / board",
+      "repeatable": true,
+      "route_tag": "outer_sea",
+      "service_tag": "gold_core",
+      "related_quest_id": "outer_sea_trail"
+    },
+    {
       "job_id": "xutian_probe",
       "title": "残殿探线",
       "kind": "高风险机会任务",
@@ -13133,6 +13798,40 @@
       "route_tag": "xutian_arc",
       "service_tag": "danger",
       "related_quest_id": "xutian_key"
+    },
+    {
+      "job_id": "core_flame_watch",
+      "title": "残环探火",
+      "kind": "高风险机会任务",
+      "scene_id": "xutian_hall",
+      "issuer_npc_id": "palace_remnant_spirit",
+      "submit_npc_id": "palace_remnant_spirit",
+      "summary": "守门残灵开始把后来人往残环与丹火灵脉更深处引，像是在挑还敢不敢继续赌命的人。",
+      "description": "守门残灵开始把后来人往残环与丹火灵脉更深处引，像是在挑还敢不敢继续赌命的人。",
+      "requirements": "最好已摸清虚天残区的基本节律，否则很容易在古禁深处先乱了神。",
+      "reward_summary": "结丹辅材、古修见闻、残环门径。",
+      "command_hint": "ask 守门残灵 about rumor / board / travel",
+      "repeatable": true,
+      "route_tag": "xutian_arc",
+      "service_tag": "gold_core",
+      "related_quest_id": "core_ruin_heart"
+    },
+    {
+      "job_id": "star_abyss_collect",
+      "title": "星渊采心",
+      "kind": "高风险机会任务",
+      "scene_id": "xutian_star_platform",
+      "issuer_npc_id": "star_tablet_spirit",
+      "submit_npc_id": "star_tablet_spirit",
+      "summary": "祭台残灵开始让人把路走到星渊潮眼，只为取那一枚真正够格的凝婴灵物。",
+      "description": "祭台残灵开始让人把路走到星渊潮眼，只为取那一枚真正够格的凝婴灵物。",
+      "requirements": "结丹后段的修士才会认真考虑这条差事，太早去多半只会把命交给深海。",
+      "reward_summary": "凝婴线索、深海灵物、关键见闻。",
+      "command_hint": "ask 祭台残灵 about rumor / travel / board",
+      "repeatable": true,
+      "route_tag": "star_abyss",
+      "service_tag": "nascent_soul",
+      "related_quest_id": "nascent_soul_gate"
     }
   ],
   "identity_tracks": [
@@ -13146,7 +13845,7 @@
         "采真客",
         "洞府之主"
       ],
-      "description": "散修不靠山门，也能靠风声、坊市、海路和手艺慢慢起势。",
+      "description": "散修不靠山门，也能靠风声、坊市、海路和手艺慢慢起势；走到结丹与凝婴前夜时，外海、残环与星渊便会成为新的试胆场。",
       "mentor_ids": [
         "xu_wanderer",
         "loose_master_wen",
@@ -13190,7 +13889,7 @@
         "内门",
         "执事"
       ],
-      "description": "黄枫谷重规矩、药园与基础功法，是炼气到筑基准备的重要正道路线。",
+      "description": "黄枫谷重规矩、药园与基础功法，是炼气到筑基准备的重要正道路线；到了筑基后段，门内贡献与见闻会直接影响你能否继续摸到结丹门槛。",
       "mentor_ids": [
         "huangfeng_steward",
         "elder_ma",
@@ -13213,7 +13912,7 @@
         "内门",
         "执事"
       ],
-      "description": "灵兽山偏向灵兽、灵虫、照料和采药，是资源循环感最强的一条门派线。",
+      "description": "灵兽山偏向灵兽、灵虫、照料和采药，是资源循环感最强的一条门派线；中后期仍能通过高阶材料差事与外海采集维持稳定积累。",
       "mentor_ids": [
         "spirit_beast_steward",
         "beast_feeder_zhou"
@@ -13394,6 +14093,25 @@
       "unlock_flags": []
     },
     {
+      "source_id": "outer_sea_rumor",
+      "scene_id": "chaos_sea_port",
+      "npc_id": "captain_qu",
+      "topic": "结丹",
+      "summary": "曲船主近来谈得更多的已不是近海生意，而是谁敢真正把船压进外海中层。",
+      "body_lines": [
+        "曲船主望着更深处的海色：到了外海，胆子、法力和退路都得一起备齐，缺一样都不够你活着回来。",
+        "他提到最近有人在外海中层见到青焰般的潮下碎光，那东西正适合拿来稳住丹火。"
+      ],
+      "job_ids": [
+        "outer_sea_watch"
+      ],
+      "quest_ids": [
+        "outer_sea_trail",
+        "gold_core_gate"
+      ],
+      "unlock_flags": []
+    },
+    {
       "source_id": "xutian_spirit_rumor",
       "scene_id": "xutian_hall",
       "npc_id": "palace_remnant_spirit",
@@ -13408,6 +14126,42 @@
       ],
       "quest_ids": [
         "xutian_key"
+      ],
+      "unlock_flags": []
+    },
+    {
+      "source_id": "core_flame_rumor",
+      "scene_id": "xutian_hall",
+      "npc_id": "palace_remnant_spirit",
+      "topic": "古修残环",
+      "summary": "守门残灵开始反复提起残环与丹火灵脉，像是默认你已经能往更深处走了。",
+      "body_lines": [
+        "守门残灵缓缓道：外殿之火只够照路，真正会试人心性的，是残环里那口还没散尽的古修余温。",
+        "它提醒你，若手里仍握着旧库令牌，不妨试着把它带去残环深处，看古禁到底认不认你。"
+      ],
+      "job_ids": [
+        "core_flame_watch"
+      ],
+      "quest_ids": [
+        "core_ruin_heart"
+      ],
+      "unlock_flags": []
+    },
+    {
+      "source_id": "star_abyss_rumor",
+      "scene_id": "xutian_star_platform",
+      "npc_id": "star_tablet_spirit",
+      "topic": "凝婴",
+      "summary": "祭台残灵近来把话题越提越远，已经不再只谈玄门，而是在谈更深海里的那口婴火。",
+      "body_lines": [
+        "祭台残灵低语：凝婴所缺的从不是一味丹，而是你有没有走到那一步、见到那一步、护住那一步。",
+        "它提到星渊潮眼里偶有灵物流成心形，真正敢下去的人，通常已不再把结丹当终点。"
+      ],
+      "job_ids": [
+        "star_abyss_collect"
+      ],
+      "quest_ids": [
+        "nascent_soul_gate"
       ],
       "unlock_flags": []
     }
@@ -13774,6 +14528,26 @@
       "required_skill_id": ""
     },
     {
+      "node_id": "outer_sea_crystal_reef",
+      "name": "青焰礁髓",
+      "scene_id": "outer_sea_mid",
+      "description": "外海中层偶有礁髓在潮下亮起青焰般的碎光，正适合作为稳丹主材。",
+      "drop_item_id": "azure_flame_crystal",
+      "drop_item_count": 1,
+      "cooldown_ms": 60000,
+      "required_skill_id": ""
+    },
+    {
+      "node_id": "star_abyss_tide_eye",
+      "name": "星心潮眼",
+      "scene_id": "star_abyss",
+      "description": "只有潮眼最短暂张开的一刻，才来得及摸出那一枚真正像活着的心珀。",
+      "drop_item_id": "star_sea_heart",
+      "drop_item_count": 1,
+      "cooldown_ms": 60000,
+      "required_skill_id": ""
+    },
+    {
       "node_id": "void_crystal_sand",
       "name": "裂隙晶砂",
       "scene_id": "xutian_void_rift",
@@ -13809,6 +14583,26 @@
       "scene_id": "xutian_endless_wall",
       "description": "贴着古壁结出的细密灰丝，拉扯时总像会发出低鸣。",
       "drop_item_id": "ash_silk",
+      "drop_item_count": 1,
+      "cooldown_ms": 60000,
+      "required_skill_id": ""
+    },
+    {
+      "node_id": "core_flame_sandfall",
+      "name": "丹砂涌脉",
+      "scene_id": "core_flame_vein",
+      "description": "断裂火脉里不断有细砂般的丹火残屑涌上来，捞取时最怕火息反扑。",
+      "drop_item_id": "purple_core_sand",
+      "drop_item_count": 1,
+      "cooldown_ms": 60000,
+      "required_skill_id": ""
+    },
+    {
+      "node_id": "ruin_ring_jade_seat",
+      "name": "养魂玉座",
+      "scene_id": "ancient_ruin_ring",
+      "description": "残环偏殿的玉座里仍残留温养神魂的旧意，偶尔能剥下几片古玉。",
+      "drop_item_id": "soul_warming_jade",
       "drop_item_count": 1,
       "cooldown_ms": 60000,
       "required_skill_id": ""
@@ -13974,6 +14768,22 @@
       "quantity": 1,
       "description": "静库角落里积着一小团异常细密的灰。",
       "one_time": true
+    },
+    {
+      "loot_id": "outer_sea_route_trace",
+      "scene_id": "outer_sea_mid",
+      "item_id": "storm_route_chart",
+      "quantity": 1,
+      "description": "一片被海水反复打湿的航纹残页卡在礁缝里，仍能看出深海方向的旧注记。",
+      "one_time": true
+    },
+    {
+      "loot_id": "ruin_ring_cache_token",
+      "scene_id": "ancient_ruin_ring",
+      "item_id": "treasure_cache_token",
+      "quantity": 1,
+      "description": "残环主殿石台下压着一枚古库令牌，像是替后来人留下的一次试探。",
+      "one_time": true
     }
   ],
   "hazards": [
@@ -14118,6 +14928,26 @@
       "resist_key": "resist_water"
     },
     {
+      "hazard_id": "outer_sea_pressure",
+      "scene_id": "outer_sea_mid",
+      "name": "外海灵压",
+      "description": "外海中层的灵压会顺着潮路一阵阵压来，稍不留神便连呼吸都乱掉。",
+      "hp_cost": 0,
+      "mana_cost": 14,
+      "sta_cost": 12,
+      "resist_key": "resist_water"
+    },
+    {
+      "hazard_id": "star_abyss_backflow",
+      "scene_id": "star_abyss",
+      "name": "星渊回潮",
+      "description": "潮底灵流会突然倒卷，像要把站得太深的人整个拖回深渊里。",
+      "hp_cost": 16,
+      "mana_cost": 16,
+      "sta_cost": 0,
+      "resist_key": "resist_water"
+    },
+    {
       "hazard_id": "void_rift_pressure",
       "scene_id": "xutian_void_rift",
       "name": "裂隙灵压",
@@ -14136,6 +14966,26 @@
       "mana_cost": 10,
       "sta_cost": 0,
       "resist_key": "resist_ice"
+    },
+    {
+      "hazard_id": "core_flame_burst",
+      "scene_id": "core_flame_vein",
+      "name": "丹火逆涌",
+      "description": "一旦踩错火脉节律，地火便会沿残槽猛地回喷，把经脉都烫得发颤。",
+      "hp_cost": 14,
+      "mana_cost": 12,
+      "sta_cost": 0,
+      "resist_key": "resist_fire"
+    },
+    {
+      "hazard_id": "ruin_ring_whisper",
+      "scene_id": "ancient_ruin_ring",
+      "name": "残环回啸",
+      "description": "残环里回荡的旧日咒声会一点点啃咬神识，让人分不清哪里是出口。",
+      "hp_cost": 0,
+      "mana_cost": 8,
+      "sta_cost": 0,
+      "resist_key": "resist_corrosion"
     }
   ],
   "codex_entries": [
@@ -16360,6 +17210,46 @@
       ]
     },
     {
+      "entry_id": "geo_outer_sea_mid",
+      "category": "地理志",
+      "title": "外海中层",
+      "summary": "海雾渐沉，灵压已不是近海可比，潮下偶有青焰般的碎光一闪而过。",
+      "content": "外海中层位于外海深线。海雾渐沉，灵压已不是近海可比，潮下偶有青焰般的碎光一闪而过。",
+      "related_scene_ids": [
+        "outer_sea_mid"
+      ],
+      "related_npc_ids": [],
+      "related_monster_ids": [],
+      "related_item_ids": [],
+      "related_sect_ids": [],
+      "unlock_rules": [
+        {
+          "trigger": "enter_scene",
+          "target_id": "outer_sea_mid"
+        }
+      ]
+    },
+    {
+      "entry_id": "geo_star_abyss",
+      "category": "地理志",
+      "title": "星渊裂海",
+      "summary": "深海灵流在此翻卷成裂，潮底像埋着碎星，许多凝婴灵物都只肯在这片黑水里现身。",
+      "content": "星渊裂海位于外海深线。深海灵流在此翻卷成裂，潮底像埋着碎星，许多凝婴灵物都只肯在这片黑水里现身。",
+      "related_scene_ids": [
+        "star_abyss"
+      ],
+      "related_npc_ids": [],
+      "related_monster_ids": [],
+      "related_item_ids": [],
+      "related_sect_ids": [],
+      "unlock_rules": [
+        {
+          "trigger": "enter_scene",
+          "target_id": "star_abyss"
+        }
+      ]
+    },
+    {
       "entry_id": "geo_xutian_void_rift",
       "category": "地理志",
       "title": "裂隙口",
@@ -16556,6 +17446,46 @@
         {
           "trigger": "enter_scene",
           "target_id": "xutian_endless_wall"
+        }
+      ]
+    },
+    {
+      "entry_id": "geo_core_flame_vein",
+      "category": "地理志",
+      "title": "丹火灵脉",
+      "summary": "地火暗涌，许多断裂槽线仍在吐出灼热灵息，是稳固金丹丹火最危险也最有效的地方。",
+      "content": "丹火灵脉位于虚天后脉。地火暗涌，许多断裂槽线仍在吐出灼热灵息，是稳固金丹丹火最危险也最有效的地方。",
+      "related_scene_ids": [
+        "core_flame_vein"
+      ],
+      "related_npc_ids": [],
+      "related_monster_ids": [],
+      "related_item_ids": [],
+      "related_sect_ids": [],
+      "unlock_rules": [
+        {
+          "trigger": "enter_scene",
+          "target_id": "core_flame_vein"
+        }
+      ]
+    },
+    {
+      "entry_id": "geo_ancient_ruin_ring",
+      "category": "地理志",
+      "title": "古修残环",
+      "summary": "一圈残殿围着旧日禁制慢慢沉在暗光里，中央像还压着某种没散尽的古修意志。",
+      "content": "古修残环位于虚天后脉。一圈残殿围着旧日禁制慢慢沉在暗光里，中央像还压着某种没散尽的古修意志。",
+      "related_scene_ids": [
+        "ancient_ruin_ring"
+      ],
+      "related_npc_ids": [],
+      "related_monster_ids": [],
+      "related_item_ids": [],
+      "related_sect_ids": [],
+      "unlock_rules": [
+        {
+          "trigger": "enter_scene",
+          "target_id": "ancient_ruin_ring"
         }
       ]
     },
@@ -19798,6 +20728,54 @@
       ]
     },
     {
+      "entry_id": "monster_outer_sea_ray",
+      "category": "妖兽志",
+      "title": "外海裂鲼",
+      "summary": "它总借外海暗流突然翻身，鳍边像擦出一层青焰般的寒光。",
+      "content": "它总借外海暗流突然翻身，鳍边像擦出一层青焰般的寒光。",
+      "related_scene_ids": [
+        "outer_sea_mid"
+      ],
+      "related_npc_ids": [],
+      "related_monster_ids": [
+        "outer_sea_ray"
+      ],
+      "related_item_ids": [
+        "azure_flame_crystal"
+      ],
+      "related_sect_ids": [],
+      "unlock_rules": [
+        {
+          "trigger": "defeat_monster",
+          "target_id": "outer_sea_ray"
+        }
+      ]
+    },
+    {
+      "entry_id": "monster_star_abyss_eel",
+      "category": "妖兽志",
+      "title": "星渊鳗皇",
+      "summary": "深海电光顺着它的骨脊一路闪灭，看久了连神识都会被那节律牵着走。",
+      "content": "深海电光顺着它的骨脊一路闪灭，看久了连神识都会被那节律牵着走。",
+      "related_scene_ids": [
+        "star_abyss"
+      ],
+      "related_npc_ids": [],
+      "related_monster_ids": [
+        "star_abyss_eel"
+      ],
+      "related_item_ids": [
+        "star_sea_heart"
+      ],
+      "related_sect_ids": [],
+      "unlock_rules": [
+        {
+          "trigger": "defeat_monster",
+          "target_id": "star_abyss_eel"
+        }
+      ]
+    },
+    {
       "entry_id": "monster_ash_guard",
       "category": "妖兽志",
       "title": "灰甲守影",
@@ -19938,6 +20916,54 @@
         {
           "trigger": "defeat_monster",
           "target_id": "pit_spider"
+        }
+      ]
+    },
+    {
+      "entry_id": "monster_flame_vein_wisp",
+      "category": "妖兽志",
+      "title": "丹火流萤",
+      "summary": "它像被地火吹起来的一簇活焰，扑近时会把经脉都烫得微微发麻。",
+      "content": "它像被地火吹起来的一簇活焰，扑近时会把经脉都烫得微微发麻。",
+      "related_scene_ids": [
+        "core_flame_vein"
+      ],
+      "related_npc_ids": [],
+      "related_monster_ids": [
+        "flame_vein_wisp"
+      ],
+      "related_item_ids": [
+        "purple_core_sand"
+      ],
+      "related_sect_ids": [],
+      "unlock_rules": [
+        {
+          "trigger": "defeat_monster",
+          "target_id": "flame_vein_wisp"
+        }
+      ]
+    },
+    {
+      "entry_id": "monster_ruin_ring_guard",
+      "category": "妖兽志",
+      "title": "残环守影",
+      "summary": "像古修残念与石甲捏在一起的守卫，只要踏进残环中央便会慢慢朝你合围。",
+      "content": "像古修残念与石甲捏在一起的守卫，只要踏进残环中央便会慢慢朝你合围。",
+      "related_scene_ids": [
+        "ancient_ruin_ring"
+      ],
+      "related_npc_ids": [],
+      "related_monster_ids": [
+        "ruin_ring_guard"
+      ],
+      "related_item_ids": [
+        "soul_warming_jade"
+      ],
+      "related_sect_ids": [],
+      "unlock_rules": [
+        {
+          "trigger": "defeat_monster",
+          "target_id": "ruin_ring_guard"
         }
       ]
     },
@@ -21238,6 +22264,126 @@
         {
           "trigger": "obtain_item",
           "target_id": "frost_robe"
+        }
+      ]
+    },
+    {
+      "entry_id": "item_gold_core_pill",
+      "category": "灵草丹药志",
+      "title": "结丹灵丸",
+      "summary": "专为筑基后期修士准备的主丹药，可助修士凝丹定火。",
+      "content": "专为筑基后期修士准备的主丹药，可助修士凝丹定火。",
+      "related_scene_ids": [],
+      "related_npc_ids": [],
+      "related_monster_ids": [],
+      "related_item_ids": [
+        "gold_core_pill"
+      ],
+      "related_sect_ids": [],
+      "unlock_rules": [
+        {
+          "trigger": "obtain_item",
+          "target_id": "gold_core_pill"
+        }
+      ]
+    },
+    {
+      "entry_id": "item_azure_flame_crystal",
+      "category": "灵草丹药志",
+      "title": "青焰晶髓",
+      "summary": "自地火灵脉深处凝出的晶髓，最适合作为稳固丹火的主材。",
+      "content": "自地火灵脉深处凝出的晶髓，最适合作为稳固丹火的主材。",
+      "related_scene_ids": [],
+      "related_npc_ids": [],
+      "related_monster_ids": [],
+      "related_item_ids": [
+        "azure_flame_crystal"
+      ],
+      "related_sect_ids": [],
+      "unlock_rules": [
+        {
+          "trigger": "obtain_item",
+          "target_id": "azure_flame_crystal"
+        }
+      ]
+    },
+    {
+      "entry_id": "item_purple_core_sand",
+      "category": "灵草丹药志",
+      "title": "紫丹灵砂",
+      "summary": "古修丹室里残留下来的灵砂，常用于辅助凝丹。",
+      "content": "古修丹室里残留下来的灵砂，常用于辅助凝丹。",
+      "related_scene_ids": [],
+      "related_npc_ids": [],
+      "related_monster_ids": [],
+      "related_item_ids": [
+        "purple_core_sand"
+      ],
+      "related_sect_ids": [],
+      "unlock_rules": [
+        {
+          "trigger": "obtain_item",
+          "target_id": "purple_core_sand"
+        }
+      ]
+    },
+    {
+      "entry_id": "item_nascent_soul_pill",
+      "category": "灵草丹药志",
+      "title": "凝婴灵丹",
+      "summary": "结丹后期修士冲击元婴前最看重的主丹，药力绵长而霸道。",
+      "content": "结丹后期修士冲击元婴前最看重的主丹，药力绵长而霸道。",
+      "related_scene_ids": [],
+      "related_npc_ids": [],
+      "related_monster_ids": [],
+      "related_item_ids": [
+        "nascent_soul_pill"
+      ],
+      "related_sect_ids": [],
+      "unlock_rules": [
+        {
+          "trigger": "obtain_item",
+          "target_id": "nascent_soul_pill"
+        }
+      ]
+    },
+    {
+      "entry_id": "item_star_sea_heart",
+      "category": "灵草丹药志",
+      "title": "星海心珀",
+      "summary": "深海星渊中才会出没的灵物之一，可护持神魂凝婴。",
+      "content": "深海星渊中才会出没的灵物之一，可护持神魂凝婴。",
+      "related_scene_ids": [],
+      "related_npc_ids": [],
+      "related_monster_ids": [],
+      "related_item_ids": [
+        "star_sea_heart"
+      ],
+      "related_sect_ids": [],
+      "unlock_rules": [
+        {
+          "trigger": "obtain_item",
+          "target_id": "star_sea_heart"
+        }
+      ]
+    },
+    {
+      "entry_id": "item_soul_warming_jade",
+      "category": "灵草丹药志",
+      "title": "养魂古玉",
+      "summary": "古修遗址里流出的养魂玉片，适合凝婴前温养神识。",
+      "content": "古修遗址里流出的养魂玉片，适合凝婴前温养神识。",
+      "related_scene_ids": [],
+      "related_npc_ids": [],
+      "related_monster_ids": [],
+      "related_item_ids": [
+        "soul_warming_jade"
+      ],
+      "related_sect_ids": [],
+      "unlock_rules": [
+        {
+          "trigger": "obtain_item",
+          "target_id": "soul_warming_jade"
         }
       ]
     },
@@ -22834,6 +23980,42 @@
       ]
     },
     {
+      "entry_id": "spell_core_fire_seal",
+      "category": "法术志",
+      "title": "丹火印",
+      "summary": "火系入门术法",
+      "content": "将地火之力收于掌间，专用于稳固金丹前的气海与丹火。",
+      "related_scene_ids": [],
+      "related_npc_ids": [],
+      "related_monster_ids": [],
+      "related_item_ids": [],
+      "related_sect_ids": [],
+      "unlock_rules": [
+        {
+          "trigger": "cast_spell",
+          "target_id": "core_fire_seal"
+        }
+      ]
+    },
+    {
+      "entry_id": "spell_nascent_soul_glow",
+      "category": "法术志",
+      "title": "婴光护神术",
+      "summary": "风系入门术法",
+      "content": "以柔和灵光护住神识，在凝婴前夜守住神魂不散。",
+      "related_scene_ids": [],
+      "related_npc_ids": [],
+      "related_monster_ids": [],
+      "related_item_ids": [],
+      "related_sect_ids": [],
+      "unlock_rules": [
+        {
+          "trigger": "cast_spell",
+          "target_id": "nascent_soul_glow"
+        }
+      ]
+    },
+    {
       "entry_id": "spell_blazing_ring",
       "category": "法术志",
       "title": "烈环术",
@@ -23122,6 +24304,58 @@
         {
           "trigger": "brew_recipe",
           "target_id": "storm_ward_recipe"
+        }
+      ]
+    },
+    {
+      "entry_id": "recipe_gold_core_pill_recipe",
+      "category": "灵草丹药志",
+      "title": "结丹灵丸炼制",
+      "summary": "以青焰晶髓与紫丹灵砂为主材，炼出助修士冲击结丹的主丹。",
+      "content": "以青焰晶髓与紫丹灵砂为主材，炼出助修士冲击结丹的主丹。",
+      "related_scene_ids": [
+        "xutian_pill_room"
+      ],
+      "related_npc_ids": [],
+      "related_monster_ids": [],
+      "related_item_ids": [
+        "gold_core_pill",
+        "azure_flame_crystal",
+        "purple_core_sand",
+        "pill_room_ash"
+      ],
+      "related_sect_ids": [],
+      "unlock_rules": [
+        {
+          "trigger": "brew_recipe",
+          "target_id": "gold_core_pill_recipe"
+        }
+      ]
+    },
+    {
+      "entry_id": "recipe_nascent_soul_pill_recipe",
+      "category": "灵草丹药志",
+      "title": "凝婴灵丹炼制",
+      "summary": "以星海心珀、养魂古玉等灵物合炼，是元婴前最凶险的一炉丹。",
+      "content": "以星海心珀、养魂古玉等灵物合炼，是元婴前最凶险的一炉丹。",
+      "related_scene_ids": [
+        "xutian_star_platform"
+      ],
+      "related_npc_ids": [
+        "star_tablet_spirit"
+      ],
+      "related_monster_ids": [],
+      "related_item_ids": [
+        "nascent_soul_pill",
+        "star_sea_heart",
+        "soul_warming_jade",
+        "xutian_key_fragment"
+      ],
+      "related_sect_ids": [],
+      "unlock_rules": [
+        {
+          "trigger": "brew_recipe",
+          "target_id": "nascent_soul_pill_recipe"
         }
       ]
     },

@@ -2803,6 +2803,22 @@ std::vector<std::string> MudGameRuntime::unlocked_routes_for_player(const MudPla
 
 std::string MudGameRuntime::stage_label_for_player(const MudPlayerState& player) const
 {
+    if(player.realm_stage >= 12)
+    {
+        return "元婴初成";
+    }
+    if(player.realm_stage >= 11)
+    {
+        return "结丹圆满";
+    }
+    if(player.realm_stage >= 9)
+    {
+        return "金丹凝练";
+    }
+    if(player.realm_stage >= 7)
+    {
+        return "筑基深修";
+    }
     if(player.realm_stage >= 6)
     {
         return "筑基初成";
@@ -2905,6 +2921,30 @@ std::vector<MudWeeklyEventSummaryState> MudGameRuntime::weekly_events_for_player
 std::string MudGameRuntime::recommended_loop_for_player(const MudPlayerState& player) const
 {
     const auto* scene = current_scene(player);
+    if(player.realm_stage >= 11)
+    {
+        if(has_loop_tag(scene, "残区探禁"))
+        {
+            return "残区探禁";
+        }
+        if(has_loop_tag(scene, "海猎采珠"))
+        {
+            return "海猎采珠";
+        }
+        return "残区探禁";
+    }
+    if(player.realm_stage >= 8)
+    {
+        if(has_loop_tag(scene, "海猎采珠"))
+        {
+            return "海猎采珠";
+        }
+        if(has_loop_tag(scene, "残区探禁"))
+        {
+            return "残区探禁";
+        }
+        return "海猎采珠";
+    }
     if(player.realm_stage >= 5 && inventory_count(player, "foundation_pill") <= 0)
     {
         return "残区探禁";
@@ -4921,6 +4961,13 @@ MudCommandExecution MudGameRuntime::execute_submit(MudPlayerState* player,
         add_inventory_item(player, quest->reward_item_id, quest->reward_item_count, false);
         unlock_codex_by_trigger(player, "obtain_item", quest->reward_item_id, &execution);
     }
+    if(quest->quest_id == "outer_sea_trail" || quest->quest_id == "core_ruin_heart" ||
+       quest->quest_id == "nascent_soul_gate")
+    {
+        const int world_witness = flag_int_value(*player, "major_world_witness", 0) + 1;
+        set_flag_int(player, "major_world_witness", world_witness);
+        execution.hints.push_back("关键见闻：" + std::to_string(world_witness) + "/3");
+    }
     refresh_quest_progress(player);
 
     execution.success = true;
@@ -5101,6 +5148,20 @@ MudCommandExecution MudGameRuntime::execute_use(MudPlayerState* player,
                      "foundation_qihai",
                      flag_int_value(*player, "foundation_qihai", 0) +
                          std::max(6, item_config->exp_gain > 0 ? static_cast<int>(item_config->exp_gain / 6) : 8));
+        if(player->realm_stage >= 7)
+        {
+            set_flag_int(player,
+                         "gold_core_prep",
+                         flag_int_value(*player, "gold_core_prep", 0) +
+                             std::max(10, item_config->exp_gain > 0 ? static_cast<int>(item_config->exp_gain / 10) : 12));
+        }
+        if(player->realm_stage >= 10)
+        {
+            set_flag_int(player,
+                         "nascent_soul_prep",
+                         flag_int_value(*player, "nascent_soul_prep", 0) +
+                             std::max(8, item_config->exp_gain > 0 ? static_cast<int>(item_config->exp_gain / 12) : 10));
+        }
         remove_inventory_item(player, inventory_item.item_id, 1);
         refresh_quest_progress(player);
         execution.success = true;
@@ -5151,6 +5212,18 @@ MudCommandExecution MudGameRuntime::execute_practice(MudPlayerState* player,
     set_flag_int(player,
                  "foundation_qihai",
                  flag_int_value(*player, "foundation_qihai", 0) + std::max(12, static_cast<int>(gain / 2)));
+    if(player->realm_stage >= 7)
+    {
+        set_flag_int(player,
+                     "gold_core_prep",
+                     flag_int_value(*player, "gold_core_prep", 0) + std::max(10, static_cast<int>(gain / 2)));
+    }
+    if(player->realm_stage >= 10)
+    {
+        set_flag_int(player,
+                     "nascent_soul_prep",
+                     flag_int_value(*player, "nascent_soul_prep", 0) + std::max(8, static_cast<int>(gain / 3)));
+    }
     if(player->exp / 100 > player->skill_level)
     {
         ++player->skill_level;
@@ -5188,14 +5261,55 @@ MudCommandExecution MudGameRuntime::execute_breakthrough(MudPlayerState* player)
         return execution;
     }
 
-    if(player->realm_stage >= 6)
+    if(player->realm_stage >= 12)
     {
-        execution.title = "境界封盘";
-        execution.summary = "当前阶段上限已锁定为筑基初期，后续更高境界暂未开放。";
+        execution.title = "境界已稳";
+        execution.summary = "当前阶段上限已开放至元婴初期，你的修行已到本轮终点。";
         return execution;
     }
 
-    if(player->realm_stage >= 5)
+    if(player->realm_stage >= 11)
+    {
+        const int nascent_soul_prep = flag_int_value(*player, "nascent_soul_prep", 0);
+        const bool has_main_pill = inventory_count(*player, "nascent_soul_pill") > 0;
+        const bool has_star_heart = inventory_count(*player, "star_sea_heart") > 0;
+        const bool has_soul_jade = inventory_count(*player, "soul_warming_jade") > 0;
+        const bool has_major_witness = flag_int_value(*player, "major_world_witness", 0) >= 3;
+        if(nascent_soul_prep < 360 || !has_main_pill || !has_star_heart || !has_soul_jade || !has_major_witness)
+        {
+            execution.title = "凝婴未备";
+            execution.summary = "冲击元婴前，还需神识圆满、主丹主材齐备并完成关键见闻。";
+            execution.hints.push_back("凝婴准备：" + std::to_string(nascent_soul_prep) + "/360");
+            execution.hints.push_back(std::string("凝婴主丹：") + (has_main_pill ? "已备凝婴灵丹" : "缺少凝婴灵丹"));
+            execution.hints.push_back(std::string("星海灵物：") + (has_star_heart ? "已备星海心珀" : "缺少星海心珀"));
+            execution.hints.push_back(std::string("养魂灵物：") + (has_soul_jade ? "已备养魂古玉" : "缺少养魂古玉"));
+            execution.hints.push_back(std::string("世界见闻：") + (has_major_witness ? "已足" : "尚未足够"));
+            return execution;
+        }
+        remove_inventory_item(player, "nascent_soul_pill", 1);
+    }
+    else if(player->realm_stage >= 8)
+    {
+        const int gold_core_prep = flag_int_value(*player, "gold_core_prep", 0);
+        const int64_t identity_credit = player->sect_id.empty() ? flag_int_value(*player, "loose_reputation", 0)
+                                                                : sect_contribution_for_player(*player);
+        const bool has_main_pill = inventory_count(*player, "gold_core_pill") > 0;
+        const bool has_flame_crystal = inventory_count(*player, "azure_flame_crystal") > 0;
+        const bool has_core_sand = inventory_count(*player, "purple_core_sand") > 0;
+        if(gold_core_prep < 240 || identity_credit < 980 || !has_main_pill || !has_flame_crystal || !has_core_sand)
+        {
+            execution.title = "结丹未备";
+            execution.summary = "冲击结丹前，还需稳住丹火、备齐主丹主材并补足资历。";
+            execution.hints.push_back("结丹准备：" + std::to_string(gold_core_prep) + "/240");
+            execution.hints.push_back(std::string("结丹主丹：") + (has_main_pill ? "已备结丹灵丸" : "缺少结丹灵丸"));
+            execution.hints.push_back(std::string("丹火晶髓：") + (has_flame_crystal ? "已备青焰晶髓" : "缺少青焰晶髓"));
+            execution.hints.push_back(std::string("辅材灵砂：") + (has_core_sand ? "已备紫丹灵砂" : "缺少紫丹灵砂"));
+            execution.hints.push_back("身份资历：" + std::to_string(identity_credit) + "/980");
+            return execution;
+        }
+        remove_inventory_item(player, "gold_core_pill", 1);
+    }
+    else if(player->realm_stage >= 5)
     {
         const int qihai = flag_int_value(*player, "foundation_qihai", 0);
         const int64_t identity_credit = player->sect_id.empty() ? flag_int_value(*player, "loose_reputation", 0)
@@ -5221,6 +5335,8 @@ MudCommandExecution MudGameRuntime::execute_breakthrough(MudPlayerState* player)
     player->hp = player->max_hp;
     player->attack_power += 8;
     player->defense_power += 4;
+    set_flag_int(player, "gold_core_prep", flag_int_value(*player, "gold_core_prep", 0) + 40);
+    set_flag_int(player, "nascent_soul_prep", flag_int_value(*player, "nascent_soul_prep", 0) + 28);
     player->title = "踏入" + player->realm_name;
 
     execution.success = true;
@@ -7655,6 +7771,14 @@ MudCommandExecution MudGameRuntime::execute_meditate(MudPlayerState* player)
     set_flag_int(player, "current_sta", player->status_attributes.sta);
     player->exp += 12;
     set_flag_int(player, "foundation_qihai", flag_int_value(*player, "foundation_qihai", 0) + 12);
+    if(player->realm_stage >= 7)
+    {
+        set_flag_int(player, "gold_core_prep", flag_int_value(*player, "gold_core_prep", 0) + 10);
+    }
+    if(player->realm_stage >= 10)
+    {
+        set_flag_int(player, "nascent_soul_prep", flag_int_value(*player, "nascent_soul_prep", 0) + 8);
+    }
     execution.success = true;
     execution.title = "静坐调息";
     execution.summary = "你缓缓调匀呼吸，法力、神念与气力都恢复了不少。";
