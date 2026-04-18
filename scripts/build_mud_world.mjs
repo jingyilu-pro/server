@@ -934,6 +934,91 @@ function validateNascentSoulMainline({ scenes, quests }) {
   }
 }
 
+function sceneFeatureKindCount(scene) {
+  return (
+    ((scene.service_tags?.length ?? 0) > 0 ? 1 : 0) +
+    ((scene.rumor_topics?.length ?? 0) > 0 ? 1 : 0) +
+    ((scene.mentor_ids?.length ?? 0) > 0 ? 1 : 0) +
+    (Boolean(scene.board_available) ? 1 : 0) +
+    ((scene.resource_node_ids?.length ?? 0) > 0 ? 1 : 0)
+  );
+}
+
+function validateSharedWorldOperability({ scenes, helpTopics, jobs }) {
+  const denseSceneCount = (scenes ?? []).filter((scene) => sceneFeatureKindCount(scene) >= 2).length;
+  if (denseSceneCount < 60) {
+    throw new Error(`Shared-world validation failed: expected at least 60 dense scenes, got ${denseSceneCount}`);
+  }
+
+  const sceneMap = buildIdMap(scenes, 'scene_id', 'shared_world_scenes');
+  for (const sceneId of [
+    'qixuan_square',
+    'qixuan_hall',
+    'qixuan_dormitory',
+    'qixuan_medicine_garden',
+    'escort_post',
+    'jiayuan_east_gate',
+    'tainan_gate',
+  ]) {
+    const scene = sceneMap.get(sceneId);
+    if (!scene) {
+      throw new Error(`Shared-world validation failed: missing onboarding scene ${sceneId}`);
+    }
+    if (sceneFeatureKindCount(scene) < 2) {
+      throw new Error(`Shared-world validation failed: onboarding scene ${sceneId} is not dense enough`);
+    }
+  }
+
+  const topicMap = buildIdMap(helpTopics, 'topic_id', 'shared_world_help_topics');
+  for (const topicId of ['newbie', 'newbie_10', 'newbie_90', 'economy']) {
+    if (!topicMap.has(topicId)) {
+      throw new Error(`Shared-world validation failed: missing help topic ${topicId}`);
+    }
+  }
+
+  const newbie10Body = ensureArray(topicMap.get('newbie_10')?.body_lines ?? [], 'newbie_10.body_lines').join('\n');
+  for (const keyword of ['厉飞雨', 'ask 厉飞雨 about rumor', 'work', 'board', 'say 在下初来乍到']) {
+    if (!newbie10Body.includes(keyword)) {
+      throw new Error(`Shared-world validation failed: newbie_10 help is missing ${keyword}`);
+    }
+  }
+
+  const newbie90Body = ensureArray(topicMap.get('newbie_90')?.body_lines ?? [], 'newbie_90.body_lines').join('\n');
+  for (const keyword of ['help', 'rumor', 'work', 'say/tell/post', 'duty']) {
+    if (!newbie90Body.includes(keyword)) {
+      throw new Error(`Shared-world validation failed: newbie_90 help is missing ${keyword}`);
+    }
+  }
+
+  const economyBody = ensureArray(topicMap.get('economy')?.body_lines ?? [], 'economy.body_lines').join('\n');
+  for (const keyword of ['保底营生', '身份事务', '高风险机会']) {
+    if (!economyBody.includes(keyword)) {
+      throw new Error(`Shared-world validation failed: economy help is missing ${keyword}`);
+    }
+  }
+
+  const routeCounts = new Map();
+  for (const job of jobs ?? []) {
+    const routeTag = String(job.route_tag ?? '').trim();
+    if (!routeTag) {
+      continue;
+    }
+    routeCounts.set(routeTag, (routeCounts.get(routeTag) ?? 0) + 1);
+  }
+  for (const [routeTag, minimum] of [
+    ['qixuan_gate', 5],
+    ['loose_cultivator', 7],
+    ['huangfeng_valley', 4],
+    ['spirit_beast_mountain', 4],
+  ]) {
+    if ((routeCounts.get(routeTag) ?? 0) < minimum) {
+      throw new Error(
+        `Shared-world validation failed: expected at least ${minimum} jobs for route ${routeTag}, got ${routeCounts.get(routeTag) ?? 0}`,
+      );
+    }
+  }
+}
+
 function validateContentDensityExpansion({ scenes, jobs, rumorSources }) {
   const sceneMap = buildIdMap(scenes, 'scene_id', 'content_density_scenes');
   const jobSceneIds = new Set((jobs ?? []).map((job) => String(job.scene_id ?? '').trim()).filter(Boolean));
@@ -1194,6 +1279,11 @@ async function main() {
     jobs,
     rumorSources,
     identityTracks,
+  });
+  validateSharedWorldOperability({
+    scenes,
+    helpTopics,
+    jobs,
   });
   validateNascentSoulSkeleton({
     defaults,

@@ -38,6 +38,36 @@ export default {
       service_tag: 'mentor',
       related_quest_id: 'backslope_wolf_skin',
     }),
+    job('qixuan_hall_rollbook', '堂前录事', '门派事务', 'qixuan_hall', 'han_zhanglao', 'sun_er', '韩长老不急着让新人学高深法子，先看你能不能把堂前名册、口信和顺序理顺。', {
+      requirements: '识字、守时、肯把杂务先做扎实。',
+      reward_summary: '门内信任、七玄人情、堂前熟路。',
+      command_hint: 'ask 韩长老 about rumor / duty / journal',
+      route_tag: 'qixuan_gate',
+      service_tag: 'sect',
+    }),
+    job('qixuan_dorm_rollcall', '弟子舍点名', '门派事务', 'qixuan_dormitory', 'sun_er', 'sun_er', '弟子舍里最不起眼的点名、铺位和杂役分派，最能看出一个新人能不能扛住日常。', {
+      requirements: '记得住人、分得清先后、不嫌活碎。',
+      reward_summary: '外门熟脸、舍内口碑、更多杂务入口。',
+      command_hint: 'ask 孙二 about rumor / work / journal',
+      route_tag: 'qixuan_gate',
+      service_tag: 'mentor',
+    }),
+    job('qixuan_garden_sorting', '药圃拣苗', '门派事务', 'qixuan_medicine_garden', 'field_steward', 'field_steward', '药圃执役最看重的不是你认得多少珍药，而是你肯不肯把浅药幼苗一株株先分明白。', {
+      requirements: '认得浅药、手稳、不贪快。',
+      reward_summary: '基础药材、采药熟路、药圃信任。',
+      command_hint: 'ask 药圃执役 about rumor / work / journal',
+      route_tag: 'qixuan_gate',
+      service_tag: 'gather',
+      related_quest_id: 'qixuan_herb',
+    }),
+    job('escort_post_watch', '驿棚巡签', '工作任务', 'escort_post', 'escort_captain_shen', 'escort_captain_shen', '沈镖头不先看你打得多凶，只看你能不能把驿棚点签、路引和回报做得像样。', {
+      requirements: '会认路、能守时、知道何时该把消息带回驿棚。',
+      reward_summary: '官道口碑、护送熟路、押路资格。',
+      command_hint: 'ask 沈镖头 about rumor / work / travel',
+      route_tag: 'qixuan_gate',
+      service_tag: 'travel',
+      related_quest_id: 'escort_token_task',
+    }),
     job('market_errand', '坊市采办', '公众任务', 'jiayuan_market', 'mofu_steward', 'mofu_steward', '嘉元城集市里最不缺的就是跑腿、采买和顺手捎消息的人。', {
       requirements: '认得摊位、认得药材、认得谁说话算数。',
       reward_summary: '灵石、基础药材、集市门路。',
@@ -294,6 +324,32 @@ export default {
     ], {
       job_ids: ['qixuan_runner'],
       quest_ids: ['backslope_wolf_skin'],
+    }),
+    rumor('qixuan_han_rumor', 'qixuan_hall', 'han_zhanglao', '门内规矩', '韩长老看新人，先看你会不会把堂前顺序和门内规矩摆正。', [
+      '韩长老语气平平：七玄门不缺想学东西的人，缺的是肯先把堂前名册、口信和次序理明白的人。',
+      '他点到为止，说外场、弟子舍、药圃和东门驿棚这些小处都做得稳，才算真能往后走。'
+    ], {
+      job_ids: ['qixuan_hall_rollbook', 'qixuan_dorm_rollcall', 'qixuan_garden_sorting'],
+    }),
+    rumor('qixuan_sun_er_rumor', 'qixuan_dormitory', 'sun_er', '外门杂务', '孙二嘴里常抱怨杂务多，可他比谁都清楚哪种人能在外门站住脚。', [
+      '孙二挠着头道：弟子舍的活看着碎，可谁肯把铺位、点名和口信做利索，大家都看在眼里。',
+      '他劝你别小看这些杂务，真能把它们做好的人，往往出去跑腿也最不容易掉链子。'
+    ], {
+      job_ids: ['qixuan_dorm_rollcall', 'qixuan_hall_rollbook'],
+    }),
+    rumor('qixuan_field_rumor', 'qixuan_medicine_garden', 'field_steward', '浅药门路', '药圃执役教人的第一课从来不是炼丹，而是别把浅药幼苗当杂草。', [
+      '药圃执役弯腰拣苗：认药先从认便宜货开始，真把浅药分清了，往后你去嘉元采买、太南换消息都不容易吃亏。',
+      '他提醒你，药圃、集市和东门其实是一条线，跑熟了才算有了第一条能养活自己的路。'
+    ], {
+      job_ids: ['qixuan_garden_sorting'],
+      quest_ids: ['qixuan_herb'],
+    }),
+    rumor('escort_shen_rumor', 'escort_post', 'escort_captain_shen', '官道风声', '沈镖头最懂官道上什么叫真本事，什么叫逞一时勇。', [
+      '沈镖头看着官道道：押路不是只会打，先得认签、认人、认什么时候该把消息带回来。',
+      '他说驿棚巡签、东门换口信和碎石官道试手其实是一条线，跑顺了才算能接更长的护送活。'
+    ], {
+      job_ids: ['escort_post_watch'],
+      quest_ids: ['escort_token_task'],
     }),
     rumor('jiayuan_market_rumor', 'jiayuan_market', 'mofu_steward', 'rumor', '嘉元城的风声从来不只在嘴上，也在货、在人情和谁先跑到位里。', [
       '墨府总管抬眼道：会跑腿的人到处都有，可会把药、信、消息都送准的人不多。',

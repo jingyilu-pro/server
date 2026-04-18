@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-18T06:48:42.575Z",
+  "generated_at": "2026-04-18T07:01:44.911Z",
   "defaults": {
     "starting_scene_id": "qixuan_square",
     "starter_title": "初入修仙路",
@@ -6539,6 +6539,19 @@
         "此地常有人提起「七玄门启程」相关的旧闻。"
       ],
       "chapter": "七玄门启程",
+      "service_tags": [
+        "sect",
+        "mentor",
+        "duty"
+      ],
+      "rumor_topics": [
+        "堂前录事",
+        "门内规矩"
+      ],
+      "board_available": false,
+      "mentor_ids": [
+        "han_zhanglao"
+      ],
       "room_type": "宗门",
       "risk_level": "安全",
       "room_layer": "新手安全圈",
@@ -6546,10 +6559,6 @@
       "loop_tags": [
         "门派事务"
       ],
-      "service_tags": [],
-      "rumor_topics": [],
-      "board_available": false,
-      "mentor_ids": [],
       "codex_entry_id": "geo_qixuan_hall"
     },
     {
@@ -6646,6 +6655,18 @@
         "此地常有人提起「七玄门启程」相关的旧闻。"
       ],
       "chapter": "七玄门启程",
+      "service_tags": [
+        "work",
+        "mentor"
+      ],
+      "rumor_topics": [
+        "弟子舍杂务",
+        "外门口风"
+      ],
+      "board_available": false,
+      "mentor_ids": [
+        "sun_er"
+      ],
       "room_type": "房间",
       "risk_level": "安全",
       "room_layer": "新手安全圈",
@@ -6653,10 +6674,6 @@
       "loop_tags": [
         "门派事务"
       ],
-      "service_tags": [],
-      "rumor_topics": [],
-      "board_available": false,
-      "mentor_ids": [],
       "codex_entry_id": "geo_qixuan_dormitory"
     },
     {
@@ -6797,6 +6814,19 @@
         "这里的采集点很受散修与药师关注。"
       ],
       "chapter": "七玄门启程",
+      "service_tags": [
+        "work",
+        "gather",
+        "mentor"
+      ],
+      "rumor_topics": [
+        "药圃拣苗",
+        "浅药入门"
+      ],
+      "board_available": false,
+      "mentor_ids": [
+        "field_steward"
+      ],
       "room_type": "房间",
       "risk_level": "安全",
       "room_layer": "新手安全圈",
@@ -6805,10 +6835,6 @@
         "采药炼丹",
         "门派事务"
       ],
-      "service_tags": [],
-      "rumor_topics": [],
-      "board_available": false,
-      "mentor_ids": [],
       "codex_entry_id": "geo_qixuan_medicine_garden"
     },
     {
@@ -7126,6 +7152,16 @@
         "这里的采集点很受散修与药师关注。"
       ],
       "chapter": "嘉元城风波",
+      "service_tags": [
+        "gather",
+        "danger"
+      ],
+      "rumor_topics": [
+        "林间小路",
+        "蛇行竹影"
+      ],
+      "board_available": false,
+      "mentor_ids": [],
       "room_type": "野外",
       "risk_level": "历练",
       "room_layer": "新手安全圈",
@@ -7134,10 +7170,6 @@
         "采药炼丹",
         "巡山悬赏"
       ],
-      "service_tags": [],
-      "rumor_topics": [],
-      "board_available": false,
-      "mentor_ids": [],
       "codex_entry_id": "geo_bamboo_forest"
     },
     {
@@ -7177,6 +7209,16 @@
         "这里的采集点很受散修与药师关注。"
       ],
       "chapter": "嘉元城风波",
+      "service_tags": [
+        "gather",
+        "rumor"
+      ],
+      "rumor_topics": [
+        "黄精去路",
+        "采药口风"
+      ],
+      "board_available": false,
+      "mentor_ids": [],
       "room_type": "野外",
       "risk_level": "历练",
       "room_layer": "新手安全圈",
@@ -7185,10 +7227,6 @@
         "采药炼丹",
         "巡山悬赏"
       ],
-      "service_tags": [],
-      "rumor_topics": [],
-      "board_available": false,
-      "mentor_ids": [],
       "codex_entry_id": "geo_herb_slope"
     },
     {
@@ -7565,6 +7603,16 @@
         "附近修士常交换妖兽出没与掉落材料的消息。"
       ],
       "chapter": "太南小会",
+      "service_tags": [
+        "travel",
+        "danger"
+      ],
+      "rumor_topics": [
+        "谷外旧路",
+        "血禁门径"
+      ],
+      "board_available": false,
+      "mentor_ids": [],
       "room_type": "房间",
       "risk_level": "历练",
       "room_layer": "新手安全圈",
@@ -7573,10 +7621,6 @@
         "采药炼丹",
         "巡山悬赏"
       ],
-      "service_tags": [],
-      "rumor_topics": [],
-      "board_available": false,
-      "mentor_ids": [],
       "codex_entry_id": "geo_mountain_path"
     },
     {
@@ -7913,6 +7957,17 @@
         "此地常有人提起「黄枫谷门径」相关的旧闻。"
       ],
       "chapter": "黄枫谷门径",
+      "service_tags": [
+        "travel",
+        "sect",
+        "rumor"
+      ],
+      "rumor_topics": [
+        "云桥口信",
+        "门内去路"
+      ],
+      "board_available": false,
+      "mentor_ids": [],
       "room_type": "房间",
       "risk_level": "历练",
       "room_layer": "新手安全圈",
@@ -7921,10 +7976,6 @@
         "采药炼丹",
         "门派事务"
       ],
-      "service_tags": [],
-      "rumor_topics": [],
-      "board_available": false,
-      "mentor_ids": [],
       "codex_entry_id": "geo_huangfeng_cloud_bridge"
     },
     {
@@ -7963,6 +8014,19 @@
         "老修士常说，血禁里最可怕的不是妖兽，而是人心开始觉得自己还能再贪一点的时候。"
       ],
       "chapter": "血色禁地",
+      "service_tags": [
+        "danger",
+        "rumor",
+        "mentor"
+      ],
+      "rumor_topics": [
+        "血禁规矩",
+        "入禁名单"
+      ],
+      "board_available": false,
+      "mentor_ids": [
+        "blood_warden"
+      ],
       "room_type": "宗门",
       "risk_level": "安全",
       "room_layer": "成长历练圈",
@@ -7971,10 +8035,6 @@
         "护送跑商",
         "残区探禁"
       ],
-      "service_tags": [],
-      "rumor_topics": [],
-      "board_available": false,
-      "mentor_ids": [],
       "codex_entry_id": "geo_blood_gate"
     },
     {
@@ -8016,6 +8076,19 @@
         "老修士提醒新手时总爱说一句：禁地外围最会骗人，因为它偏偏看起来还像来得及回头。"
       ],
       "chapter": "血色禁地",
+      "service_tags": [
+        "danger",
+        "gather",
+        "rumor"
+      ],
+      "rumor_topics": [
+        "外围安全线",
+        "禁地旧闻"
+      ],
+      "board_available": false,
+      "mentor_ids": [
+        "forbidden_scout"
+      ],
       "room_type": "秘境",
       "risk_level": "历练",
       "room_layer": "成长历练圈",
@@ -8025,10 +8098,6 @@
         "巡山悬赏",
         "残区探禁"
       ],
-      "service_tags": [],
-      "rumor_topics": [],
-      "board_available": false,
-      "mentor_ids": [],
       "codex_entry_id": "geo_blood_forbidden_outer"
     },
     {
@@ -8073,6 +8142,19 @@
         "附近修士常交换妖兽出没与掉落材料的消息。"
       ],
       "chapter": "血色禁地",
+      "service_tags": [
+        "danger",
+        "gather",
+        "rumor"
+      ],
+      "rumor_topics": [
+        "沼泽残息",
+        "虫毒回声"
+      ],
+      "board_available": false,
+      "mentor_ids": [
+        "swamp_survivor"
+      ],
       "room_type": "秘境",
       "risk_level": "高危",
       "room_layer": "筑基冲刺圈",
@@ -8081,10 +8163,6 @@
         "巡山悬赏",
         "残区探禁"
       ],
-      "service_tags": [],
-      "rumor_topics": [],
-      "board_available": false,
-      "mentor_ids": [],
       "codex_entry_id": "geo_blood_swamp"
     },
     {
@@ -8629,6 +8707,19 @@
         "此地常有人提起「结丹之门」相关的旧闻。"
       ],
       "chapter": "结丹之门",
+      "service_tags": [
+        "travel",
+        "rumor",
+        "mentor"
+      ],
+      "rumor_topics": [
+        "船上旧闻",
+        "结丹门径"
+      ],
+      "board_available": false,
+      "mentor_ids": [
+        "deck_mage"
+      ],
       "room_type": "海域",
       "risk_level": "安全",
       "room_layer": "成长历练圈",
@@ -8636,10 +8727,6 @@
       "loop_tags": [
         "海猎采珠"
       ],
-      "service_tags": [],
-      "rumor_topics": [],
-      "board_available": false,
-      "mentor_ids": [],
       "codex_entry_id": "geo_chaos_sea_ship"
     },
     {
@@ -8678,6 +8765,19 @@
         "海上人提到这座孤岛时，总会把声音压低一点，像怕多说一句就把碑里没散的旧事惊醒。"
       ],
       "chapter": "乱星海漂流",
+      "service_tags": [
+        "danger",
+        "rumor",
+        "mentor"
+      ],
+      "rumor_topics": [
+        "残碑旧闻",
+        "孤岛退路"
+      ],
+      "board_available": false,
+      "mentor_ids": [
+        "island_hermit"
+      ],
       "room_type": "房间",
       "risk_level": "安全",
       "room_layer": "成长历练圈",
@@ -8685,10 +8785,6 @@
       "loop_tags": [
         "海猎采珠"
       ],
-      "service_tags": [],
-      "rumor_topics": [],
-      "board_available": false,
-      "mentor_ids": [],
       "codex_entry_id": "geo_chaos_sea_isle"
     },
     {
@@ -8731,6 +8827,17 @@
         "这里的采集点很受散修与药师关注。"
       ],
       "chapter": "乱星海漂流",
+      "service_tags": [
+        "sea",
+        "gather",
+        "rumor"
+      ],
+      "rumor_topics": [
+        "礁影海材",
+        "近海潮纹"
+      ],
+      "board_available": false,
+      "mentor_ids": [],
       "room_type": "海域",
       "risk_level": "历练",
       "room_layer": "成长历练圈",
@@ -8739,10 +8846,6 @@
         "采药炼丹",
         "海猎采珠"
       ],
-      "service_tags": [],
-      "rumor_topics": [],
-      "board_available": false,
-      "mentor_ids": [],
       "codex_entry_id": "geo_reef_shore"
     },
     {
@@ -8833,6 +8936,17 @@
         "此地常有人提起「乱星海漂流」相关的旧闻。"
       ],
       "chapter": "乱星海漂流",
+      "service_tags": [
+        "travel",
+        "danger",
+        "rumor"
+      ],
+      "rumor_topics": [
+        "风暴断航",
+        "深海退路"
+      ],
+      "board_available": false,
+      "mentor_ids": [],
       "room_type": "海域",
       "risk_level": "历练",
       "room_layer": "筑基冲刺圈",
@@ -8840,10 +8954,6 @@
       "loop_tags": [
         "海猎采珠"
       ],
-      "service_tags": [],
-      "rumor_topics": [],
-      "board_available": false,
-      "mentor_ids": [],
       "codex_entry_id": "geo_storm_route"
     },
     {
@@ -8937,6 +9047,16 @@
         "曾有人说，虚天回廊里的幻影若看久了，会把闯殿者心里最想赢的那一口气先照出来。"
       ],
       "chapter": "虚天殿初启",
+      "service_tags": [
+        "danger",
+        "rumor"
+      ],
+      "rumor_topics": [
+        "回廊残讯",
+        "前殿退路"
+      ],
+      "board_available": false,
+      "mentor_ids": [],
       "room_type": "秘境",
       "risk_level": "历练",
       "room_layer": "成长历练圈",
@@ -8945,10 +9065,6 @@
         "巡山悬赏",
         "残区探禁"
       ],
-      "service_tags": [],
-      "rumor_topics": [],
-      "board_available": false,
-      "mentor_ids": [],
       "codex_entry_id": "geo_xutian_corridor"
     },
     {
@@ -8989,6 +9105,17 @@
         "这里的采集点很受散修与药师关注。"
       ],
       "chapter": "虚天殿初启",
+      "service_tags": [
+        "danger",
+        "gather",
+        "rumor"
+      ],
+      "rumor_topics": [
+        "遗室残火",
+        "丹渣旧方"
+      ],
+      "board_available": false,
+      "mentor_ids": [],
       "room_type": "秘境",
       "risk_level": "安全",
       "room_layer": "成长历练圈",
@@ -8997,10 +9124,6 @@
         "采药炼丹",
         "残区探禁"
       ],
-      "service_tags": [],
-      "rumor_topics": [],
-      "board_available": false,
-      "mentor_ids": [],
       "codex_entry_id": "geo_xutian_pill_room"
     },
     {
@@ -9151,6 +9274,16 @@
         "此地常有人提起「虚天残区」相关的旧闻。"
       ],
       "chapter": "虚天残区",
+      "service_tags": [
+        "danger",
+        "rumor"
+      ],
+      "rumor_topics": [
+        "内门试心",
+        "深殿旧规"
+      ],
+      "board_available": false,
+      "mentor_ids": [],
       "room_type": "宗门",
       "risk_level": "历练",
       "room_layer": "成长历练圈",
@@ -9159,10 +9292,6 @@
         "护送跑商",
         "残区探禁"
       ],
-      "service_tags": [],
-      "rumor_topics": [],
-      "board_available": false,
-      "mentor_ids": [],
       "codex_entry_id": "geo_xutian_inner_gate"
     },
     {
@@ -9624,14 +9753,23 @@
       "room_type": "驿站",
       "risk_level": "安全",
       "landmark": "东门驿棚",
+      "service_tags": [
+        "travel",
+        "work",
+        "mentor"
+      ],
+      "rumor_topics": [
+        "官道风声",
+        "押路试手"
+      ],
+      "board_available": false,
+      "mentor_ids": [
+        "escort_captain_shen"
+      ],
       "room_layer": "成长历练圈",
       "loop_tags": [
         "护送跑商"
       ],
-      "service_tags": [],
-      "rumor_topics": [],
-      "board_available": false,
-      "mentor_ids": [],
       "codex_entry_id": "geo_escort_post"
     },
     {
@@ -10849,14 +10987,21 @@
       "room_type": "校场",
       "risk_level": "历练",
       "landmark": "驯兽场",
+      "service_tags": [
+        "work",
+        "sect",
+        "rumor"
+      ],
+      "rumor_topics": [
+        "驯兽试手",
+        "幼兽脾性"
+      ],
+      "board_available": false,
+      "mentor_ids": [],
       "room_layer": "新手安全圈",
       "loop_tags": [
         "门派事务"
       ],
-      "service_tags": [],
-      "rumor_topics": [],
-      "board_available": false,
-      "mentor_ids": [],
       "codex_entry_id": "geo_spirit_beast_taming_yard"
     },
     {
@@ -10889,14 +11034,21 @@
       "room_type": "宗门",
       "risk_level": "历练",
       "landmark": "内山小径",
+      "service_tags": [
+        "travel",
+        "sect",
+        "rumor"
+      ],
+      "rumor_topics": [
+        "内山路引",
+        "兽山规矩"
+      ],
+      "board_available": false,
+      "mentor_ids": [],
       "room_layer": "新手安全圈",
       "loop_tags": [
         "门派事务"
       ],
-      "service_tags": [],
-      "rumor_topics": [],
-      "board_available": false,
-      "mentor_ids": [],
       "codex_entry_id": "geo_spirit_beast_inner_path"
     },
     {
@@ -11777,14 +11929,23 @@
       "room_type": "海岛",
       "risk_level": "历练",
       "landmark": "雷木坡",
+      "service_tags": [
+        "travel",
+        "rumor",
+        "mentor"
+      ],
+      "rumor_topics": [
+        "雷木风向",
+        "外海借道"
+      ],
+      "board_available": false,
+      "mentor_ids": [
+        "storm_scout_qi"
+      ],
       "room_layer": "成长历练圈",
       "loop_tags": [
         "海猎采珠"
       ],
-      "service_tags": [],
-      "rumor_topics": [],
-      "board_available": false,
-      "mentor_ids": [],
       "codex_entry_id": "geo_outer_isles_storm_tree"
     },
     {
@@ -11818,14 +11979,21 @@
       "room_type": "海域",
       "risk_level": "历练",
       "landmark": "月泻潟湖",
+      "service_tags": [
+        "sea",
+        "gather",
+        "rumor"
+      ],
+      "rumor_topics": [
+        "潟湖候潮",
+        "浅海虫珠"
+      ],
+      "board_available": false,
+      "mentor_ids": [],
       "room_layer": "成长历练圈",
       "loop_tags": [
         "海猎采珠"
       ],
-      "service_tags": [],
-      "rumor_topics": [],
-      "board_available": false,
-      "mentor_ids": [],
       "codex_entry_id": "geo_outer_isles_lagoon"
     },
     {
@@ -12547,14 +12715,23 @@
       "room_type": "秘境",
       "risk_level": "高危",
       "landmark": "无尽壁",
+      "service_tags": [
+        "danger",
+        "gather",
+        "rumor"
+      ],
+      "rumor_topics": [
+        "壁上残纹",
+        "听壁回声"
+      ],
+      "board_available": false,
+      "mentor_ids": [
+        "wall_listener_qiu"
+      ],
       "room_layer": "筑基冲刺圈",
       "loop_tags": [
         "残区探禁"
       ],
-      "service_tags": [],
-      "rumor_topics": [],
-      "board_available": false,
-      "mentor_ids": [],
       "codex_entry_id": "geo_xutian_endless_wall"
     },
     {
@@ -13532,7 +13709,9 @@
         "你现在玩的是共享世界修仙 MUD，不是单线剧情闯关。",
         "先做三件事：look 看场景、listen 听风声、talk/ask 找人问路。",
         "看不懂时先输入 help commands 或 help work。",
-        "初期最稳的节奏是：看 -> 问 -> 接差事 -> 跑一圈 -> 回来交事。"
+        "初期最稳的节奏是：看 -> 问 -> 接差事 -> 跑一圈 -> 回来交事。",
+        "前 10 分钟先把第一轮营生跑顺，前 90 分钟则要做出第一条稳定活路和第一段社会关系。",
+        "若你从七玄门起步，就先把外场、议事堂、弟子舍、药圃和东门驿棚这几处走熟。"
       ],
       "keywords": [
         "新手",
@@ -13554,6 +13733,74 @@
         "help commands",
         "board",
         "work"
+      ],
+      "category": "基础"
+    },
+    {
+      "topic_id": "newbie_10",
+      "title": "前十分钟",
+      "summary": "前十分钟先做完第一轮看路、问讯、营生和留痕。",
+      "body_lines": [
+        "前 10 分钟只做一套动作：look -> talk 厉飞雨 -> ask 厉飞雨 about rumor -> work -> board。",
+        "若人在七玄门，就先把外场、议事堂、弟子舍、药圃和东门驿棚五点走熟。",
+        "第一笔稳钱优先靠外场跑腿、堂前录事、弟子舍点名、药圃拣苗或驿棚巡签。",
+        "至少开口一次：say 在下初来乍到，请问太南谷如何走。",
+        "离开前记得用 journal 看手头差事，不要只会赶路，不会记事。"
+      ],
+      "keywords": [
+        "前十分钟",
+        "10分钟",
+        "开局"
+      ],
+      "related_commands": [
+        "look",
+        "talk",
+        "ask",
+        "work",
+        "board",
+        "say",
+        "journal"
+      ],
+      "inline_commands": [
+        "talk 厉飞雨",
+        "ask 厉飞雨 about rumor",
+        "work",
+        "board",
+        "say 在下初来乍到"
+      ],
+      "category": "基础"
+    },
+    {
+      "topic_id": "newbie_90",
+      "title": "九十分钟",
+      "summary": "九十分钟目标不是冲一条主线，而是做成首个共享世界闭环。",
+      "body_lines": [
+        "前 90 分钟至少完成：1 次 help 查询、1 条 rumor 差事、1 次 work 循环、1 次 say/tell/post、1 次 duty 或散修推进。",
+        "最稳路线通常是：七玄门起手 -> 嘉元与墨府换人情 -> 太南谷换消息 -> 再选散修或门派继续做深。",
+        "若 90 分钟后还只有打怪和赶路，没有稳定营生、没有板帖或说话、没有身份推进，就还没真正入世。",
+        "共享世界最重要的不是你跑得多快，而是你有没有留下别人能继续接住的关系和信息。"
+      ],
+      "keywords": [
+        "九十分钟",
+        "90分钟",
+        "首轮闭环"
+      ],
+      "related_commands": [
+        "help",
+        "ask",
+        "work",
+        "board",
+        "duty",
+        "family",
+        "post",
+        "say"
+      ],
+      "inline_commands": [
+        "help newbie",
+        "ask 墨府总管 about rumor",
+        "work",
+        "post 收药=嘉元东门收止血草",
+        "duty"
       ],
       "category": "基础"
     },
@@ -13599,9 +13846,12 @@
       "body_lines": [
         "say：只让同场景听见，适合眼前交谈。",
         "chat world：发到世界频道，适合问路、喊人、收消息。",
+        "chat trade：发到交易频道，适合报收货、出货、问价和叫跑商。",
+        "chat sect：发到门派频道，适合门内公告、点名和差事交接。",
         "chat team：发到队伍频道，适合组队协作。",
         "tell <玩家> <内容>：私聊。",
-        "reply <内容>：回复最近联系你的玩家。"
+        "reply <内容>：回复最近联系你的玩家。",
+        "world 用来问路与求援，trade 用来谈货，sect 用来谈门内事，别让一个频道替你做所有事情。"
       ],
       "keywords": [
         "频道",
@@ -13619,6 +13869,7 @@
       ],
       "inline_commands": [
         "chat world 有人在太南谷吗",
+        "chat trade 嘉元东门收止血草",
         "say 在下初来乍到",
         "tell hanli 道友可在"
       ],
@@ -13689,7 +13940,8 @@
         "board：看当前房间的公开委托和近帖。",
         "read <编号>：读一条帖子。",
         "post <题目>=<正文>：在当前板子留言。",
-        "discard <编号>：把某条帖子从你自己的视野里收起。"
+        "discard <编号>：把某条帖子从你自己的视野里收起。",
+        "板子最适合留可执行的信息：收货、缺人、路引、提醒和房间近况。"
       ],
       "keywords": [
         "留言板",
@@ -13718,7 +13970,8 @@
         "rank：查看当前默认榜单。",
         "rank wealth / rank alchemy / rank travel：查看指定榜。",
         "首席榜只取各门派当前最强一人，偏身份荣誉。",
-        "财富榜、丹道榜、游历榜更适合观察服内生态。"
+        "财富榜、丹道榜、游历榜更适合观察服内生态。",
+        "若你发现某一榜长期只剩一种玩法刷榜，就说明这服的内容或经济已经开始失衡。"
       ],
       "keywords": [
         "榜",
@@ -13743,9 +13996,10 @@
       "summary": "这服不是强制门派服，散修也能长期玩。",
       "body_lines": [
         "散修线更自由，靠坊市、风声、采药、跑商、海猎慢慢起势。",
-        "七玄门偏凡俗起步与江湖过渡。",
+        "七玄门偏凡俗起步、门内杂务、药圃打底和官道护送，是最稳的入世过渡线。",
         "黄枫谷偏药园、法修和宗门规矩，内堂、药台、经廊是一整套稳根基的线。",
-        "灵兽山偏灵兽、灵虫、采药和照料工作，兽栏、虫圃与外山执事堂是一整条日常事务链。"
+        "灵兽山偏灵兽、灵虫、采药和照料工作，兽栏、虫圃与外山执事堂是一整条日常事务链。",
+        "真正的分化不是名字不同，而是你每天跑的房间、见的人、攒的资源和追的榜都开始不同。"
       ],
       "keywords": [
         "门派",
@@ -13764,6 +14018,38 @@
         "join huangfeng_valley"
       ],
       "category": "身份"
+    },
+    {
+      "topic_id": "economy",
+      "title": "经济与产出",
+      "summary": "把收入看成保底营生、身份事务、高风险机会三层，不要只盯着灵石数字。",
+      "body_lines": [
+        "保底营生负责养活你：棚市记账、药圃拣苗、盐棚拣货、珠市拣成色都属于这一层。",
+        "身份事务负责拉开差异：堂前录事、内堂录名、兽栏巡喂、外山点事给的是贡献、权限和下一层资格。",
+        "高风险机会负责改命：外海测潮、残环拓纹、星渊候潮给的是关键材料、世界见闻和突破门槛。",
+        "别把所有产出都折算成灵石，真正值钱的往往是路引、名录、门路、见闻和下一轮可做之事。"
+      ],
+      "keywords": [
+        "经济",
+        "产出",
+        "营生",
+        "收益"
+      ],
+      "related_commands": [
+        "work",
+        "board",
+        "rank",
+        "duty",
+        "travel"
+      ],
+      "inline_commands": [
+        "work",
+        "board",
+        "rank wealth",
+        "duty",
+        "travel"
+      ],
+      "category": "循环"
     },
     {
       "topic_id": "map_tiannan",
@@ -13899,6 +14185,74 @@
       "route_tag": "qixuan_gate",
       "service_tag": "mentor",
       "related_quest_id": "backslope_wolf_skin"
+    },
+    {
+      "job_id": "qixuan_hall_rollbook",
+      "title": "堂前录事",
+      "kind": "门派事务",
+      "scene_id": "qixuan_hall",
+      "issuer_npc_id": "han_zhanglao",
+      "submit_npc_id": "sun_er",
+      "summary": "韩长老不急着让新人学高深法子，先看你能不能把堂前名册、口信和顺序理顺。",
+      "description": "韩长老不急着让新人学高深法子，先看你能不能把堂前名册、口信和顺序理顺。",
+      "requirements": "识字、守时、肯把杂务先做扎实。",
+      "reward_summary": "门内信任、七玄人情、堂前熟路。",
+      "command_hint": "ask 韩长老 about rumor / duty / journal",
+      "repeatable": true,
+      "route_tag": "qixuan_gate",
+      "service_tag": "sect",
+      "related_quest_id": ""
+    },
+    {
+      "job_id": "qixuan_dorm_rollcall",
+      "title": "弟子舍点名",
+      "kind": "门派事务",
+      "scene_id": "qixuan_dormitory",
+      "issuer_npc_id": "sun_er",
+      "submit_npc_id": "sun_er",
+      "summary": "弟子舍里最不起眼的点名、铺位和杂役分派，最能看出一个新人能不能扛住日常。",
+      "description": "弟子舍里最不起眼的点名、铺位和杂役分派，最能看出一个新人能不能扛住日常。",
+      "requirements": "记得住人、分得清先后、不嫌活碎。",
+      "reward_summary": "外门熟脸、舍内口碑、更多杂务入口。",
+      "command_hint": "ask 孙二 about rumor / work / journal",
+      "repeatable": true,
+      "route_tag": "qixuan_gate",
+      "service_tag": "mentor",
+      "related_quest_id": ""
+    },
+    {
+      "job_id": "qixuan_garden_sorting",
+      "title": "药圃拣苗",
+      "kind": "门派事务",
+      "scene_id": "qixuan_medicine_garden",
+      "issuer_npc_id": "field_steward",
+      "submit_npc_id": "field_steward",
+      "summary": "药圃执役最看重的不是你认得多少珍药，而是你肯不肯把浅药幼苗一株株先分明白。",
+      "description": "药圃执役最看重的不是你认得多少珍药，而是你肯不肯把浅药幼苗一株株先分明白。",
+      "requirements": "认得浅药、手稳、不贪快。",
+      "reward_summary": "基础药材、采药熟路、药圃信任。",
+      "command_hint": "ask 药圃执役 about rumor / work / journal",
+      "repeatable": true,
+      "route_tag": "qixuan_gate",
+      "service_tag": "gather",
+      "related_quest_id": "qixuan_herb"
+    },
+    {
+      "job_id": "escort_post_watch",
+      "title": "驿棚巡签",
+      "kind": "工作任务",
+      "scene_id": "escort_post",
+      "issuer_npc_id": "escort_captain_shen",
+      "submit_npc_id": "escort_captain_shen",
+      "summary": "沈镖头不先看你打得多凶，只看你能不能把驿棚点签、路引和回报做得像样。",
+      "description": "沈镖头不先看你打得多凶，只看你能不能把驿棚点签、路引和回报做得像样。",
+      "requirements": "会认路、能守时、知道何时该把消息带回驿棚。",
+      "reward_summary": "官道口碑、护送熟路、押路资格。",
+      "command_hint": "ask 沈镖头 about rumor / work / travel",
+      "repeatable": true,
+      "route_tag": "qixuan_gate",
+      "service_tag": "travel",
+      "related_quest_id": "escort_token_task"
     },
     {
       "job_id": "market_errand",
@@ -14479,7 +14833,7 @@
         "内门",
         "执事"
       ],
-      "description": "七玄门适合作为凡俗江湖与修行世界之间的稳妥起步点。",
+      "description": "七玄门不是一次性教程门派，而是一条从外场跑腿、堂前录事、弟子舍杂务、药圃打底再走到官道护送的长期起步线；它最适合把凡俗江湖、人情、营生和初阶修行接在一起。",
       "mentor_ids": [
         "li_feiyu",
         "han_zhanglao"
@@ -14487,7 +14841,9 @@
       "service_unlocks": [
         "mentor",
         "board",
-        "duty"
+        "duty",
+        "gather",
+        "travel"
       ]
     },
     {
@@ -14552,6 +14908,77 @@
       ],
       "quest_ids": [
         "backslope_wolf_skin"
+      ],
+      "unlock_flags": []
+    },
+    {
+      "source_id": "qixuan_han_rumor",
+      "scene_id": "qixuan_hall",
+      "npc_id": "han_zhanglao",
+      "topic": "门内规矩",
+      "summary": "韩长老看新人，先看你会不会把堂前顺序和门内规矩摆正。",
+      "body_lines": [
+        "韩长老语气平平：七玄门不缺想学东西的人，缺的是肯先把堂前名册、口信和次序理明白的人。",
+        "他点到为止，说外场、弟子舍、药圃和东门驿棚这些小处都做得稳，才算真能往后走。"
+      ],
+      "job_ids": [
+        "qixuan_hall_rollbook",
+        "qixuan_dorm_rollcall",
+        "qixuan_garden_sorting"
+      ],
+      "quest_ids": [],
+      "unlock_flags": []
+    },
+    {
+      "source_id": "qixuan_sun_er_rumor",
+      "scene_id": "qixuan_dormitory",
+      "npc_id": "sun_er",
+      "topic": "外门杂务",
+      "summary": "孙二嘴里常抱怨杂务多，可他比谁都清楚哪种人能在外门站住脚。",
+      "body_lines": [
+        "孙二挠着头道：弟子舍的活看着碎，可谁肯把铺位、点名和口信做利索，大家都看在眼里。",
+        "他劝你别小看这些杂务，真能把它们做好的人，往往出去跑腿也最不容易掉链子。"
+      ],
+      "job_ids": [
+        "qixuan_dorm_rollcall",
+        "qixuan_hall_rollbook"
+      ],
+      "quest_ids": [],
+      "unlock_flags": []
+    },
+    {
+      "source_id": "qixuan_field_rumor",
+      "scene_id": "qixuan_medicine_garden",
+      "npc_id": "field_steward",
+      "topic": "浅药门路",
+      "summary": "药圃执役教人的第一课从来不是炼丹，而是别把浅药幼苗当杂草。",
+      "body_lines": [
+        "药圃执役弯腰拣苗：认药先从认便宜货开始，真把浅药分清了，往后你去嘉元采买、太南换消息都不容易吃亏。",
+        "他提醒你，药圃、集市和东门其实是一条线，跑熟了才算有了第一条能养活自己的路。"
+      ],
+      "job_ids": [
+        "qixuan_garden_sorting"
+      ],
+      "quest_ids": [
+        "qixuan_herb"
+      ],
+      "unlock_flags": []
+    },
+    {
+      "source_id": "escort_shen_rumor",
+      "scene_id": "escort_post",
+      "npc_id": "escort_captain_shen",
+      "topic": "官道风声",
+      "summary": "沈镖头最懂官道上什么叫真本事，什么叫逞一时勇。",
+      "body_lines": [
+        "沈镖头看着官道道：押路不是只会打，先得认签、认人、认什么时候该把消息带回来。",
+        "他说驿棚巡签、东门换口信和碎石官道试手其实是一条线，跑顺了才算能接更长的护送活。"
+      ],
+      "job_ids": [
+        "escort_post_watch"
+      ],
+      "quest_ids": [
+        "escort_token_task"
       ],
       "unlock_flags": []
     },

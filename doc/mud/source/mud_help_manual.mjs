@@ -20,11 +20,46 @@ export default {
         '先做三件事：look 看场景、listen 听风声、talk/ask 找人问路。',
         '看不懂时先输入 help commands 或 help work。',
         '初期最稳的节奏是：看 -> 问 -> 接差事 -> 跑一圈 -> 回来交事。',
+        '前 10 分钟先把第一轮营生跑顺，前 90 分钟则要做出第一条稳定活路和第一段社会关系。',
+        '若你从七玄门起步，就先把外场、议事堂、弟子舍、药圃和东门驿棚这几处走熟。',
       ],
       {
         keywords: ['新手', '入门', '上手'],
         related_commands: ['look', 'listen', 'talk', 'ask', 'board', 'work', 'journal'],
         inline_commands: ['look', 'listen', 'help commands', 'board', 'work'],
+      },
+    ),
+    topic(
+      'newbie_10',
+      '前十分钟',
+      '前十分钟先做完第一轮看路、问讯、营生和留痕。',
+      [
+        '前 10 分钟只做一套动作：look -> talk 厉飞雨 -> ask 厉飞雨 about rumor -> work -> board。',
+        '若人在七玄门，就先把外场、议事堂、弟子舍、药圃和东门驿棚五点走熟。',
+        '第一笔稳钱优先靠外场跑腿、堂前录事、弟子舍点名、药圃拣苗或驿棚巡签。',
+        '至少开口一次：say 在下初来乍到，请问太南谷如何走。',
+        '离开前记得用 journal 看手头差事，不要只会赶路，不会记事。',
+      ],
+      {
+        keywords: ['前十分钟', '10分钟', '开局'],
+        related_commands: ['look', 'talk', 'ask', 'work', 'board', 'say', 'journal'],
+        inline_commands: ['talk 厉飞雨', 'ask 厉飞雨 about rumor', 'work', 'board', 'say 在下初来乍到'],
+      },
+    ),
+    topic(
+      'newbie_90',
+      '九十分钟',
+      '九十分钟目标不是冲一条主线，而是做成首个共享世界闭环。',
+      [
+        '前 90 分钟至少完成：1 次 help 查询、1 条 rumor 差事、1 次 work 循环、1 次 say/tell/post、1 次 duty 或散修推进。',
+        '最稳路线通常是：七玄门起手 -> 嘉元与墨府换人情 -> 太南谷换消息 -> 再选散修或门派继续做深。',
+        '若 90 分钟后还只有打怪和赶路，没有稳定营生、没有板帖或说话、没有身份推进，就还没真正入世。',
+        '共享世界最重要的不是你跑得多快，而是你有没有留下别人能继续接住的关系和信息。',
+      ],
+      {
+        keywords: ['九十分钟', '90分钟', '首轮闭环'],
+        related_commands: ['help', 'ask', 'work', 'board', 'duty', 'family', 'post', 'say'],
+        inline_commands: ['help newbie', 'ask 墨府总管 about rumor', 'work', 'post 收药=嘉元东门收止血草', 'duty'],
       },
     ),
     topic(
@@ -52,14 +87,17 @@ export default {
       [
         'say：只让同场景听见，适合眼前交谈。',
         'chat world：发到世界频道，适合问路、喊人、收消息。',
+        'chat trade：发到交易频道，适合报收货、出货、问价和叫跑商。',
+        'chat sect：发到门派频道，适合门内公告、点名和差事交接。',
         'chat team：发到队伍频道，适合组队协作。',
         'tell <玩家> <内容>：私聊。',
         'reply <内容>：回复最近联系你的玩家。',
+        'world 用来问路与求援，trade 用来谈货，sect 用来谈门内事，别让一个频道替你做所有事情。',
       ],
       {
         keywords: ['频道', '聊天', 'chat', 'say', 'tell'],
         related_commands: ['say', 'chat', 'tell', 'reply', 'team'],
-        inline_commands: ['chat world 有人在太南谷吗', 'say 在下初来乍到', 'tell hanli 道友可在'],
+        inline_commands: ['chat world 有人在太南谷吗', 'chat trade 嘉元东门收止血草', 'say 在下初来乍到', 'tell hanli 道友可在'],
         category: '社交',
       },
     ),
@@ -107,6 +145,7 @@ export default {
         'read <编号>：读一条帖子。',
         'post <题目>=<正文>：在当前板子留言。',
         'discard <编号>：把某条帖子从你自己的视野里收起。',
+        '板子最适合留可执行的信息：收货、缺人、路引、提醒和房间近况。',
       ],
       {
         keywords: ['留言板', 'board', 'read', 'post'],
@@ -124,6 +163,7 @@ export default {
         'rank wealth / rank alchemy / rank travel：查看指定榜。',
         '首席榜只取各门派当前最强一人，偏身份荣誉。',
         '财富榜、丹道榜、游历榜更适合观察服内生态。',
+        '若你发现某一榜长期只剩一种玩法刷榜，就说明这服的内容或经济已经开始失衡。',
       ],
       {
         keywords: ['榜', '排行', 'rank'],
@@ -138,15 +178,33 @@ export default {
       '这服不是强制门派服，散修也能长期玩。',
       [
         '散修线更自由，靠坊市、风声、采药、跑商、海猎慢慢起势。',
-        '七玄门偏凡俗起步与江湖过渡。',
+        '七玄门偏凡俗起步、门内杂务、药圃打底和官道护送，是最稳的入世过渡线。',
         '黄枫谷偏药园、法修和宗门规矩，内堂、药台、经廊是一整套稳根基的线。',
         '灵兽山偏灵兽、灵虫、采药和照料工作，兽栏、虫圃与外山执事堂是一整条日常事务链。',
+        '真正的分化不是名字不同，而是你每天跑的房间、见的人、攒的资源和追的榜都开始不同。',
       ],
       {
         keywords: ['门派', '散修', '宗门'],
         related_commands: ['family', 'duty', 'join', 'contribute'],
         inline_commands: ['family', 'duty', 'join huangfeng_valley'],
         category: '身份',
+      },
+    ),
+    topic(
+      'economy',
+      '经济与产出',
+      '把收入看成保底营生、身份事务、高风险机会三层，不要只盯着灵石数字。',
+      [
+        '保底营生负责养活你：棚市记账、药圃拣苗、盐棚拣货、珠市拣成色都属于这一层。',
+        '身份事务负责拉开差异：堂前录事、内堂录名、兽栏巡喂、外山点事给的是贡献、权限和下一层资格。',
+        '高风险机会负责改命：外海测潮、残环拓纹、星渊候潮给的是关键材料、世界见闻和突破门槛。',
+        '别把所有产出都折算成灵石，真正值钱的往往是路引、名录、门路、见闻和下一轮可做之事。',
+      ],
+      {
+        keywords: ['经济', '产出', '营生', '收益'],
+        related_commands: ['work', 'board', 'rank', 'duty', 'travel'],
+        inline_commands: ['work', 'board', 'rank wealth', 'duty', 'travel'],
+        category: '循环',
       },
     ),
     topic(

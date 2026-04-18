@@ -256,6 +256,14 @@ bool panel_entries_contain_title(const MudStructuredPanelState& panel,
                        [&](const MudSummaryEntry& entry) { return entry.title.find(needle) != std::string::npos; });
 }
 
+bool structured_panel_entries_contain_title(const mud::StructuredPanel& panel,
+                                            std::string_view needle)
+{
+    return std::any_of(panel.entries().begin(),
+                       panel.entries().end(),
+                       [&](const mud::SummaryEntry& entry) { return entry.title().find(needle) != std::string::npos; });
+}
+
 bool string_contains(std::string_view haystack, std::string_view needle)
 {
     return haystack.find(needle) != std::string::npos;
@@ -474,6 +482,50 @@ int main()
             call_endpoint<mud::CharacterCreateRequest, mud::CharacterCreateResponse>(
                 "127.0.0.1", 18082, "/v1/game/character/create", create_request, token);
 
+        const std::string peer_account = "peer" + suffix;
+
+        gateway::AuthRegisterRequest peer_register_request;
+        peer_register_request.set_account(peer_account);
+        peer_register_request.set_password(password);
+        const auto peer_register_response =
+            call_endpoint<gateway::AuthRegisterRequest, gateway::AuthRegisterResponse>(
+                "127.0.0.1", 18081, "/v1/auth/register", peer_register_request);
+
+        gateway::AuthLoginRequest peer_login_request;
+        peer_login_request.set_account(peer_account);
+        peer_login_request.set_password(password);
+        const auto peer_login_response =
+            call_endpoint<gateway::AuthLoginRequest, gateway::AuthLoginResponse>(
+                "127.0.0.1", 18081, "/v1/auth/login", peer_login_request);
+        const std::string peer_token = peer_login_response.jwt();
+
+        gateway::GameEnterRequest peer_enter_request;
+        peer_enter_request.set_account(peer_account);
+        const auto peer_enter_response =
+            call_endpoint<gateway::GameEnterRequest, gateway::GameEnterResponse>(
+                "127.0.0.1", 18082, "/v1/game/enter", peer_enter_request, peer_token);
+
+        mud::BootstrapRequest peer_bootstrap_request;
+        peer_bootstrap_request.set_account(peer_account);
+        const auto peer_bootstrap_response =
+            call_endpoint<mud::BootstrapRequest, mud::BootstrapResponse>(
+                "127.0.0.1", 18082, "/v1/game/bootstrap", peer_bootstrap_request, peer_token);
+
+        mud::CharacterCreateRequest peer_create_request;
+        peer_create_request.set_account(peer_account);
+        peer_create_request.set_character_name("同测" + suffix.substr(suffix.size() >= 4 ? suffix.size() - 4 : 0));
+        if(peer_bootstrap_response.available_origins_size() > 0)
+        {
+            peer_create_request.set_origin_id(peer_bootstrap_response.available_origins(0).origin_id());
+        }
+        if(peer_bootstrap_response.available_backgrounds_size() > 0)
+        {
+            peer_create_request.set_background_id(peer_bootstrap_response.available_backgrounds(0).background_id());
+        }
+        const auto peer_create_response =
+            call_endpoint<mud::CharacterCreateRequest, mud::CharacterCreateResponse>(
+                "127.0.0.1", 18082, "/v1/game/character/create", peer_create_request, peer_token);
+
         mud::CommandExecuteRequest inspect_request;
         inspect_request.set_account(account);
         inspect_request.set_command("inspect 厉飞雨");
@@ -489,13 +541,24 @@ int main()
                 "127.0.0.1", 18082, "/v1/game/command/execute", request, token);
         };
 
+        auto run_peer_command = [&](const std::string& command) {
+            mud::CommandExecuteRequest request;
+            request.set_account(peer_account);
+            request.set_command(command);
+            return call_endpoint<mud::CommandExecuteRequest, mud::CommandExecuteResponse>(
+                "127.0.0.1", 18082, "/v1/game/command/execute", request, peer_token);
+        };
+
         const auto board_response = run_command("board");
         const auto duty_response = run_command("duty");
         const auto wanted_response = run_command("wanted");
         const auto travel_response = run_command("travel");
         const auto claim_response = run_command("claim");
         const auto help_response = run_command("help newbie");
+        const auto help_newbie_10_response = run_command("help newbie_10");
+        const auto help_newbie_90_response = run_command("help newbie_90");
         const auto help_work_response = run_command("help work");
+        const auto help_economy_response = run_command("help economy");
         const auto help_core_dan_response = run_command("help core_dan");
         const auto help_nascent_soul_response = run_command("help nascent_soul");
         const auto commands_response = run_command("commands");
@@ -503,16 +566,26 @@ int main()
         const auto rank_response = run_command("rank");
         const auto rank_wealth_response = run_command("rank wealth");
         const auto rumor_response = run_command("ask 厉飞雨 about rumor");
+        const auto peer_board_before_post = run_peer_command("board");
         const auto post_response = run_command("post " + post_subject + "=七玄门外场长期收灰狼皮与止血草。");
+        const auto peer_board_after_post = run_peer_command("board");
 
         require_command_success(inspect_response, "inspect");
+        require_true(peer_register_response.code() == 0, "peer register returned code=" + std::to_string(peer_register_response.code()));
+        require_true(peer_login_response.code() == 0 && !peer_token.empty(), "peer login failed");
+        require_true(peer_enter_response.code() == 0, "peer enter returned code=" + std::to_string(peer_enter_response.code()));
+        require_true(peer_bootstrap_response.code() == 0, "peer bootstrap returned code=" + std::to_string(peer_bootstrap_response.code()));
+        require_true(peer_create_response.code() == 0, "peer create returned code=" + std::to_string(peer_create_response.code()));
         require_command_success(board_response, "board");
         require_command_success(duty_response, "duty");
         require_command_success(wanted_response, "wanted");
         require_command_success(travel_response, "travel");
         require_true(claim_response.code() == 0, "claim returned code=" + std::to_string(claim_response.code()));
         require_command_success(help_response, "help newbie");
+        require_command_success(help_newbie_10_response, "help newbie_10");
+        require_command_success(help_newbie_90_response, "help newbie_90");
         require_command_success(help_work_response, "help work");
+        require_command_success(help_economy_response, "help economy");
         require_command_success(help_core_dan_response, "help core_dan");
         require_command_success(help_nascent_soul_response, "help nascent_soul");
         require_command_success(commands_response, "commands");
@@ -520,9 +593,23 @@ int main()
         require_command_success(rank_response, "rank");
         require_command_success(rank_wealth_response, "rank wealth");
         require_command_success(rumor_response, "ask rumor");
+        require_command_success(peer_board_before_post, "peer board before post");
         require_command_success(post_response, "post", false);
+        require_command_success(peer_board_after_post, "peer board after post");
+        const auto& help_newbie_10_panel = help_newbie_10_response.result().panels(0);
+        const auto& help_newbie_90_panel = help_newbie_90_response.result().panels(0);
+        const auto& help_economy_panel = help_economy_response.result().panels(0);
         const auto& help_core_dan_panel = help_core_dan_response.result().panels(0);
         const auto& help_nascent_soul_panel = help_nascent_soul_response.result().panels(0);
+        const bool onboarding_first_loop_hint = panel_body_contains_all(
+            help_newbie_10_panel,
+            {"厉飞雨", "ask 厉飞雨 about rumor", "work", "board", "say 在下初来乍到"});
+        const bool onboarding_first_day_hint = panel_body_contains_all(
+            help_newbie_90_panel,
+            {"help", "rumor", "work", "say/tell/post", "duty"});
+        const bool economy_layer_hint = panel_body_contains_all(
+            help_economy_panel,
+            {"保底营生", "身份事务", "高风险机会"});
         const bool mainline_outer_sea_present = panel_body_contains(help_core_dan_panel, "外海见闻") &&
                                                 panel_body_contains(help_core_dan_panel, "结丹之门");
         const bool breakthrough_gold_core_hint = panel_body_contains_all(
@@ -535,12 +622,19 @@ int main()
         require_true(breakthrough_gold_core_hint, "help core_dan is missing gold-core breakthrough checklist");
         require_true(breakthrough_nascent_soul_hint,
                      "help nascent_soul is missing nascent-soul breakthrough checklist");
+        require_true(onboarding_first_loop_hint, "help newbie_10 is missing the first-loop checklist");
+        require_true(onboarding_first_day_hint, "help newbie_90 is missing the first shared-world day checklist");
+        require_true(economy_layer_hint, "help economy is missing the economy layers");
         require_true(post_response.events_size() > 0, "post returned no board_post event");
+        require_true(peer_board_after_post.result().panels_size() > 0 &&
+                         structured_panel_entries_contain_title(peer_board_after_post.result().panels(0), post_subject),
+                     "posted board entry is not visible to the peer player");
         const auto board_post_event_id = post_response.events(post_response.events_size() - 1).event_id();
         const auto board_post_event_id_text = std::to_string(board_post_event_id);
         const auto read_response = run_command("read " + board_post_event_id_text);
         const auto discard_response = run_command("discard " + board_post_event_id_text);
         const auto board_after_discard_response = run_command("board");
+        const auto peer_board_after_discard = run_peer_command("board");
 
         require_command_success(read_response, "read");
         require_true(read_response.result().panels(0).panel_kind() == "board_post",
@@ -549,6 +643,10 @@ int main()
                      "read returned unexpected document_id=" + read_response.result().panels(0).document_id());
         require_true(discard_response.code() == 0 && discard_response.result().success(),
                      "discard returned failure");
+        require_command_success(peer_board_after_discard, "peer board after discard");
+        require_true(peer_board_after_discard.result().panels_size() > 0 &&
+                         structured_panel_entries_contain_title(peer_board_after_discard.result().panels(0), post_subject),
+                     "primary discard should not hide the board entry from the peer player");
         if(board_after_discard_response.result().panels_size() > 0)
         {
             std::ostringstream board_titles_after_discard;
@@ -595,6 +693,24 @@ int main()
         auto local_repository = std::make_shared<SmokeMudPlayerRepository>();
         MudGameRuntime local_runtime(local_world, local_repository);
         require_true(local_runtime.ready(), "local mud runtime not ready: " + local_runtime.ready_error());
+
+        auto qixuan_density_player =
+            local_runtime.build_default_player("qixuan-density-" + suffix, "七玄烟测" + suffix.substr(suffix.size() >= 4 ? suffix.size() - 4 : 0));
+        qixuan_density_player.location_scene_id = "qixuan_hall";
+        const auto qixuan_hall_work = local_runtime.run_command(&qixuan_density_player, "work");
+        require_true(qixuan_hall_work.success && !qixuan_hall_work.panels.empty() &&
+                         panel_entries_contain_title(qixuan_hall_work.panels.front(), "堂前录事"),
+                     "qixuan hall work should expose 堂前录事");
+        qixuan_density_player.location_scene_id = "qixuan_medicine_garden";
+        const auto qixuan_garden_work = local_runtime.run_command(&qixuan_density_player, "work");
+        require_true(qixuan_garden_work.success && !qixuan_garden_work.panels.empty() &&
+                         panel_entries_contain_title(qixuan_garden_work.panels.front(), "药圃拣苗"),
+                     "qixuan medicine garden work should expose 药圃拣苗");
+        qixuan_density_player.location_scene_id = "escort_post";
+        const auto escort_post_work = local_runtime.run_command(&qixuan_density_player, "work");
+        require_true(escort_post_work.success && !escort_post_work.panels.empty() &&
+                         panel_entries_contain_title(escort_post_work.panels.front(), "驿棚巡签"),
+                     "escort post work should expose 驿棚巡签");
 
         auto loose_density_player =
             local_runtime.build_default_player("loose-density-" + suffix, "散修烟测" + suffix.substr(suffix.size() >= 4 ? suffix.size() - 4 : 0));
