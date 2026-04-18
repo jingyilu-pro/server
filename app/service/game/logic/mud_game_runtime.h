@@ -223,7 +223,8 @@ private:
                                      const std::vector<std::string>& args);
     MudCommandExecution execute_team(MudPlayerState* player,
                                      const std::vector<std::string>& args);
-    MudCommandExecution execute_event(const MudPlayerState& player) const;
+    MudCommandExecution execute_event(const MudPlayerState& player,
+                                      const std::vector<std::string>& args) const;
     MudCommandExecution execute_chat(const MudPlayerState& player,
                                      const std::string& raw_args);
     MudCommandExecution execute_say(const MudPlayerState& player,

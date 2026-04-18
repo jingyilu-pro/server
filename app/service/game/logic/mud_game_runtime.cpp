@@ -2701,7 +2701,7 @@ void MudGameRuntime::fill_command_catalog(const MudPlayerState& player,
         {"follow", "group", "跟随目标", "follow ", "标记要同行的目标。", "command", "", {}, "follow <玩家>", "玩家", "scene", false},
         {"guard", "group", "护卫目标", "guard ", "标记要照应的目标。", "command", "", {}, "guard <玩家>", "玩家", "scene", false},
         {"codex", "manual", "打开手册", "codex ", "查看资料手册条目。", "command", "", {}, "codex <分类> [条目]", "分类 条目", "global", false},
-        {"event", "manual", "天地异象", "event", "查看近期世界大事与事件骨架。", "command", "", {}, "event", "", "global", true},
+        {"event", "manual", "天地异象", "event", "查看近期世界大事与事件骨架。", "command", "", {}, "event [switch_id]", "switch_id", "global", false},
         {"save", "manual", "存档落笔", "save", "立即把当前角色状态写回存档。", "command", "", {}, "save", "", "global", true},
     };
 
@@ -4346,7 +4346,7 @@ MudCommandExecution MudGameRuntime::execute_command(MudPlayerState* player,
     }
     if(verb == "event")
     {
-        return execute_event(*player);
+        return execute_event(*player, parsed.args);
     }
     if(verb == "chat")
     {
@@ -5853,13 +5853,108 @@ MudCommandExecution MudGameRuntime::execute_team(MudPlayerState* player,
     return execution;
 }
 
-MudCommandExecution MudGameRuntime::execute_event(const MudPlayerState& player) const
+MudCommandExecution MudGameRuntime::execute_event(const MudPlayerState& player,
+                                                  const std::vector<std::string>& args) const
 {
     MudCommandExecution execution;
     execution.success = true;
-    execution.title = "近期天地异象";
-
     const auto weekly_events = weekly_events_for_player(player);
+    const auto normalize_key = [](const std::string& value) { return mud_to_lower_ascii(mud_trim(value)); };
+    const auto query = args.empty() ? std::string() : normalize_key(args.front());
+
+    if(!query.empty())
+    {
+        const auto switch_iter = std::find_if(
+            m_world->world_event_switches().begin(),
+            m_world->world_event_switches().end(),
+            [&](const MudWorldEventSwitchConfig& switch_config) {
+                return normalize_key(switch_config.switch_id) == query || normalize_key(switch_config.title) == query;
+            });
+        if(switch_iter != m_world->world_event_switches().end())
+        {
+            execution.title = "世界事件开关";
+            execution.summary = "你翻检了「" + switch_iter->title + "」的当前骨架与投放约束。";
+
+            MudStructuredPanelState detail_panel;
+            detail_panel.panel_id = "event";
+            detail_panel.title = switch_iter->title;
+            detail_panel.summary = execution.summary;
+            detail_panel.panel_kind = "world_event_switch";
+            detail_panel.document_id = "event:" + switch_iter->switch_id;
+            detail_panel.body_lines.push_back("开关：" + switch_iter->switch_id);
+            detail_panel.body_lines.push_back(
+                "级别：" + (switch_iter->level.empty() ? std::string("L?") : switch_iter->level));
+            detail_panel.body_lines.push_back("默认：" + std::string(switch_iter->default_enabled ? "on" : "off"));
+            if(!switch_iter->region_name.empty())
+            {
+                detail_panel.body_lines.push_back("区域：" + switch_iter->region_name);
+            }
+            if(!switch_iter->summary.empty())
+            {
+                detail_panel.body_lines.push_back("说明：" + switch_iter->summary);
+            }
+            if(!switch_iter->command_hint.empty())
+            {
+                detail_panel.body_lines.push_back("入口：" + switch_iter->command_hint);
+            }
+            if(!switch_iter->fallback_behavior.empty())
+            {
+                detail_panel.body_lines.push_back("回退：" + switch_iter->fallback_behavior);
+            }
+            if(!switch_iter->start_hint.empty())
+            {
+                detail_panel.body_lines.push_back("开启建议：" + switch_iter->start_hint);
+            }
+            if(!switch_iter->close_hint.empty())
+            {
+                detail_panel.body_lines.push_back("关闭建议：" + switch_iter->close_hint);
+            }
+            if(!switch_iter->smoke_note.empty())
+            {
+                detail_panel.body_lines.push_back("烟测：" + switch_iter->smoke_note);
+            }
+
+            for(const auto& weekly_event : weekly_events)
+            {
+                const bool linked_by_config = std::any_of(
+                    m_world->weekly_events().begin(),
+                    m_world->weekly_events().end(),
+                    [&](const MudWeeklyEventConfig& config) {
+                        if(config.event_id != weekly_event.event_id)
+                        {
+                            return false;
+                        }
+                        return (!switch_iter->switch_id.empty() && config.switch_id == switch_iter->switch_id) ||
+                               (!switch_iter->weekly_event_id.empty() && config.event_id == switch_iter->weekly_event_id);
+                    });
+                if(!linked_by_config)
+                {
+                    continue;
+                }
+
+                detail_panel.entries.push_back({weekly_event.event_id,
+                                                weekly_event.title,
+                                                weekly_event.summary,
+                                                "关联周讯",
+                                                "周讯",
+                                                "week",
+                                                weekly_event.location_hint,
+                                                weekly_event.command_hint});
+            }
+
+            execution.panels.push_back(std::move(detail_panel));
+            execution.hints.push_back("可先用 week 看本周热点，再用 board / travel / wanted 顺着入口继续走。");
+            return execution;
+        }
+
+        execution.success = false;
+        execution.title = "未识别事件";
+        execution.summary = "当前没有这条世界事件开关，可先执行 event 查看总览。";
+        execution.hints.push_back("例如：event evt_qixuan_support");
+        return execution;
+    }
+
+    execution.title = "近期天地异象";
     MudStructuredPanelState panel;
     panel.panel_id = "event";
     panel.title = execution.title;

@@ -564,6 +564,7 @@ int main()
         const auto commands_response = run_command("commands");
         const auto work_response = run_command("work");
         const auto event_response = run_command("event");
+        const auto event_switch_response = run_command("event evt_qixuan_support");
         const auto week_response = run_command("week");
         const auto rank_response = run_command("rank");
         const auto rank_wealth_response = run_command("rank wealth");
@@ -593,6 +594,7 @@ int main()
         require_command_success(commands_response, "commands");
         require_command_success(work_response, "work");
         require_command_success(event_response, "event");
+        require_command_success(event_switch_response, "event evt_qixuan_support");
         require_command_success(week_response, "week");
         require_command_success(rank_response, "rank");
         require_command_success(rank_wealth_response, "rank wealth");
@@ -606,6 +608,7 @@ int main()
         const auto& help_core_dan_panel = help_core_dan_response.result().panels(0);
         const auto& help_nascent_soul_panel = help_nascent_soul_response.result().panels(0);
         const auto& event_panel = event_response.result().panels(0);
+        const auto& event_switch_panel = event_switch_response.result().panels(0);
         const auto& week_panel = week_response.result().panels(0);
         const bool onboarding_first_loop_hint = panel_body_contains_all(
             help_newbie_10_panel,
@@ -632,6 +635,11 @@ int main()
             event_panel.panel_kind() == "world_event_board" &&
             structured_panel_entries_contain_title(event_panel, "血禁开禁") &&
             panel_body_contains_all(event_panel, {"evt_qixuan_support", "七玄门外场援手"});
+        const bool world_event_switch_ok =
+            event_switch_panel.panel_kind() == "world_event_switch" &&
+            panel_body_contains_all(
+                event_switch_panel,
+                {"开关：evt_qixuan_support", "区域：七玄门外场", "入口：week / help newbie / work", "回退：关闭额外提示后仍保留基础新手循环。"});
         require_true(mainline_outer_sea_present, "help core_dan is missing late-game route anchors");
         require_true(breakthrough_gold_core_hint, "help core_dan is missing gold-core breakthrough checklist");
         require_true(breakthrough_nascent_soul_hint,
@@ -640,6 +648,7 @@ int main()
         require_true(onboarding_first_day_hint, "help newbie_90 is missing the first shared-world day checklist");
         require_true(economy_layer_hint, "help economy is missing the economy layers");
         require_true(world_event_panel_ok, "event is missing the structured world-event board");
+        require_true(world_event_switch_ok, "event <switch_id> is missing the structured switch detail");
         require_true(weekly_event_panel_ok, "week is missing the weekly event board summary");
         require_true(post_response.events_size() > 0, "post returned no board_post event");
         require_true(peer_board_after_post.result().panels_size() > 0 &&
@@ -1044,6 +1053,11 @@ int main()
                   << " event_success=" << (event_response.result().success() ? "true" : "false")
                   << " event_entries="
                   << (event_response.result().panels_size() > 0 ? event_response.result().panels(0).entries_size() : 0)
+                  << "\n";
+        std::cout << "event_switch_code=" << event_switch_response.code()
+                  << " event_switch_success=" << (event_switch_response.result().success() ? "true" : "false")
+                  << " event_switch_kind="
+                  << (event_switch_response.result().panels_size() > 0 ? event_switch_response.result().panels(0).panel_kind() : "")
                   << "\n";
         std::cout << "week_code=" << week_response.code()
                   << " week_success=" << (week_response.result().success() ? "true" : "false")
