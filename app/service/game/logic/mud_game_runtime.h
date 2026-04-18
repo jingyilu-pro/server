@@ -27,6 +27,7 @@
 #include <memory>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 class MudGameRuntime
@@ -159,6 +160,10 @@ private:
     void fill_team_snapshot(const MudPlayerState& player,
                             mud::TeamState* snapshot) const;
     void maybe_emit_world_event();
+    const MudWorldEventSwitchConfig* find_world_event_switch(const std::string& switch_id) const;
+    bool is_world_event_switch_enabled(const MudWorldEventSwitchConfig& switch_config) const;
+    std::string world_event_switch_status_label(const MudWorldEventSwitchConfig& switch_config) const;
+    std::string world_event_switch_status_summary(const MudWorldEventSwitchConfig& switch_config) const;
     std::vector<std::string> unlocked_regions_for_player(const MudPlayerState& player) const;
     std::vector<std::string> unlocked_routes_for_player(const MudPlayerState& player) const;
     std::string progression_chapter_for_player(const MudPlayerState& player) const;
@@ -330,6 +335,8 @@ private:
     std::unordered_map<std::string, OnlinePresenceState> m_online_presence;
     std::unordered_map<std::string, MudTeamState> m_teams;
     std::unordered_map<std::string, std::string> m_team_by_account;
+    std::unordered_set<std::string> m_active_world_event_switches;
+    std::unordered_set<std::string> m_disabled_world_event_switches;
     uint64_t m_next_event_id = 1;
     int64_t m_last_world_event_ms = 0;
     std::size_t m_world_event_cursor = 0;

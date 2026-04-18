@@ -131,6 +131,8 @@ struct MudWeeklyEventSummaryState
     std::string risk_level;
     std::string location_hint;
     std::string command_hint;
+    std::string switch_id;
+    std::string switch_status;
 };
 
 struct MudWeeklyEventConfig

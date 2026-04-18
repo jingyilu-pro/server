@@ -264,6 +264,20 @@ bool structured_panel_entries_contain_title(const mud::StructuredPanel& panel,
                        [&](const mud::SummaryEntry& entry) { return entry.title().find(needle) != std::string::npos; });
 }
 
+bool structured_panel_entry_status_contains(const mud::StructuredPanel& panel,
+                                            std::string_view title,
+                                            std::string_view needle)
+{
+    const auto iter = std::find_if(panel.entries().begin(),
+                                   panel.entries().end(),
+                                   [&](const mud::SummaryEntry& entry) { return entry.title().find(title) != std::string::npos; });
+    if(iter == panel.entries().end())
+    {
+        return false;
+    }
+    return iter->status().find(needle) != std::string::npos;
+}
+
 bool string_contains(std::string_view haystack, std::string_view needle)
 {
     return haystack.find(needle) != std::string::npos;
@@ -631,15 +645,21 @@ int main()
             week_panel.panel_kind() == "weekly_event_board" &&
             structured_panel_entries_contain_title(week_panel, "血禁开禁") &&
             structured_panel_entries_contain_title(week_panel, "外港海潮");
+        const bool weekly_event_status_ok =
+            structured_panel_entry_status_contains(week_panel, "外港海潮", "本周·");
         const bool world_event_panel_ok =
             event_panel.panel_kind() == "world_event_board" &&
             structured_panel_entries_contain_title(event_panel, "血禁开禁") &&
-            panel_body_contains_all(event_panel, {"evt_qixuan_support", "七玄门外场援手"});
+            panel_body_contains_all(event_panel, {"evt_qixuan_support", "七玄门外场援手", "状态"});
         const bool world_event_switch_ok =
             event_switch_panel.panel_kind() == "world_event_switch" &&
             panel_body_contains_all(
                 event_switch_panel,
-                {"开关：evt_qixuan_support", "区域：七玄门外场", "入口：week / help newbie / work", "回退：关闭额外提示后仍保留基础新手循环。"});
+                {"开关：evt_qixuan_support",
+                 "状态：",
+                 "区域：七玄门外场",
+                 "入口：week / help newbie / work",
+                 "回退：关闭额外提示后仍保留基础新手循环。"});
         require_true(mainline_outer_sea_present, "help core_dan is missing late-game route anchors");
         require_true(breakthrough_gold_core_hint, "help core_dan is missing gold-core breakthrough checklist");
         require_true(breakthrough_nascent_soul_hint,
@@ -650,6 +670,7 @@ int main()
         require_true(world_event_panel_ok, "event is missing the structured world-event board");
         require_true(world_event_switch_ok, "event <switch_id> is missing the structured switch detail");
         require_true(weekly_event_panel_ok, "week is missing the weekly event board summary");
+        require_true(weekly_event_status_ok, "week is missing the linked world-event runtime status");
         require_true(post_response.events_size() > 0, "post returned no board_post event");
         require_true(peer_board_after_post.result().panels_size() > 0 &&
                          structured_panel_entries_contain_title(peer_board_after_post.result().panels(0), post_subject),

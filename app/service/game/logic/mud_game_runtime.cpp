@@ -21,13 +21,51 @@
 #include "http_code_message.h"
 
 #include <algorithm>
+#include <cctype>
+#include <cstdlib>
 #include <sstream>
+#include <unordered_set>
 #include <utility>
 
 namespace
 {
 
 constexpr int64_t kScenePresenceTtlMs = 5 * 60 * 1000;
+
+std::string normalized_switch_key(const std::string& raw_value)
+{
+    return mud_to_lower_ascii(mud_trim(raw_value));
+}
+
+void append_switch_keys(std::unordered_set<std::string>* output,
+                        const char* raw_value)
+{
+    if(output == nullptr || raw_value == nullptr)
+    {
+        return;
+    }
+
+    std::string current;
+    const auto flush = [&]() {
+        const auto normalized = normalized_switch_key(current);
+        if(!normalized.empty())
+        {
+            output->insert(normalized);
+        }
+        current.clear();
+    };
+
+    for(const unsigned char ch : std::string_view(raw_value))
+    {
+        if(ch == ',' || ch == ';' || std::isspace(ch) != 0)
+        {
+            flush();
+            continue;
+        }
+        current.push_back(static_cast<char>(ch));
+    }
+    flush();
+}
 
 std::string join_strings(const std::vector<std::string>& values, const char* separator = "、")
 {
@@ -725,6 +763,11 @@ MudGameRuntime::MudGameRuntime(std::shared_ptr<MudWorld> world,
         m_ready_error = "mud player repository not ready";
         return;
     }
+
+    append_switch_keys(&m_active_world_event_switches, std::getenv("MUD_ACTIVE_WORLD_EVENT_SWITCHES"));
+    append_switch_keys(&m_active_world_event_switches, std::getenv("MUD_ACTIVE_WORLD_EVENTS"));
+    append_switch_keys(&m_disabled_world_event_switches, std::getenv("MUD_DISABLED_WORLD_EVENT_SWITCHES"));
+    append_switch_keys(&m_disabled_world_event_switches, std::getenv("MUD_DISABLED_WORLD_EVENTS"));
 }
 
 bool MudGameRuntime::ready() const
@@ -2921,8 +2964,19 @@ std::vector<MudWeeklyEventSummaryState> MudGameRuntime::weekly_events_for_player
         {
             continue;
         }
-        events.push_back(
-            {config.event_id, config.title, config.summary, config.risk_level, config.location_hint, config.command_hint});
+        std::string switch_status;
+        if(const auto* switch_config = find_world_event_switch(config.switch_id); switch_config != nullptr)
+        {
+            switch_status = world_event_switch_status_label(*switch_config);
+        }
+        events.push_back({config.event_id,
+                          config.title,
+                          config.summary,
+                          config.risk_level,
+                          config.location_hint,
+                          config.command_hint,
+                          config.switch_id,
+                          switch_status});
     }
     if(!events.empty())
     {
@@ -2934,19 +2988,85 @@ std::vector<MudWeeklyEventSummaryState> MudGameRuntime::weekly_events_for_player
              "血色禁地每周会出现一次资源与妖兽同时活跃的窗口，单人可入，组队更稳。",
              "高危",
              "血禁石门、血雾沼泽、血兰谷",
-             "wanted / board"},
+             "wanted / board",
+             "",
+             ""},
             {"outer_port_tide",
              "外港海潮",
              "天南外港和乱星近海会在潮期迎来海材暴增，适合跑海猎与采珠。",
              "中危",
              "天南外港、群岛小埠、听潮坛",
-             "travel / board"},
+             "travel / board",
+             "",
+             ""},
             {"black_reef_mining",
              "黑礁争采",
              "黑礁争采会刷新稀缺海材，也更容易引发玩家间的争夺与切磋。",
              "冲突",
              "黑礁、风暴航道、群岛礁路",
-             "travel / wanted"}};
+             "travel / wanted",
+             "",
+             ""}};
+}
+
+const MudWorldEventSwitchConfig* MudGameRuntime::find_world_event_switch(const std::string& switch_id) const
+{
+    const auto query = normalized_switch_key(switch_id);
+    if(query.empty())
+    {
+        return nullptr;
+    }
+
+    const auto iter = std::find_if(
+        m_world->world_event_switches().begin(),
+        m_world->world_event_switches().end(),
+        [&](const MudWorldEventSwitchConfig& switch_config) {
+            return normalized_switch_key(switch_config.switch_id) == query;
+        });
+    return iter == m_world->world_event_switches().end() ? nullptr : &(*iter);
+}
+
+bool MudGameRuntime::is_world_event_switch_enabled(const MudWorldEventSwitchConfig& switch_config) const
+{
+    const auto key = normalized_switch_key(switch_config.switch_id);
+    if(!key.empty() && m_disabled_world_event_switches.contains(key))
+    {
+        return false;
+    }
+    if(!key.empty() && m_active_world_event_switches.contains(key))
+    {
+        return true;
+    }
+    return switch_config.default_enabled;
+}
+
+std::string MudGameRuntime::world_event_switch_status_label(const MudWorldEventSwitchConfig& switch_config) const
+{
+    const auto key = normalized_switch_key(switch_config.switch_id);
+    if(!key.empty() && m_disabled_world_event_switches.contains(key))
+    {
+        return "手动关闭";
+    }
+    if(!key.empty() && m_active_world_event_switches.contains(key))
+    {
+        return "运行中";
+    }
+    return switch_config.default_enabled ? "默认开启" : "待命";
+}
+
+std::string MudGameRuntime::world_event_switch_status_summary(const MudWorldEventSwitchConfig& switch_config) const
+{
+    const auto key = normalized_switch_key(switch_config.switch_id);
+    if(!key.empty() && m_disabled_world_event_switches.contains(key))
+    {
+        return "当前被运行时覆盖显式关闭，会退回基础内容骨架。";
+    }
+    if(!key.empty() && m_active_world_event_switches.contains(key))
+    {
+        return "当前被运行时覆盖显式开启，可按该事件方案加热对应区域与入口。";
+    }
+    return is_world_event_switch_enabled(switch_config) ? "当前没有显式覆盖，按默认 on 持续生效。"
+                                                        : "当前没有显式覆盖，按默认 off 待命。";
 }
 
 std::string MudGameRuntime::recommended_loop_for_player(const MudPlayerState& player) const
@@ -5873,7 +5993,7 @@ MudCommandExecution MudGameRuntime::execute_event(const MudPlayerState& player,
         if(switch_iter != m_world->world_event_switches().end())
         {
             execution.title = "世界事件开关";
-            execution.summary = "你翻检了「" + switch_iter->title + "」的当前骨架与投放约束。";
+            execution.summary = "你翻检了「" + switch_iter->title + "」的当前运行态、骨架与投放约束。";
 
             MudStructuredPanelState detail_panel;
             detail_panel.panel_id = "event";
@@ -5884,6 +6004,8 @@ MudCommandExecution MudGameRuntime::execute_event(const MudPlayerState& player,
             detail_panel.body_lines.push_back("开关：" + switch_iter->switch_id);
             detail_panel.body_lines.push_back(
                 "级别：" + (switch_iter->level.empty() ? std::string("L?") : switch_iter->level));
+            detail_panel.body_lines.push_back("状态：" + world_event_switch_status_label(*switch_iter));
+            detail_panel.body_lines.push_back("判定：" + world_event_switch_status_summary(*switch_iter));
             detail_panel.body_lines.push_back("默认：" + std::string(switch_iter->default_enabled ? "on" : "off"));
             if(!switch_iter->region_name.empty())
             {
@@ -5935,7 +6057,8 @@ MudCommandExecution MudGameRuntime::execute_event(const MudPlayerState& player,
                 detail_panel.entries.push_back({weekly_event.event_id,
                                                 weekly_event.title,
                                                 weekly_event.summary,
-                                                "关联周讯",
+                                                weekly_event.switch_status.empty() ? std::string("关联周讯")
+                                                                                   : ("关联周讯·" + weekly_event.switch_status),
                                                 "周讯",
                                                 "week",
                                                 weekly_event.location_hint,
@@ -5976,10 +6099,13 @@ MudCommandExecution MudGameRuntime::execute_event(const MudPlayerState& player,
         const auto location_hint = weekly_iter == weekly_events.end() ? std::string() : weekly_iter->location_hint;
         const auto command_hint =
             weekly_iter == weekly_events.end() ? std::string("week / board") : weekly_iter->command_hint;
+        const auto entry_status =
+            weekly_iter == weekly_events.end() || weekly_iter->switch_status.empty() ? std::string("近日")
+                                                                                     : ("近日·" + weekly_iter->switch_status);
         panel.entries.push_back({"world_event:" + std::to_string(iter->event_id),
                                  iter->title,
                                  iter->content,
-                                 "近日",
+                                 entry_status,
                                  "天地异象",
                                  "week",
                                  location_hint,
@@ -5997,8 +6123,9 @@ MudCommandExecution MudGameRuntime::execute_event(const MudPlayerState& player,
         {
             continue;
         }
+        const auto entry_status = event.switch_status.empty() ? std::string("本周") : ("本周·" + event.switch_status);
         panel.entries.push_back(
-            {event.event_id, event.title, event.summary, "本周", "周讯", "week", event.location_hint, event.command_hint});
+            {event.event_id, event.title, event.summary, entry_status, "周讯", "week", event.location_hint, event.command_hint});
         if(panel.entries.size() >= 7)
         {
             break;
@@ -6012,9 +6139,11 @@ MudCommandExecution MudGameRuntime::execute_event(const MudPlayerState& player,
             continue;
         }
 
+        const auto switch_status = world_event_switch_status_label(switch_config);
         std::string line = switch_config.switch_id + "〔" +
                            (switch_config.level.empty() ? std::string("L?") : switch_config.level) +
-                           " / 默认 " + (switch_config.default_enabled ? "on" : "off") + "〕 " + switch_config.title;
+                           " / 状态 " + switch_status + " / 默认 " +
+                           (switch_config.default_enabled ? "on" : "off") + "〕 " + switch_config.title;
         if(!switch_config.summary.empty())
         {
             line += "：";
@@ -7089,8 +7218,9 @@ MudCommandExecution MudGameRuntime::execute_week(const MudPlayerState& player) c
                 command = trimmed_command;
             }
         }
+        const auto entry_status = event.switch_status.empty() ? std::string("本周") : ("本周·" + event.switch_status);
         panel.entries.push_back(
-            {event.event_id, event.title, event.summary, "本周", event.risk_level, command, event.location_hint, event.command_hint});
+            {event.event_id, event.title, event.summary, entry_status, event.risk_level, command, event.location_hint, event.command_hint});
     }
     execution.panels.push_back(std::move(panel));
     execution.hints.push_back("若想顺着周风波找事做，可先 board，再 travel 或 wanted。");
