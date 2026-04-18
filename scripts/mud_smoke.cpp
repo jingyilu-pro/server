@@ -563,6 +563,7 @@ int main()
         const auto help_nascent_soul_response = run_command("help nascent_soul");
         const auto commands_response = run_command("commands");
         const auto work_response = run_command("work");
+        const auto week_response = run_command("week");
         const auto rank_response = run_command("rank");
         const auto rank_wealth_response = run_command("rank wealth");
         const auto rumor_response = run_command("ask 厉飞雨 about rumor");
@@ -590,6 +591,7 @@ int main()
         require_command_success(help_nascent_soul_response, "help nascent_soul");
         require_command_success(commands_response, "commands");
         require_command_success(work_response, "work");
+        require_command_success(week_response, "week");
         require_command_success(rank_response, "rank");
         require_command_success(rank_wealth_response, "rank wealth");
         require_command_success(rumor_response, "ask rumor");
@@ -601,6 +603,7 @@ int main()
         const auto& help_economy_panel = help_economy_response.result().panels(0);
         const auto& help_core_dan_panel = help_core_dan_response.result().panels(0);
         const auto& help_nascent_soul_panel = help_nascent_soul_response.result().panels(0);
+        const auto& week_panel = week_response.result().panels(0);
         const bool onboarding_first_loop_hint = panel_body_contains_all(
             help_newbie_10_panel,
             {"厉飞雨", "ask 厉飞雨 about rumor", "work", "board", "say 在下初来乍到"});
@@ -618,6 +621,10 @@ int main()
         const bool breakthrough_nascent_soul_hint = panel_body_contains_all(
             help_nascent_soul_panel,
             {"凝婴前夜", "凝婴灵丹", "星海心珀", "养魂古玉", "世界见闻"});
+        const bool weekly_event_panel_ok =
+            week_panel.panel_kind() == "weekly_event_board" &&
+            structured_panel_entries_contain_title(week_panel, "血禁开禁") &&
+            structured_panel_entries_contain_title(week_panel, "外港海潮");
         require_true(mainline_outer_sea_present, "help core_dan is missing late-game route anchors");
         require_true(breakthrough_gold_core_hint, "help core_dan is missing gold-core breakthrough checklist");
         require_true(breakthrough_nascent_soul_hint,
@@ -625,6 +632,7 @@ int main()
         require_true(onboarding_first_loop_hint, "help newbie_10 is missing the first-loop checklist");
         require_true(onboarding_first_day_hint, "help newbie_90 is missing the first shared-world day checklist");
         require_true(economy_layer_hint, "help economy is missing the economy layers");
+        require_true(weekly_event_panel_ok, "week is missing the weekly event board summary");
         require_true(post_response.events_size() > 0, "post returned no board_post event");
         require_true(peer_board_after_post.result().panels_size() > 0 &&
                          structured_panel_entries_contain_title(peer_board_after_post.result().panels(0), post_subject),
@@ -1023,6 +1031,11 @@ int main()
         std::cout << "work_code=" << work_response.code()
                   << " work_success=" << (work_response.result().success() ? "true" : "false")
                   << " work_entries=" << (work_response.result().panels_size() > 0 ? work_response.result().panels(0).entries_size() : 0)
+                  << "\n";
+        std::cout << "week_code=" << week_response.code()
+                  << " week_success=" << (week_response.result().success() ? "true" : "false")
+                  << " week_entries="
+                  << (week_response.result().panels_size() > 0 ? week_response.result().panels(0).entries_size() : 0)
                   << "\n";
         std::cout << "rank_code=" << rank_response.code()
                   << " rank_success=" << (rank_response.result().success() ? "true" : "false")

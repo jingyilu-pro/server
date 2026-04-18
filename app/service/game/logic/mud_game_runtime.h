@@ -259,6 +259,7 @@ private:
     MudCommandExecution execute_discard(MudPlayerState* player,
                                         const std::vector<std::string>& args) const;
     MudCommandExecution execute_work(const MudPlayerState& player) const;
+    MudCommandExecution execute_week(const MudPlayerState& player) const;
     MudCommandExecution execute_duty(const MudPlayerState& player) const;
     MudCommandExecution execute_wanted(const MudPlayerState& player) const;
     MudCommandExecution execute_travel(const MudPlayerState& player) const;

@@ -72,6 +72,16 @@ describe('useGameStore role recovery', () => {
       scene: {
         sceneId: 'qixuan_square',
       },
+      weeklyEvents: [
+        {
+          eventId: 'outer_port_tide',
+          title: '外港海潮',
+          summary: '外港潮期到了，海材与跑商都更热闹。',
+          riskLevel: '中危',
+          locationHint: '天南外港',
+          commandHint: 'travel / board',
+        },
+      ],
       events: [],
       nextEventId: 7,
     })
@@ -82,6 +92,16 @@ describe('useGameStore role recovery', () => {
     expect(store.readyToPlay).toBe(true)
     expect(store.player?.characterName).toBe('韩立')
     expect(store.scene?.sceneId).toBe('qixuan_square')
+    expect(store.weeklyEvents).toEqual([
+      {
+        eventId: 'outer_port_tide',
+        title: '外港海潮',
+        summary: '外港潮期到了，海材与跑商都更热闹。',
+        riskLevel: '中危',
+        locationHint: '天南外港',
+        commandHint: 'travel / board',
+      },
+    ])
   })
 
   it('rejects auto registration when the new account contains non-alphanumeric characters', async () => {
@@ -155,6 +175,16 @@ describe('useGameStore role recovery', () => {
       player: {
         account: 'recover_acc',
         characterName: '韩立',
+        weeklyEvents: [
+          {
+            eventId: 'blood_forbidden_open',
+            title: '血禁开禁',
+            summary: '血色禁地本周灵禁短暂松动。',
+            riskLevel: '高危',
+            locationHint: '血禁石门',
+            commandHint: 'wanted / board',
+          },
+        ],
       },
       scene: {
         sceneId: 'qixuan_square',
@@ -170,5 +200,15 @@ describe('useGameStore role recovery', () => {
     expect(store.needCreateCharacter).toBe(false)
     expect(store.readyToPlay).toBe(true)
     expect(store.player?.characterName).toBe('韩立')
+    expect(store.weeklyEvents).toEqual([
+      {
+        eventId: 'blood_forbidden_open',
+        title: '血禁开禁',
+        summary: '血色禁地本周灵禁短暂松动。',
+        riskLevel: '高危',
+        locationHint: '血禁石门',
+        commandHint: 'wanted / board',
+      },
+    ])
   })
 })

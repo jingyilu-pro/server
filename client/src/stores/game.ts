@@ -10,6 +10,15 @@ interface AuthState {
   token: string
 }
 
+interface WeeklyEventEntry {
+  eventId: string
+  title: string
+  summary: string
+  riskLevel: string
+  locationHint: string
+  commandHint: string
+}
+
 type RankingType = 'realm' | 'wealth' | 'combat' | 'alchemy' | 'travel' | 'bounty' | 'chief'
 
 const gatewayErrorCode = {
@@ -69,12 +78,65 @@ function isInvalidOrExpiredJwtResponse(response: Record<string, any> | null | un
   return Number(response?.code ?? -1) === gatewayErrorCode.invalidOrExpiredJwt
 }
 
+function normalizeWeeklyEvents(source: unknown): WeeklyEventEntry[] {
+  if (!Array.isArray(source)) {
+    return []
+  }
+
+  return source
+    .map((item) => {
+      const event = (item as Record<string, any> | null | undefined) ?? {}
+      const eventId = String(event.eventId ?? event.event_id ?? '').trim()
+      const title = String(event.title ?? '').trim()
+      const summary = String(event.summary ?? '').trim()
+      const riskLevel = String(event.riskLevel ?? event.risk_level ?? '').trim()
+      const locationHint = String(event.locationHint ?? event.location_hint ?? '').trim()
+      const commandHint = String(event.commandHint ?? event.command_hint ?? '').trim()
+
+      if (!eventId && !title && !summary) {
+        return null
+      }
+
+      return {
+        eventId,
+        title,
+        summary,
+        riskLevel,
+        locationHint,
+        commandHint,
+      }
+    })
+    .filter((item): item is WeeklyEventEntry => item !== null)
+}
+
+function hasWeeklyEventField(source: unknown) {
+  if (!source || typeof source !== 'object') {
+    return false
+  }
+  return 'weeklyEvents' in source || 'weekly_events' in source
+}
+
+function resolveWeeklyEvents(
+  response: Record<string, any> | null | undefined,
+  player: Record<string, any> | null | undefined,
+  fallback: WeeklyEventEntry[] = [],
+) {
+  if (hasWeeklyEventField(response)) {
+    return normalizeWeeklyEvents(response?.weeklyEvents ?? response?.weekly_events)
+  }
+  if (hasWeeklyEventField(player)) {
+    return normalizeWeeklyEvents(player?.weeklyEvents ?? player?.weekly_events)
+  }
+  return [...fallback]
+}
+
 export const useGameStore = defineStore('game', {
   state: () => ({
     account: loadAuthState().account,
     token: loadAuthState().token,
     player: null as Record<string, any> | null,
     scene: null as Record<string, any> | null,
+    weeklyEvents: [] as WeeklyEventEntry[],
     events: [] as Record<string, any>[],
     commandHistory: [] as string[],
     nextEventId: 0,
@@ -210,6 +272,7 @@ export const useGameStore = defineStore('game', {
         this.needCreateCharacter = Boolean(response.needCreateCharacter) && !playable
         this.player = player
         this.scene = scene
+        this.weeklyEvents = resolveWeeklyEvents(response as Record<string, any>, player)
         this.availableOrigins = (response.availableOrigins as Record<string, any>[]) ?? []
         this.availableBackgrounds = (response.availableBackgrounds as Record<string, any>[]) ?? []
         this.lastResult = null
@@ -270,6 +333,7 @@ export const useGameStore = defineStore('game', {
         this.needCreateCharacter = !playable
         this.player = player
         this.scene = scene
+        this.weeklyEvents = resolveWeeklyEvents(response as Record<string, any>, player, this.weeklyEvents)
         this.pollError = ''
         this.pollFailureCount = 0
         this.appendEvents((response.events as Record<string, any>[]) ?? [])
@@ -301,6 +365,11 @@ export const useGameStore = defineStore('game', {
         this.lastResult = response.result ?? null
         this.player = response.player ?? this.player
         this.scene = response.scene ?? this.scene
+        this.weeklyEvents = resolveWeeklyEvents(
+          response as Record<string, any>,
+          (response.player as Record<string, any> | undefined) ?? this.player,
+          this.weeklyEvents,
+        )
         this.appendEvents((response.events as Record<string, any>[]) ?? [])
         this.nextEventId = Number(response.nextEventId ?? this.nextEventId)
         this.pollIntervalMs = Number((response.result as any)?.recommendedPollIntervalMs ?? 1500)
@@ -368,6 +437,7 @@ export const useGameStore = defineStore('game', {
       this.token = ''
       this.player = null
       this.scene = null
+      this.weeklyEvents = []
       this.events = []
       this.commandHistory = []
       this.nextEventId = 0

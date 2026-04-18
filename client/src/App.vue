@@ -1363,6 +1363,36 @@ function serviceTagFlavor(value: string) {
   return flavorMap[normalized] ?? normalized
 }
 
+function weeklyEventFlavor(event: Record<string, any>) {
+  const title = String(event.title ?? '').trim()
+  const riskLevel = String(event.riskLevel ?? event.risk_level ?? '').trim()
+  const locationHint = String(event.locationHint ?? event.location_hint ?? '').trim()
+  const commandHint = String(event.commandHint ?? event.command_hint ?? '').trim()
+  const summary = String(event.summary ?? '').trim()
+  const head = `${title || '无名周事'}${riskLevel ? `〔${riskLevel}〕` : ''}`
+  const tail = locationHint
+    ? `见于${locationHint}`
+    : commandHint
+      ? `可留心 ${commandHint}`
+      : summary
+
+  return [head, tail].filter(Boolean).join('，')
+}
+
+function weeklyEventDigest(events: Record<string, any>[]) {
+  const featured = events
+    .map((event) => weeklyEventFlavor(event))
+    .filter(Boolean)
+    .slice(0, 2)
+
+  if (!featured.length) {
+    return ''
+  }
+
+  const extraCount = Math.max(0, events.length - featured.length)
+  return `本周风波正起：${featured.join('；')}。${extraCount > 0 ? `另有 ${extraCount} 桩周事待看。` : ''}`
+}
+
 function sceneLayerNarration(roomLayer: string, loopTags: string[]) {
   const layer = roomLayerFlavor(roomLayer)
   const loopFlavors = loopTags.map((item) => loopTagFlavor(item)).filter(Boolean)
@@ -2073,6 +2103,9 @@ function panelMetaParts(panelId: string, entry: Record<string, any>) {
   if (normalized === 'listen') {
     return [locationHint, category].filter(Boolean)
   }
+  if (normalized === 'week') {
+    return [locationHint, category, rewardSummary ? `可循：${rewardSummary}` : ''].filter(Boolean)
+  }
   if (normalized === 'bag') {
     return [category, rewardSummary].filter(Boolean)
   }
@@ -2381,6 +2414,9 @@ function buildSceneSnapshotLines() {
   const contributionState = String(player.value.contributionState ?? '').trim()
   const reputationState = String(player.value.reputationState ?? '').trim()
   const unreadBoardCount = Number(player.value.unreadBoardCount ?? 0)
+  const weeklyEvents = ((store.weeklyEvents as Record<string, any>[] | undefined) ?? []).filter(
+    (event) => String(event.title ?? event.summary ?? '').trim(),
+  )
 
   if (roomLayer || loopTags.length > 0) {
     const layerNarration = sceneLayerNarration(roomLayer, loopTags)
@@ -2403,6 +2439,16 @@ function buildSceneSnapshotLines() {
       key: `scene-services-${currentSceneId.value}-${mainTimelineSequence + 1}`,
       tag: '门径',
       text: serviceParts.join('，') + '。',
+      tone: 'hint',
+    })
+  }
+
+  const weeklyEventText = weeklyEventDigest(weeklyEvents)
+  if (weeklyEventText) {
+    lines.push({
+      key: `scene-weekly-${currentSceneId.value}-${mainTimelineSequence + 1}`,
+      tag: '周讯',
+      text: weeklyEventText,
       tone: 'hint',
     })
   }

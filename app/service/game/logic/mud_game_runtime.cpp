@@ -1435,6 +1435,7 @@ void MudGameRuntime::fill_player_snapshot(const MudPlayerState& player,
     snapshot->add_known_commands("post <题目>=<正文>");
     snapshot->add_known_commands("discard <id>");
     snapshot->add_known_commands("work");
+    snapshot->add_known_commands("week");
     snapshot->add_known_commands("duty");
     snapshot->add_known_commands("wanted");
     snapshot->add_known_commands("travel");
@@ -2670,6 +2671,7 @@ void MudGameRuntime::fill_command_catalog(const MudPlayerState& player,
         {"post", "loops", "留下帖子", "post ", "在当前房间留言板发帖。", "command", "", {}, "post <题目>=<正文>", "题目=正文", "scene", false},
         {"discard", "loops", "收起帖子", "discard ", "把一条板帖从自己视野里收起。", "command", "", {}, "discard <编号>", "编号", "scene", false},
         {"work", "loops", "当前营生", "work", "查看此地可做的工作与营生。", "command", "", {}, "work", "", "scene", true},
+        {"week", "loops", "本周风波", "week", "查看本周正在发酵的世界事件与热点区域。", "command", "", {"weekly"}, "week", "", "global", true},
         {"wanted", "loops", "悬赏目标", "wanted", "查看当前房间和周边的悬赏目标。", "command", "", {}, "wanted", "", "scene", true},
         {"fight", "combat", "攻击目标", "fight ", "与妖兽或敌对目标交战。", "command", "", {"kill"}, "fight <目标>", "目标", "scene", false},
         {"challenge", "combat", "切磋挑战", "challenge ", "在可冲突区挑战同场景玩家。", "command", "", {}, "challenge <玩家>", "玩家", "scene", false},
@@ -4099,6 +4101,10 @@ MudCommandExecution MudGameRuntime::execute_command(MudPlayerState* player,
     {
         verb = "commands";
     }
+    else if(verb == "weekly")
+    {
+        verb = "week";
+    }
     else if(verb == "?")
     {
         verb = "help";
@@ -4155,6 +4161,10 @@ MudCommandExecution MudGameRuntime::execute_command(MudPlayerState* player,
     if(verb == "board")
     {
         return execute_board(*player);
+    }
+    if(verb == "week")
+    {
+        return execute_week(*player);
     }
     if(verb == "read")
     {
@@ -6844,6 +6854,42 @@ MudCommandExecution MudGameRuntime::execute_work(const MudPlayerState& player) c
     panel.entries = work_entries_for_player(player, scene);
     execution.panels.push_back(std::move(panel));
     execution.hints.push_back("若想接更多活，可先 talk 人物，再 ask <人物> about rumor。");
+    return execution;
+}
+
+MudCommandExecution MudGameRuntime::execute_week(const MudPlayerState& player) const
+{
+    MudCommandExecution execution;
+    const auto weekly_events = weekly_events_for_player(player);
+    execution.success = true;
+    execution.title = "本周风波";
+    execution.summary = weekly_events.empty() ? "本周暂无显著风波，先照常经营当前营生即可。"
+                                              : "本周各地最值得留心的风波与热点如下。";
+
+    MudStructuredPanelState panel;
+    panel.panel_id = "week";
+    panel.title = execution.title;
+    panel.summary = execution.summary;
+    panel.panel_kind = "weekly_event_board";
+    panel.document_id = "week";
+    for(const auto& event : weekly_events)
+    {
+        std::string command = "board";
+        if(!event.command_hint.empty())
+        {
+            const auto divider = event.command_hint.find('/');
+            const auto raw_command = divider == std::string::npos ? event.command_hint : event.command_hint.substr(0, divider);
+            const auto trimmed_command = mud_trim(raw_command);
+            if(!trimmed_command.empty())
+            {
+                command = trimmed_command;
+            }
+        }
+        panel.entries.push_back(
+            {event.event_id, event.title, event.summary, "本周", event.risk_level, command, event.location_hint, event.command_hint});
+    }
+    execution.panels.push_back(std::move(panel));
+    execution.hints.push_back("若想顺着周风波找事做，可先 board，再 travel 或 wanted。");
     return execution;
 }
 
