@@ -133,6 +133,17 @@ struct MudWeeklyEventSummaryState
     std::string command_hint;
 };
 
+struct MudWeeklyEventConfig
+{
+    std::string event_id;
+    std::string title;
+    std::string summary;
+    std::string risk_level;
+    std::string location_hint;
+    std::string command_hint;
+    std::string switch_id;
+};
+
 struct MudStarterInventoryItem
 {
     std::string item_id;
@@ -439,6 +450,22 @@ struct MudRumorSourceConfig
     std::vector<std::string> job_ids;
     std::vector<std::string> quest_ids;
     std::vector<std::string> unlock_flags;
+};
+
+struct MudWorldEventSwitchConfig
+{
+    std::string switch_id;
+    std::string title;
+    std::string level;
+    bool default_enabled = false;
+    std::string region_name;
+    std::string summary;
+    std::string weekly_event_id;
+    std::string command_hint;
+    std::string fallback_behavior;
+    std::string start_hint;
+    std::string close_hint;
+    std::string smoke_note;
 };
 
 struct MudIdentityTrackConfig

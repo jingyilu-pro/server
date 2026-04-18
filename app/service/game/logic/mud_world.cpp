@@ -323,6 +323,8 @@ bool MudWorld::load_from_file(const std::string& path, std::string* error_messag
     m_jobs.clear();
     m_identity_tracks.clear();
     m_rumor_sources.clear();
+    m_weekly_events.clear();
+    m_world_event_switches.clear();
 
     json_error_t error{};
     json_t* root = json_load_file(path.c_str(), 0, &error);
@@ -1046,6 +1048,67 @@ bool MudWorld::load_from_file(const std::string& path, std::string* error_messag
         }
     }
 
+    if(auto* weekly_events = json_object_get(root, "weekly_events");
+       weekly_events != nullptr && json_is_array(weekly_events))
+    {
+        const size_t count = json_array_size(weekly_events);
+        m_weekly_events.reserve(count);
+        for(size_t index = 0; index < count; ++index)
+        {
+            auto* item = json_array_get(weekly_events, index);
+            if(item == nullptr || !json_is_object(item))
+            {
+                continue;
+            }
+
+            MudWeeklyEventConfig event;
+            event.event_id = json_string_field(item, "event_id");
+            event.title = json_string_field(item, "title");
+            event.summary = json_string_field(item, "summary");
+            event.risk_level = json_string_field(item, "risk_level");
+            event.location_hint = json_string_field(item, "location_hint");
+            event.command_hint = json_string_field(item, "command_hint");
+            event.switch_id = json_string_field(item, "switch_id");
+            if(!event.event_id.empty())
+            {
+                m_weekly_events.push_back(std::move(event));
+            }
+        }
+    }
+
+    if(auto* world_event_switches = json_object_get(root, "world_event_switches");
+       world_event_switches != nullptr && json_is_array(world_event_switches))
+    {
+        const size_t count = json_array_size(world_event_switches);
+        m_world_event_switches.reserve(count);
+        for(size_t index = 0; index < count; ++index)
+        {
+            auto* item = json_array_get(world_event_switches, index);
+            if(item == nullptr || !json_is_object(item))
+            {
+                continue;
+            }
+
+            MudWorldEventSwitchConfig switch_config;
+            switch_config.switch_id = json_string_field(item, "switch_id");
+            switch_config.title = json_string_field(item, "title");
+            switch_config.level = json_string_field(item, "level");
+            switch_config.default_enabled = json_bool_value(item, "default_enabled", false);
+            switch_config.region_name = json_string_field(item, "region_name");
+            switch_config.summary = json_string_field(item, "summary");
+            switch_config.weekly_event_id = json_string_field(item, "weekly_event_id");
+            switch_config.command_hint = json_string_field(item, "command_hint");
+            switch_config.fallback_behavior = json_string_field(item, "fallback_behavior");
+            switch_config.start_hint = json_string_field(item, "start_hint");
+            switch_config.close_hint = json_string_field(item, "close_hint");
+            switch_config.smoke_note = json_string_field(item, "smoke_note");
+            if(!switch_config.switch_id.empty())
+            {
+                m_world_event_switches.push_back(std::move(switch_config));
+            }
+        }
+    }
+
     cleanup();
 
     if(m_defaults.starting_scene_id.empty() || m_scenes.find(m_defaults.starting_scene_id) == m_scenes.end())
@@ -1331,4 +1394,14 @@ std::vector<const MudRumorSourceConfig*> MudWorld::rumor_sources_for_npc(const s
         return lhs->topic < rhs->topic;
     });
     return result;
+}
+
+const std::vector<MudWeeklyEventConfig>& MudWorld::weekly_events() const
+{
+    return m_weekly_events;
+}
+
+const std::vector<MudWorldEventSwitchConfig>& MudWorld::world_event_switches() const
+{
+    return m_world_event_switches;
 }

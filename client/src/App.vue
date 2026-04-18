@@ -2066,6 +2066,8 @@ function panelRenderProfile(panelId: string) {
       return { mark: '榜', compact: true, entryLimit: 5, summaryLimit: 1 }
     case 'work':
       return { mark: '工', compact: true, entryLimit: 4, summaryLimit: 1 }
+    case 'event':
+      return { mark: '异', compact: true, entryLimit: 4, summaryLimit: 1 }
     case 'help':
       return { mark: '助', compact: false, entryLimit: 8, summaryLimit: 2 }
     case 'commands':
@@ -2104,6 +2106,9 @@ function panelMetaParts(panelId: string, entry: Record<string, any>) {
     return [locationHint, category].filter(Boolean)
   }
   if (normalized === 'week') {
+    return [locationHint, category, rewardSummary ? `可循：${rewardSummary}` : ''].filter(Boolean)
+  }
+  if (normalized === 'event') {
     return [locationHint, category, rewardSummary ? `可循：${rewardSummary}` : ''].filter(Boolean)
   }
   if (normalized === 'bag') {

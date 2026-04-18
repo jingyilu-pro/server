@@ -10,6 +10,7 @@ import pureMudExpansion from '../doc/mud/source/pure_mud_shared_world.mjs';
 import mudHelpManual from '../doc/mud/source/mud_help_manual.mjs';
 import mudJobsRumors from '../doc/mud/source/mud_jobs_rumors.mjs';
 import mudTitlesFactions from '../doc/mud/source/mud_titles_factions.mjs';
+import mudWorldEvents from '../doc/mud/source/mud_world_events.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -604,6 +605,8 @@ function validateRefs({
   jobs,
   rumorSources,
   identityTracks,
+  weeklyEvents,
+  worldEventSwitches,
 }) {
   const sceneMap = buildIdMap(scenes, 'scene_id', 'scenes');
   const itemMap = buildIdMap(items, 'item_id', 'items');
@@ -621,6 +624,8 @@ function validateRefs({
   const formationMap = buildIdMap(formations, 'formation_id', 'formations');
   const questMap = buildIdMap(quests, 'quest_id', 'quests');
   const jobMap = buildIdMap(jobs, 'job_id', 'jobs');
+  const weeklyEventMap = buildIdMap(weeklyEvents, 'event_id', 'weekly_events');
+  const worldEventSwitchMap = buildIdMap(worldEventSwitches, 'switch_id', 'world_event_switches');
 
   for (const scene of scenes) {
     for (const targetSceneId of Object.values(scene.exits ?? {})) {
@@ -786,6 +791,18 @@ function validateRefs({
     }
   }
 
+  for (const weeklyEvent of weeklyEvents) {
+    if (weeklyEvent.switch_id) {
+      mustExist(worldEventSwitchMap, weeklyEvent.switch_id, 'weekly event switch');
+    }
+  }
+
+  for (const switchConfig of worldEventSwitches) {
+    if (switchConfig.weekly_event_id) {
+      mustExist(weeklyEventMap, switchConfig.weekly_event_id, 'world event weekly event');
+    }
+  }
+
   return {
     sceneMap,
     itemMap,
@@ -803,6 +820,8 @@ function validateRefs({
     formationMap,
     questMap,
     jobMap,
+    weeklyEventMap,
+    worldEventSwitchMap,
   };
 }
 
@@ -1048,7 +1067,7 @@ function validateContentDensityExpansion({ scenes, jobs, rumorSources }) {
         throw new Error(`Content density validation failed: missing job coverage for ${label} scene ${sceneId}`);
       }
     }
-  };
+  }
 
   const requireRumorNpcs = (label, npcIds) => {
     for (const npcId of npcIds) {
@@ -1146,6 +1165,39 @@ function validateContentDensityExpansion({ scenes, jobs, rumorSources }) {
     'rift_record_spirit',
     'wall_listener_qiu',
   ]);
+}
+
+function validateWorldEventCoverage({ weeklyEvents, worldEventSwitches }) {
+  if ((weeklyEvents ?? []).length < 3) {
+    throw new Error(`World-event validation failed: expected at least 3 weekly events, got ${weeklyEvents.length}`);
+  }
+  if ((worldEventSwitches ?? []).length < 5) {
+    throw new Error(
+      `World-event validation failed: expected at least 5 world-event switches, got ${worldEventSwitches.length}`,
+    );
+  }
+
+  for (const weeklyEvent of weeklyEvents ?? []) {
+    if (!String(weeklyEvent.title ?? '').trim() || !String(weeklyEvent.summary ?? '').trim()) {
+      throw new Error(`World-event validation failed: weekly event ${weeklyEvent.event_id} is missing title or summary`);
+    }
+    if (!String(weeklyEvent.command_hint ?? '').trim()) {
+      throw new Error(`World-event validation failed: weekly event ${weeklyEvent.event_id} is missing command_hint`);
+    }
+  }
+
+  for (const switchConfig of worldEventSwitches ?? []) {
+    if (!String(switchConfig.title ?? '').trim() || !String(switchConfig.summary ?? '').trim()) {
+      throw new Error(
+        `World-event validation failed: switch ${switchConfig.switch_id} is missing title or summary`,
+      );
+    }
+    if (!String(switchConfig.command_hint ?? '').trim()) {
+      throw new Error(
+        `World-event validation failed: switch ${switchConfig.switch_id} is missing command_hint`,
+      );
+    }
+  }
 }
 
 function renderWorldMapTs(mapPayload) {
@@ -1246,6 +1298,8 @@ async function main() {
   const jobs = structuredClone(mudJobsRumors.jobs ?? []);
   const rumorSources = structuredClone(mudJobsRumors.rumor_sources ?? []);
   const identityTracks = structuredClone(mudTitlesFactions.identity_tracks ?? []);
+  const weeklyEvents = structuredClone(mudWorldEvents.weekly_events ?? []);
+  const worldEventSwitches = structuredClone(mudWorldEvents.world_event_switches ?? []);
 
   applyScenePatches(scenes, structuredClone(pureMudExpansion.scene_patches ?? []));
   applySceneServices(scenes, structuredClone(mudTitlesFactions.scene_services ?? []));
@@ -1272,6 +1326,8 @@ async function main() {
     jobs,
     rumorSources,
     identityTracks,
+    weeklyEvents,
+    worldEventSwitches,
   });
   validateP0Coverage({
     scenes,
@@ -1301,6 +1357,10 @@ async function main() {
     scenes,
     jobs,
     rumorSources,
+  });
+  validateWorldEventCoverage({
+    weeklyEvents,
+    worldEventSwitches,
   });
 
   buildSceneRelations(scenes, npcs, 'npc_id', 'npc_ids', 'npcs');
@@ -1346,6 +1406,8 @@ async function main() {
     jobs,
     identity_tracks: identityTracks,
     rumor_sources: rumorSources,
+    weekly_events: weeklyEvents,
+    world_event_switches: worldEventSwitches,
     resource_nodes: resourceNodes,
     ground_loots: groundLoots,
     hazards,

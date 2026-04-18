@@ -43,6 +43,8 @@ public:
     std::vector<const MudJobConfig*> jobs_for_scene(const std::string& scene_id) const;
     std::vector<const MudRumorSourceConfig*> rumor_sources_for_scene(const std::string& scene_id) const;
     std::vector<const MudRumorSourceConfig*> rumor_sources_for_npc(const std::string& npc_id) const;
+    const std::vector<MudWeeklyEventConfig>& weekly_events() const;
+    const std::vector<MudWorldEventSwitchConfig>& world_event_switches() const;
 
     const MudOriginConfig* find_origin(const std::string& origin_id) const;
     const MudBackgroundConfig* find_background(const std::string& background_id) const;
@@ -93,5 +95,7 @@ private:
     std::unordered_map<std::string, MudJobConfig> m_jobs;
     std::unordered_map<std::string, MudIdentityTrackConfig> m_identity_tracks;
     std::unordered_map<std::string, MudRumorSourceConfig> m_rumor_sources;
+    std::vector<MudWeeklyEventConfig> m_weekly_events;
+    std::vector<MudWorldEventSwitchConfig> m_world_event_switches;
     bool m_ready = false;
 };

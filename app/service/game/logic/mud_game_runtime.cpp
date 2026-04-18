@@ -2701,7 +2701,7 @@ void MudGameRuntime::fill_command_catalog(const MudPlayerState& player,
         {"follow", "group", "跟随目标", "follow ", "标记要同行的目标。", "command", "", {}, "follow <玩家>", "玩家", "scene", false},
         {"guard", "group", "护卫目标", "guard ", "标记要照应的目标。", "command", "", {}, "guard <玩家>", "玩家", "scene", false},
         {"codex", "manual", "打开手册", "codex ", "查看资料手册条目。", "command", "", {}, "codex <分类> [条目]", "分类 条目", "global", false},
-        {"event", "manual", "天地异象", "event", "查看近期世界大事。", "command", "", {}, "event", "", "global", true},
+        {"event", "manual", "天地异象", "event", "查看近期世界大事与事件骨架。", "command", "", {}, "event", "", "global", true},
         {"save", "manual", "存档落笔", "save", "立即把当前角色状态写回存档。", "command", "", {}, "save", "", "global", true},
     };
 
@@ -2914,11 +2914,39 @@ std::vector<MudRouteSummaryState> MudGameRuntime::route_summaries_for_player(con
 
 std::vector<MudWeeklyEventSummaryState> MudGameRuntime::weekly_events_for_player(const MudPlayerState&) const
 {
-    return {
-        {"blood_forbidden_open", "血禁开禁", "血色禁地每周会出现一次资源与妖兽同时活跃的窗口，单人可入，组队更稳。", "高危", "血禁石门、血雾沼泽、血兰谷", "wanted / board"},
-        {"outer_port_tide", "外港海潮", "天南外港和乱星近海会在潮期迎来海材暴增，适合跑海猎与采珠。", "中危", "天南外港、群岛小埠、听潮坛", "travel / board"},
-        {"black_reef_mining", "黑礁争采", "黑礁争采会刷新稀缺海材，也更容易引发玩家间的争夺与切磋。", "冲突", "黑礁、风暴航道、群岛礁路", "travel / wanted"}
-    };
+    std::vector<MudWeeklyEventSummaryState> events;
+    for(const auto& config : m_world->weekly_events())
+    {
+        if(config.event_id.empty() || config.title.empty())
+        {
+            continue;
+        }
+        events.push_back(
+            {config.event_id, config.title, config.summary, config.risk_level, config.location_hint, config.command_hint});
+    }
+    if(!events.empty())
+    {
+        return events;
+    }
+
+    return {{"blood_forbidden_open",
+             "血禁开禁",
+             "血色禁地每周会出现一次资源与妖兽同时活跃的窗口，单人可入，组队更稳。",
+             "高危",
+             "血禁石门、血雾沼泽、血兰谷",
+             "wanted / board"},
+            {"outer_port_tide",
+             "外港海潮",
+             "天南外港和乱星近海会在潮期迎来海材暴增，适合跑海猎与采珠。",
+             "中危",
+             "天南外港、群岛小埠、听潮坛",
+             "travel / board"},
+            {"black_reef_mining",
+             "黑礁争采",
+             "黑礁争采会刷新稀缺海材，也更容易引发玩家间的争夺与切磋。",
+             "冲突",
+             "黑礁、风暴航道、群岛礁路",
+             "travel / wanted"}};
 }
 
 std::string MudGameRuntime::recommended_loop_for_player(const MudPlayerState& player) const
@@ -3643,18 +3671,28 @@ void MudGameRuntime::maybe_emit_world_event()
         return;
     }
 
-    static const std::vector<std::pair<std::string, std::string>> kWorldEvents = {
-        {"血禁开禁", "血色禁地本周灵禁短暂松动，单人可闯，组队更稳，血兰与虫材都更活跃。"},
-        {"外港海潮", "天南外港与乱星近海迎来大潮期，海灵藻、珠蚌和潮砂的收益同时抬升。"},
-        {"黑礁争采", "黑礁深处冒出新的稀缺矿材与海齿，收益极高，也更容易引发同道争夺。"}
-    };
+    std::vector<std::pair<std::string, std::string>> world_events;
+    for(const auto& event : m_world->weekly_events())
+    {
+        if(event.title.empty() || event.summary.empty())
+        {
+            continue;
+        }
+        world_events.emplace_back(event.title, event.summary);
+    }
+    if(world_events.empty())
+    {
+        world_events = {{"血禁开禁", "血色禁地本周灵禁短暂松动，单人可闯，组队更稳，血兰与虫材都更活跃。"},
+                        {"外港海潮", "天南外港与乱星近海迎来大潮期，海灵藻、珠蚌和潮砂的收益同时抬升。"},
+                        {"黑礁争采", "黑礁深处冒出新的稀缺矿材与海齿，收益极高，也更容易引发同道争夺。"}};
+    }
 
-    if(kWorldEvents.empty())
+    if(world_events.empty())
     {
         return;
     }
 
-    const auto& event = kWorldEvents[m_world_event_cursor % kWorldEvents.size()];
+    const auto& event = world_events[m_world_event_cursor % world_events.size()];
     ++m_world_event_cursor;
     m_last_world_event_ms = now;
     append_event("",
@@ -4308,7 +4346,7 @@ MudCommandExecution MudGameRuntime::execute_command(MudPlayerState* player,
     }
     if(verb == "event")
     {
-        return execute_event();
+        return execute_event(*player);
     }
     if(verb == "chat")
     {
@@ -5815,11 +5853,18 @@ MudCommandExecution MudGameRuntime::execute_team(MudPlayerState* player,
     return execution;
 }
 
-MudCommandExecution MudGameRuntime::execute_event() const
+MudCommandExecution MudGameRuntime::execute_event(const MudPlayerState& player) const
 {
     MudCommandExecution execution;
     execution.success = true;
     execution.title = "近期天地异象";
+
+    const auto weekly_events = weekly_events_for_player(player);
+    MudStructuredPanelState panel;
+    panel.panel_id = "event";
+    panel.title = execution.title;
+    panel.panel_kind = "world_event_board";
+    panel.document_id = "event";
 
     int count = 0;
     for(auto iter = m_events.rbegin(); iter != m_events.rend() && count < 4; ++iter)
@@ -5828,11 +5873,75 @@ MudCommandExecution MudGameRuntime::execute_event() const
         {
             continue;
         }
+
+        const auto weekly_iter =
+            std::find_if(weekly_events.begin(), weekly_events.end(), [&](const MudWeeklyEventSummaryState& weekly_event) {
+                return weekly_event.title == iter->title;
+            });
+        const auto location_hint = weekly_iter == weekly_events.end() ? std::string() : weekly_iter->location_hint;
+        const auto command_hint =
+            weekly_iter == weekly_events.end() ? std::string("week / board") : weekly_iter->command_hint;
+        panel.entries.push_back({"world_event:" + std::to_string(iter->event_id),
+                                 iter->title,
+                                 iter->content,
+                                 "近日",
+                                 "天地异象",
+                                 "week",
+                                 location_hint,
+                                 command_hint});
         execution.hints.push_back(iter->title + "： " + iter->content);
         ++count;
     }
 
-    execution.summary = count == 0 ? "近期尚无新的天地异象。" : "近期天地异象如下。";
+    for(const auto& event : weekly_events)
+    {
+        const bool already_listed = std::any_of(panel.entries.begin(),
+                                                panel.entries.end(),
+                                                [&](const MudSummaryEntry& entry) { return entry.title == event.title; });
+        if(already_listed)
+        {
+            continue;
+        }
+        panel.entries.push_back(
+            {event.event_id, event.title, event.summary, "本周", "周讯", "week", event.location_hint, event.command_hint});
+        if(panel.entries.size() >= 7)
+        {
+            break;
+        }
+    }
+
+    for(const auto& switch_config : m_world->world_event_switches())
+    {
+        if(switch_config.switch_id.empty() || switch_config.title.empty())
+        {
+            continue;
+        }
+
+        std::string line = switch_config.switch_id + "〔" +
+                           (switch_config.level.empty() ? std::string("L?") : switch_config.level) +
+                           " / 默认 " + (switch_config.default_enabled ? "on" : "off") + "〕 " + switch_config.title;
+        if(!switch_config.summary.empty())
+        {
+            line += "：";
+            line += switch_config.summary;
+        }
+        if(!switch_config.command_hint.empty())
+        {
+            line += " 入口 ";
+            line += switch_config.command_hint;
+            line += "。";
+        }
+        panel.body_lines.push_back(std::move(line));
+    }
+
+    execution.summary = count == 0 ? "近期尚无新的天地异象，当前世界事件骨架如下。"
+                                   : "近期天地异象与当前世界事件骨架如下。";
+    panel.summary = execution.summary;
+    if(!panel.entries.empty() || !panel.body_lines.empty())
+    {
+        execution.panels.push_back(std::move(panel));
+    }
+    execution.hints.push_back("week 可看本周热点，event 更偏近期大事与事件骨架。");
     return execution;
 }
 
