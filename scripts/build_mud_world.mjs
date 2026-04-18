@@ -934,6 +934,135 @@ function validateNascentSoulMainline({ scenes, quests }) {
   }
 }
 
+function validateContentDensityExpansion({ scenes, jobs, rumorSources }) {
+  const sceneMap = buildIdMap(scenes, 'scene_id', 'content_density_scenes');
+  const jobSceneIds = new Set((jobs ?? []).map((job) => String(job.scene_id ?? '').trim()).filter(Boolean));
+  const rumorNpcIds = new Set((rumorSources ?? []).map((source) => String(source.npc_id ?? '').trim()).filter(Boolean));
+
+  const requireSceneServices = (label, sceneIds) => {
+    for (const sceneId of sceneIds) {
+      const scene = sceneMap.get(sceneId);
+      if (!scene) {
+        throw new Error(`Content density validation failed: missing scene ${sceneId} for ${label}`);
+      }
+
+      const hasServicePayload =
+        (scene.service_tags?.length ?? 0) > 0 ||
+        (scene.rumor_topics?.length ?? 0) > 0 ||
+        (scene.mentor_ids?.length ?? 0) > 0 ||
+        Boolean(scene.board_available);
+      if (!hasServicePayload) {
+        throw new Error(`Content density validation failed: scene ${sceneId} lacks service payload for ${label}`);
+      }
+    }
+  };
+
+  const requireJobScenes = (label, sceneIds) => {
+    for (const sceneId of sceneIds) {
+      if (!jobSceneIds.has(sceneId)) {
+        throw new Error(`Content density validation failed: missing job coverage for ${label} scene ${sceneId}`);
+      }
+    }
+  };
+
+  const requireRumorNpcs = (label, npcIds) => {
+    for (const npcId of npcIds) {
+      if (!rumorNpcIds.has(npcId)) {
+        throw new Error(`Content density validation failed: missing rumor coverage for ${label} npc ${npcId}`);
+      }
+    }
+  };
+
+  requireSceneServices('散修与嘉元-太南外圈', [
+    'loose_camp_square',
+    'loose_medicine_tent',
+    'loose_guest_hall',
+    'jiayuan_east_gate',
+    'mofu_front_hall',
+    'tainan_gate',
+  ]);
+  requireJobScenes('散修与嘉元-太南外圈', [
+    'loose_camp_square',
+    'loose_medicine_tent',
+    'jiayuan_east_gate',
+    'mofu_front_hall',
+    'tainan_gate',
+  ]);
+  requireRumorNpcs('散修与嘉元-太南外圈', [
+    'loose_master_wen',
+    'herb_tutor_qing',
+    'mofu_elder_housekeeper',
+    'wandering_broker',
+  ]);
+
+  requireSceneServices('黄枫谷与灵兽山内圈', [
+    'huangfeng_hall',
+    'huangfeng_medicine_terrace',
+    'huangfeng_scripture',
+    'spirit_beast_beast_pen',
+    'spirit_beast_insect_garden',
+    'spirit_beast_hall',
+  ]);
+  requireJobScenes('黄枫谷与灵兽山内圈', [
+    'huangfeng_hall',
+    'huangfeng_medicine_terrace',
+    'huangfeng_scripture',
+    'spirit_beast_beast_pen',
+    'spirit_beast_insect_garden',
+    'spirit_beast_hall',
+  ]);
+  requireRumorNpcs('黄枫谷与灵兽山内圈', [
+    'elder_ma',
+    'scripture_keeper',
+    'beast_feeder_zhou',
+    'insect_master_qin',
+    'outer_deacon_du',
+  ]);
+
+  requireSceneServices('天南港-后湾-群岛近海', [
+    'tiannan_market',
+    'tiannan_dock',
+    'harbor_salt_house',
+    'harbor_net_field',
+    'outer_isles_wharf',
+    'outer_isles_market',
+  ]);
+  requireJobScenes('天南港-后湾-群岛近海', [
+    'tiannan_market',
+    'tiannan_dock',
+    'harbor_salt_house',
+    'harbor_net_field',
+    'outer_isles_wharf',
+    'outer_isles_market',
+  ]);
+  requireRumorNpcs('天南港-后湾-群岛近海', [
+    'chart_seller',
+    'old_shipwright',
+    'salt_house_keeper_lin',
+    'net_master_peng',
+    'island_broker_shi',
+    'pearl_diver_lan',
+  ]);
+
+  requireSceneServices('结丹与凝婴桥接区', [
+    'outer_sea_mid',
+    'core_flame_vein',
+    'ancient_ruin_ring',
+    'star_abyss',
+  ]);
+  requireJobScenes('结丹与凝婴桥接区', [
+    'outer_sea_mid',
+    'core_flame_vein',
+    'ancient_ruin_ring',
+    'star_abyss',
+  ]);
+  requireRumorNpcs('结丹与凝婴桥接区', [
+    'deck_mage',
+    'rift_record_spirit',
+    'wall_listener_qiu',
+  ]);
+}
+
 function renderWorldMapTs(mapPayload) {
   return `export interface WorldMapNode {
   id: string
@@ -1077,6 +1206,11 @@ async function main() {
   validateNascentSoulMainline({
     scenes,
     quests,
+  });
+  validateContentDensityExpansion({
+    scenes,
+    jobs,
+    rumorSources,
   });
 
   buildSceneRelations(scenes, npcs, 'npc_id', 'npc_ids', 'npcs');

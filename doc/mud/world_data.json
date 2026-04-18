@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-17T06:45:04.028Z",
+  "generated_at": "2026-04-18T06:48:42.575Z",
   "defaults": {
     "starting_scene_id": "qixuan_square",
     "starter_title": "初入修仙路",
@@ -6845,6 +6845,18 @@
         "此地常有人提起「越京官道」相关的旧闻。"
       ],
       "chapter": "越京官道",
+      "service_tags": [
+        "rumor",
+        "travel"
+      ],
+      "rumor_topics": [
+        "东门风声",
+        "城里差遣"
+      ],
+      "board_available": false,
+      "mentor_ids": [
+        "gate_guard_lu"
+      ],
       "room_type": "宗门",
       "risk_level": "安全",
       "room_layer": "新手安全圈",
@@ -6852,10 +6864,6 @@
       "loop_tags": [
         "护送跑商"
       ],
-      "service_tags": [],
-      "rumor_topics": [],
-      "board_available": false,
-      "mentor_ids": [],
       "codex_entry_id": "geo_jiayuan_east_gate"
     },
     {
@@ -7005,6 +7013,18 @@
         "此地常有人提起「嘉元城风波」相关的旧闻。"
       ],
       "chapter": "嘉元城风波",
+      "service_tags": [
+        "board",
+        "rumor"
+      ],
+      "rumor_topics": [
+        "府内差遣",
+        "来客名录"
+      ],
+      "board_available": true,
+      "mentor_ids": [
+        "mofu_elder_housekeeper"
+      ],
       "room_type": "宗门",
       "risk_level": "安全",
       "room_layer": "新手安全圈",
@@ -7012,10 +7032,6 @@
       "loop_tags": [
         "采药炼丹"
       ],
-      "service_tags": [],
-      "rumor_topics": [],
-      "board_available": false,
-      "mentor_ids": [],
       "codex_entry_id": "geo_mofu_front_hall"
     },
     {
@@ -7053,6 +7069,19 @@
         "此地常有人提起「嘉元城风波」相关的旧闻。"
       ],
       "chapter": "嘉元城风波",
+      "service_tags": [
+        "rumor",
+        "mentor"
+      ],
+      "rumor_topics": [
+        "内院风声",
+        "府内人情"
+      ],
+      "board_available": false,
+      "mentor_ids": [
+        "mo_caikuan",
+        "mo_fengwu"
+      ],
       "room_type": "房间",
       "risk_level": "安全",
       "room_layer": "新手安全圈",
@@ -7060,10 +7089,6 @@
       "loop_tags": [
         "采药炼丹"
       ],
-      "service_tags": [],
-      "rumor_topics": [],
-      "board_available": false,
-      "mentor_ids": [],
       "codex_entry_id": "geo_mofu_courtyard"
     },
     {
@@ -7252,6 +7277,20 @@
         "此地常有人提起「太南散修坊」相关的旧闻。"
       ],
       "chapter": "太南散修坊",
+      "service_tags": [
+        "board",
+        "rumor",
+        "trade",
+        "travel"
+      ],
+      "rumor_topics": [
+        "谷口门路",
+        "散修消息"
+      ],
+      "board_available": true,
+      "mentor_ids": [
+        "wandering_broker"
+      ],
       "room_type": "宗门",
       "risk_level": "安全",
       "room_layer": "新手安全圈",
@@ -7260,10 +7299,6 @@
         "采药炼丹",
         "护送跑商"
       ],
-      "service_tags": [],
-      "rumor_topics": [],
-      "board_available": false,
-      "mentor_ids": [],
       "codex_entry_id": "geo_tainan_gate"
     },
     {
@@ -7643,6 +7678,20 @@
         "此地常有人提起「黄枫谷门径」相关的旧闻。"
       ],
       "chapter": "黄枫谷门径",
+      "service_tags": [
+        "board",
+        "sect",
+        "mentor"
+      ],
+      "rumor_topics": [
+        "内堂录名",
+        "黄枫规矩"
+      ],
+      "board_available": true,
+      "mentor_ids": [
+        "elder_ma",
+        "disciple_lu"
+      ],
       "room_type": "宗门",
       "risk_level": "安全",
       "room_layer": "新手安全圈",
@@ -7651,10 +7700,6 @@
         "采药炼丹",
         "门派事务"
       ],
-      "service_tags": [],
-      "rumor_topics": [],
-      "board_available": false,
-      "mentor_ids": [],
       "codex_entry_id": "geo_huangfeng_hall"
     },
     {
@@ -7693,6 +7738,21 @@
         "这里的采集点很受散修与药师关注。"
       ],
       "chapter": "黄枫谷门径",
+      "service_tags": [
+        "board",
+        "sect",
+        "mentor",
+        "alchemy",
+        "gather"
+      ],
+      "rumor_topics": [
+        "药台巡材",
+        "药园门路"
+      ],
+      "board_available": true,
+      "mentor_ids": [
+        "medicine_deacon"
+      ],
       "room_type": "房间",
       "risk_level": "安全",
       "room_layer": "新手安全圈",
@@ -7701,10 +7761,6 @@
         "采药炼丹",
         "门派事务"
       ],
-      "service_tags": [],
-      "rumor_topics": [],
-      "board_available": false,
-      "mentor_ids": [],
       "codex_entry_id": "geo_huangfeng_medicine_terrace"
     },
     {
@@ -7742,6 +7798,20 @@
         "谷中老人常说，藏经石廊最值钱的不是哪张残卷，而是肯把一篇口诀真的练到心里去的人。"
       ],
       "chapter": "黄枫谷门径",
+      "service_tags": [
+        "board",
+        "sect",
+        "mentor",
+        "rumor"
+      ],
+      "rumor_topics": [
+        "经廊抄卷",
+        "旧卷口诀"
+      ],
+      "board_available": true,
+      "mentor_ids": [
+        "scripture_keeper"
+      ],
       "room_type": "宗门",
       "risk_level": "安全",
       "room_layer": "新手安全圈",
@@ -7750,10 +7820,6 @@
         "采药炼丹",
         "门派事务"
       ],
-      "service_tags": [],
-      "rumor_topics": [],
-      "board_available": false,
-      "mentor_ids": [],
       "codex_entry_id": "geo_huangfeng_scripture"
     },
     {
@@ -8280,6 +8346,20 @@
         "此地常有人提起「天南港启航」相关的旧闻。"
       ],
       "chapter": "天南港启航",
+      "service_tags": [
+        "board",
+        "trade",
+        "rumor"
+      ],
+      "rumor_topics": [
+        "坊市誊图",
+        "海货门路"
+      ],
+      "board_available": true,
+      "mentor_ids": [
+        "chart_seller",
+        "sea_peddler"
+      ],
       "room_type": "坊市",
       "risk_level": "安全",
       "room_layer": "新手安全圈",
@@ -8288,10 +8368,6 @@
         "护送跑商",
         "海猎采珠"
       ],
-      "service_tags": [],
-      "rumor_topics": [],
-      "board_available": false,
-      "mentor_ids": [],
       "codex_entry_id": "geo_tiannan_market"
     },
     {
@@ -8330,6 +8406,20 @@
         "此地常有人提起「天南港启航」相关的旧闻。"
       ],
       "chapter": "天南港启航",
+      "service_tags": [
+        "board",
+        "travel",
+        "mentor",
+        "rumor"
+      ],
+      "rumor_topics": [
+        "码头紧索",
+        "远航准备"
+      ],
+      "board_available": true,
+      "mentor_ids": [
+        "old_shipwright"
+      ],
       "room_type": "港埠",
       "risk_level": "安全",
       "room_layer": "新手安全圈",
@@ -8338,10 +8428,6 @@
         "护送跑商",
         "海猎采珠"
       ],
-      "service_tags": [],
-      "rumor_topics": [],
-      "board_available": false,
-      "mentor_ids": [],
       "codex_entry_id": "geo_tiannan_dock"
     },
     {
@@ -8376,6 +8462,18 @@
         "此地常有人提起「天南港启航」相关的旧闻。"
       ],
       "chapter": "天南港启航",
+      "service_tags": [
+        "travel",
+        "rumor"
+      ],
+      "rumor_topics": [
+        "风向异动",
+        "潮势观察"
+      ],
+      "board_available": false,
+      "mentor_ids": [
+        "tower_watch"
+      ],
       "room_type": "房间",
       "risk_level": "安全",
       "room_layer": "新手安全圈",
@@ -8383,10 +8481,6 @@
       "loop_tags": [
         "海猎采珠"
       ],
-      "service_tags": [],
-      "rumor_topics": [],
-      "board_available": false,
-      "mentor_ids": [],
       "codex_entry_id": "geo_sea_wind_tower"
     },
     {
@@ -10003,14 +10097,24 @@
       "room_type": "坊市",
       "risk_level": "安全",
       "landmark": "散修棚市",
+      "service_tags": [
+        "board",
+        "rumor",
+        "trade",
+        "mentor"
+      ],
+      "rumor_topics": [
+        "散修营生",
+        "棚市风声"
+      ],
+      "board_available": true,
+      "mentor_ids": [
+        "loose_master_wen"
+      ],
       "room_layer": "新手安全圈",
       "loop_tags": [
         "采药炼丹"
       ],
-      "service_tags": [],
-      "rumor_topics": [],
-      "board_available": false,
-      "mentor_ids": [],
       "codex_entry_id": "geo_loose_camp_square"
     },
     {
@@ -10044,15 +10148,24 @@
       "room_type": "坊市",
       "risk_level": "安全",
       "landmark": "杂货棚巷",
+      "service_tags": [
+        "board",
+        "trade",
+        "rumor"
+      ],
+      "rumor_topics": [
+        "杂货消息",
+        "旧图门路"
+      ],
+      "board_available": true,
+      "mentor_ids": [
+        "market_broker_hu"
+      ],
       "room_layer": "新手安全圈",
       "loop_tags": [
         "采药炼丹",
         "护送跑商"
       ],
-      "service_tags": [],
-      "rumor_topics": [],
-      "board_available": false,
-      "mentor_ids": [],
       "codex_entry_id": "geo_loose_market_lane"
     },
     {
@@ -10088,14 +10201,24 @@
       "room_type": "营地",
       "risk_level": "安全",
       "landmark": "药帐",
+      "service_tags": [
+        "work",
+        "gather",
+        "mentor",
+        "rumor"
+      ],
+      "rumor_topics": [
+        "草药营生",
+        "炼药门路"
+      ],
+      "board_available": false,
+      "mentor_ids": [
+        "herb_tutor_qing"
+      ],
       "room_layer": "新手安全圈",
       "loop_tags": [
         "采药炼丹"
       ],
-      "service_tags": [],
-      "rumor_topics": [],
-      "board_available": false,
-      "mentor_ids": [],
       "codex_entry_id": "geo_loose_medicine_tent"
     },
     {
@@ -10129,14 +10252,22 @@
       "room_type": "营地",
       "risk_level": "安全",
       "landmark": "卜席角",
+      "service_tags": [
+        "rumor",
+        "mentor"
+      ],
+      "rumor_topics": [
+        "旧路消息",
+        "识物口风"
+      ],
+      "board_available": false,
+      "mentor_ids": [
+        "diviner_meng"
+      ],
       "room_layer": "新手安全圈",
       "loop_tags": [
         "采药炼丹"
       ],
-      "service_tags": [],
-      "rumor_topics": [],
-      "board_available": false,
-      "mentor_ids": [],
       "codex_entry_id": "geo_loose_diviner_mat"
     },
     {
@@ -10306,14 +10437,23 @@
       "room_type": "营地",
       "risk_level": "安全",
       "landmark": "借宿大棚",
+      "service_tags": [
+        "board",
+        "rumor",
+        "work"
+      ],
+      "rumor_topics": [
+        "借宿消息",
+        "散修往来"
+      ],
+      "board_available": true,
+      "mentor_ids": [
+        "guest_scribe_fan"
+      ],
       "room_layer": "新手安全圈",
       "loop_tags": [
         "采药炼丹"
       ],
-      "service_tags": [],
-      "rumor_topics": [],
-      "board_available": false,
-      "mentor_ids": [],
       "codex_entry_id": "geo_loose_guest_hall"
     },
     {
@@ -10449,14 +10589,23 @@
       "room_type": "坊市",
       "risk_level": "安全",
       "landmark": "兽材街",
+      "service_tags": [
+        "trade",
+        "sect",
+        "rumor"
+      ],
+      "rumor_topics": [
+        "兽材行情",
+        "外山货路"
+      ],
+      "board_available": false,
+      "mentor_ids": [
+        "bug_trader_tao"
+      ],
       "room_layer": "新手安全圈",
       "loop_tags": [
         "门派事务"
       ],
-      "service_tags": [],
-      "rumor_topics": [],
-      "board_available": false,
-      "mentor_ids": [],
       "codex_entry_id": "geo_spirit_beast_broker_lane"
     },
     {
@@ -10494,14 +10643,23 @@
       "room_type": "宗门",
       "risk_level": "安全",
       "landmark": "外山兽栏",
+      "service_tags": [
+        "work",
+        "sect",
+        "mentor"
+      ],
+      "rumor_topics": [
+        "兽栏巡喂",
+        "饲养门路"
+      ],
+      "board_available": false,
+      "mentor_ids": [
+        "beast_feeder_zhou"
+      ],
       "room_layer": "新手安全圈",
       "loop_tags": [
         "门派事务"
       ],
-      "service_tags": [],
-      "rumor_topics": [],
-      "board_available": false,
-      "mentor_ids": [],
       "codex_entry_id": "geo_spirit_beast_beast_pen"
     },
     {
@@ -10540,14 +10698,24 @@
       "room_type": "宗门",
       "risk_level": "历练",
       "landmark": "灵虫圃",
+      "service_tags": [
+        "work",
+        "gather",
+        "sect",
+        "rumor"
+      ],
+      "rumor_topics": [
+        "虫圃换饵",
+        "灵虫门路"
+      ],
+      "board_available": false,
+      "mentor_ids": [
+        "insect_master_qin"
+      ],
       "room_layer": "新手安全圈",
       "loop_tags": [
         "门派事务"
       ],
-      "service_tags": [],
-      "rumor_topics": [],
-      "board_available": false,
-      "mentor_ids": [],
       "codex_entry_id": "geo_spirit_beast_insect_garden"
     },
     {
@@ -10583,14 +10751,23 @@
       "room_type": "野外",
       "risk_level": "历练",
       "landmark": "饲草岭",
+      "service_tags": [
+        "work",
+        "gather",
+        "rumor"
+      ],
+      "rumor_topics": [
+        "饲草差遣",
+        "外山药草"
+      ],
+      "board_available": false,
+      "mentor_ids": [
+        "ridge_keeper_pei"
+      ],
       "room_layer": "新手安全圈",
       "loop_tags": [
         "门派事务"
       ],
-      "service_tags": [],
-      "rumor_topics": [],
-      "board_available": false,
-      "mentor_ids": [],
       "codex_entry_id": "geo_spirit_beast_herb_ridge"
     },
     {
@@ -10881,14 +11058,23 @@
       "room_type": "宗门",
       "risk_level": "安全",
       "landmark": "外山执事堂",
+      "service_tags": [
+        "board",
+        "sect",
+        "mentor"
+      ],
+      "rumor_topics": [
+        "外山点事",
+        "执事差遣"
+      ],
+      "board_available": true,
+      "mentor_ids": [
+        "outer_deacon_du"
+      ],
       "room_layer": "新手安全圈",
       "loop_tags": [
         "门派事务"
       ],
-      "service_tags": [],
-      "rumor_topics": [],
-      "board_available": false,
-      "mentor_ids": [],
       "codex_entry_id": "geo_spirit_beast_hall"
     },
     {
@@ -11024,15 +11210,24 @@
       "room_type": "港埠",
       "risk_level": "安全",
       "landmark": "晒盐棚",
+      "service_tags": [
+        "work",
+        "trade",
+        "rumor"
+      ],
+      "rumor_topics": [
+        "盐棚拣货",
+        "后湾海材"
+      ],
+      "board_available": false,
+      "mentor_ids": [
+        "salt_house_keeper_lin"
+      ],
       "room_layer": "成长历练圈",
       "loop_tags": [
         "护送跑商",
         "海猎采珠"
       ],
-      "service_tags": [],
-      "rumor_topics": [],
-      "board_available": false,
-      "mentor_ids": [],
       "codex_entry_id": "geo_harbor_salt_house"
     },
     {
@@ -11066,15 +11261,24 @@
       "room_type": "港埠",
       "risk_level": "历练",
       "landmark": "晒网场",
+      "service_tags": [
+        "work",
+        "sea",
+        "rumor"
+      ],
+      "rumor_topics": [
+        "晒网分潮",
+        "近海图线"
+      ],
+      "board_available": false,
+      "mentor_ids": [
+        "net_master_peng"
+      ],
       "room_layer": "成长历练圈",
       "loop_tags": [
         "护送跑商",
         "海猎采珠"
       ],
-      "service_tags": [],
-      "rumor_topics": [],
-      "board_available": false,
-      "mentor_ids": [],
       "codex_entry_id": "geo_harbor_net_field"
     },
     {
@@ -11281,15 +11485,23 @@
       "room_type": "港埠",
       "risk_level": "安全",
       "landmark": "后湾灯塔",
+      "service_tags": [
+        "travel",
+        "rumor"
+      ],
+      "rumor_topics": [
+        "后湾灯色",
+        "出湾时机"
+      ],
+      "board_available": false,
+      "mentor_ids": [
+        "lamp_guard_xie"
+      ],
       "room_layer": "成长历练圈",
       "loop_tags": [
         "护送跑商",
         "海猎采珠"
       ],
-      "service_tags": [],
-      "rumor_topics": [],
-      "board_available": false,
-      "mentor_ids": [],
       "codex_entry_id": "geo_harbor_lamp_tower"
     },
     {
@@ -11372,15 +11584,25 @@
       "room_type": "港埠",
       "risk_level": "安全",
       "landmark": "群岛小埠",
+      "service_tags": [
+        "board",
+        "travel",
+        "trade",
+        "rumor"
+      ],
+      "rumor_topics": [
+        "群岛小埠",
+        "清舱点货"
+      ],
+      "board_available": true,
+      "mentor_ids": [
+        "island_broker_shi"
+      ],
       "room_layer": "成长历练圈",
       "loop_tags": [
         "护送跑商",
         "海猎采珠"
       ],
-      "service_tags": [],
-      "rumor_topics": [],
-      "board_available": false,
-      "mentor_ids": [],
       "codex_entry_id": "geo_outer_isles_wharf"
     },
     {
@@ -11419,15 +11641,25 @@
       "room_type": "坊市",
       "risk_level": "安全",
       "landmark": "珠市棚",
+      "service_tags": [
+        "board",
+        "trade",
+        "sea",
+        "rumor"
+      ],
+      "rumor_topics": [
+        "珠市成色",
+        "采珠门路"
+      ],
+      "board_available": true,
+      "mentor_ids": [
+        "pearl_diver_lan"
+      ],
       "room_layer": "成长历练圈",
       "loop_tags": [
         "护送跑商",
         "海猎采珠"
       ],
-      "service_tags": [],
-      "rumor_topics": [],
-      "board_available": false,
-      "mentor_ids": [],
       "codex_entry_id": "geo_outer_isles_market"
     },
     {
@@ -11766,14 +11998,23 @@
       "room_type": "海岛",
       "risk_level": "安全",
       "landmark": "听潮坛",
+      "service_tags": [
+        "travel",
+        "rumor",
+        "mentor"
+      ],
+      "rumor_topics": [
+        "听潮时机",
+        "群岛风向"
+      ],
+      "board_available": false,
+      "mentor_ids": [
+        "altar_keeper_hua"
+      ],
       "room_layer": "成长历练圈",
       "loop_tags": [
         "海猎采珠"
       ],
-      "service_tags": [],
-      "rumor_topics": [],
-      "board_available": false,
-      "mentor_ids": [],
       "codex_entry_id": "geo_outer_isles_watch_altar"
     },
     {
@@ -11816,11 +12057,14 @@
       "service_tags": [
         "travel",
         "sea",
-        "rumor"
+        "rumor",
+        "danger",
+        "gold_core"
       ],
       "rumor_topics": [
         "外海潮路",
-        "结丹线索"
+        "结丹线索",
+        "测潮退路"
       ],
       "board_available": false,
       "mentor_ids": [],
@@ -11868,11 +12112,13 @@
       "service_tags": [
         "travel",
         "danger",
-        "rumor"
+        "rumor",
+        "nascent_soul"
       ],
       "rumor_topics": [
         "星渊潮眼",
-        "凝婴灵物"
+        "凝婴灵物",
+        "候潮守识"
       ],
       "board_available": false,
       "mentor_ids": [],
@@ -12349,11 +12595,13 @@
       "service_tags": [
         "danger",
         "gather",
-        "rumor"
+        "rumor",
+        "gold_core"
       ],
       "rumor_topics": [
         "丹火灵脉",
-        "结丹辅材"
+        "结丹辅材",
+        "火脉筛脉"
       ],
       "board_available": false,
       "mentor_ids": [],
@@ -12402,11 +12650,13 @@
       "service_tags": [
         "danger",
         "board",
-        "rumor"
+        "rumor",
+        "gold_core"
       ],
       "rumor_topics": [
         "古修残环",
-        "残殿回响"
+        "残殿回响",
+        "残纹拓录"
       ],
       "board_available": true,
       "mentor_ids": [],
@@ -13382,6 +13632,7 @@
         "先用 work 看当前场景可做的工作。",
         "工作通常绑定一个发起人、一段路和一类产出。",
         "低风险工作适合积累灵石、药材、熟练度和人情。",
+        "散修棚市、黄枫药台、灵兽兽栏、后湾盐棚和群岛珠市，都是能把小活做成长线收入的地方。",
         "如果 board 更像公开委托，那么 work 更像你此刻手边就能开的营生。"
       ],
       "keywords": [
@@ -13409,7 +13660,8 @@
       "body_lines": [
         "先找有风声的人 talk，然后 ask <人物> about rumor。",
         "有些任务会直接挂在 board 上，有些则藏在 NPC 话里。",
-        "公众任务讲究一轮一轮跑：问讯 -> 接线 -> 执行 -> 提交 -> 听后续风声。"
+        "公众任务讲究一轮一轮跑：问讯 -> 接线 -> 执行 -> 提交 -> 听后续风声。",
+        "嘉元东门、墨府前厅、太南谷口、天南港坊市和群岛小埠，都是风声会直接落成差事的地方。"
       ],
       "keywords": [
         "公众任务",
@@ -13492,8 +13744,8 @@
       "body_lines": [
         "散修线更自由，靠坊市、风声、采药、跑商、海猎慢慢起势。",
         "七玄门偏凡俗起步与江湖过渡。",
-        "黄枫谷偏药园、法修和宗门规矩。",
-        "灵兽山偏灵兽、灵虫、采药和照料工作。"
+        "黄枫谷偏药园、法修和宗门规矩，内堂、药台、经廊是一整套稳根基的线。",
+        "灵兽山偏灵兽、灵虫、采药和照料工作，兽栏、虫圃与外山执事堂是一整条日常事务链。"
       ],
       "keywords": [
         "门派",
@@ -13519,7 +13771,7 @@
       "summary": "天南一线是从凡俗走向宗门和海路的主交通带。",
       "body_lines": [
         "七玄门与嘉元城适合起步和熟悉命令。",
-        "太南谷适合换消息、接风声、学阵法。",
+        "太南谷适合换消息、接风声、学阵法，散修棚市则最适合先把第一条活路跑顺。",
         "黄枫谷和灵兽山开始把你推向正式身份线。",
         "血禁和天南港则把你往更高风险的世界推过去。"
       ],
@@ -13545,8 +13797,8 @@
       "title": "乱星海舆图",
       "summary": "乱星海不是一张图走到底，而是要学会认潮、认礁、认风暴。",
       "body_lines": [
-        "先从天南港和近港开始，别一上来就往深海闯。",
-        "礁影浅滩和群岛小埠是海猎、采珠与跑货的基础盘。",
+        "先从天南港、后湾和近港开始，别一上来就往深海闯。",
+        "礁影浅滩、群岛小埠和珠市棚是海猎、采珠与跑货的基础盘。",
         "风暴航道和残碑孤岛则开始把人拉向虚天殿线。"
       ],
       "keywords": [
@@ -13574,7 +13826,7 @@
       "body_lines": [
         "从筑基后期开始，结丹准备会变成真正的大关口。",
         "至少要关心三件事：结丹主丹、稳丹主材、身份或世界见闻。",
-        "可把结丹主线记成一串路标：外海见闻 -> 结丹之门 -> 古修残环。",
+        "可把结丹主线记成一串路标：外海见闻 -> 结丹之门 -> 外海中层 -> 丹火灵脉 -> 古修残环。",
         "先问 rumor，再跑 work/board，把外海中层、丹火灵脉与古修残环的线索串起来。",
         "突破前最好逐项核对：结丹灵丸、青焰晶髓、紫丹灵砂，再加上够用的身份资历。"
       ],
@@ -13604,7 +13856,7 @@
       "summary": "元婴初期之前，真正困难的不是修为，而是护住神识与凑齐灵物。",
       "body_lines": [
         "凝婴前夜需要神识圆满、主丹主材齐备，以及足够的世界见闻。",
-        "可把凝婴路标记成：古修残环 -> 凝婴前夜 -> 星渊裂海。",
+        "可把凝婴路标记成：古修残环 -> 凝婴前夜 -> 星渊潮眼。",
         "深海灵物、古修遗迹和高风险 rumor 会在这一阶段同时指向你。",
         "突破前先逐项核对：凝婴灵丹、星海心珀、养魂古玉，以及关键世界见闻。",
         "若仍停留在筑基/结丹期的旧循环，往往看得见路，却进不了门。"
@@ -13830,6 +14082,363 @@
       "requirements": "结丹后段的修士才会认真考虑这条差事，太早去多半只会把命交给深海。",
       "reward_summary": "凝婴线索、深海灵物、关键见闻。",
       "command_hint": "ask 祭台残灵 about rumor / travel / board",
+      "repeatable": true,
+      "route_tag": "star_abyss",
+      "service_tag": "nascent_soul",
+      "related_quest_id": "nascent_soul_gate"
+    },
+    {
+      "job_id": "loose_market_shift",
+      "title": "棚市记账",
+      "kind": "工作任务",
+      "scene_id": "loose_camp_square",
+      "issuer_npc_id": "loose_master_wen",
+      "submit_npc_id": "guest_scribe_fan",
+      "summary": "散修棚市最缺的不是热闹，而是有人肯把货、话和来路去路记明白。",
+      "description": "散修棚市最缺的不是热闹，而是有人肯把货、话和来路去路记明白。",
+      "requirements": "识人、认货、肯跑腿。",
+      "reward_summary": "灵石、散修声望、棚市门路。",
+      "command_hint": "ask 温散人 about rumor / board / journal",
+      "repeatable": true,
+      "route_tag": "loose_cultivator",
+      "service_tag": "board",
+      "related_quest_id": "loose_rumor_task"
+    },
+    {
+      "job_id": "loose_herb_sorting",
+      "title": "药帐分拣",
+      "kind": "工作任务",
+      "scene_id": "loose_medicine_tent",
+      "issuer_npc_id": "herb_tutor_qing",
+      "submit_npc_id": "herb_tutor_qing",
+      "summary": "药帐里永远缺一个肯把便宜药草也分清的人。",
+      "description": "药帐里永远缺一个肯把便宜药草也分清的人。",
+      "requirements": "认草药、手稳、耐心足。",
+      "reward_summary": "药材、炼药熟路、散修人情。",
+      "command_hint": "ask 青药师 about rumor / work / journal",
+      "repeatable": true,
+      "route_tag": "loose_cultivator",
+      "service_tag": "gather",
+      "related_quest_id": ""
+    },
+    {
+      "job_id": "east_gate_notice_run",
+      "title": "东门传话",
+      "kind": "公众任务",
+      "scene_id": "jiayuan_east_gate",
+      "issuer_npc_id": "gate_guard_lu",
+      "submit_npc_id": "gate_guard_lu",
+      "summary": "城门口的差事多半不起眼，却最能试出一个人会不会把口风和脚程都收住。",
+      "description": "城门口的差事多半不起眼，却最能试出一个人会不会把口风和脚程都收住。",
+      "requirements": "认得城里几条路，也知道哪些话不能在街心乱说。",
+      "reward_summary": "灵石、城门熟路、嘉元城口碑。",
+      "command_hint": "ask 陆门吏 about rumor / travel / journal",
+      "repeatable": true,
+      "route_tag": "loose_cultivator",
+      "service_tag": "rumor",
+      "related_quest_id": ""
+    },
+    {
+      "job_id": "mofu_guest_registry",
+      "title": "府前记名",
+      "kind": "公众任务",
+      "scene_id": "mofu_front_hall",
+      "issuer_npc_id": "mofu_elder_housekeeper",
+      "submit_npc_id": "mofu_elder_housekeeper",
+      "summary": "墨府前厅最缺的不是客人，而是能把来客、令牌和口信都记清的人。",
+      "description": "墨府前厅最缺的不是客人，而是能把来客、令牌和口信都记清的人。",
+      "requirements": "眼明手快，嘴严心稳。",
+      "reward_summary": "灵石、墨府人情、府内差遣入口。",
+      "command_hint": "ask 府中老管事 about rumor / board / journal",
+      "repeatable": true,
+      "route_tag": "loose_cultivator",
+      "service_tag": "board",
+      "related_quest_id": "mofu_guest_token"
+    },
+    {
+      "job_id": "tainan_gate_lead",
+      "title": "谷口引路",
+      "kind": "公众任务",
+      "scene_id": "tainan_gate",
+      "issuer_npc_id": "wandering_broker",
+      "submit_npc_id": "wandering_broker",
+      "summary": "太南谷口每天都有人来问货、问人、问路，肯替人把线头理顺便是一门活。",
+      "description": "太南谷口每天都有人来问货、问人、问路，肯替人把线头理顺便是一门活。",
+      "requirements": "认得摊位、会听风向、敢往血禁边上追半步。",
+      "reward_summary": "灵石、散修声望、太南消息口子。",
+      "command_hint": "ask 流动牙人 about rumor / board / travel",
+      "repeatable": true,
+      "route_tag": "loose_cultivator",
+      "service_tag": "rumor",
+      "related_quest_id": "ruins_old_map"
+    },
+    {
+      "job_id": "huangfeng_registry_copy",
+      "title": "内堂录名",
+      "kind": "门派事务",
+      "scene_id": "huangfeng_hall",
+      "issuer_npc_id": "elder_ma",
+      "submit_npc_id": "disciple_lu",
+      "summary": "黄枫谷偏殿最看重的不是嘴上恭顺，而是能不能把交到案头的事录得清、办得稳。",
+      "description": "黄枫谷偏殿最看重的不是嘴上恭顺，而是能不能把交到案头的事录得清、办得稳。",
+      "requirements": "守规矩、认名录、肯把杂务先做扎实。",
+      "reward_summary": "贡献、名录熟路、内堂信任。",
+      "command_hint": "ask 马师伯 about rumor / duty / journal",
+      "repeatable": true,
+      "route_tag": "huangfeng_valley",
+      "service_tag": "sect",
+      "related_quest_id": ""
+    },
+    {
+      "job_id": "medicine_terrace_round",
+      "title": "药台巡材",
+      "kind": "门派事务",
+      "scene_id": "huangfeng_medicine_terrace",
+      "issuer_npc_id": "medicine_deacon",
+      "submit_npc_id": "medicine_deacon",
+      "summary": "药梯台每日都要点药、验苗、分辨哪些东西能入炉、哪些只能先晾着。",
+      "description": "药梯台每日都要点药、验苗、分辨哪些东西能入炉、哪些只能先晾着。",
+      "requirements": "认药材、肯吃细活、知道轻重缓急。",
+      "reward_summary": "贡献、药材、药台门路。",
+      "command_hint": "ask 药台执事 about rumor / work / journal",
+      "repeatable": true,
+      "route_tag": "huangfeng_valley",
+      "service_tag": "alchemy",
+      "related_quest_id": "medicine_moss"
+    },
+    {
+      "job_id": "scripture_rubbing",
+      "title": "经廊抄卷",
+      "kind": "门派事务",
+      "scene_id": "huangfeng_scripture",
+      "issuer_npc_id": "scripture_keeper",
+      "submit_npc_id": "scripture_keeper",
+      "summary": "藏经石廊最缺的不是会背口诀的人，而是肯把一页页旧卷慢慢抄到手上的人。",
+      "description": "藏经石廊最缺的不是会背口诀的人，而是肯把一页页旧卷慢慢抄到手上的人。",
+      "requirements": "心稳、手稳、愿意从最浅的口诀开始磨。",
+      "reward_summary": "贡献、手册见闻、经廊信任。",
+      "command_hint": "ask 守卷人 about rumor / duty / journal",
+      "repeatable": true,
+      "route_tag": "huangfeng_valley",
+      "service_tag": "mentor",
+      "related_quest_id": "huangfeng_manual"
+    },
+    {
+      "job_id": "beast_pen_feed_round",
+      "title": "兽栏巡喂",
+      "kind": "门派事务",
+      "scene_id": "spirit_beast_beast_pen",
+      "issuer_npc_id": "beast_feeder_zhou",
+      "submit_npc_id": "beast_feeder_zhou",
+      "summary": "灵兽山最基本也最磨人的活，就是把一圈圈兽栏按时喂稳、看稳、收拾稳。",
+      "description": "灵兽山最基本也最磨人的活，就是把一圈圈兽栏按时喂稳、看稳、收拾稳。",
+      "requirements": "不怕脏、不怕麻烦、懂得先把灵兽脾气摸清。",
+      "reward_summary": "贡献、饲养熟路、兽栏信任。",
+      "command_hint": "ask 周饲兽 about rumor / work / journal",
+      "repeatable": true,
+      "route_tag": "spirit_beast_mountain",
+      "service_tag": "sect",
+      "related_quest_id": ""
+    },
+    {
+      "job_id": "insect_garden_mist",
+      "title": "虫圃换饵",
+      "kind": "门派事务",
+      "scene_id": "spirit_beast_insect_garden",
+      "issuer_npc_id": "insect_master_qin",
+      "submit_npc_id": "insect_master_qin",
+      "summary": "虫圃里最怕的不是虫凶，而是饵丸、湿度和气味哪一样先乱了。",
+      "description": "虫圃里最怕的不是虫凶，而是饵丸、湿度和气味哪一样先乱了。",
+      "requirements": "胆大心细，肯照规矩试错。",
+      "reward_summary": "贡献、虫材、灵虫门路。",
+      "command_hint": "ask 秦虫师 about rumor / work / journal",
+      "repeatable": true,
+      "route_tag": "spirit_beast_mountain",
+      "service_tag": "gather",
+      "related_quest_id": ""
+    },
+    {
+      "job_id": "outer_hall_ledger",
+      "title": "外山点事",
+      "kind": "门派事务",
+      "scene_id": "spirit_beast_hall",
+      "issuer_npc_id": "outer_deacon_du",
+      "submit_npc_id": "outer_deacon_du",
+      "summary": "外山执事堂里从不缺杂务，缺的是能把兽材、差遣和人手全都拢顺的人。",
+      "description": "外山执事堂里从不缺杂务，缺的是能把兽材、差遣和人手全都拢顺的人。",
+      "requirements": "扛事、守时、知道先后次序。",
+      "reward_summary": "贡献、执事眼缘、外山权限。",
+      "command_hint": "ask 杜执事 about rumor / duty / journal",
+      "repeatable": true,
+      "route_tag": "spirit_beast_mountain",
+      "service_tag": "sect",
+      "related_quest_id": ""
+    },
+    {
+      "job_id": "tiannan_chart_copy",
+      "title": "坊市誊图",
+      "kind": "工作任务",
+      "scene_id": "tiannan_market",
+      "issuer_npc_id": "chart_seller",
+      "submit_npc_id": "chart_seller",
+      "summary": "海商坊市里最值钱的常不是货，而是那张你抄得够不够准的旧海图。",
+      "description": "海商坊市里最值钱的常不是货，而是那张你抄得够不够准的旧海图。",
+      "requirements": "识潮线、认旧字、愿意替人把图与口信都补齐。",
+      "reward_summary": "灵石、航线见闻、坊市门路。",
+      "command_hint": "ask 卖图客 about rumor / board / journal",
+      "repeatable": true,
+      "route_tag": "chaos_sea_route",
+      "service_tag": "trade",
+      "related_quest_id": ""
+    },
+    {
+      "job_id": "dock_rigging_shift",
+      "title": "码头紧索",
+      "kind": "工作任务",
+      "scene_id": "tiannan_dock",
+      "issuer_npc_id": "old_shipwright",
+      "submit_npc_id": "old_shipwright",
+      "summary": "远航码头不怕活重，只怕有人在阵索和风骨上偷懒。",
+      "description": "远航码头不怕活重，只怕有人在阵索和风骨上偷懒。",
+      "requirements": "手脚利落，听得懂船匠指挥。",
+      "reward_summary": "灵石、远航信用、海路门径。",
+      "command_hint": "ask 老船匠 about rumor / work / travel",
+      "repeatable": true,
+      "route_tag": "chaos_sea_route",
+      "service_tag": "travel",
+      "related_quest_id": "captain_supply"
+    },
+    {
+      "job_id": "salt_house_packing",
+      "title": "盐棚拣货",
+      "kind": "工作任务",
+      "scene_id": "harbor_salt_house",
+      "issuer_npc_id": "salt_house_keeper_lin",
+      "submit_npc_id": "salt_house_keeper_lin",
+      "summary": "晒盐棚里最稳的活从来不是抢货，而是把盐壳、海藻和能卖钱的东西一层层拣明白。",
+      "description": "晒盐棚里最稳的活从来不是抢货，而是把盐壳、海藻和能卖钱的东西一层层拣明白。",
+      "requirements": "手快眼明，懂得什么能留、什么该卖。",
+      "reward_summary": "海材、灵石、后湾熟路。",
+      "command_hint": "ask 林盐婆 about rumor / work / journal",
+      "repeatable": true,
+      "route_tag": "chaos_sea_route",
+      "service_tag": "trade",
+      "related_quest_id": ""
+    },
+    {
+      "job_id": "net_field_sorting",
+      "title": "晒网分潮",
+      "kind": "工作任务",
+      "scene_id": "harbor_net_field",
+      "issuer_npc_id": "net_master_peng",
+      "submit_npc_id": "net_master_peng",
+      "summary": "晒网场的活讲究快，也讲究你会不会从一堆网脚和海屑里先挑出值钱的那一点。",
+      "description": "晒网场的活讲究快，也讲究你会不会从一堆网脚和海屑里先挑出值钱的那一点。",
+      "requirements": "不怕湿、不怕乱、肯反复练手。",
+      "reward_summary": "海材、后湾口碑、近海图线索。",
+      "command_hint": "ask 彭网师 about rumor / work / journal",
+      "repeatable": true,
+      "route_tag": "chaos_sea_route",
+      "service_tag": "sea",
+      "related_quest_id": "harbor_chart_task"
+    },
+    {
+      "job_id": "isles_manifest_run",
+      "title": "群岛清舱",
+      "kind": "工作任务",
+      "scene_id": "outer_isles_wharf",
+      "issuer_npc_id": "island_broker_shi",
+      "submit_npc_id": "island_broker_shi",
+      "summary": "群岛小埠的活不算凶险，却最考验你会不会把人、货和下一段航线都理顺。",
+      "description": "群岛小埠的活不算凶险，却最考验你会不会把人、货和下一段航线都理顺。",
+      "requirements": "认船、认货、肯替人跑埠头。",
+      "reward_summary": "灵石、群岛航线熟路、海商信任。",
+      "command_hint": "ask 施岛牙 about rumor / board / travel",
+      "repeatable": true,
+      "route_tag": "chaos_sea_route",
+      "service_tag": "travel",
+      "related_quest_id": "outer_pearl_task"
+    },
+    {
+      "job_id": "pearl_market_grading",
+      "title": "珠市拣成色",
+      "kind": "工作任务",
+      "scene_id": "outer_isles_market",
+      "issuer_npc_id": "pearl_diver_lan",
+      "submit_npc_id": "pearl_diver_lan",
+      "summary": "珠市棚里最不缺珠壳，最缺的是肯把成色、药用和去处都分出来的人。",
+      "description": "珠市棚里最不缺珠壳，最缺的是肯把成色、药用和去处都分出来的人。",
+      "requirements": "眼准、心稳、肯把潮汐时机记熟。",
+      "reward_summary": "海材、灵石、采珠门路。",
+      "command_hint": "ask 蓝采珠 about rumor / board / journal",
+      "repeatable": true,
+      "route_tag": "chaos_sea_route",
+      "service_tag": "sea",
+      "related_quest_id": "outer_coral_task"
+    },
+    {
+      "job_id": "outer_sea_sounding",
+      "title": "外海测潮",
+      "kind": "高风险机会任务",
+      "scene_id": "outer_sea_mid",
+      "issuer_npc_id": "deck_mage",
+      "submit_npc_id": "deck_mage",
+      "summary": "真正的结丹准备不止靠丹方，也得有人敢在外海中层把潮压、灵压和退路一并看回来。",
+      "description": "真正的结丹准备不止靠丹方，也得有人敢在外海中层把潮压、灵压和退路一并看回来。",
+      "requirements": "最好已走通近港和群岛海线，否则连第一轮灵压都未必扛得住。",
+      "reward_summary": "结丹见闻、外海主材、丹火线索。",
+      "command_hint": "wanted",
+      "repeatable": true,
+      "route_tag": "outer_sea",
+      "service_tag": "gold_core",
+      "related_quest_id": "gold_core_gate"
+    },
+    {
+      "job_id": "core_flame_sifting",
+      "title": "丹火筛脉",
+      "kind": "高风险机会任务",
+      "scene_id": "core_flame_vein",
+      "issuer_npc_id": "rift_record_spirit",
+      "submit_npc_id": "rift_record_spirit",
+      "summary": "丹火灵脉不是拿到什么就算什么，真正值钱的是你能不能把灵脉里那一缕够稳的火意筛出来。",
+      "description": "丹火灵脉不是拿到什么就算什么，真正值钱的是你能不能把灵脉里那一缕够稳的火意筛出来。",
+      "requirements": "要扛得住地火，也要看得懂残纹与火脉如何互相咬合。",
+      "reward_summary": "结丹辅材、古修见闻、残环门径。",
+      "command_hint": "harvest",
+      "repeatable": true,
+      "route_tag": "xutian_arc",
+      "service_tag": "gold_core",
+      "related_quest_id": "core_ruin_heart"
+    },
+    {
+      "job_id": "ruin_ring_rubbing",
+      "title": "残环拓纹",
+      "kind": "高风险机会任务",
+      "scene_id": "ancient_ruin_ring",
+      "issuer_npc_id": "wall_listener_qiu",
+      "submit_npc_id": "wall_listener_qiu",
+      "summary": "古修残环里真正带得出去的往往不是整件宝，而是那几段能让后人继续往下走的残纹。",
+      "description": "古修残环里真正带得出去的往往不是整件宝，而是那几段能让后人继续往下走的残纹。",
+      "requirements": "会读残纹，肯在危险里停下来慢慢看。",
+      "reward_summary": "残环线索、古禁见闻、结丹门槛提示。",
+      "command_hint": "board",
+      "repeatable": true,
+      "route_tag": "xutian_arc",
+      "service_tag": "danger",
+      "related_quest_id": "core_ruin_heart"
+    },
+    {
+      "job_id": "star_abyss_tidewatch",
+      "title": "星渊候潮",
+      "kind": "高风险机会任务",
+      "scene_id": "star_abyss",
+      "issuer_npc_id": "star_tablet_spirit",
+      "submit_npc_id": "star_tablet_spirit",
+      "summary": "走到星渊潮眼后，真正困难的不是进去，而是等到那一口能让灵物露面的潮时。",
+      "description": "走到星渊潮眼后，真正困难的不是进去，而是等到那一口能让灵物露面的潮时。",
+      "requirements": "结丹后段只是门槛，更要有足够见闻和耐性。",
+      "reward_summary": "凝婴线索、深海灵物、潮眼门径。",
+      "command_hint": "travel",
       "repeatable": true,
       "route_tag": "star_abyss",
       "service_tag": "nascent_soul",
@@ -14160,6 +14769,433 @@
         "它提到星渊潮眼里偶有灵物流成心形，真正敢下去的人，通常已不再把结丹当终点。"
       ],
       "job_ids": [
+        "star_abyss_collect"
+      ],
+      "quest_ids": [
+        "nascent_soul_gate"
+      ],
+      "unlock_flags": []
+    },
+    {
+      "source_id": "loose_master_wen_rumor",
+      "scene_id": "loose_camp_square",
+      "npc_id": "loose_master_wen",
+      "topic": "rumor",
+      "summary": "温散人最懂散修起步最怕什么，也最懂第一条稳营生该从哪儿开。",
+      "body_lines": [
+        "温散人吹了吹茶面：散修若连棚市里谁在收货、谁在借宿、谁只会卖空话都分不清，出门再远也是白走。",
+        "他让你先把棚市账和口风理顺，再谈往太南和海港那边追更大的门路。"
+      ],
+      "job_ids": [
+        "loose_market_shift"
+      ],
+      "quest_ids": [
+        "loose_rumor_task"
+      ],
+      "unlock_flags": []
+    },
+    {
+      "source_id": "loose_herb_tutor_rumor",
+      "scene_id": "loose_medicine_tent",
+      "npc_id": "herb_tutor_qing",
+      "topic": "rumor",
+      "summary": "青药师最看重的不是你手里药贵不贵，而是你肯不肯把便宜草木先认扎实。",
+      "body_lines": [
+        "青药师掀开药锅：散修手里常没有好东西，所以更得学会把每一味便宜药草都用对地方。",
+        "她提醒你，药帐和棚市之间总有细活可做，认药的人比会吹嘘的人值钱得多。"
+      ],
+      "job_ids": [
+        "loose_herb_sorting"
+      ],
+      "quest_ids": [
+        "loose_stone_task"
+      ],
+      "unlock_flags": []
+    },
+    {
+      "source_id": "loose_diviner_rumor",
+      "scene_id": "loose_diviner_mat",
+      "npc_id": "diviner_meng",
+      "topic": "旧路",
+      "summary": "孟卜师爱讲的从不是神神叨叨，而是哪条旧路仍有人能走通。",
+      "body_lines": [
+        "孟卜师拨了拨草签：散修最难的不是没有宗门，是常常不知道下一步该往哪边押。",
+        "他提起太南谷口、嘉元东门和棚市借宿簿，说真正能换成活路的消息通常都藏在这些最不起眼的地方。"
+      ],
+      "job_ids": [
+        "loose_market_shift",
+        "tainan_gate_lead"
+      ],
+      "quest_ids": [],
+      "unlock_flags": []
+    },
+    {
+      "source_id": "guest_hall_rumor",
+      "scene_id": "loose_guest_hall",
+      "npc_id": "guest_scribe_fan",
+      "topic": "rumor",
+      "summary": "借宿大棚每天都有人来有人走，范记名见过太多半路起势和半路折掉的人。",
+      "body_lines": [
+        "范记名边翻簿边道：真正能越走越远的人，通常都懂得先在借宿、记账和口信这些小事上把人情攒起来。",
+        "他说棚里最近往天南港跑的人多了，群岛和后湾那边的门路正在慢慢热起来。"
+      ],
+      "job_ids": [
+        "loose_market_shift"
+      ],
+      "quest_ids": [],
+      "unlock_flags": []
+    },
+    {
+      "source_id": "east_gate_guard_rumor",
+      "scene_id": "jiayuan_east_gate",
+      "npc_id": "gate_guard_lu",
+      "topic": "rumor",
+      "summary": "陆门吏站在城门口久了，最知道哪些话是风声，哪些话其实已经在往差事上落。",
+      "body_lines": [
+        "陆门吏压低声音：城里现在最怕的不是闹事，是有人把该传的话传错了地方。",
+        "他让你先把东门、集市和墨府这三点跑熟，再谈自己有没有资格往更深处搅进去。"
+      ],
+      "job_ids": [
+        "east_gate_notice_run",
+        "mofu_guest_registry"
+      ],
+      "quest_ids": [
+        "qixuan_herb",
+        "mofu_guest_token"
+      ],
+      "unlock_flags": []
+    },
+    {
+      "source_id": "mofu_registry_rumor",
+      "scene_id": "mofu_front_hall",
+      "npc_id": "mofu_elder_housekeeper",
+      "topic": "rumor",
+      "summary": "府中老管事这些天最怕的不是客多，而是来客令、旧账和风声哪一样先乱。",
+      "body_lines": [
+        "老管事揉了揉眉心：墨府这阵子差事一桩接一桩，真肯替人把名录、口信和令牌都拢顺的人太少。",
+        "他暗示你，若能把前厅这一步办稳，内院和城里的人自然会把更多门径漏给你。"
+      ],
+      "job_ids": [
+        "mofu_guest_registry"
+      ],
+      "quest_ids": [
+        "mofu_guest_token"
+      ],
+      "unlock_flags": []
+    },
+    {
+      "source_id": "tainan_gate_broker_rumor",
+      "scene_id": "tainan_gate",
+      "npc_id": "wandering_broker",
+      "topic": "rumor",
+      "summary": "流动牙人最喜欢看新人站在谷口发愣，因为那正说明你还没学会把风声当路。",
+      "body_lines": [
+        "流动牙人笑得很淡：谷口不缺货，不缺人，缺的是有人能先把哪条线值得追、哪条线只是吵闹分出来。",
+        "他提起嘉元城旧账和血禁旧图，说真正值钱的路从来都是一段一段被人问出来的。"
+      ],
+      "job_ids": [
+        "tainan_gate_lead"
+      ],
+      "quest_ids": [
+        "ruins_old_map"
+      ],
+      "unlock_flags": []
+    },
+    {
+      "source_id": "elder_ma_rumor",
+      "scene_id": "huangfeng_hall",
+      "npc_id": "elder_ma",
+      "topic": "rumor",
+      "summary": "马师伯肯开口时，通常不是在讲大道理，而是在提醒你哪一步根基最不能省。",
+      "body_lines": [
+        "马师伯缓声道：黄枫谷里真正能让人走远的，多半都藏在内堂录名、药台巡材和旧卷抄写这些最慢的事里。",
+        "他说若你连这些都嫌琐碎，后面无论是血禁还是结丹门槛，多半都会先嫌你心浮。"
+      ],
+      "job_ids": [
+        "huangfeng_registry_copy",
+        "medicine_terrace_round",
+        "scripture_rubbing"
+      ],
+      "quest_ids": [
+        "medicine_moss",
+        "huangfeng_manual"
+      ],
+      "unlock_flags": []
+    },
+    {
+      "source_id": "scripture_keeper_rumor",
+      "scene_id": "huangfeng_scripture",
+      "npc_id": "scripture_keeper",
+      "topic": "口诀和抄卷在守卷人眼里从不是杂活，而是照人心性的法子。",
+      "summary": [
+        "守卷人抬手抚过旧刻：许多人想一口气学会更高明的东西，却不肯把最浅的一句先抄稳。",
+        "他提醒你，经廊抄卷、药台点材和内堂录名其实是一条线，都是在教人怎么把根基按次序搭起来。"
+      ],
+      "body_lines": {
+        "job_ids": [
+          "scripture_rubbing",
+          "huangfeng_registry_copy"
+        ],
+        "quest_ids": [
+          "huangfeng_manual"
+        ]
+      },
+      "job_ids": [],
+      "quest_ids": [],
+      "unlock_flags": []
+    },
+    {
+      "source_id": "beast_feeder_rumor",
+      "scene_id": "spirit_beast_beast_pen",
+      "npc_id": "beast_feeder_zhou",
+      "topic": "rumor",
+      "summary": "周饲兽看过太多人把驭兽想成威风事，却忘了最先要学的是喂稳、照稳、收拾稳。",
+      "body_lines": [
+        "周饲兽拍着栏杆：灵兽不认你说了什么，只认你今天有没有把草料、药丸和脾气都照看明白。",
+        "他提起虫圃和外山执事堂，说真正能往内山走的人，往往先是把这些最脏最细的活扛住了。"
+      ],
+      "job_ids": [
+        "beast_pen_feed_round",
+        "insect_garden_mist",
+        "outer_hall_ledger"
+      ],
+      "quest_ids": [
+        "spirit_feed_task",
+        "spirit_bug_task"
+      ],
+      "unlock_flags": []
+    },
+    {
+      "source_id": "insect_master_rumor",
+      "scene_id": "spirit_beast_insect_garden",
+      "npc_id": "insect_master_qin",
+      "topic": "rumor",
+      "summary": "秦虫师从不把灵虫当小玩意，在她眼里，能不能照料这种细物最见真本事。",
+      "body_lines": [
+        "秦虫师皱着眉：虫圃里怕的不是虫多，是你看不出哪一丝湿热、哪一味饵丸已经在往错处走。",
+        "她让你先学会换饵、稳气味，再谈更深的采材和驭使。"
+      ],
+      "job_ids": [
+        "insect_garden_mist"
+      ],
+      "quest_ids": [
+        "spirit_bug_task"
+      ],
+      "unlock_flags": []
+    },
+    {
+      "source_id": "outer_deacon_rumor",
+      "scene_id": "spirit_beast_hall",
+      "npc_id": "outer_deacon_du",
+      "topic": "rumor",
+      "summary": "杜执事最清楚外山哪种人是会留下来的，哪种人只是图一时新鲜。",
+      "body_lines": [
+        "杜执事翻着册子道：兽栏、虫圃、饲草岭这些地方看着不起眼，可谁真能把事扛下来，我一眼就看得出来。",
+        "他点明外山点事不是跑腿，而是给愿意往上走的人一块块垫脚石。"
+      ],
+      "job_ids": [
+        "outer_hall_ledger",
+        "beast_pen_feed_round"
+      ],
+      "quest_ids": [
+        "spirit_feed_task"
+      ],
+      "unlock_flags": []
+    },
+    {
+      "source_id": "chart_seller_rumor",
+      "scene_id": "tiannan_market",
+      "npc_id": "chart_seller",
+      "topic": "rumor",
+      "summary": "卖图客从不觉得图最值钱，他觉得值钱的是你会不会把图后头那一串人和货也一并看懂。",
+      "body_lines": [
+        "卖图客压着嗓子：海商坊市每天都有人来买残图，可真能把图誊准、把口风问全的人少得很。",
+        "他说若你肯先做坊市誊图这类慢活，远航码头和群岛小埠那边自然会慢慢认你。"
+      ],
+      "job_ids": [
+        "tiannan_chart_copy"
+      ],
+      "quest_ids": [],
+      "unlock_flags": []
+    },
+    {
+      "source_id": "old_shipwright_rumor",
+      "scene_id": "tiannan_dock",
+      "npc_id": "old_shipwright",
+      "topic": "rumor",
+      "summary": "老船匠口中的远航，从来不只是上船，而是把绳索、阵灯、补给和胆气一并备齐。",
+      "body_lines": [
+        "老船匠摸着船板：船骨差一寸，海上就能让你赔一条命；人心若差一寸，也是一样。",
+        "他让你先在码头把紧索和补给活做稳，再谈群岛、外海和更深的旧路。"
+      ],
+      "job_ids": [
+        "dock_rigging_shift",
+        "isles_manifest_run"
+      ],
+      "quest_ids": [
+        "captain_supply"
+      ],
+      "unlock_flags": []
+    },
+    {
+      "source_id": "salt_house_rumor",
+      "scene_id": "harbor_salt_house",
+      "npc_id": "salt_house_keeper_lin",
+      "topic": "rumor",
+      "summary": "林盐婆知道后湾看似最不起眼的东西，往往正是药师和海商最舍不得断的货。",
+      "body_lines": [
+        "林盐婆把盐壳拨成一堆：后湾真正能养人的，不只是猎得着东西，而是能把盐壳、海藻和壳粉都卖对人。",
+        "她让你先把晒盐棚和晒网场这些小活做熟，群岛珠市那边自然会认你是会过日子的。"
+      ],
+      "job_ids": [
+        "salt_house_packing",
+        "net_field_sorting"
+      ],
+      "quest_ids": [],
+      "unlock_flags": []
+    },
+    {
+      "source_id": "net_master_rumor",
+      "scene_id": "harbor_net_field",
+      "npc_id": "net_master_peng",
+      "topic": "rumor",
+      "summary": "彭网师看海货不像看战利品，更像在看一张会不会断档的活路。",
+      "body_lines": [
+        "彭网师边补网边说：晒网场的活看着零碎，其实最能练人，慢一拍就少一份货，快过头又容易全毁。",
+        "他提起后湾灯塔和群岛小埠，说真正的海路都是从这些看似杂乱的地方一段段拼出来的。"
+      ],
+      "job_ids": [
+        "net_field_sorting",
+        "isles_manifest_run"
+      ],
+      "quest_ids": [
+        "harbor_chart_task"
+      ],
+      "unlock_flags": []
+    },
+    {
+      "source_id": "lamp_guard_rumor",
+      "scene_id": "harbor_lamp_tower",
+      "npc_id": "lamp_guard_xie",
+      "topic": "风向",
+      "summary": "谢灯守不卖货，只卖比货更值钱的东西：什么时候该出湾，什么时候该缩手。",
+      "body_lines": [
+        "谢灯守盯着灯焰：海上很多人不是死在浪里，是死在自以为再赶一程也无妨。",
+        "他说若你学会看灯、看潮、看云，群岛和外海会比别人多给你一条退路。"
+      ],
+      "job_ids": [
+        "salt_house_packing",
+        "isles_manifest_run"
+      ],
+      "quest_ids": [],
+      "unlock_flags": []
+    },
+    {
+      "source_id": "island_broker_rumor",
+      "scene_id": "outer_isles_wharf",
+      "npc_id": "island_broker_shi",
+      "topic": "rumor",
+      "summary": "施岛牙最会替人把群岛航线拆成一段段可活着走完的小路。",
+      "body_lines": [
+        "施岛牙笑道：群岛不大，可哪条小埠能补货、哪条礁路会翻脸、哪条船愿意带你，全是门路。",
+        "他让你先替埠头把清舱和点货做稳，再慢慢往珠市和黑礁那边伸手。"
+      ],
+      "job_ids": [
+        "isles_manifest_run",
+        "pearl_market_grading"
+      ],
+      "quest_ids": [
+        "outer_pearl_task"
+      ],
+      "unlock_flags": []
+    },
+    {
+      "source_id": "pearl_diver_rumor",
+      "scene_id": "outer_isles_market",
+      "npc_id": "pearl_diver_lan",
+      "topic": "rumor",
+      "summary": "蓝采珠知道近海最会骗人的是哪层浪，也知道哪一颗珠子够格被留下。",
+      "body_lines": [
+        "蓝采珠轻轻转着珠壳：近海采珠最怕心急，成色差半分，去处就会差一截。",
+        "她提到听潮坛和黑礁外缘，说真正的群岛门路从来不是一把捞出来的，是一轮轮候潮磨出来的。"
+      ],
+      "job_ids": [
+        "pearl_market_grading"
+      ],
+      "quest_ids": [
+        "outer_coral_task"
+      ],
+      "unlock_flags": []
+    },
+    {
+      "source_id": "deck_mage_rumor",
+      "scene_id": "chaos_sea_ship",
+      "npc_id": "deck_mage",
+      "topic": "结丹门径",
+      "summary": "甲板术士近来谈得最多的已不是近港法阵，而是外海中层那股能稳住丹火的潮压。",
+      "body_lines": [
+        "甲板术士把阵灯调得更亮：想碰结丹门槛，先得学会在外海灵压里不乱手脚，丹火与退路都得一起算。",
+        "他说若你真敢往外海中层再走一步，就别只想着拿东西，先把潮势、压感和能不能回来都看清。"
+      ],
+      "job_ids": [
+        "outer_sea_sounding"
+      ],
+      "quest_ids": [
+        "gold_core_gate"
+      ],
+      "unlock_flags": []
+    },
+    {
+      "source_id": "rift_record_rumor",
+      "scene_id": "xutian_rune_garden",
+      "npc_id": "rift_record_spirit",
+      "topic": "残纹丹火",
+      "summary": "记纹残灵对后来人最感兴趣的，不是你带了什么，而是你能不能把丹火与残纹看成同一件事。",
+      "body_lines": [
+        "记纹残灵空声道：地火自会烧人，残纹自会迷人，真正够格的人得先看出它们为什么还会彼此照应。",
+        "它暗示丹火灵脉和古修残环其实是一前一后的两道门，少看懂一边都进不深。"
+      ],
+      "job_ids": [
+        "core_flame_sifting",
+        "ruin_ring_rubbing"
+      ],
+      "quest_ids": [
+        "core_ruin_heart"
+      ],
+      "unlock_flags": []
+    },
+    {
+      "source_id": "wall_listener_rumor",
+      "scene_id": "xutian_endless_wall",
+      "npc_id": "wall_listener_qiu",
+      "topic": "残环回响",
+      "summary": "听壁残识总像是在替古修残环留最后几句愿意被后来人听见的话。",
+      "body_lines": [
+        "听壁残识缓缓道：残环最贵的从来不是一件整宝，而是那几道仍肯回应后来人的旧纹与旧意。",
+        "它提醒你，若真想从残环往星渊再挪一步，就得先学会把看见的东西带回去，而不是只把手伸过去。"
+      ],
+      "job_ids": [
+        "ruin_ring_rubbing",
+        "star_abyss_tidewatch"
+      ],
+      "quest_ids": [
+        "core_ruin_heart",
+        "nascent_soul_gate"
+      ],
+      "unlock_flags": []
+    },
+    {
+      "source_id": "star_tablet_abyss_rumor",
+      "scene_id": "xutian_star_platform",
+      "npc_id": "star_tablet_spirit",
+      "topic": "星渊潮眼",
+      "summary": "祭台残灵如今偶尔不再只谈玄门，而是直接谈那口会决定凝婴成败的潮眼。",
+      "body_lines": [
+        "祭台残灵低声道：星渊潮眼给人的从不是机会，而是一次你敢不敢等、能不能护住神识的试探。",
+        "它说真正要去候那一轮潮的人，通常已经不再把结丹当终点，而把每一步退路都提前算进命里。"
+      ],
+      "job_ids": [
+        "star_abyss_tidewatch",
         "star_abyss_collect"
       ],
       "quest_ids": [

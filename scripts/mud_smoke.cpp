@@ -248,6 +248,14 @@ bool panel_body_contains_all(const mud::StructuredPanel& panel,
                        [&](const std::string& needle) { return panel_body_contains(panel, needle); });
 }
 
+bool panel_entries_contain_title(const MudStructuredPanelState& panel,
+                                 std::string_view needle)
+{
+    return std::any_of(panel.entries.begin(),
+                       panel.entries.end(),
+                       [&](const MudSummaryEntry& entry) { return entry.title.find(needle) != std::string::npos; });
+}
+
 bool string_contains(std::string_view haystack, std::string_view needle)
 {
     return haystack.find(needle) != std::string::npos;
@@ -587,6 +595,69 @@ int main()
         auto local_repository = std::make_shared<SmokeMudPlayerRepository>();
         MudGameRuntime local_runtime(local_world, local_repository);
         require_true(local_runtime.ready(), "local mud runtime not ready: " + local_runtime.ready_error());
+
+        auto loose_density_player =
+            local_runtime.build_default_player("loose-density-" + suffix, "散修烟测" + suffix.substr(suffix.size() >= 4 ? suffix.size() - 4 : 0));
+        loose_density_player.location_scene_id = "loose_camp_square";
+        const auto loose_work = local_runtime.run_command(&loose_density_player, "work");
+        const auto loose_rumor = local_runtime.run_command(&loose_density_player, "ask 温散人 about rumor");
+        require_true(loose_work.success && !loose_work.panels.empty() &&
+                         panel_entries_contain_title(loose_work.panels.front(), "棚市记账"),
+                     "loose camp work should expose 棚市记账");
+        require_true(loose_rumor.success && !loose_rumor.panels.empty() &&
+                         loose_rumor.panels.front().panel_kind == "rumor" &&
+                         panel_entries_contain_title(loose_rumor.panels.front(), "棚市记账"),
+                     "loose camp rumor should expose 棚市记账");
+
+        auto sect_density_player =
+            local_runtime.build_default_player("sect-density-" + suffix, "宗门烟测" + suffix.substr(suffix.size() >= 4 ? suffix.size() - 4 : 0));
+        sect_density_player.location_scene_id = "huangfeng_hall";
+        const auto huangfeng_work = local_runtime.run_command(&sect_density_player, "work");
+        require_true(huangfeng_work.success && !huangfeng_work.panels.empty() &&
+                         panel_entries_contain_title(huangfeng_work.panels.front(), "内堂录名"),
+                     "huangfeng hall work should expose 内堂录名");
+        sect_density_player.location_scene_id = "spirit_beast_beast_pen";
+        const auto spirit_beast_work = local_runtime.run_command(&sect_density_player, "work");
+        require_true(spirit_beast_work.success && !spirit_beast_work.panels.empty() &&
+                         panel_entries_contain_title(spirit_beast_work.panels.front(), "兽栏巡喂"),
+                     "spirit beast pen work should expose 兽栏巡喂");
+
+        auto sea_density_player =
+            local_runtime.build_default_player("sea-density-" + suffix, "海路烟测" + suffix.substr(suffix.size() >= 4 ? suffix.size() - 4 : 0));
+        sea_density_player.location_scene_id = "tiannan_market";
+        const auto tiannan_work = local_runtime.run_command(&sea_density_player, "work");
+        require_true(tiannan_work.success && !tiannan_work.panels.empty() &&
+                         panel_entries_contain_title(tiannan_work.panels.front(), "坊市誊图"),
+                     "tiannan market work should expose 坊市誊图");
+        sea_density_player.location_scene_id = "outer_isles_market";
+        const auto isles_work = local_runtime.run_command(&sea_density_player, "work");
+        require_true(isles_work.success && !isles_work.panels.empty() &&
+                         panel_entries_contain_title(isles_work.panels.front(), "珠市拣成色"),
+                     "outer isles market work should expose 珠市拣成色");
+
+        auto late_density_player =
+            local_runtime.build_default_player("late-density-" + suffix, "后段烟测" + suffix.substr(suffix.size() >= 4 ? suffix.size() - 4 : 0));
+        late_density_player.location_scene_id = "chaos_sea_ship";
+        const auto deck_mage_rumor = local_runtime.run_command(&late_density_player, "ask 甲板术士 about 结丹门径");
+        require_true(deck_mage_rumor.success && !deck_mage_rumor.panels.empty() &&
+                         deck_mage_rumor.panels.front().panel_kind == "rumor" &&
+                         panel_entries_contain_title(deck_mage_rumor.panels.front(), "外海测潮"),
+                     "deck mage rumor should expose 外海测潮");
+        late_density_player.location_scene_id = "outer_sea_mid";
+        const auto outer_sea_work = local_runtime.run_command(&late_density_player, "work");
+        require_true(outer_sea_work.success && !outer_sea_work.panels.empty() &&
+                         panel_entries_contain_title(outer_sea_work.panels.front(), "外海测潮"),
+                     "outer sea mid work should expose 外海测潮");
+        late_density_player.location_scene_id = "ancient_ruin_ring";
+        const auto ruin_ring_work = local_runtime.run_command(&late_density_player, "work");
+        require_true(ruin_ring_work.success && !ruin_ring_work.panels.empty() &&
+                         panel_entries_contain_title(ruin_ring_work.panels.front(), "残环拓纹"),
+                     "ancient ruin ring work should expose 残环拓纹");
+        late_density_player.location_scene_id = "star_abyss";
+        const auto star_abyss_work = local_runtime.run_command(&late_density_player, "work");
+        require_true(star_abyss_work.success && !star_abyss_work.panels.empty() &&
+                         panel_entries_contain_title(star_abyss_work.panels.front(), "星渊候潮"),
+                     "star abyss work should expose 星渊候潮");
 
         auto gold_core_chapter_player =
             make_local_story_player(&local_runtime, "gold-core-chapter", 8, "筑基后期");
