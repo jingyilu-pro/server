@@ -2,6 +2,17 @@
 
 统一的 C++ 游戏服务端工程，使用单一 `application` 二进制按角色启动。
 
+## 开源状态
+
+- 项目自有代码采用 [MIT License](LICENSE) 发布。
+- 开源范围边界见 [OPEN_SOURCE_SCOPE.md](OPEN_SOURCE_SCOPE.md)。
+- 仓库内的第三方子模块与依赖保持各自原始许可证，不因本仓库采用 MIT 而自动变更。
+- 第三方组件清单与许可证入口见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
+- 贡献方式见 [CONTRIBUTING.md](CONTRIBUTING.md)。
+- 社区行为规范见 [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)。
+- 安全漏洞披露流程见 [SECURITY.md](SECURITY.md)。
+- 凡人修仙题材相关的世界观、剧情、运营与玩法方案文档不属于本仓库开源授权范畴。
+
 当前角色：
 
 - `manager`
@@ -180,8 +191,15 @@ export $(grep -v '^#' .env | xargs)
 - 架构说明：`ARCHITECTURE.md`
 - 代码风格：`CODE_STYLE.md`
 - H5 客户端说明：`client/README.md`
+- 开源范围说明：`OPEN_SOURCE_SCOPE.md`
+- 开源贡献指南：`CONTRIBUTING.md`
+- 第三方依赖说明：`THIRD_PARTY_NOTICES.md`
 
 ## 仓库内技能
 
 - `skills/code-review-fix-loop/SKILL.md`：改动后 review/fix 循环规范。
 - `skills/chinese-default-agent/SKILL.md`：中文协作规范（对话、注释、文档、技能内容）。
+
+## License
+
+除 [OPEN_SOURCE_SCOPE.md](OPEN_SOURCE_SCOPE.md) 明确排除的内容，以及 `libs/` 下的第三方子模块及其各自文件外，仓库中的项目自有代码与通用技术文档按 MIT 协议发布。详情见 [LICENSE](LICENSE)、[OPEN_SOURCE_SCOPE.md](OPEN_SOURCE_SCOPE.md) 与 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。

@@ -1,7 +1,17 @@
 {
   "name": "fanren-mud-client",
   "version": "0.1.0",
+  "description": "Web client for the fanren-mud server project.",
   "private": true,
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jingyilu-pro/server.git"
+  },
+  "bugs": {
+    "url": "https://github.com/jingyilu-pro/server/issues"
+  },
+  "homepage": "https://github.com/jingyilu-pro/server#readme",
   "type": "module",
   "scripts": {
     "dev": "vite",
